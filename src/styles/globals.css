@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * Design tokens — sourced 1:1 from docs/core/STYLE_GUIDE.md.
+ *
+ * Note: values are plain hex, not shadcn's usual "H S% L%" triples.
+ * tailwind.config.ts references these directly (e.g. bg-primary -> var(--color-primary)).
+ * Simpler to keep in sync with the style guide than maintaining an HSL conversion.
+ */
+:root {
+  /* Brand */
+  --color-primary: #2f5d50;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #8faf9b;
+  --color-secondary-foreground: #1f2320;
+  --color-accent: #c7744f;
+  --color-accent-foreground: #ffffff;
+
+  /* Surfaces */
+  --color-background: #f8f7f3;
+  --color-surface: #ffffff;
+  --color-border: #e5e3dd;
+
+  /* Text */
+  --color-foreground: #2c2c2c;
+  --color-muted-foreground: #6b6b6b;
+
+  /* Status */
+  --color-success: #3f8f5f;
+  --color-warning: #d69e2e;
+  --color-error: #c44a4a;
+  --color-info: #4a78c4;
+
+  /* Radii — per STYLE_GUIDE.md §Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+}
+
+.dark {
+  --color-primary: #4f8a70;
+  --color-primary-foreground: #171817;
+  --color-secondary: #8faf9b;
+  --color-secondary-foreground: #171817;
+  --color-accent: #c7744f;
+  --color-accent-foreground: #171817;
+
+  --color-background: #171817;
+  --color-surface: #202321;
+  --color-border: #333634;
+
+  --color-foreground: #f4f3ef;
+  --color-muted-foreground: #b9b7b1;
+
+  --color-success: #3f8f5f;
+  --color-warning: #d69e2e;
+  --color-error: #c44a4a;
+  --color-info: #4a78c4;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+}

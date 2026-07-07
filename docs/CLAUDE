@@ -1,0 +1,596 @@
+# CLAUDE.md
+
+# NourishOS Development Guidelines
+
+> This document provides the project context, architecture, development standards, and engineering principles for Claude when contributing to **NourishOS**.
+
+---
+
+# Project Overview
+
+**NourishOS (Nourish Operational System)** is an enterprise-grade, cloud-native operational platform designed for **Nourish Group Indonesia**, a multi-outlet Food & Beverage company.
+
+The platform digitizes end-to-end business operations into a single integrated ecosystem, replacing spreadsheets, paper forms, and fragmented communication.
+
+## Vision
+
+Build a **paperless, scalable, real-time operational platform** that enables headquarters and outlets to operate from a single source of truth.
+
+---
+
+# Project Objectives
+
+NourishOS aims to:
+
+- Digitize all SOPs and operational workflows
+- Centralize business data across departments
+- Reduce approval turnaround time by at least 80%
+- Support headquarters and unlimited outlets
+- Deliver real-time dashboards and KPIs
+- Standardize processes across all locations
+- Enable future AI-powered operational intelligence
+
+---
+
+# Technology Stack
+
+## Frontend
+
+- React
+- TypeScript
+- Vite
+- React Router
+- React Query / TanStack Query
+- React Hook Form
+- PWA (Progressive Web App)
+
+## Backend
+
+- Firebase Authentication
+- Firebase Cloud Functions
+- Firestore
+- Firebase Cloud Storage
+- Firebase Cloud Messaging
+
+## Future Integrations
+
+- ESB POS
+- Payroll System
+- WhatsApp Notifications
+- Digital Signatures
+- AI Assistant
+- Business Intelligence
+- Google Workspace
+
+---
+
+# Architecture Principles
+
+NourishOS follows a **Domain-Driven, Event-Driven, Serverless Architecture**.
+
+```
+React Frontend
+        │
+        ▼
+Firebase Authentication
+        │
+        ▼
+Cloud Functions
+        │
+        ▼
+Firestore
+        │
+        ▼
+Shared Services
+```
+
+---
+
+# Business Modules
+
+Each module is independent while sharing common platform services.
+
+## Human Resources
+
+- Employee Database
+- Recruitment
+- Onboarding
+- Contracts
+- Performance Management
+- Disciplinary Actions
+- Training
+- Assets
+- Employee Activities
+- Payroll Integration (Future)
+
+---
+
+## Operations
+
+- SOP Library
+- Opening Checklist
+- Closing Checklist
+- Daily Reports
+- Incident Reports
+- Engineering Work Orders
+
+---
+
+## Finance
+
+- Expense Requests
+- Budget Requests
+- Budget Approvals
+- Petty Cash
+- Financial Reporting
+
+---
+
+## Purchasing
+
+- Purchase Requests
+- RFQ
+- Purchase Orders
+- Supplier Management
+- Goods Receiving
+
+---
+
+## Inventory
+
+- Item Master
+- Stock Levels
+- Stock Movements
+- Transfers
+- Stock Opname
+- Waste Tracking
+- Inventory Valuation
+
+---
+
+## CRM
+
+- Customer Profiles
+- Customer Feedback
+- Customer Segmentation
+- Loyalty Program (Future)
+- Customer Analytics
+
+---
+
+## Documents
+
+- SOP Library
+- Templates
+- Forms
+- Training Materials
+- Version Control
+
+---
+
+## Communications
+
+- Announcements
+- Internal Messaging
+- Task Assignments
+- Team Collaboration
+
+---
+
+## Reports & Analytics
+
+- Executive Dashboard
+- Department Dashboards
+- Operational Reports
+- Financial Reports
+- Inventory Reports
+- KPI Monitoring
+
+---
+
+# Shared Platform Services
+
+These services are mandatory across all modules.
+
+## Approval Engine
+
+Responsible for:
+
+- Multi-level approvals
+- Approval routing
+- Approval history
+- Approval notifications
+
+---
+
+## Task Engine
+
+Responsible for:
+
+- Task creation
+- Assignment
+- Deadlines
+- Escalations
+- Progress tracking
+
+---
+
+## Notification Engine
+
+Supports:
+
+- In-App Notifications
+- Push Notifications
+- Email (Future)
+- WhatsApp (Future)
+
+---
+
+## Audit Log Service
+
+Every important action must generate an immutable audit log.
+
+Examples:
+
+- Create
+- Update
+- Delete
+- Approval
+- Login
+- File Upload
+
+---
+
+## File Storage Service
+
+Centralized storage for:
+
+- SOPs
+- Contracts
+- Invoices
+- Receipts
+- Images
+- Attachments
+
+---
+
+## Search Service
+
+Cross-module search for:
+
+- Employees
+- Documents
+- Suppliers
+- Customers
+- Inventory
+- Reports
+
+---
+
+# Workflow Standards
+
+All business processes follow the same lifecycle.
+
+```
+Draft
+
+↓
+
+Submitted
+
+↓
+
+Pending Approval
+
+↓
+
+Approved
+
+↓
+
+Completed
+```
+
+Alternative outcomes:
+
+```
+Rejected
+
+Cancelled
+
+Expired
+```
+
+Every state transition should:
+
+- Create an Audit Log
+- Trigger Notifications
+- Generate Tasks (when applicable)
+
+---
+
+# Role-Based Access Control (RBAC)
+
+Access is controlled by:
+
+- Role
+- Department
+- Outlet
+- Permission
+
+## Standard Roles
+
+- Super Admin
+- Director
+- General Manager
+- HR Manager
+- Finance Manager
+- Purchasing Officer
+- Outlet Manager
+- Kitchen Leader
+- Bar Leader
+- Floor Leader
+- Security Leader
+- Engineering Leader
+- Staff
+
+Never rely on frontend permissions alone.
+
+All permission checks must also exist in Cloud Functions.
+
+---
+
+# Firestore Design Standards
+
+Each document should include:
+
+```ts
+id;
+createdAt;
+updatedAt;
+createdBy;
+updatedBy;
+status;
+outletId;
+```
+
+Collections should:
+
+- Use flat structures where possible
+- Avoid deeply nested subcollections unless justified
+- Prefer event-driven writes
+- Support efficient querying
+- Be optimized for Firestore indexing
+
+---
+
+# Cloud Functions Standards
+
+Business logic belongs in Cloud Functions.
+
+Functions should be:
+
+- Small
+- Focused
+- Reusable
+- Event-driven
+
+Example:
+
+```
+submitExpense()
+
+approveExpense()
+
+rejectExpense()
+
+createTask()
+
+notifyUsers()
+```
+
+Avoid monolithic functions.
+
+---
+
+# React Standards
+
+Use:
+
+- Functional Components
+- Hooks
+- TypeScript
+- Component composition
+- Reusable UI components
+
+Avoid:
+
+- Large components
+- Business logic in UI
+- Direct Firestore mutations inside components
+
+---
+
+# Component Library
+
+Reusable components include:
+
+- Button
+- Input
+- Select
+- Modal
+- Drawer
+- Table
+- Data Grid
+- Card
+- Badge
+- Tabs
+- KPI Card
+- Timeline
+- Avatar
+- Loader
+- Toast
+- Empty State
+
+---
+
+# UI Design Principles
+
+Follow the Nourish Design System.
+
+Characteristics:
+
+- Clean
+- Premium
+- Modern
+- Minimal
+- Fast
+- Mobile-first
+
+Support:
+
+- Light Mode
+- Dark Mode
+
+Use consistent spacing, typography, colors, and elevation.
+
+---
+
+# Reporting Principles
+
+Reports should support:
+
+- Real-time dashboards
+- Scheduled reports
+- Department KPIs
+- Executive summaries
+
+Future:
+
+- AI-generated insights
+- Predictive analytics
+
+---
+
+# Coding Philosophy
+
+Always prefer:
+
+- Readability
+- Maintainability
+- Scalability
+- Reusability
+
+Optimize for long-term growth rather than short-term shortcuts.
+
+---
+
+# Development Workflow
+
+Build incrementally.
+
+Recommended order:
+
+1. Authentication
+2. Layout
+3. Dashboard
+4. Shared Services
+5. HR
+6. Documents
+7. Operations
+8. Communications
+9. Finance
+10. Purchasing
+11. Inventory
+12. CRM
+13. Reports
+14. Integrations
+15. AI Features
+
+Every module should be production-ready before moving to the next.
+
+---
+
+# Git Standards
+
+Branch naming:
+
+```
+feature/hr-module
+
+feature/dashboard
+
+feature/inventory
+
+fix/login
+
+refactor/auth
+```
+
+Commit messages:
+
+```
+feat(hr): add employee management
+
+feat(finance): implement expense approval workflow
+
+fix(auth): resolve Google login redirect
+
+refactor(shared): optimize notification service
+```
+
+Follow Conventional Commits whenever possible.
+
+---
+
+# Definition of Done
+
+A feature is complete when:
+
+- UI implemented
+- Business logic complete
+- RBAC enforced
+- Audit logs added
+- Notifications integrated
+- Tasks generated where applicable
+- Firestore schema updated
+- Documentation updated
+- Tested for desktop and mobile
+- No TypeScript errors
+- No linting errors
+
+---
+
+# Success Metrics
+
+The platform succeeds when it achieves:
+
+- 100% SOP digitization
+- Paperless operations
+- 80% faster approval workflows
+- Single sign-on across departments
+- Real-time operational reporting
+- Multi-outlet scalability
+- High user adoption
+- Enterprise-grade reliability
+
+---
+
+# Claude Guidelines
+
+When contributing to NourishOS:
+
+- Think in systems, not isolated features.
+- Follow the existing architecture and module boundaries.
+- Reuse shared services instead of duplicating functionality.
+- Maintain consistency with the PRD, Architecture, RBAC, Firestore Schema, and Feature Specifications.
+- Favor modular, maintainable, and production-ready solutions.
+- When proposing new functionality, explain its impact on Firestore, Cloud Functions, RBAC, Audit Logs, Notifications, and Reporting.
+- Keep the user experience simple for outlet staff while providing comprehensive capabilities for management.
+
+> **Principle:** Every feature should strengthen the vision of NourishOS as a unified, enterprise-grade operating system for multi-outlet F&B businesses.
+
+```
+
+This `CLAUDE.md` is suitable as the root-level AI guidance file in your GitHub repository and is aligned with the PRD, architecture, roadmap, RBAC, Firestore schema, and module specifications you've developed for NourishOS.
+```
