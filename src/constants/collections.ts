@@ -21,7 +21,13 @@ export const COLLECTIONS = {
   RECRUITMENTS: 'recruitments',
   CANDIDATES: 'candidates',
   CONTRACTS: 'contracts',
+  // NOTE: 'performances' (DATABASE.md §13 / FIRESTORE_SCHEMA.md §13) is a loose
+  // generic shape (employeeId, reviewerId, score, comments) — superseded by the
+  // structured Appraisal module below. Recommend deprecating this collection
+  // once Appraisal ships rather than maintaining both shapes for the same data.
   PERFORMANCES: 'performances',
+  APPRAISAL_TEMPLATES: 'appraisalTemplates',
+  APPRAISALS: 'appraisals',
   DISCIPLINARY_ACTIONS: 'disciplinaryActions',
   TRAININGS: 'trainings',
   EMPLOYEE_ASSETS: 'employeeAssets',
