@@ -1,0 +1,109 @@
+rules_version = '2';
+
+// Relies on custom claims {role, departmentId, outletId} kept in sync with
+// the users/{uid} document by functions/src/auth/syncUserClaims.ts. Reading
+// claims from the auth token (not a Firestore get()) keeps rule evaluation
+// fast and avoids the extra-read cost/latency of cross-document lookups.
+//
+// Scope note: this covers only the collections Milestone 3 touches (users,
+// appraisals, approval engine, tasks, notifications, files, audit — deny
+// only). Every other collection falls through to the deny-all match at the
+// bottom until its owning module adds real rules — per DATABASE.md §23,
+// nothing should ship with an open rule by omission.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function role() {
+      return request.auth.token.role;
+    }
+
+    function hasAnyRole(roles) {
+      return isSignedIn() && role() in roles;
+    }
+
+    function isElevated() {
+      return hasAnyRole(['superAdmin', 'director', 'generalManager']);
+    }
+
+    // ---- Core ----
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || hasAnyRole(['superAdmin', 'director', 'generalManager', 'hrManager']));
+      allow write: if false; // createUserProfile / updateUserProfile Cloud Functions only
+    }
+
+    // ---- HR: Appraisal ----
+    match /appraisalTemplates/{templateId} {
+      allow read: if isSignedIn(); // needed to render the review form
+      allow write: if false; // seedAppraisalTemplates / future Settings UI Cloud Function only
+    }
+
+    match /appraisals/{appraisalId} {
+      allow read: if isSignedIn() && (
+        resource.data.employeeId == request.auth.uid ||
+        resource.data.reviewerId == request.auth.uid ||
+        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin'])
+      );
+      allow write: if false; // createAppraisal / submitAppraisal / approval flow only
+    }
+
+    // ---- Shared: Approval Engine ----
+    match /approvalRequests/{requestId} {
+      allow read: if isSignedIn() && (
+        resource.data.requestedBy == request.auth.uid ||
+        hasAnyRole(['hrManager', 'financeManager', 'generalManager', 'director', 'superAdmin'])
+      );
+      allow write: if false;
+    }
+
+    match /approvalSteps/{stepId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    match /approvalHistory/{historyId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // ---- Shared: Task Engine ----
+    match /tasks/{taskId} {
+      allow read: if isSignedIn() && (
+        request.auth.uid in resource.data.assignedTo ||
+        resource.data.assignedBy == request.auth.uid ||
+        isElevated()
+      );
+      allow write: if false;
+    }
+
+    // ---- Shared: Notifications ----
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && resource.data.recipientUid == request.auth.uid;
+      // markNotificationRead also goes through a Cloud Function rather than
+      // a direct client update, so every state change is auditable the
+      // same way a write from any other module would be.
+      allow write: if false;
+    }
+
+    // ---- Shared: Audit Log ----
+    // Never directly readable or writable by clients — always via the
+    // RBAC-scoped searchAuditLogs() Cloud Function (AUDIT_LOG.md §17).
+    match /auditLogs/{logId} {
+      allow read, write: if false;
+    }
+
+    // ---- Shared: File Storage metadata ----
+    match /files/{fileId} {
+      allow read: if isSignedIn();
+      allow write: if false; // createFileMetadata / deleteFile Cloud Functions only
+    }
+
+    // ---- Default deny ----
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

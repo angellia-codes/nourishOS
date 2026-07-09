@@ -1,0 +1,15 @@
+rules_version = '2';
+
+// Starter rule: any authenticated user may upload/read, capped at 25MB
+// (FILE_STORAGE.md §14's largest documented limit). Per-folder rules
+// matching §14's per-type limits and §19's per-role table are a refinement
+// for the File Storage service's own milestone — this unblocks uploads
+// correctly and safely (auth required, size capped) in the meantime.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.resource.size < 25 * 1024 * 1024;
+    }
+  }
+}

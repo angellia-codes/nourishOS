@@ -9,7 +9,8 @@ export interface Task extends BaseDocument {
   taskType: TaskType
   sourceModule: string
   referenceId?: string
-  assignedTo: string | string[]
+  /** Always an array in Firestore, even for a single assignee — required for array-contains queries. */
+  assignedTo: string[]
   assignedBy: string
   priority: Priority
   taskStatus: TaskStatus
