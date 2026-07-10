@@ -260,6 +260,7 @@ Employee Ready
 
 ### Features
 
+- Notification Letter (3 months before contract expiry)
 - Create Contract
 - Renew Contract
 - Extend Contract
@@ -430,6 +431,7 @@ Files are stored in Firebase Cloud Storage with metadata in Firestore.
 - Performance Summary
 - Asset Assignment
 - Disciplinary Records
+- Employee Turn Over
 
 Reports should support filtering and export.
 

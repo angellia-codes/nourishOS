@@ -215,6 +215,8 @@ Support department-based collaboration.
 - #engineering
 - #security
 - #general
+- #wholefood
+- #thebakery
 
 ---
 
