@@ -1,5 +1,7 @@
 import { Moon, Sun, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui'
+import { SearchBar } from './SearchBar'
+import { NotificationBell } from './NotificationBell'
 import { useAuth } from '@/hooks'
 import { useThemeStore } from '@/store'
 
@@ -12,10 +14,12 @@ export function Header() {
     theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
 
   return (
-    <header className="flex h-[72px] shrink-0 items-center justify-between border-b border-border bg-surface px-6">
-      <span className="font-display text-lg text-primary">NourishOS</span>
+    <header className="flex h-[72px] shrink-0 items-center justify-between gap-4 border-b border-border bg-surface px-6">
+      <span className="shrink-0 font-display text-lg text-primary">NourishOS</span>
 
-      <div className="flex items-center gap-2">
+      <SearchBar />
+
+      <div className="flex shrink-0 items-center gap-2">
         <Button
           type="button"
           variant="ghost"
@@ -25,6 +29,8 @@ export function Header() {
         >
           {isDark ? <Sun className="h-4 w-4" aria-hidden="true" /> : <Moon className="h-4 w-4" aria-hidden="true" />}
         </Button>
+
+        <NotificationBell />
 
         <div className="mx-1 hidden text-right sm:block">
           <p className="text-sm font-medium leading-tight text-foreground">{profile?.displayName}</p>
