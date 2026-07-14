@@ -1,32 +1,21 @@
 import { useCallback, useEffect, useState } from 'react'
 import * as appraisalService from '@/features/hr/services/appraisalService'
+import { useFirestoreDoc, useAsync } from '@/hooks'
+import { COLLECTIONS } from '@/constants'
 import type { Appraisal, AppraisalTemplate, AppraisalSubjectScore } from '@/types'
 
 /**
- * Manages its own loading/error/submitting state for now — this is
- * exactly the shape the shared useAsync/useFirestoreDoc hooks (Milestone 5)
- * will formalize, so expect this to get thinner once those exist rather
- * than duplicating that pattern per-feature indefinitely.
+ * Thinner than its Milestone 3 version — now composes the generic
+ * useFirestoreDoc (live appraisal doc) and useAsync (submit / generate
+ * insights) instead of hand-rolling the same loading/error state here.
+ * The template lookup stays a local effect since it's a one-shot fetch
+ * keyed off a field of the (already-subscribed) appraisal doc, not a
+ * subscription of its own.
  */
 export function useAppraisalReview(appraisalId: string | undefined) {
-  const [appraisal, setAppraisal] = useState<Appraisal | null>(null)
-  const [template, setTemplate] = useState<AppraisalTemplate | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isGeneratingInsights, setIsGeneratingInsights] = useState(false)
+  const { data: appraisal, loading } = useFirestoreDoc<Appraisal>(COLLECTIONS.APPRAISALS, appraisalId)
 
-  useEffect(() => {
-    if (!appraisalId) {
-      setLoading(false)
-      return
-    }
-    setLoading(true)
-    return appraisalService.subscribeToAppraisal(appraisalId, (doc) => {
-      setAppraisal(doc)
-      setLoading(false)
-    })
-  }, [appraisalId])
+  const [template, setTemplate] = useState<AppraisalTemplate | null>(null)
 
   useEffect(() => {
     if (!appraisal) {
@@ -42,34 +31,30 @@ export function useAppraisalReview(appraisalId: string | undefined) {
     }
   }, [appraisal?.positionId, appraisal?.reviewType])
 
+  const submitAsync = useAsync(appraisalService.submitAppraisal)
+  const generateInsightsAsync = useAsync(appraisalService.generateAppraisalInsights)
+
   const submit = useCallback(
-    async (subjectScores: AppraisalSubjectScore[]) => {
-      if (!appraisalId) return
-      setIsSubmitting(true)
-      setError(null)
-      try {
-        await appraisalService.submitAppraisal({ appraisalId, subjectScores })
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to submit appraisal.')
-      } finally {
-        setIsSubmitting(false)
-      }
+    (subjectScores: AppraisalSubjectScore[], overallComment?: string) => {
+      if (!appraisalId) return Promise.resolve()
+      return submitAsync.execute({ appraisalId, subjectScores, overallComment })
     },
-    [appraisalId],
+    [appraisalId, submitAsync],
   )
 
-  const generateInsights = useCallback(async () => {
-    if (!appraisalId) return
-    setIsGeneratingInsights(true)
-    setError(null)
-    try {
-      await appraisalService.generateAppraisalInsights(appraisalId)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to generate AI insights.')
-    } finally {
-      setIsGeneratingInsights(false)
-    }
-  }, [appraisalId])
+  const generateInsights = useCallback(() => {
+    if (!appraisalId) return Promise.resolve()
+    return generateInsightsAsync.execute(appraisalId)
+  }, [appraisalId, generateInsightsAsync])
 
-  return { appraisal, template, loading, error, isSubmitting, isGeneratingInsights, submit, generateInsights }
+  return {
+    appraisal,
+    template,
+    loading,
+    error: submitAsync.error?.message ?? generateInsightsAsync.error?.message ?? null,
+    isSubmitting: submitAsync.loading,
+    isGeneratingInsights: generateInsightsAsync.loading,
+    submit,
+    generateInsights,
+  }
 }

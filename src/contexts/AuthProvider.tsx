@@ -4,6 +4,7 @@ import { auth } from '@/services/firebase'
 import { subscribeToDocument, getDocument } from '@/services/firestore'
 import { COLLECTIONS } from '@/constants'
 import { useAuthStore } from '@/store'
+import { Spinner } from '@/components/ui'
 import type { UserProfile } from '@/types'
 
 interface RoleDocument {
@@ -99,11 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   if (status === 'loading') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <div
-          className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"
-          role="status"
-          aria-label="Loading"
-        />
+        <Spinner />
       </div>
     )
   }

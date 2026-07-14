@@ -1,4 +1,4 @@
-export { AppraisalReviewForm, type AppraisalReviewFormProps } from './AppraisalReviewForm'
+export { AppraisalReviewForm, type AppraisalReviewFormProps, type AppraisalSubmitPayload } from './AppraisalReviewForm'
 export { AppraisalSubjectCard } from './AppraisalSubjectCard'
 export { AppraisalStatusBadge } from './AppraisalStatusBadge'
 export { AppraisalAIInsights } from './AppraisalAIInsights'
