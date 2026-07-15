@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Card, CardContent, Button } from '@/components/ui'
+import { Card, CardContent, CardHeader, CardTitle, Button, Textarea } from '@/components/ui'
 import { AppraisalSubjectCard } from './AppraisalSubjectCard'
 import { AppraisalStatusBadge } from './AppraisalStatusBadge'
 import { AppraisalAIInsights } from './AppraisalAIInsights'
@@ -23,6 +23,11 @@ interface DraftScore {
   reviewerNote?: string
 }
 
+export interface AppraisalSubmitPayload {
+  subjectScores: AppraisalSubjectScore[]
+  overallComment?: string
+}
+
 export interface AppraisalReviewFormProps {
   employeeName: string
   positionLabel: string
@@ -31,8 +36,9 @@ export interface AppraisalReviewFormProps {
   status: ApprovalStatus
   subjects: AppraisalSubject[]
   initialScores?: AppraisalSubjectScore[]
+  initialOverallComment?: string | null
   aiInsights: AIInsightsData | null
-  onSubmit: (scores: AppraisalSubjectScore[]) => void | Promise<void>
+  onSubmit: (payload: AppraisalSubmitPayload) => void | Promise<void>
   onGenerateInsights: () => void | Promise<void>
   isSubmitting?: boolean
   isGeneratingInsights?: boolean
@@ -46,6 +52,7 @@ export function AppraisalReviewForm({
   status,
   subjects,
   initialScores,
+  initialOverallComment,
   aiInsights,
   onSubmit,
   onGenerateInsights,
@@ -53,6 +60,7 @@ export function AppraisalReviewForm({
   isGeneratingInsights,
 }: AppraisalReviewFormProps) {
   const isDraft = status === 'draft'
+  const [overallComment, setOverallComment] = useState(initialOverallComment ?? '')
 
   const [draftScores, setDraftScores] = useState<Record<string, DraftScore>>(() => {
     const initial: Record<string, DraftScore> = {}
@@ -95,7 +103,7 @@ export function AppraisalReviewForm({
         reviewerNote: entry.reviewerNote?.trim() || undefined,
       }
     })
-    void onSubmit(scores)
+    void onSubmit({ subjectScores: scores, overallComment: overallComment.trim() || undefined })
   }
 
   return (
@@ -158,6 +166,24 @@ export function AppraisalReviewForm({
           </p>
         </CardContent>
       </Card>
+
+      {/* Overall comment */}
+      {(isDraft || overallComment) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Overall Comment</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Textarea
+              value={overallComment}
+              onChange={(e) => setOverallComment(e.target.value)}
+              placeholder="Summary feedback for this review period (optional)…"
+              disabled={!isDraft}
+              className="min-h-[88px]"
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* AI Insights — unlocked once submitted */}
       <AppraisalAIInsights

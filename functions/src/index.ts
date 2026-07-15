@@ -25,3 +25,6 @@ export { createCheckpoint, createPatrolLog, checkOverdueCheckpoints } from './se
 
 // ---- HR: Appraisal ----
 export { seedAppraisalTemplates, createAppraisal, submitAppraisal, generateAppraisalInsights } from './hr/appraisal'
+
+// ---- HR: Employee Database ----
+export { createEmployee, updateEmployee, archiveEmployee } from './hr/employees'

@@ -75,6 +75,7 @@ export interface Appraisal extends BaseDocument {
   periodLabel: string // e.g. "Q3 2026", "Probation - Month 3", "FY2026"
   subjectScores: AppraisalSubjectScore[]
   overallScore: number // average of subjectScores — computed server-side on submit, never client-set
+  overallComment: string | null // reviewer's summary feedback, set on submit
   status: ApprovalStatus
   approvalRequestId?: string // links into the normalized Approval Engine once submitted
   aiInsights: AppraisalAIInsights | null // null until generateAppraisalInsights() is explicitly triggered

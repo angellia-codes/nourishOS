@@ -35,6 +35,22 @@ service cloud.firestore {
       allow write: if false; // createUserProfile / updateUserProfile Cloud Functions only
     }
 
+    // ---- HR: Employee Database ----
+    match /employees/{employeeId} {
+      // HR.md §22: HR/GM/Director full read; department leaders limited to
+      // their own department. Salary is deliberately NOT stored on this doc
+      // (see employee.types.ts) since rules can't hide individual fields.
+      allow read: if hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
+        (hasAnyRole(['kitchenLeader', 'barLeader', 'floorLeader', 'outletManager']) &&
+          resource.data.departmentId == request.auth.token.departmentId);
+      allow write: if false; // createEmployee / updateEmployee / archiveEmployee Cloud Functions only
+    }
+
+    match /employeeActivities/{activityId} {
+      allow read: if hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']);
+      allow write: if false; // written server-side alongside employee mutations
+    }
+
     // ---- HR: Appraisal ----
     match /appraisalTemplates/{templateId} {
       allow read: if isSignedIn(); // needed to render the review form

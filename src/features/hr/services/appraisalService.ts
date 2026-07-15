@@ -25,6 +25,7 @@ export function createAppraisal(input: CreateAppraisalInput): Promise<{ appraisa
 export interface SubmitAppraisalInput {
   appraisalId: string
   subjectScores: AppraisalSubjectScore[]
+  overallComment?: string
 }
 
 /**

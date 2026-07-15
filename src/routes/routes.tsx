@@ -7,6 +7,9 @@ import { NotFoundPage } from '@/features/auth/NotFoundPage'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { AppraisalReviewPage } from '@/features/hr/pages/AppraisalReviewPage'
 import { AppraisalDemoPage } from '@/features/hr/pages/AppraisalDemoPage'
+import { EmployeeListPage } from '@/features/hr/pages/EmployeeListPage'
+import { EmployeeFormPage } from '@/features/hr/pages/EmployeeFormPage'
+import { EmployeeProfilePage } from '@/features/hr/pages/EmployeeProfilePage'
 import { ModulePlaceholder } from '@/components/shared/ModulePlaceholder'
 import { CheckpointListPage } from '@/features/security/pages/CheckpointListPage'
 import { PatrolCapturePage } from '@/features/security/pages/PatrolCapturePage'
@@ -35,7 +38,10 @@ export const router = createBrowserRouter([
           {
             path: 'hr',
             children: [
-              { index: true, element: <ModulePlaceholder title="HR" description="Employee database, recruitment, and training land in a future milestone." /> },
+              { index: true, element: <EmployeeListPage /> },
+              { path: 'employees/new', element: <EmployeeFormPage /> },
+              { path: 'employees/:employeeId', element: <EmployeeProfilePage /> },
+              { path: 'employees/:employeeId/edit', element: <EmployeeFormPage /> },
               { path: 'appraisals/:appraisalId', element: <AppraisalReviewPage /> },
             ],
           },

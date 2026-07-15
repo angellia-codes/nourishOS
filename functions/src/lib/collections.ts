@@ -12,6 +12,9 @@ export const COLLECTIONS = {
   APPRAISAL_TEMPLATES: 'appraisalTemplates',
   APPRAISALS: 'appraisals',
 
+  EMPLOYEES: 'employees',
+  EMPLOYEE_ACTIVITIES: 'employeeActivities',
+
   APPROVAL_WORKFLOWS: 'approvalWorkflows',
   APPROVAL_REQUESTS: 'approvalRequests',
   APPROVAL_STEPS: 'approvalSteps',
@@ -27,4 +30,6 @@ export const COLLECTIONS = {
 
   CHECKPOINTS: 'checkpoints',
   PATROL_LOGS: 'patrolLogs',
+
+  SYSTEM_SETTINGS: 'systemSettings',
 } as const
