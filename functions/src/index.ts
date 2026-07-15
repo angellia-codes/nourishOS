@@ -20,5 +20,8 @@ export { markNotificationRead, markAllNotificationsRead } from './shared/notific
 // ---- Shared: File Storage ----
 export { createFileMetadata, deleteFile } from './shared/fileStorage'
 
+// ---- Security ----
+export { createCheckpoint, createPatrolLog, checkOverdueCheckpoints } from './security'
+
 // ---- HR: Appraisal ----
 export { seedAppraisalTemplates, createAppraisal, submitAppraisal, generateAppraisalInsights } from './hr/appraisal'

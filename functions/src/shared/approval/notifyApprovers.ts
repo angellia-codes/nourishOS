@@ -1,5 +1,4 @@
-import { db, COLLECTIONS } from '../../lib'
-import { sendNotificationInternal } from '../notifications'
+import { notifyUsersByRole } from '../notifications'
 
 /**
  * Notifies every active user holding `approverRole` that a request needs
@@ -7,6 +6,10 @@ import { sendNotificationInternal } from '../notifications'
  * when it advances to the next step after an approval. Generic copy so it
  * works for any module without per-resourceType customization; a module
  * can layer nicer copy on top later without changing this contract.
+ *
+ * Thin wrapper over the shared notifyUsersByRole() primitive — the actual
+ * "query users by role, send to each" logic lives in one place now,
+ * shared with the Security module's checkpoint/overdue alerts.
  */
 export async function notifyStepApprovers(input: {
   approverRole: string
@@ -14,28 +17,13 @@ export async function notifyStepApprovers(input: {
   resourceType: string
   resourceId: string
 }): Promise<void> {
-  const { approverRole, module, resourceType, resourceId } = input
+  const label = input.resourceType.charAt(0).toUpperCase() + input.resourceType.slice(1)
 
-  const usersSnap = await db
-    .collection(COLLECTIONS.USERS)
-    .where('roleId', '==', approverRole)
-    .where('status', '==', 'active')
-    .get()
-
-  const label = resourceType.charAt(0).toUpperCase() + resourceType.slice(1)
-
-  await Promise.all(
-    usersSnap.docs.map((userDoc) =>
-      sendNotificationInternal({
-        type: 'approval',
-        title: `${label} Awaiting Your Approval`,
-        message: `A ${resourceType} has been submitted and requires your approval.`,
-        module,
-        priority: 'medium',
-        recipientUid: userDoc.id,
-        referenceModule: module,
-        referenceId: resourceId,
-      }),
-    ),
-  )
+  await notifyUsersByRole({
+    role: input.approverRole,
+    module: input.module,
+    title: `${label} Awaiting Your Approval`,
+    message: `A ${input.resourceType} has been submitted and requires your approval.`,
+    referenceId: input.resourceId,
+  })
 }

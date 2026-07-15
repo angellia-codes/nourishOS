@@ -141,6 +141,10 @@ export const COLLECTIONS = {
   SEARCH_HISTORY: 'searchHistory',
   SAVED_SEARCHES: 'savedSearches',
 
+  // Security
+  CHECKPOINTS: 'checkpoints',
+  PATROL_LOGS: 'patrolLogs',
+
   // Settings
   COMPANIES: 'companies',
   POSITIONS: 'positions',

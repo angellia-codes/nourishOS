@@ -8,6 +8,8 @@ import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { AppraisalReviewPage } from '@/features/hr/pages/AppraisalReviewPage'
 import { AppraisalDemoPage } from '@/features/hr/pages/AppraisalDemoPage'
 import { ModulePlaceholder } from '@/components/shared/ModulePlaceholder'
+import { CheckpointListPage } from '@/features/security/pages/CheckpointListPage'
+import { PatrolCapturePage } from '@/features/security/pages/PatrolCapturePage'
 import { ROUTES } from '@/constants'
 
 export const router = createBrowserRouter([
@@ -38,6 +40,13 @@ export const router = createBrowserRouter([
             ],
           },
           { path: 'operations', element: <ModulePlaceholder title="Operations" /> },
+          {
+            path: 'security',
+            children: [
+              { index: true, element: <CheckpointListPage /> },
+              { path: 'checkpoints/:checkpointId/patrol', element: <PatrolCapturePage /> },
+            ],
+          },
           { path: 'finance', element: <ModulePlaceholder title="Finance" /> },
           { path: 'purchasing', element: <ModulePlaceholder title="Purchasing" /> },
           { path: 'inventory', element: <ModulePlaceholder title="Inventory" /> },

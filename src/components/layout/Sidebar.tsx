@@ -11,6 +11,7 @@ import {
   MessageSquare,
   BarChart3,
   Settings,
+  Shield,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
@@ -22,6 +23,7 @@ const NAV_ITEMS = [
   { to: ROUTES.DASHBOARD, label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: ROUTES.HR, label: 'HR', icon: Users, end: false },
   { to: ROUTES.OPERATIONS, label: 'Operations', icon: ClipboardList, end: false },
+  { to: ROUTES.SECURITY, label: 'Security', icon: Shield, end: false },
   { to: ROUTES.FINANCE, label: 'Finance', icon: Wallet, end: false },
   { to: ROUTES.PURCHASING, label: 'Purchasing', icon: ShoppingCart, end: false },
   { to: ROUTES.INVENTORY, label: 'Inventory', icon: Package, end: false },

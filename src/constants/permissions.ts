@@ -32,6 +32,7 @@ export const PERMISSION_MODULES = {
   SETTINGS: 'settings',
   USERS: 'users',
   ROLES: 'roles',
+  SECURITY: 'security',
 } as const
 
 export type PermissionModule = (typeof PERMISSION_MODULES)[keyof typeof PERMISSION_MODULES]
@@ -99,6 +100,12 @@ export const PERMISSIONS = {
   SETTINGS_MANAGE: permission(PERMISSION_MODULES.SETTINGS, ACTIONS.MANAGE),
   USERS_MANAGE: permission(PERMISSION_MODULES.USERS, ACTIONS.MANAGE),
   ROLES_MANAGE: permission(PERMISSION_MODULES.ROLES, ACTIONS.MANAGE),
+
+  // Security — patrol checkpoints. Any active guard can log a patrol;
+  // registering/editing checkpoints themselves is a supervisor action.
+  PATROLS_CREATE: permission(PERMISSION_MODULES.SECURITY, ACTIONS.CREATE),
+  PATROLS_READ: permission(PERMISSION_MODULES.SECURITY, ACTIONS.READ),
+  CHECKPOINTS_MANAGE: permission(PERMISSION_MODULES.SECURITY, 'manageCheckpoints'),
 } as const
 
 export type PermissionString = (typeof PERMISSIONS)[keyof typeof PERMISSIONS]
