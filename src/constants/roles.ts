@@ -1,11 +1,3 @@
-/**
- * Canonical roles.
- *
- * Source: RBAC.md §4. Extended with roles used in module-level permission
- * matrices (CRM.md, PURCHASING.md, INVENTORY.md) that aren't in RBAC.md's
- * core list yet. Marked below so the gap stays visible instead of being
- * silently merged away — recommend folding these into RBAC.md §4/§14.
- */
 export const ROLES = {
   SUPER_ADMIN: 'superAdmin',
   DIRECTOR: 'director',
@@ -16,25 +8,15 @@ export const ROLES = {
   KITCHEN_LEADER: 'kitchenLeader',
   BAR_LEADER: 'barLeader',
   FLOOR_LEADER: 'floorLeader',
+  /** Added for HR & Operations PRD §7.1 — Bakery outlet did not have a leader role. */
+  BAKERY_LEADER: 'bakeryLeader',
+  /** Added for HR & Operations PRD §7.1 — Wholefood outlet did not have a leader role. */
+  WHOLEFOOD_LEADER: 'wholefoodLeader',
   SECURITY: 'security',
   ENGINEERING: 'engineering',
-  /** Used in CRM.md, PURCHASING.md, INVENTORY.md matrices — not yet in RBAC.md §4. */
   OUTLET_MANAGER: 'outletManager',
-  /** INVENTORY.md only. */
   STOREKEEPER: 'storekeeper',
-  /** CRM.md only. */
   MARKETING: 'marketing',
-  /** CRM.md only. */
   CUSTOMER_SERVICE: 'customerService',
-  /** Generic frontline/employee baseline referenced across module docs as "Staff"/"Employee". */
   STAFF: 'staff',
 } as const
-
-export type Role = (typeof ROLES)[keyof typeof ROLES]
-
-/** Roles with cross-outlet visibility per RBAC.md §7. Used by outlet-scoping logic. */
-export const CROSS_OUTLET_ROLES: readonly Role[] = [
-  ROLES.SUPER_ADMIN,
-  ROLES.DIRECTOR,
-  ROLES.GENERAL_MANAGER,
-]
