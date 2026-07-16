@@ -15,11 +15,14 @@ export interface ApprovalStepDefinition {
   slaHours?: number
 }
 
+/**
+ * Note: no `steps` field. Routes are server-owned (see routes.ts) — the
+ * caller identifies the resource, the engine resolves who approves it.
+ */
 export interface SubmitApprovalInternalInput {
   module: string
   resourceType: string
   resourceId: string
   requestedBy: string
-  steps: ApprovalStepDefinition[]
   priority?: 'critical' | 'high' | 'medium' | 'low'
 }

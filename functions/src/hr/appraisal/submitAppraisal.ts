@@ -70,18 +70,15 @@ export const submitAppraisal = onCall({ region: REGION }, async (request) => {
     const overallScore = subjectScores.reduce((sum, s) => sum + s.score, 0) / subjectScores.length
 
     // Every review type routes through HR Manager, then GM — confirmed decision,
-    // sequential (not parallel), not conditional on reviewType. Notification to
-    // the first-step approver (HR Manager) is handled by submitApprovalInternal
-    // itself now — see shared/approval/notifyApprovers.ts.
+    // sequential (not parallel), not conditional on reviewType. The route
+    // itself is server-owned (shared/approval/routes.ts, 'hr/appraisal');
+    // notification to the first-step approver is handled inside
+    // submitApprovalInternal — see shared/approval/notifyApprovers.ts.
     const approvalRequestId = await submitApprovalInternal({
       module: 'hr',
       resourceType: 'appraisal',
       resourceId: appraisalId,
       requestedBy: user.uid,
-      steps: [
-        { sequence: 1, approverRole: 'hrManager' },
-        { sequence: 2, approverRole: 'generalManager' },
-      ],
     })
 
     await appraisalRef.update({

@@ -15,6 +15,11 @@ import type { ApprovalStepDefinition } from './types'
 
 const OVERRIDE_ROLES = ['superAdmin']
 
+/**
+ * Same transactional shape as approveStep: preconditions re-read inside the
+ * transaction (a reject can't race an approve), the live step doc closed
+ * out, history written atomically with the state change.
+ */
 export const rejectStep = onCall({ region: REGION }, async (request) => {
   try {
     const user = await requireActiveUser(request)
@@ -31,42 +36,70 @@ export const rejectStep = onCall({ region: REGION }, async (request) => {
     }
 
     const requestRef = db.collection(COLLECTIONS.APPROVAL_REQUESTS).doc(approvalRequestId)
-    const requestSnap = await requestRef.get()
-    if (!requestSnap.exists) {
-      throw new AppError('not-found', 'Approval request not found.')
-    }
-    const requestData = requestSnap.data()!
 
-    if (requestData.approvalStatus !== 'pending') {
-      throw new AppError('failed-precondition', `This request is already ${requestData.approvalStatus}.`)
-    }
+    const outcome = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(requestRef)
+      if (!snap.exists) throw new AppError('not-found', 'Approval request not found.')
+      const data = snap.data()!
 
-    const steps = requestData.steps as ApprovalStepDefinition[]
-    const currentStep = steps[requestData.currentStepIndex as number]
-    const isAssignedApprover = user.roleId === currentStep.approverRole
-    if (!isAssignedApprover && !OVERRIDE_ROLES.includes(user.roleId)) {
-      throw new AppError('permission-denied', 'You are not the approver for the current step.')
-    }
+      if (data.approvalStatus !== 'pending') {
+        throw new AppError('failed-precondition', `This request is already ${data.approvalStatus}.`)
+      }
 
-    await requestRef.update({ approvalStatus: 'rejected', ...updatedFields(user.uid) })
+      const steps = data.steps as ApprovalStepDefinition[]
+      const stepIndex = data.currentStepIndex as number
+      const currentStep = steps[stepIndex]
 
-    await db.collection(COLLECTIONS.APPROVAL_HISTORY).add({
-      approvalRequestId,
-      stepIndex: requestData.currentStepIndex,
-      approverUid: user.uid,
-      action: 'reject',
-      comments,
-      previousStatus: 'pending',
-      newStatus: 'rejected',
-      timestamp: FieldValue.serverTimestamp(),
+      const isOverride = OVERRIDE_ROLES.includes(user.roleId)
+      if (user.roleId !== currentStep.approverRole && !isOverride) {
+        throw new AppError('permission-denied', 'You are not the approver for the current step.')
+      }
+      // approval_engine.md §23 — same rule as approve: the requester never
+      // actions their own request.
+      if (data.requestedBy === user.uid && !isOverride) {
+        throw new AppError('permission-denied', 'You cannot action your own request.')
+      }
+
+      // All reads before the first write — Firestore transaction requirement.
+      const currentStepQuery = await tx.get(
+        db
+          .collection(COLLECTIONS.APPROVAL_STEPS)
+          .where('approvalRequestId', '==', approvalRequestId)
+          .where('sequence', '==', currentStep.sequence)
+          .limit(1),
+      )
+
+      tx.update(requestRef, { approvalStatus: 'rejected', ...updatedFields(user.uid) })
+
+      if (!currentStepQuery.empty) {
+        tx.update(currentStepQuery.docs[0].ref, {
+          stepStatus: 'rejected',
+          rejectedBy: user.uid,
+          rejectedAt: FieldValue.serverTimestamp(),
+          ...updatedFields(user.uid),
+        })
+      }
+
+      tx.set(db.collection(COLLECTIONS.APPROVAL_HISTORY).doc(), {
+        approvalRequestId,
+        stepIndex,
+        approverUid: user.uid,
+        action: isOverride && user.roleId !== currentStep.approverRole ? 'reject_override' : 'reject',
+        comments,
+        previousStatus: 'pending',
+        newStatus: 'rejected',
+        timestamp: FieldValue.serverTimestamp(),
+      })
+
+      return { data }
     })
 
     await recordAuditEvent({
       eventType: 'ApprovalStepRejected',
       category: 'Approvals',
-      module: requestData.module,
-      resourceType: requestData.resourceType,
-      resourceId: requestData.resourceId,
+      module: outcome.data.module,
+      resourceType: outcome.data.resourceType,
+      resourceId: outcome.data.resourceId,
       action: 'reject',
       user,
       metadata: { approvalRequestId, comments },

@@ -4,24 +4,54 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-NourishOS is an internal operational platform for Nourish Group Indonesia — a React PWA frontend backed by Firebase (Auth, Firestore, Cloud Functions, Storage). It is in early milestone development: most feature modules are placeholder stubs, and only a few (HR appraisal, Security patrol) are actually implemented.
+NourishOS is an internal operational platform for Nourish Group Indonesia, a multi-outlet F&B company — a React SPA frontend backed by Firebase (Auth, Firestore, Cloud Functions, Storage). It is in early milestone development. Implemented today: **HR appraisal** (including an AI-insights UI), **HR employee database**, and **Security patrol/checkpoints**. Every other module (Operations, Finance, Purchasing, Inventory, CRM, Documents, Communications, Reports, Settings) is mounted as a `<ModulePlaceholder>` route stub.
+
+PWA support (manifest, service worker) is **planned but not built** — there is no `vite-plugin-pwa` yet. Treat it as a plain Vite SPA today; don't claim or rely on offline/installable behavior until that lands.
+
+## Environment
+
+Development happens on Windows 11 with PowerShell as the shell. Write commands in PowerShell syntax (`;` chaining, `$env:VAR`, no heredocs into bash).
 
 ## Commands
 
-```bash
+Frontend (repo root):
+
+```
 npm run dev      # Vite dev server on http://localhost:5173
-npm run build    # tsc (typecheck, noEmit) then vite build — build fails on any type error
-npm run lint     # eslint on ts/tsx, --max-warnings 0 (zero-tolerance; a single warning fails)
+npm run build    # tsc (typecheck) then vite build — fails on any type error
 npm run preview  # serve the production build
+npm run lint     # ASPIRATIONAL — eslint is not installed and has no config; this fails today
 ```
 
-There is **no test runner configured** — do not assume `npm test` exists or invent test commands.
+Functions (`functions/`, Node 20, firebase-functions v6 / firebase-admin v12 / @anthropic-ai/sdk):
 
-Firebase emulators are configured (`src/firebase.json`): auth 9099, functions 5001, firestore 8080, storage 9199, UI 4000. Set `VITE_USE_FIREBASE_EMULATOR=true` in `.env.local` to point the app at them. Copy `.env.example` → `.env.local` for the `VITE_FIREBASE_*` config.
+```
+npm run build    # tsc → lib/
+npm run serve    # build + functions emulator
+npm run deploy   # firebase deploy --only functions
+```
+
+There is **no test runner configured** — do not assume `npm test` exists or invent test commands. Verification means: typecheck/build passes, and you exercised the affected flow in the dev server (against emulators where a backend is involved).
+
+Firebase emulators are configured (`src/firebase.json`): auth 9099, functions 5001, firestore 8080, storage 9199, UI 4000. Set `VITE_USE_FIREBASE_EMULATOR=true` in `.env.local` to point the app at them (`src/services/firebase/config.ts` reads it; must be the literal string `'true'`). Copy `.env.example` → `.env.local` for the `VITE_FIREBASE_*` config.
+
+## Current state of the tree (last verified 2026-07-16)
+
+These are facts, not standards — the standards are in "Definition of done". **If your change alters any fact here, update this section in the same commit.**
+
+- **Both builds are green**: `npm run build` at the root (tsc + vite) and `npm run build` inside `functions/` both pass with zero errors.
+- **Approval routes are server-owned.** The approval engine was rewritten (July 2026): routes live only in [functions/src/shared/approval/routes.ts](functions/src/shared/approval/routes.ts), clients submit a resource identity only (never a `steps` array), self-approval is blocked (approval_engine.md §23, superAdmin override is audit-logged as `approve_override`), and every state change (approve/reject/return/cancel) runs in a Firestore transaction that also closes out the live `approvalSteps` doc. Adding a new approvable resource = adding a route entry + registering a resolved-handler (see `hr/appraisal/index.ts`).
+- **`Employee` in `src/types/employee.types.ts` is the shipped shape** (mirrors what `createEmployee` writes: `position`, `employmentStatus`, ISO-string dates). The PRD §12.1 schema (`TaxStatus`, `EmployeeCompensation`, etc.) sits below it in a clearly-marked PLANNED section — do not use those in shipped code paths yet.
+- **Vite warns that the main JS chunk is >500 kB** — a warning, not a failure. Code-splitting is future work; don't treat the warning as a regression you introduced.
 
 ## Documentation is the source of truth
 
-`docs/` (core/, modules/, platform/) holds the authoritative product/architecture specs, and the code is written to trace back to them. Comments cite sections directly, e.g. `// API.md §7`, `// DATABASE.md §23`, `// RBAC.md §4`. **Before changing behavior in a module, read its doc** — and when code and doc disagree, the doc usually reflects intent while the code reflects what's actually shipped. Note the top-level `docs/README.md` lists an *aspirational* stack (MUI, React Hook Form, Zod) that the code does **not** use — trust `package.json` and the actual source over that list.
+`docs/` (core/, modules/, platform/) holds the authoritative product/architecture specs, and the code is written to trace back to them. Comments cite sections directly, e.g. `// API.md §7`, `// DATABASE.md §23`, `// RBAC.md §4`. **Before changing behavior in a module, read its doc** — and when code and doc disagree, the doc usually reflects intent while the code reflects what's actually shipped.
+
+Two docs will mislead you about the stack — trust `package.json` and the actual source over both:
+
+- `docs/README.md` lists an aspirational stack (MUI, React Hook Form, Zod) the code does not use.
+- `docs/CLAUDE` (no extension) is an older, superseded guidelines doc; its stack list (React Query, React Hook Form, FCM) is also aspirational. This file — the root `CLAUDE.md` — wins.
 
 ## Architecture
 
@@ -39,19 +69,35 @@ Authorization rides on Firebase custom claims `{role, departmentId, outletId}`, 
 
 ### Shared "engines"
 
-Cross-module backend capabilities live under [functions/src/shared/](functions/src/shared/) and are meant to be reused, not reimplemented per module: **approval engine**, **task engine**, **notifications**, **file storage**. Example: HR appraisal submission validates its own scores, then calls `submitApprovalInternal(...)` to drive a sequential role-based approval route (HR Manager → GM). When adding a module that needs approvals/tasks/notifications, wire into these rather than writing new flows.
+Cross-module backend capabilities live under [functions/src/shared/](functions/src/shared/) and are meant to be reused, not reimplemented per module: **approval engine**, **task engine**, **notifications**, **file storage**. Example: HR appraisal submission validates its own scores, then calls `submitApprovalInternal(...)`, which resolves the server-owned route for `hr/appraisal` (routes.ts) and drives a sequential role-based approval (HR Manager → GM). Internal (non-callable) entry points exist for cross-function use: `submitApprovalInternal`, `createTaskInternal`, `sendNotificationInternal`, `notifyUsersByRole`. When adding a module that needs approvals/tasks/notifications, wire into these rather than writing new flows.
 
 ### Frontend structure
 
-Feature-first under [src/features/](src/features/)`<module>/` (pages, components, hooks, services per feature). The router ([src/routes/routes.tsx](src/routes/routes.tsx)) mounts most modules as `<ModulePlaceholder>` until built. `src/components/ui/` is a small shadcn-style primitive set (`components.json`, `class-variance-authority`, `tailwind-merge`); `src/components/shared/` is app-level shared components. Global state is Zustand stores in [src/store/](src/store/). Path alias `@/` → `src/` (configured in both `vite.config.ts` and `tsconfig.json`).
+Feature-first under [src/features/](src/features/)`<module>/` (pages, components, hooks, services per feature). The router ([src/routes/routes.tsx](src/routes/routes.tsx)) mounts unbuilt modules as `<ModulePlaceholder>`. `src/components/ui/` is a small shadcn-style primitive set (`components.json`, `class-variance-authority`, `tailwind-merge`); `src/components/shared/` is app-level shared components. Global state is Zustand stores in [src/store/](src/store/) (`authStore`, `themeStore`, `toastStore`, `uiStore`). Path alias `@/` → `src/` (configured in both `vite.config.ts` and `tsconfig.json`).
 
 ### Intentional duplication
 
 `src/constants/` (e.g. `collections.ts`, `permissions.ts`, `roles.ts`) is mirrored by a subset in `functions/src/lib/` because frontend and functions are separate TypeScript projects that can't share imports. This duplication is deliberate and flagged in code comments — when you change a collection name, permission string, or role, **update both sides.**
 
+Firestore rules live in **one place only**: `src/firestore.rules` (`src/firebase.json` resolves paths relative to `src/`, so that copy is what a deploy consumes). A root-level duplicate used to exist and was deleted — don't recreate it.
+
+## Definition of done
+
+A change is finished only when all of these hold:
+
+1. `npm run build` passes at the root with **zero errors**. The tree is green; keep it green.
+2. If you touched `functions/`: `npm run build` inside `functions/` also passes with zero errors.
+3. If you added or renamed a collection, permission, or role: both `src/constants/` and `functions/src/lib/` are updated, and every touched collection has a `match` block with `allow write: if false` in `src/firestore.rules`.
+4. Any new callable follows the canonical skeleton (RBAC guard → mutate → audit → `successResponse`), is exported from `functions/src/index.ts`, and the client reaches it only through `callFunction`.
+5. Behavior implemented from a spec carries a doc-section citation comment (`// API.md §7` style), matching the existing convention.
+6. You exercised the affected flow in `npm run dev` (against emulators when a backend is involved) — there is no test suite to lean on.
+7. This file's "Current state" section is updated if your change altered any fact in it.
+8. Commit messages follow Conventional Commits going forward: `type(scope): summary` (e.g. `feat(hr): ...`, `fix(approval): ...`, `docs: ...`). History before July 2026 is mixed — match the convention, not the history.
+
 ## Gotchas
 
-- Firebase config files live under `src/` (`src/firebase.json`, `src/firestore.rules`, `src/storage.rules`), and there is also a root `firestore.rules`. Confirm which one a deploy actually consumes before editing rules.
-- `functions/` currently contains only `src/` — there is no committed `functions/package.json`/`tsconfig`, so the functions project isn't buildable/deployable as-is yet. Don't assume you can `firebase deploy --only functions` without scaffolding that first.
-- `strict` TypeScript is on and lint tolerates zero warnings; a build passes only if both `tsc` and eslint are clean.
-- `npm run lint` currently fails with "eslint is not recognized": eslint is not in `devDependencies` and no eslint config file exists, so the lint script is aspirational until that's scaffolded. `npm run build` (tsc + vite) is the working quality gate.
+- Firebase config lives at `src/firebase.json`, so its relative paths resolve against `src/` — `src/firestore.rules`, `src/storage.rules`, and `src/firestore.indexes.json` are the deployed ones. (A root `firestore.indexes.json` also exists; the `src/` copy wins for deploys driven by `src/firebase.json`.)
+- `strict` TypeScript is on in both projects; the build fails on any type error.
+- `npm run lint` fails with "eslint is not recognized" — eslint is not in `devDependencies` and there is no config file. `npm run build` (tsc + vite) is the quality gate until lint is scaffolded.
+- `generateAppraisalInsights` calls the Anthropic API (`@anthropic-ai/sdk`, model `claude-opus-4-8`) using the `ANTHROPIC_API_KEY` Firebase Functions secret ([functions/src/lib/secrets.ts](functions/src/lib/secrets.ts)). Provision it with `firebase functions:secrets:set ANTHROPIC_API_KEY` before deploying; never hardcode keys, and any callable using it must declare `secrets: [ANTHROPIC_API_KEY]` in its `onCall` options.
+- Firestore custom claims lag: `syncUserClaims` updates the Auth token claims when `users/{uid}` changes, but an already-signed-in user keeps old claims until their ID token refreshes (~1h). Cloud Functions are unaffected — `requireActiveUser` reads the live profile doc.

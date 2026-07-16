@@ -35,42 +35,65 @@ export const returnForRevision = onCall({ region: REGION }, async (request) => {
     }
 
     const requestRef = db.collection(COLLECTIONS.APPROVAL_REQUESTS).doc(approvalRequestId)
-    const requestSnap = await requestRef.get()
-    if (!requestSnap.exists) {
-      throw new AppError('not-found', 'Approval request not found.')
-    }
-    const requestData = requestSnap.data()!
 
-    if (requestData.approvalStatus !== 'pending') {
-      throw new AppError('failed-precondition', `This request is already ${requestData.approvalStatus}.`)
-    }
+    const outcome = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(requestRef)
+      if (!snap.exists) throw new AppError('not-found', 'Approval request not found.')
+      const data = snap.data()!
 
-    const steps = requestData.steps as ApprovalStepDefinition[]
-    const currentStep = steps[requestData.currentStepIndex as number]
-    const isAssignedApprover = user.roleId === currentStep.approverRole
-    if (!isAssignedApprover && !OVERRIDE_ROLES.includes(user.roleId)) {
-      throw new AppError('permission-denied', 'You are not the approver for the current step.')
-    }
+      if (data.approvalStatus !== 'pending') {
+        throw new AppError('failed-precondition', `This request is already ${data.approvalStatus}.`)
+      }
 
-    await requestRef.update({ approvalStatus: 'returnedForRevision', ...updatedFields(user.uid) })
+      const steps = data.steps as ApprovalStepDefinition[]
+      const stepIndex = data.currentStepIndex as number
+      const currentStep = steps[stepIndex]
 
-    await db.collection(COLLECTIONS.APPROVAL_HISTORY).add({
-      approvalRequestId,
-      stepIndex: requestData.currentStepIndex,
-      approverUid: user.uid,
-      action: 'returnForRevision',
-      comments,
-      previousStatus: 'pending',
-      newStatus: 'returnedForRevision',
-      timestamp: FieldValue.serverTimestamp(),
+      const isOverride = OVERRIDE_ROLES.includes(user.roleId)
+      if (user.roleId !== currentStep.approverRole && !isOverride) {
+        throw new AppError('permission-denied', 'You are not the approver for the current step.')
+      }
+      if (data.requestedBy === user.uid && !isOverride) {
+        throw new AppError('permission-denied', 'You cannot action your own request.')
+      }
+
+      const currentStepQuery = await tx.get(
+        db
+          .collection(COLLECTIONS.APPROVAL_STEPS)
+          .where('approvalRequestId', '==', approvalRequestId)
+          .where('sequence', '==', currentStep.sequence)
+          .limit(1),
+      )
+
+      tx.update(requestRef, { approvalStatus: 'returnedForRevision', ...updatedFields(user.uid) })
+
+      if (!currentStepQuery.empty) {
+        tx.update(currentStepQuery.docs[0].ref, {
+          stepStatus: 'returned',
+          ...updatedFields(user.uid),
+        })
+      }
+
+      tx.set(db.collection(COLLECTIONS.APPROVAL_HISTORY).doc(), {
+        approvalRequestId,
+        stepIndex,
+        approverUid: user.uid,
+        action: 'returnForRevision',
+        comments,
+        previousStatus: 'pending',
+        newStatus: 'returnedForRevision',
+        timestamp: FieldValue.serverTimestamp(),
+      })
+
+      return { data }
     })
 
     await recordAuditEvent({
       eventType: 'ApprovalReturnedForRevision',
       category: 'Approvals',
-      module: requestData.module,
-      resourceType: requestData.resourceType,
-      resourceId: requestData.resourceId,
+      module: outcome.data.module,
+      resourceType: outcome.data.resourceType,
+      resourceId: outcome.data.resourceId,
       action: 'returnForRevision',
       user,
       metadata: { approvalRequestId, comments },
@@ -93,38 +116,57 @@ export const cancelApproval = onCall({ region: REGION }, async (request) => {
     }
 
     const requestRef = db.collection(COLLECTIONS.APPROVAL_REQUESTS).doc(approvalRequestId)
-    const requestSnap = await requestRef.get()
-    if (!requestSnap.exists) {
-      throw new AppError('not-found', 'Approval request not found.')
-    }
-    const requestData = requestSnap.data()!
 
-    if (requestData.requestedBy !== user.uid) {
-      throw new AppError('permission-denied', 'Only the original requester can cancel this request.')
-    }
-    if (requestData.currentStepIndex !== 0 || requestData.approvalStatus !== 'pending') {
-      throw new AppError('failed-precondition', 'This request can no longer be cancelled — a step has already been actioned.')
-    }
+    const outcome = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(requestRef)
+      if (!snap.exists) throw new AppError('not-found', 'Approval request not found.')
+      const data = snap.data()!
 
-    await requestRef.update({ approvalStatus: 'cancelled', ...updatedFields(user.uid) })
+      if (data.requestedBy !== user.uid) {
+        throw new AppError('permission-denied', 'Only the original requester can cancel this request.')
+      }
+      if (data.currentStepIndex !== 0 || data.approvalStatus !== 'pending') {
+        throw new AppError('failed-precondition', 'This request can no longer be cancelled — a step has already been actioned.')
+      }
 
-    await db.collection(COLLECTIONS.APPROVAL_HISTORY).add({
-      approvalRequestId,
-      stepIndex: requestData.currentStepIndex,
-      approverUid: user.uid,
-      action: 'cancel',
-      comments: null,
-      previousStatus: 'pending',
-      newStatus: 'cancelled',
-      timestamp: FieldValue.serverTimestamp(),
+      const steps = data.steps as ApprovalStepDefinition[]
+      const currentStepQuery = await tx.get(
+        db
+          .collection(COLLECTIONS.APPROVAL_STEPS)
+          .where('approvalRequestId', '==', approvalRequestId)
+          .where('sequence', '==', steps[0].sequence)
+          .limit(1),
+      )
+
+      tx.update(requestRef, { approvalStatus: 'cancelled', ...updatedFields(user.uid) })
+
+      if (!currentStepQuery.empty) {
+        tx.update(currentStepQuery.docs[0].ref, {
+          stepStatus: 'cancelled',
+          ...updatedFields(user.uid),
+        })
+      }
+
+      tx.set(db.collection(COLLECTIONS.APPROVAL_HISTORY).doc(), {
+        approvalRequestId,
+        stepIndex: data.currentStepIndex,
+        approverUid: user.uid,
+        action: 'cancel',
+        comments: null,
+        previousStatus: 'pending',
+        newStatus: 'cancelled',
+        timestamp: FieldValue.serverTimestamp(),
+      })
+
+      return { data }
     })
 
     await recordAuditEvent({
       eventType: 'ApprovalCancelled',
       category: 'Approvals',
-      module: requestData.module,
-      resourceType: requestData.resourceType,
-      resourceId: requestData.resourceId,
+      module: outcome.data.module,
+      resourceType: outcome.data.resourceType,
+      resourceId: outcome.data.resourceId,
       action: 'cancel',
       user,
     })

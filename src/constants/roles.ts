@@ -20,3 +20,12 @@ export const ROLES = {
   CUSTOMER_SERVICE: 'customerService',
   STAFF: 'staff',
 } as const
+
+export type Role = (typeof ROLES)[keyof typeof ROLES]
+
+/** Roles with cross-outlet visibility per RBAC.md §7. Used by outlet-scoping logic. */
+export const CROSS_OUTLET_ROLES: readonly Role[] = [
+  ROLES.SUPER_ADMIN,
+  ROLES.DIRECTOR,
+  ROLES.GENERAL_MANAGER,
+]
