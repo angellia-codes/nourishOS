@@ -159,6 +159,16 @@ service cloud.firestore {
       allow write: if false; // createIncidentReport / updateIncidentStatus / reopenIncident Cloud Functions only
     }
 
+    // ---- Operations: Daily Updates ----
+    match /dailyReports/{reportId} {
+      allow read: if isSignedIn() && (
+        resource.data.submittedBy == request.auth.uid ||
+        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
+        resource.data.outletId == request.auth.token.outletId
+      );
+      allow write: if false; // submitDailyReport Cloud Function only
+    }
+
     // ---- Default deny ----
     match /{document=**} {
       allow read, write: if false;

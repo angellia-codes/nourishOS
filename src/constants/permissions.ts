@@ -35,6 +35,7 @@ export const PERMISSION_MODULES = {
   SECURITY: 'security',
   LOST_FOUND: 'lostFound',
   INCIDENTS: 'incidents',
+  DAILY_UPDATES: 'dailyUpdates',
 } as const
 
 export type PermissionModule = (typeof PERMISSION_MODULES)[keyof typeof PERMISSION_MODULES]
@@ -126,6 +127,12 @@ export const PERMISSIONS = {
   INCIDENTS_CREATE: permission(PERMISSION_MODULES.INCIDENTS, ACTIONS.CREATE),
   INCIDENTS_MANAGE: permission(PERMISSION_MODULES.INCIDENTS, ACTIONS.MANAGE),
   INCIDENTS_READ_SENSITIVE: permission(PERMISSION_MODULES.INCIDENTS, 'readSensitive'),
+
+  // Operations — Daily Updates (daily-updates.md §7). READ covers own
+  // outlet (rules-scoped); READ_ALL is the elevated cross-outlet view.
+  DAILY_UPDATES_SUBMIT: permission(PERMISSION_MODULES.DAILY_UPDATES, ACTIONS.SUBMIT),
+  DAILY_UPDATES_READ: permission(PERMISSION_MODULES.DAILY_UPDATES, ACTIONS.READ),
+  DAILY_UPDATES_READ_ALL: permission(PERMISSION_MODULES.DAILY_UPDATES, 'readAll'),
 } as const
 
 export type PermissionString = (typeof PERMISSIONS)[keyof typeof PERMISSIONS]

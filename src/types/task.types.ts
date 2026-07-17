@@ -17,4 +17,11 @@ export interface Task extends BaseDocument {
   dueDate?: Timestamp
   estimatedDurationMinutes?: number
   tags?: string[]
+
+  // Daily Updates task aging (daily-updates.md §5) — kept optional/generic
+  // per that doc's own framing, so any long-lived task type can use them
+  // later rather than hardcoding to Daily Updates only.
+  daysOpen?: number
+  escalationLevel?: 0 | 1 | 2 | 3 | 4
+  carryForwardFromTaskId?: string
 }

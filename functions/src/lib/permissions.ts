@@ -16,4 +16,5 @@ export const PERMISSIONS = {
   LOST_FOUND_MANAGE: 'lostFound.manage',
   INCIDENTS_CREATE: 'incidents.create',
   INCIDENTS_MANAGE: 'incidents.manage',
+  DAILY_UPDATES_SUBMIT: 'dailyUpdates.submit',
 } as const

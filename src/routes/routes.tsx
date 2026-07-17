@@ -42,6 +42,8 @@ import { LostFoundDetailPage } from '@/features/operations/lostFound/pages/LostF
 import { IncidentListPage } from '@/features/operations/incidents/pages/IncidentListPage'
 import { IncidentReportFormPage } from '@/features/operations/incidents/pages/IncidentReportFormPage'
 import { IncidentDetailPage } from '@/features/operations/incidents/pages/IncidentDetailPage'
+import { DailyUpdatesFeedPage } from '@/features/operations/dailyUpdates/pages/DailyUpdatesFeedPage'
+import { DailyUpdateFormPage } from '@/features/operations/dailyUpdates/pages/DailyUpdateFormPage'
 import { DemoHubPage } from '@/features/demo/DemoHubPage'
 import { DashboardDemoPage } from '@/features/dashboard/DashboardDemoPage'
 import { ExpenseRequestListDemoPage } from '@/features/finance/ExpenseRequestListDemoPage'
@@ -127,8 +129,8 @@ export const router = createBrowserRouter([
           {
             path: 'operations',
             children: [
-              // TODO(Phase 3 — Daily Updates): index route becomes the daily updates feed.
-              { index: true, element: <ModulePlaceholder title="Operations" /> },
+              { index: true, element: <DailyUpdatesFeedPage /> },
+              { path: 'daily-updates/new', element: <DailyUpdateFormPage /> },
               { path: 'lost-found', element: <LostFoundListPage /> },
               { path: 'lost-found/new', element: <LostFoundFormPage /> },
               { path: 'lost-found/:itemId', element: <LostFoundDetailPage /> },

@@ -39,3 +39,12 @@ export {
 
 // ---- Operations: Incident Reports ----
 export { createIncidentReport, updateIncidentStatus, reopenIncident } from './operations/incidentReports'
+
+// ---- Operations: Daily Updates ----
+export {
+  submitDailyReport,
+  carryForwardDailyTasks,
+  checkDailyTaskEscalations,
+  sendComplianceAlerts,
+  sendDailyDigest,
+} from './operations/dailyUpdates'
