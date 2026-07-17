@@ -52,6 +52,7 @@ export const COLLECTIONS = {
   SHIFT_HANDOVERS: 'shiftHandovers',
   INCIDENT_REPORTS: 'incidentReports',
   WORK_ORDERS: 'workOrders',
+  LOST_FOUND_ITEMS: 'lostFoundItems',
   PREVENTIVE_MAINTENANCE: 'preventiveMaintenance',
   EQUIPMENT: 'equipment',
   EQUIPMENT_INSPECTIONS: 'equipmentInspections',

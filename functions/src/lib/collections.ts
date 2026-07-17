@@ -31,5 +31,10 @@ export const COLLECTIONS = {
   CHECKPOINTS: 'checkpoints',
   PATROL_LOGS: 'patrolLogs',
 
+  DAILY_REPORTS: 'dailyReports',
+  INCIDENT_REPORTS: 'incidentReports',
+  WORK_ORDERS: 'workOrders',
+  LOST_FOUND_ITEMS: 'lostFoundItems',
+
   SYSTEM_SETTINGS: 'systemSettings',
 } as const

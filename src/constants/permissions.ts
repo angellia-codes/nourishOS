@@ -33,6 +33,8 @@ export const PERMISSION_MODULES = {
   USERS: 'users',
   ROLES: 'roles',
   SECURITY: 'security',
+  LOST_FOUND: 'lostFound',
+  INCIDENTS: 'incidents',
 } as const
 
 export type PermissionModule = (typeof PERMISSION_MODULES)[keyof typeof PERMISSION_MODULES]
@@ -107,6 +109,23 @@ export const PERMISSIONS = {
   PATROLS_CREATE: permission(PERMISSION_MODULES.SECURITY, ACTIONS.CREATE),
   PATROLS_READ: permission(PERMISSION_MODULES.SECURITY, ACTIONS.READ),
   CHECKPOINTS_MANAGE: permission(PERMISSION_MODULES.SECURITY, 'manageCheckpoints'),
+
+  // Operations — Lost & Found (lost-and-found-report.md §7). No separate
+  // "view_all" string — cross-outlet visibility is a rules-layer role check
+  // (isElevated()), same as checkpoints doesn't split it at the permission
+  // string level either.
+  LOST_FOUND_READ: permission(PERMISSION_MODULES.LOST_FOUND, ACTIONS.READ),
+  LOST_FOUND_CREATE: permission(PERMISSION_MODULES.LOST_FOUND, ACTIONS.CREATE),
+  LOST_FOUND_MANAGE: permission(PERMISSION_MODULES.LOST_FOUND, ACTIONS.MANAGE),
+
+  // Operations — Incident Reports (incident-report.md §8). READ_SENSITIVE
+  // gates the UI's display of workplace-injury narrative fields; the rules
+  // layer already restricts the whole document more coarsely (see
+  // firestore.rules) so this is a UX-layer refinement, not the only guard.
+  INCIDENTS_READ: permission(PERMISSION_MODULES.INCIDENTS, ACTIONS.READ),
+  INCIDENTS_CREATE: permission(PERMISSION_MODULES.INCIDENTS, ACTIONS.CREATE),
+  INCIDENTS_MANAGE: permission(PERMISSION_MODULES.INCIDENTS, ACTIONS.MANAGE),
+  INCIDENTS_READ_SENSITIVE: permission(PERMISSION_MODULES.INCIDENTS, 'readSensitive'),
 } as const
 
 export type PermissionString = (typeof PERMISSIONS)[keyof typeof PERMISSIONS]

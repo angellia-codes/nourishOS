@@ -1,5 +1,5 @@
 import type { Priority } from '@/constants/statuses'
-import type { IncidentStatus, IncidentType } from './incidentDemoData'
+import type { IncidentStatus, IncidentType } from '@/types'
 
 /** "15 Jul 2026, 18:45" from a stored ISO datetime. */
 export function formatIncidentDateTime(isoDateTime: string): string {

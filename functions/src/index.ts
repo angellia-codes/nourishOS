@@ -28,3 +28,14 @@ export { seedAppraisalTemplates, createAppraisal, submitAppraisal, generateAppra
 
 // ---- HR: Employee Database ----
 export { createEmployee, updateEmployee, archiveEmployee } from './hr/employees'
+
+// ---- Operations: Lost & Found ----
+export {
+  createLostFoundItem,
+  claimLostFoundItem,
+  disposeLostFoundItem,
+  checkLostFoundRetention,
+} from './operations/lostFound'
+
+// ---- Operations: Incident Reports ----
+export { createIncidentReport, updateIncidentStatus, reopenIncident } from './operations/incidentReports'

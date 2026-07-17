@@ -12,4 +12,8 @@ export const PERMISSIONS = {
   APPRAISALS_MANAGE_TEMPLATES: 'appraisals.manageTemplates',
   PATROLS_CREATE: 'security.create',
   CHECKPOINTS_MANAGE: 'security.manageCheckpoints',
+  LOST_FOUND_CREATE: 'lostFound.create',
+  LOST_FOUND_MANAGE: 'lostFound.manage',
+  INCIDENTS_CREATE: 'incidents.create',
+  INCIDENTS_MANAGE: 'incidents.manage',
 } as const

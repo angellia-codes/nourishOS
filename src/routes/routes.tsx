@@ -36,6 +36,12 @@ import { IncidentDetailDemoPage } from '@/features/operations/incidents/Incident
 import { IncidentReportFormDemoPage } from '@/features/operations/incidents/IncidentReportFormDemoPage'
 import { LostFoundListDemoPage } from '@/features/operations/lostFound/LostFoundListDemoPage'
 import { LostFoundFormDemoPage } from '@/features/operations/lostFound/LostFoundFormDemoPage'
+import { LostFoundListPage } from '@/features/operations/lostFound/pages/LostFoundListPage'
+import { LostFoundFormPage } from '@/features/operations/lostFound/pages/LostFoundFormPage'
+import { LostFoundDetailPage } from '@/features/operations/lostFound/pages/LostFoundDetailPage'
+import { IncidentListPage } from '@/features/operations/incidents/pages/IncidentListPage'
+import { IncidentReportFormPage } from '@/features/operations/incidents/pages/IncidentReportFormPage'
+import { IncidentDetailPage } from '@/features/operations/incidents/pages/IncidentDetailPage'
 import { DemoHubPage } from '@/features/demo/DemoHubPage'
 import { DashboardDemoPage } from '@/features/dashboard/DashboardDemoPage'
 import { ExpenseRequestListDemoPage } from '@/features/finance/ExpenseRequestListDemoPage'
@@ -118,7 +124,19 @@ export const router = createBrowserRouter([
               { path: 'appraisals/:appraisalId', element: <AppraisalReviewPage /> },
             ],
           },
-          { path: 'operations', element: <ModulePlaceholder title="Operations" /> },
+          {
+            path: 'operations',
+            children: [
+              // TODO(Phase 3 — Daily Updates): index route becomes the daily updates feed.
+              { index: true, element: <ModulePlaceholder title="Operations" /> },
+              { path: 'lost-found', element: <LostFoundListPage /> },
+              { path: 'lost-found/new', element: <LostFoundFormPage /> },
+              { path: 'lost-found/:itemId', element: <LostFoundDetailPage /> },
+              { path: 'incidents', element: <IncidentListPage /> },
+              { path: 'incidents/new', element: <IncidentReportFormPage /> },
+              { path: 'incidents/:incidentId', element: <IncidentDetailPage /> },
+            ],
+          },
           {
             path: 'security',
             children: [

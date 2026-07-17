@@ -1,4 +1,4 @@
-import type { LostFoundCategory, LostFoundStatus, LostFoundValueTier } from './lostFoundDemoData'
+import type { LostFoundCategory, LostFoundStatus, LostFoundValueTier } from '@/types'
 
 export { formatReportDate as formatLostFoundDate } from '@/features/operations/dailyUpdates/dailyUpdateFormat'
 

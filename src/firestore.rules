@@ -131,6 +131,34 @@ service cloud.firestore {
       allow write: if false; // createPatrolLog Cloud Function only
     }
 
+    // ---- Operations: Lost & Found ----
+    // Broad signed-in read, same shape as checkpoints — staff need to
+    // search prior found items to answer a customer inquiry (AC-8).
+    match /lostFoundItems/{itemId} {
+      allow read: if isSignedIn();
+      allow write: if false; // createLostFoundItem / claimLostFoundItem / disposeLostFoundItem Cloud Functions only
+    }
+
+    // ---- Operations: Incident Reports ----
+    // Workplace injury incidents deliberately do NOT get the outlet-wide
+    // leader/security/engineering branch below — per incident-report.md §7,
+    // the narrative (description/immediateActionTaken) can carry health
+    // information, and Firestore rules can't hide individual fields, only
+    // whole documents. Because §3's routing sends workplaceInjury only to
+    // hrManager, reporter-or-assignedToRole-or-elevated already limits
+    // access to exactly the right people without a separate subcollection.
+    match /incidentReports/{incidentId} {
+      allow read: if isSignedIn() && (
+        resource.data.reportedBy == request.auth.uid ||
+        resource.data.assignedToRole == role() ||
+        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
+        (resource.data.incidentType != 'workplaceInjury' &&
+          hasAnyRole(['kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader', 'wholefoodLeader', 'outletManager', 'security', 'engineering']) &&
+          resource.data.outletId == request.auth.token.outletId)
+      );
+      allow write: if false; // createIncidentReport / updateIncidentStatus / reopenIncident Cloud Functions only
+    }
+
     // ---- Default deny ----
     match /{document=**} {
       allow read, write: if false;
