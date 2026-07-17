@@ -18,7 +18,7 @@ import {
   Wallet,
   Wrench,
 } from 'lucide-react'
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Select } from '@/components/ui'
 import { EmptyState } from '@/components/shared'
 import {
   DEPARTMENT_WIDGETS_BY_ROLE,
@@ -90,17 +90,13 @@ export function DashboardDemoPage() {
           </div>
           <label className="flex items-center gap-2 text-sm text-muted-foreground">
             View as
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value as DemoRole)}
-              className="h-9 rounded-md border border-border bg-surface px-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            >
+            <Select value={role} onChange={(e) => setRole(e.target.value as DemoRole)} className="w-auto">
               {ROLE_ORDER.map((r) => (
                 <option key={r} value={r}>
                   {ROLE_LABELS[r]}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
         </div>
 

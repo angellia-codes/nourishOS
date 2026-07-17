@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Download, UserRound, Search } from 'lucide-react'
-import { Badge, Button, Card, CardContent, Input, Select } from '@/components/ui'
+import { Download, Search } from 'lucide-react'
+import { Avatar, Badge, Button, Card, CardContent, Input, Select } from '@/components/ui'
 import { EMPLOYMENT_STATUS_LABELS } from '@/constants/hr'
 import { exportEmployeesToCsv } from '@/features/hr/utils/employeeExport'
 import { isContractExpiringSoon, isProbationEndingSoon } from '@/features/hr/utils/employeeIndicators'
@@ -120,9 +120,7 @@ export function EmployeeListDemoPage() {
             <Link key={employee.id} to={`/demo/hr/employees/${employee.id}`}>
             <Card className="cursor-pointer transition-colors duration-150 hover:border-primary/40">
               <CardContent className="flex items-center gap-4 p-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <UserRound className="h-5 w-5" aria-hidden="true" />
-                </div>
+                <Avatar name={employee.fullName} />
 
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">

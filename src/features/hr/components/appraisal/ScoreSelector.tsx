@@ -38,7 +38,7 @@ export function ScoreSelector({ value, onChange, subjectLabel, disabled }: Score
               onBlur={() => setHovered(null)}
               onClick={() => onChange(score)}
               className={cn(
-                'flex h-9 w-9 items-center justify-center rounded-full border text-sm font-semibold transition-colors duration-150',
+                'flex h-11 w-11 items-center justify-center rounded-full border text-sm font-semibold transition-colors duration-150',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
                 isSelected
                   ? 'border-primary bg-primary text-primary-foreground'

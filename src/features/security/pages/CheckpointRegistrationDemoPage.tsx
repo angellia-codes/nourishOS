@@ -89,7 +89,6 @@ export function CheckpointRegistrationDemoPage() {
               <Label htmlFor="cpDescription">Description</Label>
               <Textarea
                 id="cpDescription"
-                className="min-h-[60px]"
                 placeholder='Landmark/context for the guard, e.g. "Behind the walk-in chiller"'
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}

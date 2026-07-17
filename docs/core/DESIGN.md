@@ -590,19 +590,19 @@ Shipped today (`src/components/`):
 - File Upload
 - Empty State
 - Permission Guard
+- Avatar
+- Checkbox / Radio / Switch
+- Breadcrumb
+- Tooltip
+- Timeline
+- Tabs
+- Toaster (Snackbar)
 
 Planned (build on demand, same principles):
 
-- Avatar
-- Checkbox / Radio / Switch
 - Date Picker
 - Table / Data Grid
-- Tabs
-- Breadcrumb
 - Modal / Drawer (see §12–13 — routed pages until then)
-- Tooltip
-- Snackbar
-- Timeline
 - Stepper
 - Data Chart
 

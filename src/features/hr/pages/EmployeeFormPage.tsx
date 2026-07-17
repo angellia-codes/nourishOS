@@ -273,7 +273,7 @@ export function EmployeeFormPage() {
           </div>
           <div className="flex flex-col gap-1.5 sm:col-span-2">
             <Label htmlFor="address">Address</Label>
-            <Textarea id="address" value={form.address} onChange={set('address')} className="min-h-[72px]" />
+            <Textarea id="address" value={form.address} onChange={set('address')} />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="emergencyContactName">Emergency contact name</Label>

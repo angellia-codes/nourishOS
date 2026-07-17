@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Archive, Pencil, UserRound } from 'lucide-react'
+import { ArrowLeft, Archive, Pencil } from 'lucide-react'
 import {
+  Avatar,
   Badge,
   Button,
   Card,
@@ -12,6 +13,8 @@ import {
   Label,
   Spinner,
   Textarea,
+  Timeline,
+  TimelineItem,
 } from '@/components/ui'
 import { ErrorMessage, FileList, FileUpload, PermissionGuard } from '@/components/shared'
 import { useFirestoreDoc, useFirestoreQuery, useToast } from '@/hooks'
@@ -104,9 +107,7 @@ export function EmployeeProfilePage() {
         <Button type="button" variant="ghost" size="sm" onClick={() => navigate('/hr')} aria-label="Back to employees">
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
         </Button>
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <UserRound className="h-6 w-6" aria-hidden="true" />
-        </div>
+        <Avatar name={employee.fullName} size="lg" />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-xl font-semibold text-foreground">{employee.fullName}</h1>
@@ -210,19 +211,19 @@ export function EmployeeProfilePage() {
         <CardHeader>
           <CardTitle>Activity</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col gap-3">
+        <CardContent>
           {activities.length === 0 ? (
             <p className="text-sm text-muted-foreground">No activity recorded yet.</p>
           ) : (
-            activities.map((activity) => (
-              <div key={activity.id} className="flex items-start gap-3">
-                <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" aria-hidden="true" />
-                <div>
-                  <p className="text-sm text-foreground">{activity.description}</p>
-                  <p className="text-xs text-muted-foreground">{formatDateTime(activity.createdAt)}</p>
-                </div>
-              </div>
-            ))
+            <Timeline>
+              {activities.map((activity) => (
+                <TimelineItem
+                  key={activity.id}
+                  title={activity.description}
+                  timestamp={formatDateTime(activity.createdAt)}
+                />
+              ))}
+            </Timeline>
           )}
         </CardContent>
       </Card>
@@ -256,7 +257,6 @@ export function EmployeeProfilePage() {
                       id="resignationReason"
                       value={resignationReason}
                       onChange={(e) => setResignationReason(e.target.value)}
-                      className="min-h-[72px]"
                     />
                   </div>
                 </div>

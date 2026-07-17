@@ -11,8 +11,8 @@ The NourishOS Component Library provides a standardized collection of reusable U
 
 > **Implementation status (2026-07-17).** This document is the *target* library. What actually ships today:
 >
-> - `src/components/ui/` — `Button`, `Card` (Header/Title/Description/Content), `Badge`, `Input`, `Label`, `Select`, `Textarea`, `Spinner`, `Skeleton`
-> - `src/components/shared/` — `EmptyState`, `FileUpload`, `PermissionGuard`
+> - `src/components/ui/` — `Button`, `Card` (Header/Title/Description/Content), `Badge`, `Input`, `Label`, `Select`, `Textarea`, `Spinner`, `Skeleton`, `Avatar`, `Checkbox`, `Radio`, `Switch`, `Breadcrumb`, `Tooltip`, `Timeline` (+`TimelineItem`), `Tabs` (+`TabPanel`)
+> - `src/components/shared/` — `EmptyState`, `FileUpload`, `PermissionGuard`, `Toaster`
 > - `src/components/layout/` — `Sidebar`, `Header` (+ `AppLayout` via `src/layouts/`)
 >
 > Everything else in this catalog is **planned** and gets built on demand, module by module. Note the shipped convention: **there is no Dialog/Modal/Drawer primitive** — confirm and multi-step flows are separate routed pages (see CLAUDE.md), and `Button` has no `asChild`/Slot support.

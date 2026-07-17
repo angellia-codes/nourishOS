@@ -209,7 +209,6 @@ export function ExitInterviewFormDemoPage() {
             {expectationsClear === 'no' && (
               <Textarea
                 aria-label="Explain unclear expectations"
-                className="min-h-[60px]"
                 placeholder="E. Please explain (required when No) *"
                 value={expectationsExplanation}
                 onChange={(e) => setExpectationsExplanation(e.target.value)}
@@ -218,7 +217,6 @@ export function ExitInterviewFormDemoPage() {
             {trainingMet === 'no' && (
               <Textarea
                 aria-label="Explain training gap"
-                className="min-h-[60px]"
                 placeholder="F. Please explain (required when No) *"
                 value={trainingExplanation}
                 onChange={(e) => setTrainingExplanation(e.target.value)}
@@ -285,7 +283,6 @@ export function ExitInterviewFormDemoPage() {
             {wouldReturn === 'no' && (
               <Textarea
                 aria-label="Explain why not returning"
-                className="min-h-[60px]"
                 placeholder="Please explain (required when No) *"
                 value={wouldReturnExplanation}
                 onChange={(e) => setWouldReturnExplanation(e.target.value)}

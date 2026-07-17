@@ -202,7 +202,6 @@ export function EmploymentApplicationFormDemoPage() {
               <Label htmlFor="appPermanent">Permanent Address *</Label>
               <Textarea
                 id="appPermanent"
-                className="min-h-[60px]"
                 value={permanentAddress}
                 onChange={(e) => setPermanentAddress(e.target.value)}
               />
@@ -211,7 +210,6 @@ export function EmploymentApplicationFormDemoPage() {
               <Label htmlFor="appDomicile">Domicile Address</Label>
               <Textarea
                 id="appDomicile"
-                className="min-h-[60px]"
                 placeholder="If different from permanent address"
                 value={domicileAddress}
                 onChange={(e) => setDomicileAddress(e.target.value)}
@@ -453,7 +451,6 @@ export function EmploymentApplicationFormDemoPage() {
             {seriousIllness === 'yes' && (
               <Textarea
                 aria-label="Illness detail"
-                className="min-h-[60px]"
                 placeholder="When, and what illness? *"
                 value={seriousIllnessDetail}
                 onChange={(e) => setSeriousIllnessDetail(e.target.value)}
@@ -462,7 +459,6 @@ export function EmploymentApplicationFormDemoPage() {
             {criminalHistory === 'yes' && (
               <Textarea
                 aria-label="Criminal history detail"
-                className="min-h-[60px]"
                 placeholder="When, and for what reason? *"
                 value={criminalHistoryDetail}
                 onChange={(e) => setCriminalHistoryDetail(e.target.value)}

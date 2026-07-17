@@ -167,7 +167,7 @@ export function ExpenseRequestFormDemoPage() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-9 w-9 shrink-0"
+                  className="shrink-0"
                   disabled={items.length === 1}
                   onClick={() => setItems((prev) => prev.filter((i) => i.id !== item.id))}
                   aria-label="Remove item"

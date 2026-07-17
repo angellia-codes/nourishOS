@@ -179,7 +179,6 @@ export function AppraisalReviewForm({
               onChange={(e) => setOverallComment(e.target.value)}
               placeholder="Summary feedback for this review period (optional)…"
               disabled={!isDraft}
-              className="min-h-[88px]"
             />
           </CardContent>
         </Card>

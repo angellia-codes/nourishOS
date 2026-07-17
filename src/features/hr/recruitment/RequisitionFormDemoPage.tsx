@@ -328,7 +328,6 @@ export function RequisitionFormDemoPage() {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8"
                       onClick={() => setAttachments((prev) => prev.filter((a) => a.id !== att.id))}
                       aria-label={`Remove ${att.fileName}`}
                     >

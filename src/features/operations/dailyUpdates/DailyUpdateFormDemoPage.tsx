@@ -312,7 +312,6 @@ export function DailyUpdateFormDemoPage() {
                 {achievements.map((achievement) => (
                   <div key={achievement.id} className="flex gap-2">
                     <Textarea
-                      className="min-h-[60px]"
                       placeholder="What went well today?"
                       value={achievement.text}
                       onChange={(e) =>
@@ -354,7 +353,6 @@ export function DailyUpdateFormDemoPage() {
                 {challenges.map((challenge) => (
                   <div key={challenge.id} className="flex flex-col gap-2 rounded-md border border-border p-3">
                     <Textarea
-                      className="min-h-[60px]"
                       placeholder="Describe the challenge"
                       value={challenge.description}
                       onChange={(e) =>
@@ -453,7 +451,6 @@ export function DailyUpdateFormDemoPage() {
                       }
                     />
                     <Textarea
-                      className="min-h-[60px]"
                       placeholder="Description"
                       value={task.description}
                       onChange={(e) =>
@@ -560,7 +557,6 @@ export function DailyUpdateFormDemoPage() {
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8"
                           onClick={() => setAttachments((prev) => prev.filter((a) => a.id !== att.id))}
                           aria-label={`Remove ${att.fileName}`}
                         >

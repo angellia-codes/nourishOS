@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, FileText, Image as ImageIcon, Upload, UserRound, X } from 'lucide-react'
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
+import { ArrowLeft, FileText, Image as ImageIcon, Upload, X } from 'lucide-react'
+import { Avatar, Badge, Button, Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
 import { EmptyState, ErrorMessage } from '@/components/shared'
 import { CONTRACT_TYPE_LABELS, EMPLOYMENT_STATUS_LABELS } from '@/constants/hr'
 import { formatIsoDate, formatTenure, isContractExpiringSoon, isProbationEndingSoon } from '@/features/hr/utils/employeeIndicators'
@@ -65,9 +65,7 @@ export function EmployeeProfileDemoPage() {
           >
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           </Button>
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <UserRound className="h-6 w-6" aria-hidden="true" />
-          </div>
+          <Avatar name={employee.fullName} size="lg" />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-xl font-semibold text-foreground">{employee.fullName}</h1>
@@ -171,7 +169,6 @@ export function EmployeeProfileDemoPage() {
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
                         onClick={() => handleRemove(doc.id)}
                         aria-label={`Remove ${doc.fileName}`}
                       >
