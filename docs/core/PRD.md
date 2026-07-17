@@ -1,11 +1,13 @@
 # Nourish Operational System (NOS)
 ## Product Requirements Document (PRD)
 
-**Version:** 1.0
+**Version:** 1.1
 **Status:** Draft
 **Product Owner:** Nourish Management
 **Prepared By:** HR & Digital Transformation
 **Last Updated:** July 2026
+
+> **Scope note:** this is the whole-platform product vision. The HR & Operations vertical (employee database, executive calendar, recruitment, contract tracking, daily updates, projects) has a deeper, architecture-aligned PRD that supersedes this document for that scope — see [HR_OPERATIONS.md](HR_OPERATIONS.md) (v2.0.0).
 
 ---
 
@@ -86,7 +88,7 @@ Features
 - Employee Database
 - Recruitment
 - Candidate Tracking
-- Employee Onboarding
+- Employee Onboarding/Offboarding
 - Employment Contracts
 - Performance Reviews
 - Disciplinary Actions
@@ -101,7 +103,6 @@ Features
 
 Features
 
-- SOP Library
 - Opening Checklist
 - Closing Checklist
 - Daily Reports
@@ -115,8 +116,6 @@ Features
 Features
 
 - Expense Requests
-- Petty Cash
-- Budget Approval Workflow
 
 ---
 
@@ -297,7 +296,7 @@ Including
 
 Primary Platform
 
-- Progressive Web App (PWA)
+- Responsive web app (SPA); Progressive Web App packaging planned — not yet built
 
 Responsive Support
 
@@ -316,7 +315,7 @@ The Nourish Operational System (NOS) will be built using a fully serverless arch
 ### Frontend
 
 - React
-- Progressive Web App (PWA)
+- Progressive Web App (PWA) — planned
 - Responsive Design
 - Component-Based Architecture
 
@@ -343,7 +342,7 @@ The Nourish Operational System (NOS) will be built using a fully serverless arch
 
 ### Hosting
 
-- Firebase Hosting
+- Firebase Hosting (planned — not yet configured)
 
 ### Architecture Principles
 

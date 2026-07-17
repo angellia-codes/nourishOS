@@ -1,6 +1,6 @@
 /**
  * HR: Employee Database enums.
- * Source: HR.md §5 (Employee Information) + HR_OPERATIONS.md §8 M01 / §11.1.
+ * Source: HR.md §5 (Employee Information) + HR_OPERATIONS.md §9.1 / §12.1.
  *
  * Naming note: HR_OPERATIONS.md's employment_status enum (FT/FL/BOD/DW/OJT/
  * RESIGN) mixes employment *type* with lifecycle state. Here employment type
@@ -9,10 +9,11 @@
  */
 export const EMPLOYMENT_STATUS = {
   /** PKWT/PKWTT full-time staff. */
-  FULL_TIME: 'fullTime',
+  FIXED_TERM: 'PKWT',
+  PERMANENT: 'PKWTT',
   FREELANCE: 'freelance',
   /** Board of Directors. */
-  BOARD: 'board',
+  BOARD: 'bod',
   DAILY_WORKER: 'dailyWorker',
   /** On-the-Job Training (intern/trainee). */
   OJT: 'ojt',
@@ -21,28 +22,30 @@ export const EMPLOYMENT_STATUS = {
 export type EmploymentStatus = (typeof EMPLOYMENT_STATUS)[keyof typeof EMPLOYMENT_STATUS]
 
 export const EMPLOYMENT_STATUS_LABELS: Record<EmploymentStatus, string> = {
-  fullTime: 'Full Time',
+  PKWT: 'Fixed-Term',
+  PKWTT: 'Permanent',
   freelance: 'Freelance',
-  board: 'Board of Directors',
+  bod: 'Board of Directors',
   dailyWorker: 'Daily Worker',
   ojt: 'On-the-Job Training',
 }
 
 /**
- * Employee number prefix per employment status — HR_OPERATIONS.md M01-F02:
+ * Employee number prefix per employment status — HR_OPERATIONS.md 9.1-F02:
  * N-NNNN (PKWT/PKWTT/BOD/Freelance), DW-NNNN (Daily Worker), OJT-NNNN (OJT).
  * Mirrored in functions/src/hr/employees/helpers.ts, where numbers are
  * actually generated — keep both in sync.
  */
 export const EMPLOYEE_NUMBER_PREFIX: Record<EmploymentStatus, string> = {
-  fullTime: 'N',
+  PKWT: 'N',
+  PKWTT: 'N',
   freelance: 'N',
-  board: 'N',
+  bod: 'N',
   dailyWorker: 'DW',
   ojt: 'OJT',
 }
 
-/** Source: HR_OPERATIONS.md §11.1 contract_type. */
+/** Source: HR_OPERATIONS.md §12.1 contractType. */
 export const CONTRACT_TYPE = {
   PERMANENT: 'permanent',
   FIXED_TERM: 'fixedTerm',

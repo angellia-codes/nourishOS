@@ -8,11 +8,46 @@ import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { AppraisalReviewPage } from '@/features/hr/pages/AppraisalReviewPage'
 import { AppraisalDemoPage } from '@/features/hr/pages/AppraisalDemoPage'
 import { EmployeeListPage } from '@/features/hr/pages/EmployeeListPage'
+import { EmployeeListDemoPage } from '@/features/hr/pages/EmployeeListDemoPage'
+import { EmployeeProfileDemoPage } from '@/features/hr/pages/EmployeeProfileDemoPage'
 import { EmployeeFormPage } from '@/features/hr/pages/EmployeeFormPage'
 import { EmployeeProfilePage } from '@/features/hr/pages/EmployeeProfilePage'
 import { ModulePlaceholder } from '@/components/shared/ModulePlaceholder'
 import { CheckpointListPage } from '@/features/security/pages/CheckpointListPage'
+import { CheckpointListDemoPage } from '@/features/security/pages/CheckpointListDemoPage'
 import { PatrolCapturePage } from '@/features/security/pages/PatrolCapturePage'
+import { DailyUpdatesFeedDemoPage } from '@/features/operations/dailyUpdates/DailyUpdatesFeedDemoPage'
+import { DailyUpdateFormDemoPage } from '@/features/operations/dailyUpdates/DailyUpdateFormDemoPage'
+import { RequisitionListDemoPage } from '@/features/hr/recruitment/RequisitionListDemoPage'
+import { RequisitionDetailDemoPage } from '@/features/hr/recruitment/RequisitionDetailDemoPage'
+import { RequisitionFormDemoPage } from '@/features/hr/recruitment/RequisitionFormDemoPage'
+import { RecruitmentPipelineDemoPage } from '@/features/hr/recruitment/RecruitmentPipelineDemoPage'
+import { CandidateDetailDemoPage } from '@/features/hr/recruitment/CandidateDetailDemoPage'
+import { CandidateFormDemoPage } from '@/features/hr/recruitment/CandidateFormDemoPage'
+import { OnboardingListDemoPage } from '@/features/hr/onboarding/OnboardingListDemoPage'
+import { OnboardingChecklistDetailDemoPage } from '@/features/hr/onboarding/OnboardingChecklistDetailDemoPage'
+import { OffboardingListDemoPage } from '@/features/hr/offboarding/OffboardingListDemoPage'
+import { OffboardingChecklistDetailDemoPage } from '@/features/hr/offboarding/OffboardingChecklistDetailDemoPage'
+import { ExitInterviewFormDemoPage } from '@/features/hr/offboarding/ExitInterviewFormDemoPage'
+import { EmploymentApplicationFormDemoPage } from '@/features/hr/recruitment/EmploymentApplicationFormDemoPage'
+import { CheckpointRegistrationDemoPage } from '@/features/security/pages/CheckpointRegistrationDemoPage'
+import { IncidentListDemoPage } from '@/features/operations/incidents/IncidentListDemoPage'
+import { IncidentDetailDemoPage } from '@/features/operations/incidents/IncidentDetailDemoPage'
+import { IncidentReportFormDemoPage } from '@/features/operations/incidents/IncidentReportFormDemoPage'
+import { LostFoundListDemoPage } from '@/features/operations/lostFound/LostFoundListDemoPage'
+import { LostFoundFormDemoPage } from '@/features/operations/lostFound/LostFoundFormDemoPage'
+import { DemoHubPage } from '@/features/demo/DemoHubPage'
+import { DashboardDemoPage } from '@/features/dashboard/DashboardDemoPage'
+import { ExpenseRequestListDemoPage } from '@/features/finance/ExpenseRequestListDemoPage'
+import { ExpenseRequestDetailDemoPage } from '@/features/finance/ExpenseRequestDetailDemoPage'
+import { ExpenseRequestFormDemoPage } from '@/features/finance/ExpenseRequestFormDemoPage'
+import { StockLevelListDemoPage } from '@/features/inventory/StockLevelListDemoPage'
+import { StockMovementFormDemoPage } from '@/features/inventory/StockMovementFormDemoPage'
+import { SopLibraryListDemoPage } from '@/features/documents/SopLibraryListDemoPage'
+import { SopDetailDemoPage } from '@/features/documents/SopDetailDemoPage'
+import { AnnouncementListDemoPage } from '@/features/communications/AnnouncementListDemoPage'
+import { AnnouncementFormDemoPage } from '@/features/communications/AnnouncementFormDemoPage'
+import { ExecutiveDashboardDemoPage } from '@/features/reports/ExecutiveDashboardDemoPage'
 import { ROUTES } from '@/constants'
 
 export const router = createBrowserRouter([
@@ -22,7 +57,45 @@ export const router = createBrowserRouter([
     children: [
       { path: ROUTES.LOGIN, element: <LoginPage /> },
       { path: ROUTES.UNAUTHORIZED, element: <UnauthorizedPage /> },
+      { path: '/demo', element: <DemoHubPage /> },
+      { path: '/demo/dashboard', element: <DashboardDemoPage /> },
       { path: '/demo/appraisal', element: <AppraisalDemoPage /> },
+      { path: '/demo/hr/employees', element: <EmployeeListDemoPage /> },
+      { path: '/demo/hr/employees/:employeeId', element: <EmployeeProfileDemoPage /> },
+      { path: '/demo/hr/requisitions', element: <RequisitionListDemoPage /> },
+      { path: '/demo/hr/requisitions/new', element: <RequisitionFormDemoPage /> },
+      { path: '/demo/hr/requisitions/:requisitionId', element: <RequisitionDetailDemoPage /> },
+      { path: '/demo/hr/pipeline', element: <RecruitmentPipelineDemoPage /> },
+      { path: '/demo/hr/pipeline/new', element: <CandidateFormDemoPage /> },
+      { path: '/demo/hr/pipeline/apply', element: <EmploymentApplicationFormDemoPage /> },
+      { path: '/demo/hr/pipeline/:candidateId', element: <CandidateDetailDemoPage /> },
+      { path: '/demo/hr/onboarding', element: <OnboardingListDemoPage /> },
+      { path: '/demo/hr/onboarding/:checklistId', element: <OnboardingChecklistDetailDemoPage /> },
+      { path: '/demo/hr/offboarding', element: <OffboardingListDemoPage /> },
+      { path: '/demo/hr/offboarding/:checklistId', element: <OffboardingChecklistDetailDemoPage /> },
+      { path: '/demo/hr/exit-interview', element: <ExitInterviewFormDemoPage /> },
+      { path: '/demo/security', element: <CheckpointListDemoPage /> },
+      { path: '/demo/security/checkpoints/new', element: <CheckpointRegistrationDemoPage /> },
+      { path: '/demo/operations', element: <DailyUpdatesFeedDemoPage /> },
+      { path: '/demo/operations/daily-updates/new', element: <DailyUpdateFormDemoPage /> },
+      { path: '/demo/operations/incidents', element: <IncidentListDemoPage /> },
+      { path: '/demo/operations/incidents/new', element: <IncidentReportFormDemoPage /> },
+      { path: '/demo/operations/incidents/:incidentId', element: <IncidentDetailDemoPage /> },
+      { path: '/demo/operations/lost-found', element: <LostFoundListDemoPage /> },
+      { path: '/demo/operations/lost-found/new', element: <LostFoundFormDemoPage /> },
+      { path: '/demo/finance', element: <ExpenseRequestListDemoPage /> },
+      { path: '/demo/finance/expenses/new', element: <ExpenseRequestFormDemoPage /> },
+      { path: '/demo/finance/expenses/:expenseId', element: <ExpenseRequestDetailDemoPage /> },
+      { path: '/demo/purchasing', element: <ModulePlaceholder title="Purchasing" /> },
+      { path: '/demo/inventory', element: <StockLevelListDemoPage /> },
+      { path: '/demo/inventory/movements/new', element: <StockMovementFormDemoPage /> },
+      { path: '/demo/crm', element: <ModulePlaceholder title="CRM" /> },
+      { path: '/demo/documents', element: <SopLibraryListDemoPage /> },
+      { path: '/demo/documents/:documentId', element: <SopDetailDemoPage /> },
+      { path: '/demo/communications', element: <AnnouncementListDemoPage /> },
+      { path: '/demo/communications/new', element: <AnnouncementFormDemoPage /> },
+      { path: '/demo/reports', element: <ExecutiveDashboardDemoPage /> },
+      { path: '/demo/settings', element: <ModulePlaceholder title="Settings" /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

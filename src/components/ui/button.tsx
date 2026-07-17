@@ -9,8 +9,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary: 'bg-primary text-primary-foreground hover:bg-primary/90',
-        secondary: 'border border-primary text-primary bg-transparent hover:bg-primary/5',
-        ghost: 'text-foreground hover:bg-border/50',
+        // STYLE_GUIDE.md § Buttons (v2): secondary = filled Deep Olive; ghost = bordered, transparent fill
+        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/90',
+        ghost: 'border border-border bg-transparent text-foreground hover:bg-border/50',
         danger: 'bg-destructive text-white hover:bg-destructive/90',
       },
       size: {

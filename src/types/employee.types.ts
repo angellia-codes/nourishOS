@@ -3,7 +3,7 @@ import type { BaseDocument } from './firestore.types'
 import type { ContractType, EmployeeActivityType, EmploymentStatus, Gender } from '@/constants/hr'
 
 /**
- * Employee master record — HR.md §5, HR_OPERATIONS.md §8 M01 / §11.1.
+ * Employee master record — HR.md §5, HR_OPERATIONS.md §9.1 / §12.1.
  * This is the SHIPPED shape: it matches exactly what
  * functions/src/hr/employees/createEmployee.ts writes to Firestore today.
  *
@@ -18,7 +18,7 @@ import type { ContractType, EmployeeActivityType, EmploymentStatus, Gender } fro
  * when payroll lands (see EmployeeCompensation below).
  */
 export interface Employee extends BaseDocument {
-  /** Auto-generated server-side: N-0001 / DW-0001 / OJT-0001 (HR_OPERATIONS.md M01-F02). */
+  /** Auto-generated server-side: N-0001 / DW-0001 / OJT-0001 (HR_OPERATIONS.md 9.1-F02). */
   employeeNumber: string
 
   // Personal

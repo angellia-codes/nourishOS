@@ -3,6 +3,8 @@
 Version: 1.0
 Module: Shared Services - Global Search
 
+> **Status: Planned — not yet built.** No search callables, index collections, or rules exist in the codebase today; this document is the target specification for when the service is scheduled.
+
 ---
 
 # 1. Overview

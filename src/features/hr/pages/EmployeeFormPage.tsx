@@ -58,7 +58,7 @@ const EMPTY_FORM: EmployeeFormState = {
   position: '',
   departmentId: '',
   outletId: '',
-  employmentStatus: 'fullTime',
+  employmentStatus: EMPLOYMENT_STATUS.FIXED_TERM,
   joinDate: '',
   probationMonths: '3',
   contractType: 'fixedTerm',

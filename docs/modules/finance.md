@@ -117,11 +117,11 @@ Finance Review
 
 ↓
 
-General Manager Approval
+General Manager Approval (only if total > IDR 5,000,000 — see expense-request.md §3)
 
 ↓
 
-Director Approval (if required)
+Director Approval (only if total > IDR 5,000,000)
 
 ↓
 
@@ -269,14 +269,17 @@ Supports
 
 ### Status
 
-- Draft
-- Submitted
-- Pending Review
-- Approved
-- Rejected
-- Returned for Revision
-- Paid
-- Closed
+Canonical keys per expense-request.md §6:
+
+- `draft`
+- `submitted`
+- `pendingApproval`
+- `approved`
+- `rejected`
+- `returnedForRevision`
+- `cancelled`
+- `paid`
+- `closed`
 
 ---
 

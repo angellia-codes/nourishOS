@@ -1,13 +1,13 @@
 # NourishOS Architecture
 
-Version: 1.0  
+Version: 1.1  
 Product: Nourish Operational System (NourishOS)
 
 ---
 
 # 1. Architecture Overview
 
-NourishOS is a cloud-native, serverless Progressive Web Application (PWA) designed to centralize operational workflows across Headquarters and all Nourish outlets.
+NourishOS is a cloud-native, serverless single-page web application (SPA) designed to centralize operational workflows across Headquarters and all Nourish outlets. PWA packaging (installable app, service worker) is planned but not yet built — today it ships as a plain Vite SPA.
 
 The architecture prioritizes:
 
@@ -16,7 +16,7 @@ The architecture prioritizes:
 - Security
 - High availability
 - Real-time collaboration
-- Offline capability (where appropriate)
+- Offline capability (planned — depends on the PWA work)
 - Low operational maintenance
 
 ---
@@ -25,15 +25,12 @@ The architecture prioritizes:
 
 ## Frontend
 
-- React
+- React 18
 - Vite
-- TypeScript
+- TypeScript (strict)
 - React Router
-- Material UI (MUI)
+- Tailwind CSS + shadcn-style UI primitives (class-variance-authority, tailwind-merge)
 - Zustand
-- React Hook Form
-- Zod
-- Day.js
 - Lucide React
 
 ---
@@ -46,17 +43,16 @@ Google Firebase
 - Cloud Firestore
 - Cloud Functions
 - Cloud Storage
-- Firebase Hosting
+- Firebase Hosting (planned — no hosting block in `src/firebase.json` yet)
 - Firebase Cloud Messaging (Future)
 
 ---
 
 ## Development
 
-- ESLint
-- Prettier
-- Vitest
-- React Testing Library
+- TypeScript strict mode — `npm run build` (tsc + vite) is the quality gate
+- ESLint + Prettier (planned — not yet installed)
+- Test runner (planned — none configured today; see CLAUDE.md)
 - Git
 - GitHub
 
@@ -71,7 +67,7 @@ Google Firebase
                 Firebase Authentication
                            │
                            ▼
-                  React PWA (Frontend)
+                  React SPA (Frontend)
                            │
           ┌────────────────┼────────────────┐
           │                │                │
@@ -80,7 +76,7 @@ Google Firebase
           │                │                │
           └────────────────┼────────────────┘
                            ▼
-                    Firebase Hosting
+              Firebase Hosting (planned)
 ```
 
 ---
@@ -101,7 +97,7 @@ Responsible for:
 Technology
 
 - React
-- MUI
+- Tailwind CSS + shadcn-style primitives (`src/components/ui/`)
 - Zustand
 
 ---
@@ -197,8 +193,6 @@ Technology
 ## Finance
 
 - Expense Requests
-- Petty Cash
-- Budget Approvals
 
 ---
 
@@ -225,39 +219,52 @@ Technology
 nourishos/
 
 ├── docs/
+│   ├── core/          (this file, PRD, DESIGN, STYLE_GUIDE, API, DATABASE, RBAC, ...)
+│   ├── modules/       (per-module specs)
+│   └── platform/      (shared-service specs: approval, tasks, notifications, ...)
 │
 ├── src/
 │   ├── app/
 │   ├── assets/
 │   ├── components/
+│   │     ├── ui/        (shadcn-style primitives)
+│   │     ├── shared/    (EmptyState, FileUpload, PermissionGuard, ...)
+│   │     └── layout/    (Sidebar, Header, ...)
+│   ├── constants/       (collections, permissions, roles — mirrored subset in functions/src/lib)
 │   ├── features/
 │   │     ├── auth/
 │   │     ├── dashboard/
+│   │     ├── demo/            (/demo mock-up hub)
 │   │     ├── hr/
+│   │     ├── security/
 │   │     ├── operations/
 │   │     ├── finance/
 │   │     ├── documents/
-│   │     ├── communication/
-│   │     └── settings/
+│   │     ├── communications/
+│   │     ├── inventory/
+│   │     └── reports/
 │   │
 │   ├── layouts/
 │   ├── hooks/
+│   ├── lib/
 │   ├── services/
 │   ├── routes/
 │   ├── contexts/
 │   ├── store/
-│   ├── themes/
+│   ├── styles/
+│   ├── themes/          (stub — design tokens live in styles/globals.css)
 │   ├── utils/
 │   ├── types/
+│   ├── firebase.json          (Firebase config — paths resolve relative to src/)
+│   ├── firestore.rules        (the deployed rules)
+│   ├── firestore.indexes.json
+│   ├── storage.rules
 │   └── main.tsx
 │
 ├── functions/
 │
 ├── public/
 │
-├── firestore.rules
-├── firestore.indexes.json
-├── firebase.json
 └── package.json
 ```
 
@@ -293,6 +300,8 @@ Permission types include:
 - Reject
 - Export
 - Manage
+- Upload
+- Download
 
 ---
 
@@ -320,15 +329,15 @@ closingChecklists
 incidentReports
 
 expenseRequests
-pettyCash
-budgets
 
 workOrders
 
-approvalFlows
+approvalRequests / approvalSteps / approvalHistory
 auditLogs
-settings
+systemSettings
 ```
+
+(Approvals are normalized into request/step/history collections — see `src/constants/collections.ts` and platform/approval_engine.md; the older single `approvalFlows` model is superseded.)
 
 ---
 
@@ -393,9 +402,11 @@ Delivery channels:
 
 ---
 
-# 13. Offline Strategy
+# 13. Offline Strategy (Planned)
 
-Supported features:
+This section is a target, not shipped behavior — there is no service worker or PWA packaging yet.
+
+Planned features:
 
 - Cached navigation
 - Recently viewed documents
@@ -519,7 +530,7 @@ Merge
 ↓
 GitHub Actions (Future)
 ↓
-Firebase Hosting
+Firebase Hosting (planned — not yet configured)
 ↓
 Production
 

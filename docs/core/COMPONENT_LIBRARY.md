@@ -1,13 +1,21 @@
 # NourishOS Component Library
 
-Version: 1.0  
-Framework: React + TypeScript + Material UI (MUI)
+Version: 1.1  
+Framework: React + TypeScript + Tailwind CSS (shadcn-style primitives via class-variance-authority)
 
 ---
 
 # 1. Overview
 
 The NourishOS Component Library provides a standardized collection of reusable UI components.
+
+> **Implementation status (2026-07-17).** This document is the *target* library. What actually ships today:
+>
+> - `src/components/ui/` — `Button`, `Card` (Header/Title/Description/Content), `Badge`, `Input`, `Label`, `Select`, `Textarea`, `Spinner`, `Skeleton`
+> - `src/components/shared/` — `EmptyState`, `FileUpload`, `PermissionGuard`
+> - `src/components/layout/` — `Sidebar`, `Header` (+ `AppLayout` via `src/layouts/`)
+>
+> Everything else in this catalog is **planned** and gets built on demand, module by module. Note the shipped convention: **there is no Dialog/Modal/Drawer primitive** — confirm and multi-step flows are separate routed pages (see CLAUDE.md), and `Button` has no `asChild`/Slot support.
 
 Goals:
 
@@ -54,21 +62,13 @@ Utilities
 
 # 4. Folder Structure
 
+Shipped structure (category folders below are aspirational; the codebase groups by primitive/shared/layout instead):
+
 ```text
-src/
-
-components/
-
-├── layout/
-├── navigation/
-├── buttons/
-├── forms/
-├── data-display/
-├── feedback/
-├── dialogs/
-├── charts/
-├── utilities/
-└── index.ts
+src/components/
+├── ui/        (shadcn-style primitives — one file per component)
+├── shared/    (app-level shared components: EmptyState, FileUpload, PermissionGuard)
+└── layout/    (Sidebar, Header)
 ```
 
 ---
@@ -189,13 +189,15 @@ Items
 
 Filled
 
-Forest Green
+Terracotta (see STYLE_GUIDE.md § Color Palette)
 
 ---
 
 ## SecondaryButton
 
-Outlined
+Filled
+
+Deep Olive
 
 ---
 
@@ -468,7 +470,9 @@ Displays fallback UI.
 
 ---
 
-# 11. Dialog Components
+# 11. Dialog Components (Planned)
+
+Not yet built — the shipped convention replaces every dialog with a separate routed page (e.g. a `/…/confirm` or `/…/new` route). Revisit this section if/when a Dialog primitive is added.
 
 ## Confirmation Dialog
 
@@ -504,11 +508,11 @@ Side panel.
 
 ---
 
-# 12. Charts
+# 12. Charts (Planned)
 
 Library
 
-Recharts
+To be selected when the first chart ships — no chart library is installed today (demo dashboards use styled primitives only). Chart colors must come from the warm terracotta/olive palette per STYLE_GUIDE.md.
 
 Supported
 
@@ -709,8 +713,6 @@ Every component should support:
 ```typescript
 className
 
-sx
-
 style
 
 children
@@ -838,7 +840,7 @@ useTasks
 
 ---
 
-# 27. Storybook
+# 27. Storybook (Planned — not installed)
 
 Each component should include:
 
@@ -852,9 +854,9 @@ Storybook should be the primary environment for UI development and review.
 
 ---
 
-# 28. Testing
+# 28. Testing (Planned — no test runner configured)
 
-Each reusable component should have tests covering:
+Once a test runner lands, each reusable component should have tests covering:
 
 - Rendering
 - User interactions
@@ -863,10 +865,7 @@ Each reusable component should have tests covering:
 - Error states
 - Theme compatibility
 
-Use:
-
-- Vitest
-- React Testing Library
+Candidate tooling: Vitest + React Testing Library. Until then, `npm run build` plus dev-server verification is the quality gate (see CLAUDE.md).
 
 ---
 

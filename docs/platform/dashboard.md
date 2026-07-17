@@ -441,9 +441,9 @@ workOrders
 
 expenseRequests
 
-budgets
+budgetPlans / budgetRequests
 
-approvalFlows
+approvalRequests
 ```
 
 ---

@@ -1,7 +1,7 @@
 import { db, COLLECTIONS, AppError, newDocumentBaseFields, type AuthedUser } from '../../lib'
 
 /** Mirrors src/constants/hr.ts (known frontend/functions duplication — keep in sync). */
-export const EMPLOYMENT_STATUSES = ['fullTime', 'freelance', 'board', 'dailyWorker', 'ojt'] as const
+export const EMPLOYMENT_STATUSES = ['PKWT', 'PKWTT', 'freelance', 'bod', 'dailyWorker', 'ojt'] as const
 export type EmploymentStatus = (typeof EMPLOYMENT_STATUSES)[number]
 
 export const CONTRACT_TYPES = ['permanent', 'fixedTerm', 'daily'] as const
@@ -9,11 +9,12 @@ export type ContractType = (typeof CONTRACT_TYPES)[number]
 
 export const GENDERS = ['male', 'female'] as const
 
-/** HR_OPERATIONS.md M01-F02: N- (PKWT/PKWTT/BOD/Freelance), DW- (Daily Worker), OJT-. */
+/** HR_OPERATIONS.md 9.1-F02: N- (PKWT/PKWTT/BOD/Freelance), DW- (Daily Worker), OJT-. */
 const EMPLOYEE_NUMBER_PREFIX: Record<EmploymentStatus, string> = {
-  fullTime: 'N',
+  PKWT: 'N',
+  PKWTT: 'N',
   freelance: 'N',
-  board: 'N',
+  bod: 'N',
   dailyWorker: 'DW',
   ojt: 'OJT',
 }

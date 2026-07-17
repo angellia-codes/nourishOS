@@ -447,62 +447,56 @@ Future
 
 # 19. Firestore Collections
 
+Real names per `src/constants/collections.ts` (shipped shared-service collections marked):
+
 ```text
-users
+users                                            (shipped)
 
 roles
 
 permissions
 
-tasks
+tasks                                            (shipped)
 
-approvals
+approvalRequests / approvalSteps / approvalHistory   (shipped)
 
-notifications
+notifications                                    (shipped)
 
-activityFeed
+files                                            (shipped)
 
-comments
+auditLogs                                        (shipped)
 
-attachments
+systemSettings
 
-searchIndex
-
-auditLogs
-
-settings
-
-metadata
+searchIndex                                      (planned — Search Service not built)
 ```
 
 ---
 
 # 20. Cloud Functions
 
+Shipped (real names):
+
 ```text
-createTask()
+createTask()  assignTask()  completeTask()  cancelTask()      (+ createTaskInternal)
 
-assignTask()
+submitApproval()  approveStep()  rejectStep()  returnForRevision()  cancelApproval()
 
-completeTask()
+sendNotificationInternal()  notifyUsersByRole()               (internal senders)
 
-createApproval()
+markNotificationRead()  markAllNotificationsRead()
 
-approveRequest()
+createFileMetadata()  deleteFile()
 
-rejectRequest()
+recordAuditEvent()                                            (internal — not a callable)
+```
 
-sendNotification()
+Planned:
 
-markNotificationRead()
-
+```text
 createComment()
 
-uploadAttachment()
-
 recordActivity()
-
-recordAuditLog()
 
 globalSearch()
 

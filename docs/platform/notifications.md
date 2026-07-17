@@ -174,11 +174,11 @@ Notification Generated
 
 ↓
 
-Permission Check
+Permission Check   (planned — shipped code writes straight to the recipient with no RBAC check)
 
 ↓
 
-Channel Selection
+Channel Selection  (planned — in-app only today)
 
 ↓
 
@@ -190,11 +190,11 @@ Read
 
 ↓
 
-Archived
+Archived           (planned)
 
 ↓
 
-Expired
+Expired            (planned)
 ```
 
 ---
@@ -349,29 +349,37 @@ Dashboard widgets display:
 # 15. Firestore Collections
 
 ```text
-notifications
+notifications             (shipped — the only collection written today)
 
-notificationPreferences
+notificationPreferences   (declared in collections.ts, not yet written)
 
-notificationTemplates
+notificationTemplates     (declared in collections.ts, not yet written)
 
-notificationQueue
+notificationQueue         (planned — not in collections.ts)
 
-notificationHistory
+notificationHistory       (planned — not in collections.ts)
 ```
 
 ---
 
 # 16. Cloud Functions
 
+Shipped:
+
 ```text
-sendNotification()
+sendNotificationInternal()     (internal — called by other Cloud Functions, not a callable)
 
+notifyUsersByRole()            (internal — role fan-out)
+
+markNotificationRead()         (callable)
+
+markAllNotificationsRead()     (callable)
+```
+
+Planned:
+
+```text
 sendBulkNotification()
-
-markAsRead()
-
-markAllAsRead()
 
 archiveNotification()
 
@@ -435,17 +443,11 @@ Examples:
 
 ---
 
-# 19. RBAC Integration
+# 19. RBAC Integration (Planned)
 
-Before delivery, the Notification Engine verifies:
+Target: before delivery, the Notification Engine verifies authentication, role, department, outlet, and resource access, so users only receive notifications for resources they are permitted to access.
 
-- Authentication
-- Role
-- Department
-- Outlet
-- Resource access
-
-Users only receive notifications for resources they are permitted to access.
+Shipped reality: `sendNotificationInternal`/`notifyUsersByRole` perform no per-recipient permission check — callers are trusted Cloud Functions that already ran RBAC on the triggering action. Revisit when notifications start carrying resource previews.
 
 ---
 

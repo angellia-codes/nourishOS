@@ -14,7 +14,6 @@ The module ensures employees always access the latest approved documents while p
 It supports:
 
 - SOPs
-- Policies
 - Company Forms
 - Templates
 - Training Materials

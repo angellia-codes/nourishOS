@@ -15,9 +15,7 @@ export const ROLES = {
   SECURITY: 'security',
   ENGINEERING: 'engineering',
   OUTLET_MANAGER: 'outletManager',
-  STOREKEEPER: 'storekeeper',
   MARKETING: 'marketing',
-  CUSTOMER_SERVICE: 'customerService',
   STAFF: 'staff',
 } as const
 

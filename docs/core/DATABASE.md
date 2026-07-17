@@ -1,8 +1,14 @@
 # NourishOS Database Design
 
-Version: 1.0  
+Version: 1.1  
 Database: Google Cloud Firestore  
 Architecture: Serverless
+
+> **Shipped-code supersessions (2026-07-17).** Where this doc and `src/constants/collections.ts` disagree, the constants file wins:
+> - The single `approvalFlows` collection (§18) is superseded by the normalized `approvalRequests` / `approvalSteps` / `approvalHistory` (+ `approvalWorkflows`, `approvalDelegations`) — see platform/approval_engine.md.
+> - The minimal `employees` shape (§10) is superseded by the shipped `Employee` type in `src/types/employee.types.ts`.
+> - Collection names: `budgets` → `budgetPlans`/`budgetRequests`; `settings` → `systemSettings`.
+> - Enum/status values in shipped code are lowerCamelCase (`active`, `pending`, `assigned`), not the Capitalized examples below.
 
 ---
 
@@ -197,19 +203,21 @@ Example document:
 
 # 10. Employees Collection
 
+Superseded — the shipped shape is `Employee` in `src/types/employee.types.ts` (what `createEmployee` writes): `employeeNumber` is server-generated per employment status (`N-`/`DW-`/`OJT-` prefixes), the field is `employmentStatus` with values `PKWT | PKWTT | freelance | bod | dailyWorker | ojt`, civil dates are ISO strings, and salary data is deliberately absent (planned compensation sub-collection). Historical sketch:
+
 ```json
 {
-  "employeeNumber": "EMP0001",
+  "employeeNumber": "N-0001",
   "fullName": "",
   "email": "",
   "phone": "",
   "position": "",
   "departmentId": "",
   "outletId": "",
-  "employmentType": "Permanent",
-  "joinDate": "Timestamp",
+  "employmentStatus": "PKWTT",
+  "joinDate": "2026-07-01",
   "managerId": "",
-  "status": "Active"
+  "status": "active"
 }
 ```
 
@@ -327,7 +335,9 @@ Example document:
 
 ---
 
-# 18. Approval Flows
+# 18. Approval Flows (superseded — normalized model shipped)
+
+The embedded-steps model below was superseded by the July 2026 approval-engine rewrite: one `approvalRequests` doc per request, a live `approvalSteps` doc, append-only `approvalHistory`, and server-owned routes (`functions/src/shared/approval/routes.ts`). Kept for historical context:
 
 ```json
 {

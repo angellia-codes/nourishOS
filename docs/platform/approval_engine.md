@@ -1,7 +1,9 @@
 # NourishOS Approval Engine
 
-Version: 1.0
+Version: 1.1
 Module: Shared Services - Approval Engine
+
+> **Shipped state (July 2026 rewrite).** Live today: server-owned routes in `functions/src/shared/approval/routes.ts` (`hr/appraisal` and `hr/contract`, each a fixed `hrManager → generalManager` chain); callables `submitApproval`, `approveStep`, `rejectStep`, `returnForRevision`, `cancelApproval` (+ `onApprovalRequestResolved` trigger and `submitApprovalInternal` for cross-function use); clients submit a resource identity only — never a steps array; self-approval blocked (§23); every state change runs in a Firestore transaction that also closes the live `approvalSteps` doc. **Planned, not shipped:** configurable routing (§6/§9), SLA/escalation/reminders (§13–§14), delegation (§12), queue bulk actions, and the §18 functions marked Planned. Lifecycle actually used: submit → `pending` → `approved` / `rejected` / `returnedForRevision` / `cancelled`.
 
 ---
 
@@ -116,30 +118,32 @@ Each step defines:
 # 5. Approval Status
 
 ```text
-Draft
+Draft                  (defined, never set by shipped code)
 
-Submitted
+Submitted              (defined, never set — submit writes straight to Pending)
 
-Pending
+Pending                (shipped)
 
-Approved
+Approved               (shipped — terminal; no separate "Completed" is set)
 
-Rejected
+Rejected               (shipped)
 
-Returned for Revision
+Returned for Revision  (shipped — KNOWN GAP: no module reacts downstream yet)
 
-Cancelled
+Cancelled              (shipped)
 
-Completed
+Completed              (defined, never set)
 
-Expired
+Expired                (defined, never set — no SLA engine yet)
 ```
 
 ---
 
-# 6. Workflow Configuration
+# 6. Workflow Configuration (Planned)
 
-Workflows are configurable by:
+Shipped reality: routes are hardcoded in `functions/src/shared/approval/routes.ts` — adding an approvable resource means adding a route entry + registering a resolved-handler (see `hr/appraisal/index.ts`). The configurability below is the target model.
+
+Workflows will be configurable by:
 
 - Module
 - Resource Type
@@ -412,43 +416,49 @@ Widgets include:
 # 17. Firestore Collections
 
 ```text
-approvalWorkflows
+approvalRequests       (shipped — written by the engine)
 
-approvalRequests
+approvalSteps          (shipped — live step doc, closed out on resolution)
 
-approvalSteps
+approvalHistory        (shipped — append-only)
 
-approvalHistory
+approvalWorkflows      (declared in collections.ts, not yet written — routes are code-owned)
 
-approvalDelegations
+approvalDelegations    (declared in collections.ts, not yet written)
 
-approvalTemplates
+approvalTemplates      (planned — does not exist)
 
-approvalEscalations
+approvalEscalations    (planned — does not exist)
 ```
 
 ---
 
 # 18. Cloud Functions
 
-```text
-submitApproval()
+Shipped:
 
-approveStep()
+```text
+submitApproval()          (also submitApprovalInternal for cross-function use)
+
+approveStep()             (advances/completes the workflow inline — no separate advance/complete fn)
 
 rejectStep()
 
 returnForRevision()
 
-advanceWorkflow()
+cancelApproval()
+```
+
+Planned:
+
+```text
+advanceWorkflow()         (currently inline in approveStep)
 
 escalateApproval()
 
 sendApprovalReminder()
 
-completeApproval()
-
-cancelApproval()
+completeApproval()        (currently inline in approveStep)
 ```
 
 ---
@@ -519,7 +529,7 @@ Each audit entry includes:
 
 - Validate authentication before processing.
 - Verify RBAC at every approval step.
-- Prevent self-approval where policy prohibits it.
+- Self-approval is blocked (shipped); a superAdmin may override, and the override is audit-logged as `approve_override`.
 - Lock completed workflows.
 - Ensure approval history is immutable.
 - Log all administrative workflow changes.

@@ -242,22 +242,28 @@ Business modules should not write directly to the audit collection.
 # 9. Firestore Collections
 
 ```text
-auditLogs
+auditLogs                 (shipped)
 
-auditArchives
+auditArchives             (planned — does not exist)
 
-auditCategories
+auditCategories           (planned — does not exist)
 
-auditRetentionPolicies
+auditRetentionPolicies    (planned — does not exist)
 ```
 
 ---
 
 # 10. Cloud Functions
 
-```text
-recordAuditEvent()
+Shipped:
 
+```text
+recordAuditEvent()        (internal — every mutating Cloud Function calls it; not a callable)
+```
+
+> **No read path ships yet.** `src/firestore.rules` denies all client reads of `auditLogs`, and `searchAuditLogs()` does not exist — audit data is currently reviewable only via the Firebase console / Admin SDK. The functions below are the planned read/maintenance surface:
+
+```text
 archiveAuditLogs()
 
 purgeExpiredLogs()

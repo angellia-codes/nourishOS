@@ -88,21 +88,26 @@ Every callable function validates:
 
 # 4. Cloud Function Structure
 
-```text
-functions/
+Shipped layout (`functions/src/`):
 
-auth/
+```text
+functions/src/
+
+auth/                  (syncUserClaims trigger)
 hr/
-operations/
-finance/
-documents/
-communication/
-notifications/
-settings/
+├── appraisal/
+└── employees/
+security/
 shared/
+├── approval/
+├── tasks/
+├── notifications/
+└── fileStorage/
+lib/                   (db, COLLECTIONS, RBAC guards, AppError, audit, response helpers)
+index.ts               (every callable is exported here)
 ```
 
-Each module owns its business logic.
+Future modules (operations/, finance/, documents/, communications/) follow the same per-module pattern. Each module owns its business logic; cross-module capabilities live in `shared/`.
 
 ---
 
@@ -168,9 +173,15 @@ completeChecklist
 
 ---
 
-# 9. Authentication API
+> **Implementation status (2026-07-17).** Shipped callables (all exported from `functions/src/index.ts`):
+> `submitApproval`, `approveStep`, `rejectStep`, `returnForRevision`, `cancelApproval` · `createTask`, `assignTask`, `completeTask`, `cancelTask` · `markNotificationRead`, `markAllNotificationsRead` · `createFileMetadata`, `deleteFile` · `createCheckpoint`, `createPatrolLog`, `checkOverdueCheckpoints` · `seedAppraisalTemplates`, `createAppraisal`, `submitAppraisal`, `generateAppraisalInsights` · `createEmployee`, `updateEmployee`, `archiveEmployee` — plus the `syncUserClaims` Firestore trigger and the `onApprovalRequestResolved` trigger.
+> Everything else in §9–§14 is **Planned** and documented here as the target API surface.
 
-## getCurrentUser
+# 9. Authentication API (Planned)
+
+The one shipped auth function is `syncUserClaims` — a Firestore **trigger** (not callable) that mirrors `users/{uid}` role/department/outlet changes into Auth custom claims. Profile data is read directly from Firestore by the client (§19).
+
+## getCurrentUser (Planned)
 
 Returns
 
@@ -182,7 +193,7 @@ Returns
 
 ---
 
-## updateProfile
+## updateProfile (Planned)
 
 Updates
 
@@ -194,49 +205,59 @@ Updates
 
 # 10. HR APIs
 
-## createEmployee
+## createEmployee — Shipped
 
-Creates employee profile.
-
-Permission
-
-HR Manager
-
----
-
-## updateEmployee
-
-Updates employee information.
+Creates employee profile (server-generated employee number, probation auto-calc).
 
 Permission
 
-HR Manager
+`employees.create` (HR Manager)
 
 ---
 
-## archiveEmployee
+## updateEmployee — Shipped
 
-Soft deletes employee.
+Updates employee information (allow-listed fields only).
 
 Permission
 
-HR Manager
+`employees.update` (HR Manager)
 
 ---
 
-## createRecruitment
+## archiveEmployee — Shipped
+
+Soft deletes employee (mandatory reason).
+
+Permission
+
+`employees.delete` (HR Manager)
+
+---
+
+## seedAppraisalTemplates / createAppraisal / submitAppraisal / generateAppraisalInsights — Shipped
+
+The HR Appraisal module: template seeding, appraisal creation, submission into the Approval Engine (`hr/appraisal` route), and on-demand AI insights (Anthropic API via the `ANTHROPIC_API_KEY` secret).
+
+Permissions
+
+`appraisals.*` (see `src/constants/permissions.ts`)
+
+---
+
+## createRecruitment (Planned)
 
 Creates recruitment record.
 
 ---
 
-## updateRecruitment
+## updateRecruitment (Planned)
 
 Updates recruitment status.
 
 ---
 
-## onboardEmployee
+## onboardEmployee (Planned)
 
 Creates employee account.
 
@@ -248,31 +269,51 @@ Assigns:
 
 ---
 
-## createTraining
+## createTraining (Planned)
 
 Creates training module.
 
 ---
 
-## assignTraining
+## assignTraining (Planned)
 
 Assigns training to employees.
 
 ---
 
-## recordPerformance
+## recordPerformance (Planned)
 
 Creates performance review.
 
 ---
 
-## issueDisciplinaryAction
+## issueDisciplinaryAction (Planned)
 
 Creates disciplinary record.
 
 ---
 
-# 11. Operations APIs
+# 10b. Security APIs — Shipped
+
+## createCheckpoint
+
+Registers a patrol checkpoint (geo-fenced).
+
+## createPatrolLog
+
+Records a patrol scan/log against a checkpoint.
+
+## checkOverdueCheckpoints
+
+Scheduled function flagging overdue patrols.
+
+Permissions
+
+`security.*` (see `src/constants/permissions.ts`)
+
+---
+
+# 11. Operations APIs (Planned)
 
 ## createDailyReport
 
@@ -342,7 +383,7 @@ Closes work order.
 
 ---
 
-# 12. Finance APIs
+# 12. Finance APIs (Planned)
 
 ## createExpenseRequest
 
@@ -386,7 +427,7 @@ Budget approval.
 
 ---
 
-# 13. Documents APIs
+# 13. Documents APIs (Planned)
 
 ## createDocument
 
@@ -426,39 +467,23 @@ Publishes SOP.
 
 ---
 
-# 14. Communication APIs
+# 14. Communication APIs (Planned)
 
-## createAnnouncement
+Note: task callables already ship as **shared Task Engine** functions, not communication-module functions — `createTask`, `assignTask`, `completeTask`, `cancelTask` (see platform/task_engine.md). `updateTask` is planned.
+
+## createAnnouncement (Planned)
 
 Creates announcement.
 
 ---
 
-## publishAnnouncement
+## publishAnnouncement (Planned)
 
 Publishes announcement.
 
 ---
 
-## assignTask
-
-Creates task.
-
----
-
-## updateTask
-
-Updates task.
-
----
-
-## completeTask
-
-Completes task.
-
----
-
-## sendChatMessage
+## sendChatMessage (Planned)
 
 Stores message.
 
@@ -466,15 +491,21 @@ Stores message.
 
 # 15. Notification APIs
 
-## createNotification
+## sendNotificationInternal / notifyUsersByRole — Shipped (internal)
 
-Internal use.
+Not callables — internal functions other Cloud Functions call to write notifications.
 
 ---
 
-## markNotificationRead
+## markNotificationRead — Shipped
 
-Updates notification.
+Marks one notification read.
+
+---
+
+## markAllNotificationsRead — Shipped
+
+Marks all of the caller's notifications read.
 
 ---
 
@@ -486,39 +517,53 @@ FCM.
 
 ---
 
-# 16. Approval APIs
+# 16. Approval APIs — Shipped
 
 ## submitApproval
 
-Starts workflow.
+Starts a workflow. Clients submit a resource identity only — the route (approver chain) is resolved server-side from `functions/src/shared/approval/routes.ts`.
 
 ---
 
-## approveDocument
+## approveStep
 
-Approves current step.
+Approves the current step (self-approval blocked; superAdmin override audit-logged).
 
 ---
 
-## rejectDocument
+## rejectStep
 
-Rejects workflow.
+Rejects the workflow at the current step.
 
 ---
 
 ## returnForRevision
 
-Returns to previous user.
+Sets the request to `returnedForRevision`. KNOWN GAP: no module currently reacts to this status downstream (`returnAndCancel.ts`) — the requester must resubmit manually.
 
 ---
 
-## getApprovalHistory
+## cancelApproval
 
-Returns approval timeline.
+Requester cancels a pending request.
 
 ---
 
-# 17. File APIs
+## getApprovalHistory (Planned)
+
+Approval timelines are currently read directly from the `approvalHistory` collection (rules-gated); a dedicated callable is planned.
+
+---
+
+# 17. File APIs — Shipped
+
+## createFileMetadata
+
+Registers an uploaded file's metadata in the `files` collection (upload itself goes to Cloud Storage).
+
+## deleteFile
+
+Soft-deletes a file (owner, or superAdmin/director/generalManager override).
 
 Storage location
 

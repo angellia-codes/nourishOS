@@ -430,7 +430,7 @@ approvalWorkflows
 
 systemSettings
 
-notificationSettings
+notificationPreferences
 
 integrations
 
@@ -440,6 +440,14 @@ auditLogs
 ---
 
 # 19. Cloud Functions
+
+Shipped:
+
+```text
+syncUserClaims()      (Firestore trigger — mirrors users/{uid} changes into Auth custom claims)
+```
+
+Planned (admin data is currently maintained via superAdmin tooling/console; audit writes go through the internal recordAuditEvent()):
 
 ```text
 createOutlet()
@@ -457,10 +465,6 @@ updatePermissions()
 createApprovalWorkflow()
 
 updateSystemSettings()
-
-recordAuditLog()
-
-syncUserClaims()
 
 archiveOutlet()
 ```

@@ -190,24 +190,28 @@ Priority influences:
 
 # 8. Task Status
 
+Shipped today, the engine only ever sets `assigned`, `completed`, `cancelled` — plus `archived` as a terminal state. The remaining statuses below are planned:
+
 ```text
-Draft
+Draft        (planned)
 
-Assigned
+Assigned     (shipped)
 
-In Progress
+In Progress  (planned)
 
-Waiting
+Waiting      (planned)
 
-Completed
+Completed    (shipped)
 
-Verified
+Verified     (planned)
 
-Closed
+Closed       (planned)
 
-Cancelled
+Cancelled    (shipped)
 
-Overdue
+Overdue      (planned — no SLA engine yet)
+
+Archived     (shipped — terminal)
 ```
 
 ---
@@ -409,39 +413,45 @@ Filters
 # 19. Firestore Collections
 
 ```text
-tasks
+tasks             (shipped — the only collection the engine writes today)
 
-taskAssignments
+taskAssignments   (declared in collections.ts, not yet written)
 
-taskComments
+taskComments      (declared in collections.ts, not yet written)
 
-taskChecklists
+taskChecklists    (declared in collections.ts, not yet written)
 
-taskTemplates
+taskTemplates     (declared in collections.ts, not yet written)
 
-taskRecurrence
+taskRecurrence    (planned — not in collections.ts yet)
 
-taskHistory
+taskHistory       (declared in collections.ts, not yet written)
 ```
 
 ---
 
 # 20. Cloud Functions
 
+Shipped (plus `createTaskInternal` for cross-function use):
+
 ```text
 createTask()
 
 assignTask()
 
-updateTask()
-
 completeTask()
+
+cancelTask()
+```
+
+Planned:
+
+```text
+updateTask()
 
 verifyTask()
 
 closeTask()
-
-cancelTask()
 
 generateRecurringTasks()
 

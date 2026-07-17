@@ -1,25 +1,26 @@
 # NourishOS Design System
 
-Version: 1.0  
+Version: 2.0
 Product: Nourish Operational System (NourishOS)
 
 ---
 
 # 1. Design Philosophy
 
-NourishOS is designed to feel like an extension of the Nourish brand.
+NourishOS is designed to feel like an extension of the Nourish brand — built by people who understand food and hospitality, not borrowed generic enterprise software.
 
 The experience should be:
 
 - Calm
 - Premium
+- Crafted
 - Minimal
 - Fast
 - Warm
 - Human
 - Professional
 
-Employees use the system throughout their workday, so the interface should reduce cognitive load and help users complete tasks efficiently.
+Employees use the system throughout their workday — some at a desk all day, others on a shared tablet during a shift at an outlet — so the interface should reduce cognitive load, work comfortably on shared devices, and help users complete tasks efficiently regardless of where they're standing.
 
 ---
 
@@ -56,7 +57,7 @@ Avoid visual clutter.
 Design should follow WCAG AA guidelines where practical:
 
 - Keyboard navigation
-- Sufficient color contrast
+- Sufficient color contrast (warm tones need extra verification — see STYLE_GUIDE.md § Accessibility)
 - Visible focus states
 - Readable typography
 - Clear labels
@@ -99,6 +100,7 @@ Tablet
 - Collapsible sidebar
 - Responsive tables
 - Simplified dashboard widgets
+- Larger touch targets (48px minimum) — this is the primary surface for outlet/frontline staff on shared devices
 
 ---
 
@@ -135,7 +137,7 @@ Sidebar behavior:
 - Expandable
 - Collapsible
 - Icon + Label
-- Active state highlighted
+- Active state highlighted in Terracotta (see STYLE_GUIDE.md § Color Palette)
 
 ---
 
@@ -187,7 +189,7 @@ Height:
 
 Dashboard includes:
 
-- Welcome message
+- Welcome message (set in Fraunces, the display typeface — see STYLE_GUIDE.md § Typography)
 - KPI cards
 - Pending approvals
 - Recent activity
@@ -206,9 +208,9 @@ Cards are the primary content container.
 
 Properties:
 
-- White surface
-- Rounded corners (20px)
-- Soft shadow
+- White surface on the warm linen background
+- Rounded corners (12px)
+- Soft, warm-tinted shadow
 - 24px padding
 - Optional header actions
 
@@ -227,15 +229,18 @@ Use cards for:
 Primary
 
 - Filled
-- Forest Green
-- White text
+- Terracotta
+- Warm off-white text
 
 Secondary
 
-- Outlined
+- Filled
+- Deep Olive
+- Warm off-white text
 
 Ghost
 
+- Bordered, transparent fill
 - Text only
 
 Danger
@@ -272,6 +277,10 @@ Input height:
 
 48px
 
+Input background:
+
+Sunken warm surface (#F2EDE4 light / #201C18 dark)
+
 Textarea minimum:
 
 120px
@@ -299,6 +308,8 @@ Yes
 Row height:
 
 56px
+
+Numeric columns use DM Sans with tabular figures for aligned digits.
 
 ---
 
@@ -335,7 +346,9 @@ Approval History
 
 ---
 
-# 12. Modals
+# 12. Modals (Planned)
+
+No Modal/Dialog primitive ships today — the current convention is that confirmation and multi-step flows are separate routed pages (see CLAUDE.md and COMPONENT_LIBRARY.md §11). If a Modal primitive is added later:
 
 Use for:
 
@@ -351,9 +364,9 @@ Maximum width:
 
 ---
 
-# 13. Drawers
+# 13. Drawers (Planned)
 
-Use side drawers for:
+No Drawer primitive ships today. If added later, use side drawers for:
 
 - Filters
 - Quick previews
@@ -377,7 +390,7 @@ Top-right (desktop)
 
 Top (mobile)
 
-Notifications should auto-dismiss when appropriate while allowing manual dismissal.
+Notifications should auto-dismiss when appropriate while allowing manual dismissal. Colors follow STYLE_GUIDE.md § Color Palette / Dark Mode.
 
 ---
 
@@ -468,6 +481,8 @@ Example widgets:
 - Active SOPs
 - Recent Incidents
 
+Stat values use Fraunces at 26–32px; stat labels use DM Sans, uppercase, 11–12px, muted.
+
 ---
 
 # 21. Charts
@@ -479,7 +494,7 @@ Preferred chart types:
 - Area
 - Donut
 
-Use muted colors consistent with the Nourish palette.
+Use warm, muted colors drawn from the terracotta/olive palette — never a chart library's default blues.
 
 Avoid unnecessary 3D effects.
 
@@ -526,7 +541,7 @@ Provide:
 - Light Mode
 - Dark Mode
 
-User preference should persist across sessions.
+User preference should persist across sessions. See STYLE_GUIDE.md § Dark Mode for the full token set.
 
 ---
 
@@ -548,6 +563,8 @@ Minimum touch target:
 
 44×44px
 
+48×48px on tablet/shared-device surfaces used by outlet and frontline staff.
+
 All controls require:
 
 - Keyboard support
@@ -559,32 +576,34 @@ All controls require:
 
 # 27. Reusable Components
 
-Core components include:
+Shipped today (`src/components/`):
 
-- Button
-- IconButton
+- Button (incl. icon size variant)
 - Card
 - Badge
-- Avatar
 - Input
+- Label
 - Textarea
 - Select
-- Checkbox
-- Radio
-- Switch
+- Spinner
+- Skeleton
+- File Upload
+- Empty State
+- Permission Guard
+
+Planned (build on demand, same principles):
+
+- Avatar
+- Checkbox / Radio / Switch
 - Date Picker
-- Table
+- Table / Data Grid
 - Tabs
 - Breadcrumb
-- Modal
-- Drawer
+- Modal / Drawer (see §12–13 — routed pages until then)
 - Tooltip
 - Snackbar
 - Timeline
 - Stepper
-- File Upload
-- Empty State
-- Skeleton
 - Data Chart
 
 Each component should have documented props, variants, and accessibility behavior.
@@ -604,7 +623,7 @@ All visual values should be centralized as design tokens:
 - Z-index
 - Motion durations
 
-Tokens should be shared between Figma and the React codebase to ensure consistency.
+Tokens are implemented as CSS custom properties in `src/styles/globals.css` (`:root` / `.dark`) and referenced from `tailwind.config.ts` (e.g. `bg-primary` → `var(--color-primary)`). They should be shared between Figma and the React codebase to ensure consistency.
 
 ---
 
@@ -632,5 +651,6 @@ Every interaction in NourishOS should help users:
 - Understand approval status at a glance
 - Collaborate across departments
 - Feel confident that data is accurate and up to date
+- Work comfortably whether they're at a back-office desk all day or on a shared tablet during a shift
 
-The overall experience should communicate the same qualities as the Nourish brand: thoughtful, organized, welcoming, and dependable.
+The overall experience should communicate the same qualities as the Nourish brand: thoughtful, organized, welcoming, crafted, and dependable.

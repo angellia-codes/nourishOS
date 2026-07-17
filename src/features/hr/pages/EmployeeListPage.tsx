@@ -1,18 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Plus, Search, UserRound } from 'lucide-react'
+import { Download, Plus, Search, UserRound } from 'lucide-react'
 import { Badge, Button, Card, CardContent, Input, Select, Spinner } from '@/components/ui'
 import { EmptyState, PermissionGuard } from '@/components/shared'
 import { PERMISSIONS } from '@/constants'
 import { EMPLOYMENT_STATUS_LABELS } from '@/constants/hr'
 import * as employeeService from '@/features/hr/services/employeeService'
+import { exportEmployeesToCsv } from '@/features/hr/utils/employeeExport'
 import { isContractExpiringSoon, isProbationEndingSoon } from '@/features/hr/utils/employeeIndicators'
+import { EMPLOYEE_SORT_FIELDS, EMPLOYEE_SORT_LABELS, sortEmployees, type EmployeeSortField } from '@/features/hr/utils/employeeSort'
 import type { Employee } from '@/types'
 
 type ActiveFilter = 'active' | 'inactive' | 'all'
 
 /**
- * Employee Database list — HR.md §5, HR_OPERATIONS.md M01. Search and
+ * Employee Database list — HR.md §5, HR_OPERATIONS.md §9.1. Search and
  * filters are cumulative and run client-side over one live subscription
  * (E01-US02: results update as you type, no reload).
  */
@@ -23,6 +25,7 @@ export function EmployeeListPage() {
   const [outletFilter, setOutletFilter] = useState('')
   const [departmentFilter, setDepartmentFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState<ActiveFilter>('active')
+  const [sortField, setSortField] = useState<EmployeeSortField>(EMPLOYEE_SORT_FIELDS.NAME)
 
   useEffect(() => {
     return employeeService.subscribeToEmployees(setEmployees)
@@ -40,7 +43,7 @@ export function EmployeeListPage() {
   const filtered = useMemo(() => {
     if (!employees) return []
     const term = search.trim().toLowerCase()
-    return employees.filter((employee) => {
+    const matches = employees.filter((employee) => {
       if (statusFilter !== 'all' && employee.status !== statusFilter) return false
       if (outletFilter && employee.outletId !== outletFilter) return false
       if (departmentFilter && employee.departmentId !== departmentFilter) return false
@@ -52,7 +55,8 @@ export function EmployeeListPage() {
       }
       return true
     })
-  }, [employees, search, outletFilter, departmentFilter, statusFilter])
+    return sortEmployees(matches, sortField)
+  }, [employees, search, outletFilter, departmentFilter, statusFilter, sortField])
 
   if (employees === null) {
     return (
@@ -71,16 +75,24 @@ export function EmployeeListPage() {
             {filtered.length} of {employees.length} records
           </p>
         </div>
-        <PermissionGuard permission={PERMISSIONS.EMPLOYEES_CREATE}>
-          <Button onClick={() => navigate('/hr/employees/new')}>
-            <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
-            Add Employee
-          </Button>
-        </PermissionGuard>
+        <div className="flex shrink-0 items-center gap-2">
+          <PermissionGuard permission={PERMISSIONS.EMPLOYEES_EXPORT}>
+            <Button variant="secondary" onClick={() => exportEmployeesToCsv(filtered, 'employees.csv')}>
+              <Download className="mr-1.5 h-4 w-4" aria-hidden="true" />
+              Export
+            </Button>
+          </PermissionGuard>
+          <PermissionGuard permission={PERMISSIONS.EMPLOYEES_CREATE}>
+            <Button onClick={() => navigate('/hr/employees/new')}>
+              <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
+              Add Employee
+            </Button>
+          </PermissionGuard>
+        </div>
       </div>
 
       {/* Filters — cumulative (E01-US02) */}
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
         <div className="relative lg:col-span-1">
           <Search
             className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
@@ -122,6 +134,17 @@ export function EmployeeListPage() {
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
           <option value="all">All statuses</option>
+        </Select>
+        <Select
+          value={sortField}
+          onChange={(e) => setSortField(e.target.value as EmployeeSortField)}
+          aria-label="Sort employees"
+        >
+          {Object.values(EMPLOYEE_SORT_FIELDS).map((field) => (
+            <option key={field} value={field}>
+              Sort: {EMPLOYEE_SORT_LABELS[field]}
+            </option>
+          ))}
         </Select>
       </div>
 

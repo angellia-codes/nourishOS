@@ -22,7 +22,7 @@ export type PositionId = (typeof POSITIONS)[keyof typeof POSITIONS]
 
 export const POSITION_LABELS: Record<PositionId, string> = {
   waiter: 'F&B Service - Waiter/Waitress',
-  barista: 'Barista',
+  barista: 'Barista/Bartender',
   cook: 'Cook / Kitchen Staff',
   cashier: 'Cashier',
   outletLeader: 'Outlet / Department Leader',

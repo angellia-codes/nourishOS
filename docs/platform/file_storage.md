@@ -354,17 +354,17 @@ Validation checks:
 # 15. Firestore Collections
 
 ```text
-files
+files             (shipped — the only collection written today)
 
-fileVersions
+fileVersions      (declared in collections.ts, not yet written)
 
-fileShares
+fileShares        (declared in collections.ts, not yet written)
 
-fileDownloads
+fileDownloads     (planned — not in collections.ts)
 
-fileCategories
+fileCategories    (planned — not in collections.ts)
 
-storageSettings
+storageSettings   (planned — not in collections.ts)
 ```
 
 Business modules reference `fileId` rather than storing file details directly.
@@ -373,11 +373,17 @@ Business modules reference `fileId` rather than storing file details directly.
 
 # 16. Cloud Functions
 
+Shipped:
+
 ```text
-uploadFile()
+createFileMetadata()   (registers an uploaded file's metadata; the binary goes to Cloud Storage directly)
 
-deleteFile()
+deleteFile()           (soft delete)
+```
 
+Planned:
+
+```text
 archiveFile()
 
 restoreFile()
@@ -434,6 +440,8 @@ Permissions are enforced using Firebase Authentication and RBAC.
 | Archive  |    ❌    |   ❌    | Limited |   ✅    |    ✅    |     ✅      |
 
 Permissions are further restricted by department, outlet, and owning resource.
+
+> **Shipped divergence:** today `createFileMetadata` requires only an active user, and `deleteFile` allows the file's **owner** (`createdBy`) to soft-delete their own file, with override for superAdmin/director/generalManager — looser than the matrix above. If the stricter matrix is still intended, tighten `functions/src/shared/fileStorage/deleteFile.ts`; until then the matrix is the target model.
 
 ---
 

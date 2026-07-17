@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Timestamp } from 'firebase/firestore'
+import type { Timestamp } from 'firebase/firestore'
 import { AppraisalReviewForm } from '@/features/hr/components/appraisal'
 import { APPRAISAL_TEMPLATE_SEEDS } from '@/constants'
 import type { ApprovalStatus } from '@/constants/statuses'
@@ -35,7 +35,8 @@ export function AppraisalDemoPage() {
         trainingSuggestions: ['Upselling & Suggestive Selling Workshop', 'Menu Knowledge Refresher'],
         developmentComment:
           'This is mock preview data. The real generateAppraisalInsights() Cloud Function calls Claude and returns suggestions based on the actual scores above.',
-        generatedAt: Timestamp.now(),
+        // Demo pages carry no runtime firebase import — never rendered, only satisfies the type.
+        generatedAt: { toDate: () => new Date() } as unknown as Timestamp,
         generatedBy: 'mock-preview',
       })
       setIsGenerating(false)

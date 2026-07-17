@@ -13,8 +13,8 @@ import {
   Spinner,
   Textarea,
 } from '@/components/ui'
-import { ErrorMessage, PermissionGuard } from '@/components/shared'
-import { useFirestoreDoc, useToast } from '@/hooks'
+import { ErrorMessage, FileList, FileUpload, PermissionGuard } from '@/components/shared'
+import { useFirestoreDoc, useFirestoreQuery, useToast } from '@/hooks'
 import { COLLECTIONS, PERMISSIONS } from '@/constants'
 import { CONTRACT_TYPE_LABELS, EMPLOYMENT_STATUS_LABELS } from '@/constants/hr'
 import * as employeeService from '@/features/hr/services/employeeService'
@@ -26,7 +26,8 @@ import {
 } from '@/features/hr/utils/employeeIndicators'
 import { formatDateTime } from '@/utils'
 import { ApiError } from '@/services/api'
-import type { Employee, EmployeeActivity } from '@/types'
+import { where, orderBy } from '@/services/firestore'
+import type { Employee, EmployeeActivity, FileMetadata } from '@/types'
 
 function Field({ label, value }: { label: string; value: string | null | undefined }) {
   return (
@@ -44,6 +45,19 @@ export function EmployeeProfilePage() {
 
   const { data: employee, loading } = useFirestoreDoc<Employee>(COLLECTIONS.EMPLOYEES, employeeId)
   const [activities, setActivities] = useState<EmployeeActivity[]>([])
+
+  const { data: documents } = useFirestoreQuery<FileMetadata>(
+    COLLECTIONS.FILES,
+    employeeId
+      ? [
+          where('resourceType', '==', 'employee'),
+          where('resourceId', '==', employeeId),
+          where('fileStatus', '==', 'available'),
+          orderBy('createdAt', 'desc'),
+        ]
+      : [],
+    [employeeId],
+  )
 
   const [showArchiveForm, setShowArchiveForm] = useState(false)
   const [resignationDate, setResignationDate] = useState('')
@@ -162,6 +176,19 @@ export function EmployeeProfilePage() {
           <Field label="Contract type" value={CONTRACT_TYPE_LABELS[employee.contractType]} />
           <Field label="Contract start" value={formatIsoDate(employee.contractStartDate)} />
           <Field label="Contract end" value={formatIsoDate(employee.contractEndDate)} />
+        </CardContent>
+      </Card>
+
+      {/* Documents — HR.md §5 (ID card, NPWP, BPJS, contract, certificates) via the generic File Storage service */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Documents</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <PermissionGuard permission={PERMISSIONS.EMPLOYEES_UPDATE}>
+            <FileUpload module="hr" resourceType="employee" resourceId={employee.id} />
+          </PermissionGuard>
+          <FileList files={documents} />
         </CardContent>
       </Card>
 

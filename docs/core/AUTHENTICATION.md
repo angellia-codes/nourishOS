@@ -437,7 +437,15 @@ Sensitive writes (approvals, role changes, audit logs) must go through Cloud Fun
 
 # 18. Cloud Functions
 
-Authentication-related functions:
+Shipped:
+
+```text
+syncUserClaims   — Firestore trigger (not callable): mirrors users/{uid} role/department/outlet
+                   changes into Auth custom claims. Note the claims lag: an already-signed-in
+                   user keeps old claims until their ID token refreshes (~1h).
+```
+
+Planned (user-admin callables — none exist yet; user docs are currently maintained by superAdmin tooling/console):
 
 ```text
 getCurrentUser()

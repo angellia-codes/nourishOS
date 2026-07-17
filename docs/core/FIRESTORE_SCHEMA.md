@@ -1,8 +1,14 @@
 # NourishOS Firestore Schema
 
-Version: 1.0  
+Version: 1.1  
 Database: Cloud Firestore  
 Architecture: Firebase Serverless
+
+> **Shipped-code supersessions (2026-07-17).** The canonical collection registry is `src/constants/collections.ts`; where this doc disagrees, the constants file wins:
+> - `approvalFlows` (§34) → normalized `approvalRequests` / `approvalSteps` / `approvalHistory` (+ `approvalWorkflows`, `approvalDelegations`).
+> - `employees` (§9) → the shipped `Employee` type in `src/types/employee.types.ts`.
+> - `budgets` → `budgetPlans`/`budgetRequests`; `chats` → `chatChannels`/`chatMessages`/`directMessages`; `settings` → `systemSettings`.
+> - Shipped enum/status values are lowerCamelCase (`active`, `pending`), not the Capitalized examples below.
 
 ---
 
@@ -57,17 +63,22 @@ Firestore
 │
 ├── expenseRequests
 ├── pettyCash
-├── budgets
+├── budgetPlans
+├── budgetRequests
 │
 ├── announcements
 ├── tasks
-├── chats
+├── chatChannels
+├── chatMessages
+├── directMessages
 ├── notifications
 │
-├── approvalFlows
+├── approvalRequests
+├── approvalSteps
+├── approvalHistory
 ├── auditLogs
 │
-└── settings
+└── systemSettings
 ```
 
 ---
@@ -193,15 +204,13 @@ Example
 
 # 9. employees
 
+Superseded — the shipped shape is `Employee` in `src/types/employee.types.ts` (`employmentStatus: PKWT | PKWTT | freelance | bod | dailyWorker | ojt`, ISO-string civil dates, server-generated `employeeNumber`). Historical sketch:
+
 ```typescript
 {
   employeeNumber: "",
 
   fullName: "",
-
-  firstName: "",
-
-  lastName: "",
 
   email: "",
 
@@ -215,9 +224,9 @@ Example
 
   managerId: "",
 
-  employmentType: "",
+  employmentStatus: "",
 
-  joinDate: Timestamp,
+  joinDate: "2026-07-01",
 
   status: "active"
 }
@@ -629,7 +638,9 @@ Structure identical to openingChecklists.
 
 ---
 
-# 34. approvalFlows
+# 34. approvalFlows (superseded)
+
+Replaced by the normalized `approvalRequests` / `approvalSteps` / `approvalHistory` model with server-owned routes — see platform/approval_engine.md. Historical sketch:
 
 ```typescript
 {
@@ -667,7 +678,7 @@ This collection should be **append-only** and written exclusively by Cloud Funct
 
 ---
 
-# 36. settings
+# 36. systemSettings
 
 ```typescript
 {

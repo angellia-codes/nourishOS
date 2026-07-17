@@ -200,6 +200,57 @@ Responsibilities:
 
 ---
 
+## Bakery Leader
+
+Responsibilities:
+
+- Bakery outlet operations
+- Daily reports
+- Checklists
+
+---
+
+## Wholefood Leader
+
+Responsibilities:
+
+- Wholefood outlet operations
+- Daily reports
+- Checklists
+
+---
+
+## Outlet Manager
+
+Responsibilities:
+
+- Whole-outlet oversight across departments
+- Outlet-level reporting and approvals
+
+---
+
+## Marketing
+
+Responsibilities:
+
+- Announcements and campaigns
+- Brand assets
+
+---
+
+## Staff
+
+Baseline role for employees without a leadership function:
+
+- Own tasks and notifications
+- Read access per module grants
+
+---
+
+The canonical role IDs live in `src/constants/roles.ts` (16 roles as of July 2026).
+
+---
+
 # 5. Permission Matrix
 
 Legend:
@@ -243,6 +294,8 @@ Legend:
 | Incident Report | Submit | Review | Review | Escalate | — |
 
 Cloud Functions determine the next approver based on the workflow definition.
+
+> **Shipped today:** approval routes are server-owned and currently fixed — `functions/src/shared/approval/routes.ts` defines `hr/appraisal` and `hr/contract`, both a 2-step `hrManager → generalManager` chain. The multi-step chains above (incl. Director finals and monetary thresholds) are the target model; see platform/approval_engine.md.
 
 ---
 
@@ -404,13 +457,12 @@ Potential future roles include:
 - Cashier Leader
 - Cashier
 - Warehouse
-- Marketing
 - Sales
-- Bakery Leader
-- Wholefood Leader
 - Inventory Controller
 - IT Administrator
 - External Auditor
+
+(Bakery Leader, Wholefood Leader, and Marketing moved out of this list — they shipped in `src/constants/roles.ts` in July 2026.)
 
 New roles should reuse the same permission model and naming conventions.
 
@@ -430,16 +482,32 @@ New roles should reuse the same permission model and naming conventions.
 
 # 16. Permission Naming Reference
 
-Examples:
+Shipped permissions (see `src/constants/permissions.ts` for the authoritative list):
 
 ```text
-dashboard.read
-
 employees.read
 employees.create
 employees.update
 employees.delete
 employees.export
+
+appraisals.read
+appraisals.create
+appraisals.submit
+appraisals.approve
+appraisals.reject
+appraisals.generateInsights
+appraisals.manageTemplates
+
+security.create          (log a patrol)
+security.read
+security.manageCheckpoints
+```
+
+Planned examples (same convention):
+
+```text
+dashboard.read
 
 recruitment.read
 recruitment.create

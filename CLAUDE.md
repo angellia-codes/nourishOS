@@ -35,7 +35,7 @@ There is **no test runner configured** — do not assume `npm test` exists or in
 
 Firebase emulators are configured (`src/firebase.json`): auth 9099, functions 5001, firestore 8080, storage 9199, UI 4000. Set `VITE_USE_FIREBASE_EMULATOR=true` in `.env.local` to point the app at them (`src/services/firebase/config.ts` reads it; must be the literal string `'true'`). Copy `.env.example` → `.env.local` for the `VITE_FIREBASE_*` config.
 
-## Current state of the tree (last verified 2026-07-16)
+## Current state of the tree (last verified 2026-07-17)
 
 These are facts, not standards — the standards are in "Definition of done". **If your change alters any fact here, update this section in the same commit.**
 
@@ -43,15 +43,16 @@ These are facts, not standards — the standards are in "Definition of done". **
 - **Approval routes are server-owned.** The approval engine was rewritten (July 2026): routes live only in [functions/src/shared/approval/routes.ts](functions/src/shared/approval/routes.ts), clients submit a resource identity only (never a `steps` array), self-approval is blocked (approval_engine.md §23, superAdmin override is audit-logged as `approve_override`), and every state change (approve/reject/return/cancel) runs in a Firestore transaction that also closes out the live `approvalSteps` doc. Adding a new approvable resource = adding a route entry + registering a resolved-handler (see `hr/appraisal/index.ts`).
 - **`Employee` in `src/types/employee.types.ts` is the shipped shape** (mirrors what `createEmployee` writes: `position`, `employmentStatus`, ISO-string dates). The PRD §12.1 schema (`TaxStatus`, `EmployeeCompensation`, etc.) sits below it in a clearly-marked PLANNED section — do not use those in shipped code paths yet.
 - **Vite warns that the main JS chunk is >500 kB** — a warning, not a failure. Code-splitting is future work; don't treat the warning as a regression you introduced.
+- **Design tokens are v2 ("Warm Utilitarian")**: `src/styles/globals.css` matches STYLE_GUIDE.md v2 1:1 (Terracotta `#B5502C` primary, Warm Linen bg, sunken-surface token, full dark set, radii 4/8/12/12), fonts are DM Sans / Fraunces / JetBrains Mono loaded via Google Fonts `<link>` in `index.html`, and `Button`'s secondary variant is filled Deep Olive (ghost is bordered). Inputs/Selects are 48px (`h-12`) on a sunken background.
+- **Every module doc has a `/demo` preview** — including Incident Reports, Lost & Found, Exit Interview (F009), Employment Application (F010), and the Security checkpoint-registration form. Demo code carries no runtime `firebase/*` imports (type-only `Timestamp` imports are the allowed exception).
+- **`docs/core/HR_OPERATIONS.md` is the refined HR & Ops PRD (v2.0.0)** — it replaced its own v1 draft; code cites its §9.x/§12.x numbering. The one-off `docs/core/PRD v2.md` file no longer exists.
+- **Docs were reality-audited July 2026**: platform/core docs mark unshipped functions/collections/components as "Planned"; `docs/CLAUDE` deleted; `docs/modules/puchasing.md` renamed to `purchasing.md`; `src/firestore.rules` read-grants fixed (`finance` role can read approvalRequests, bakery/wholefood leaders can read their department's employees).
 
 ## Documentation is the source of truth
 
 `docs/` (core/, modules/, platform/) holds the authoritative product/architecture specs, and the code is written to trace back to them. Comments cite sections directly, e.g. `// API.md §7`, `// DATABASE.md §23`, `// RBAC.md §4`. **Before changing behavior in a module, read its doc** — and when code and doc disagree, the doc usually reflects intent while the code reflects what's actually shipped.
 
-Two docs will mislead you about the stack — trust `package.json` and the actual source over both:
-
-- `docs/README.md` lists an aspirational stack (MUI, React Hook Form, Zod) the code does not use.
-- `docs/CLAUDE` (no extension) is an older, superseded guidelines doc; its stack list (React Query, React Hook Form, FCM) is also aspirational. This file — the root `CLAUDE.md` — wins.
+The docs were reality-audited in July 2026: stack claims now match `package.json`, unshipped functions/collections/components are explicitly marked "Planned", and the old misleading pair is gone (`docs/README.md` was rewritten to the real stack; `docs/CLAUDE`, the superseded extensionless guidelines doc, was deleted — git history keeps it). If a doc and `package.json` ever disagree again, trust `package.json` and this file.
 
 ## Architecture
 
@@ -80,6 +81,17 @@ Feature-first under [src/features/](src/features/)`<module>/` (pages, components
 `src/constants/` (e.g. `collections.ts`, `permissions.ts`, `roles.ts`) is mirrored by a subset in `functions/src/lib/` because frontend and functions are separate TypeScript projects that can't share imports. This duplication is deliberate and flagged in code comments — when you change a collection name, permission string, or role, **update both sides.**
 
 Firestore rules live in **one place only**: `src/firestore.rules` (`src/firebase.json` resolves paths relative to `src/`, so that copy is what a deploy consumes). A root-level duplicate used to exist and was deleted — don't recreate it.
+
+### Demo mock-up pages (`/demo/*`)
+
+Every module — built or not — gets a frontend-only preview under `/demo/*`, indexed at [src/features/demo/DemoHubPage.tsx](src/features/demo/DemoHubPage.tsx). These are how new module UI gets built and reviewed *before* the backend (Cloud Functions, Firestore rules, approval routes) exists for it — expect to be asked to build one from a `docs/modules/*.md` spec with no functions/rules work at all.
+
+- Routes are mounted under the **public** `AuthLayout` in [src/routes/routes.tsx](src/routes/routes.tsx) (no auth, no RBAC), always as `/demo/...`, never nested under the protected `/hr`, `/security`, etc. trees. Static `/new`-style routes must be registered before `/:id` param routes in the same children array to avoid the param route swallowing them.
+- **No Firebase calls of any kind** — no `callFunction`, no Firestore reads/writes. All data is a local `MOCK_*` array/const per feature. Simulated writes (approve, move stage, generate a document) update local component state and fire a `useToast()` success message like `"... (demo) — nothing was written to a backend."`; they never persist.
+- Per-module file split, e.g. `src/features/hr/onboarding/`: `<module>DemoData.ts` (types + `MOCK_*` data), `<module>Format.ts` (label maps, badge-variant maps, date/currency formatters), and one `*DemoPage.tsx` per screen (List → Detail → Form is the common trio). Mock data and shared lookups (e.g. `REQUISITION_OUTLETS`, `POSITION_LABELS`) are deliberately re-exported and reused across sibling demo modules rather than duplicated.
+- Every demo page shows a dashed-border banner: *"Demo — mock data, no Firebase calls."* Match this convention on any new demo page.
+- UI is built only from the primitives in `src/components/ui/` (`Button`, `Card`/`CardHeader`/`CardTitle`/`CardDescription`/`CardContent`, `Badge`, `Input`, `Label`, `Select`, `Textarea`, `Spinner`, `Skeleton`) plus `src/components/shared/EmptyState`. **There is no Dialog/Modal** — multi-step or confirm flows are separate routed pages, not modals. `Button` has no `asChild`/Slot support — use `useNavigate()` + `onClick`, not `<Button asChild><Link>`.
+- Gotcha: a `const` narrowed by an early-return guard (`if (!source) return ...`) does **not** stay narrowed inside a closure (event handler, callback) defined later in the same component when the variable came from `useState` or `.find()` — TS re-widens it to possibly-`undefined` inside the closure. Extract a plain local (`const id = source.id`) right after the guard and reference that inside the closure instead of the original variable.
 
 ## Definition of done
 

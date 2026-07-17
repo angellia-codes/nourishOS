@@ -1,9 +1,11 @@
 # NourishOS Development Roadmap
 
-Version: 1.0  
+Version: 1.1  
 Product: Nourish Operational System (NourishOS)
 
-Status: Planning
+Status: In development (milestone phase)
+
+> **Current state (2026-07-17):** shipped so far — core platform (Google auth, RBAC, layouts, navigation), HR Appraisal (incl. AI insights), HR Employee Database, and Security patrol/checkpoints (built ahead of plan; it was not one of the original phases below). Every other module currently ships as a frontend-only mock-up under `/demo` (see CLAUDE.md "Demo mock-up pages") ahead of its backend phase. The phase plan below is otherwise unchanged.
 
 ---
 
@@ -59,8 +61,8 @@ Establish the technical foundation and development standards.
 - Firebase project (Staging)
 - Firebase project (Production)
 - React + Vite + TypeScript setup
-- Material UI integration
-- ESLint + Prettier
+- Tailwind CSS + shadcn-style UI primitives
+- ESLint + Prettier (still pending — not yet installed; `npm run build` is the quality gate)
 - Environment configuration
 - CI/CD pipeline (initial)
 - Design tokens
@@ -394,7 +396,7 @@ A feature is complete when:
 - Functional requirements are met.
 - UI follows the design system.
 - Accessibility requirements are satisfied.
-- Tests pass.
+- `npm run build` passes with zero errors and the flow was exercised in the dev server (no test runner exists yet — see CLAUDE.md).
 - Security rules are updated.
 - Documentation is complete.
 - Code review is approved.

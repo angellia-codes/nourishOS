@@ -32,7 +32,7 @@ service cloud.firestore {
     // ---- Core ----
     match /users/{userId} {
       allow read: if isSignedIn() && (request.auth.uid == userId || hasAnyRole(['superAdmin', 'director', 'generalManager', 'hrManager']));
-      allow write: if false; // createUserProfile / updateUserProfile Cloud Functions only
+      allow write: if false; // server-side only — user docs are maintained via superAdmin tooling; admin callables are planned (AUTHENTICATION.md §18)
     }
 
     // ---- HR: Employee Database ----
@@ -41,7 +41,7 @@ service cloud.firestore {
       // their own department. Salary is deliberately NOT stored on this doc
       // (see employee.types.ts) since rules can't hide individual fields.
       allow read: if hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
-        (hasAnyRole(['kitchenLeader', 'barLeader', 'floorLeader', 'outletManager']) &&
+        (hasAnyRole(['kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader', 'wholefoodLeader', 'outletManager']) &&
           resource.data.departmentId == request.auth.token.departmentId);
       allow write: if false; // createEmployee / updateEmployee / archiveEmployee Cloud Functions only
     }
@@ -70,7 +70,7 @@ service cloud.firestore {
     match /approvalRequests/{requestId} {
       allow read: if isSignedIn() && (
         resource.data.requestedBy == request.auth.uid ||
-        hasAnyRole(['hrManager', 'financeManager', 'generalManager', 'director', 'superAdmin'])
+        hasAnyRole(['hrManager', 'finance', 'generalManager', 'director', 'superAdmin'])
       );
       allow write: if false;
     }
