@@ -45,6 +45,8 @@ export interface CreateTaskInternalInput {
   assignedBy: string
   priority: (typeof PRIORITIES)[number]
   dueDate?: string // ISO YYYY-MM-DD or full ISO datetime — converted to Timestamp here
+  /** Free-form labels for cross-module filtering (e.g. ['dailyUpdate'], ['incident']) — TASK_ENGINE.md §5. */
+  tags?: string[]
 }
 
 /**
@@ -79,6 +81,7 @@ export async function createTaskInternal(input: CreateTaskInternalInput): Promis
     priority: input.priority,
     taskStatus: 'assigned',
     dueDate,
+    tags: input.tags ?? [],
     ...newDocumentBaseFields(input.assignedBy),
   })
 

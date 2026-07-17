@@ -90,12 +90,13 @@ export const submitDailyReport = onCall({ region: REGION }, async (request) => {
       throw new AppError('already-exists', 'A daily update has already been submitted for this outlet/department today.')
     }
 
-    const openTasksSnap = await db
-      .collection(COLLECTIONS.TASKS)
-      .where('tags', 'array-contains', DAILY_UPDATE_TAG)
-      .where('assignedTo', 'array-contains', user.uid)
-      .get()
-    const openTasks = openTasksSnap.docs.filter((doc) => !CLOSED_TASK_STATUSES.includes(doc.data().taskStatus))
+    // Firestore forbids two array-contains filters in one query, so filter by
+    // assignee (usually a small set) then narrow to dailyUpdate + open in memory.
+    const openTasksSnap = await db.collection(COLLECTIONS.TASKS).where('assignedTo', 'array-contains', user.uid).get()
+    const openTasks = openTasksSnap.docs.filter((doc) => {
+      const data = doc.data()
+      return (data.tags ?? []).includes(DAILY_UPDATE_TAG) && !CLOSED_TASK_STATUSES.includes(data.taskStatus)
+    })
 
     const reviews = input.carriedForwardReviews ?? []
     const reviewedIds = new Set(reviews.map((r) => r.taskId))
@@ -137,6 +138,7 @@ export const submitDailyReport = onCall({ region: REGION }, async (request) => {
           assignedBy: user.uid,
           priority: task.priority,
           dueDate: task.dueDate ?? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+          tags: [DAILY_UPDATE_TAG],
         }),
       ),
     )
@@ -152,6 +154,7 @@ export const submitDailyReport = onCall({ region: REGION }, async (request) => {
           assignedTo: user.uid,
           assignedBy: user.uid,
           priority: challenge.severity === 'high' ? 'high' : 'medium',
+          tags: [DAILY_UPDATE_TAG],
         })
         return { ...challenge, taskId }
       }),

@@ -100,6 +100,7 @@ export const createIncidentReport = onCall({ region: REGION }, async (request) =
         assignedTo: assigneeUids,
         assignedBy: user.uid,
         priority: input.severity,
+        tags: ['incident'],
       })
     }
 

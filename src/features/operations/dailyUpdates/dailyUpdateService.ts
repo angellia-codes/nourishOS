@@ -50,11 +50,17 @@ export function subscribeToDailyReports(onChange: (reports: DailyReport[]) => vo
 
 const CLOSED_TASK_STATUSES = new Set(['completed', 'verified', 'closed', 'cancelled', 'archived'])
 
-/** Open dailyUpdate-tagged tasks assigned to `uid` — Section B's carried-forward review list. Closed-status filtering happens client-side over one subscription, matching the employees/checkpoints convention. */
+/**
+ * Open dailyUpdate-tagged tasks assigned to `uid` — Section B's carried-forward
+ * review list. Firestore forbids two array-contains filters in one query, so we
+ * subscribe by assignee only and narrow to the dailyUpdate tag + open status
+ * client-side (matching the employees/checkpoints one-subscription convention).
+ */
 export function subscribeToMyCarriedForwardTasks(uid: string, onChange: (tasks: Task[]) => void): Unsubscribe {
   return subscribeToCollection<Task>(
     COLLECTIONS.TASKS,
-    [where('tags', 'array-contains', 'dailyUpdate'), where('assignedTo', 'array-contains', uid)],
-    (tasks) => onChange(tasks.filter((task) => !CLOSED_TASK_STATUSES.has(task.taskStatus))),
+    [where('assignedTo', 'array-contains', uid)],
+    (tasks) =>
+      onChange(tasks.filter((task) => (task.tags ?? []).includes('dailyUpdate') && !CLOSED_TASK_STATUSES.has(task.taskStatus))),
   )
 }
