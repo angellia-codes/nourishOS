@@ -530,8 +530,11 @@ Future
 | Closing Checklist      |   ✅   |  View   |     ❌      |    ❌    |   ❌    |
 | Daily Reports          |   ✅   |   ✅    |    View     |   View   |  View   |
 | Incident Reports       | Create |  View   |    View     |  Manage  |  View   |
+| Lost & Found           | Create |  Manage |     ❌      |  Create  |   ❌    |
 | Work Orders            | Create | Approve |   Manage    |   View   |   ❌    |
 | Preventive Maintenance |   ❌   |  View   |   Manage    |    ❌    |   ❌    |
+
+> **Reconciled 2026-07-18**: this table is the coarse, at-a-glance version. `incident-report.md` §8 has the actual shipped permission matrix — it's type-based (Engineering only sees equipment-type incidents, Security only theft/security-type, HR gets `view_sensitive` for workplace injury) and severity-aware (any `critical` incident notifies GM regardless of type), none of which this table's flat "View"/"Manage" columns capture. `lost-and-found-report.md` §7 is the shipped Lost & Found matrix (this table's row is new, added to reflect what's actually built — see `functions/src/operations/lostFound/`). Treat the per-module docs as authoritative for RBAC; this table is an index, not a source of truth.
 
 ---
 
