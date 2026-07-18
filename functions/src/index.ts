@@ -29,6 +29,17 @@ export { seedAppraisalTemplates, createAppraisal, submitAppraisal, generateAppra
 // ---- HR: Employee Database ----
 export { createEmployee, updateEmployee, archiveEmployee } from './hr/employees'
 
+// ---- HR: Recruitment (Employee Requisition) ----
+export { createRequisition, submitRequisition, cancelRequisition } from './hr/recruitment'
+
+// ---- HR: Disciplinary Actions ----
+export {
+  createDisciplinaryAction,
+  submitDisciplinaryAction,
+  acknowledgeDisciplinaryAction,
+  checkDisciplinaryExpiry,
+} from './hr/disciplinary'
+
 // ---- Operations: Lost & Found ----
 export {
   createLostFoundItem,

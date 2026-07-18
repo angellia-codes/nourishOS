@@ -33,6 +33,24 @@ const APPROVAL_ROUTES: Record<string, RouteResolver> = {
     }
     return base
   },
+  // hr/requisition — employee-requisition.md §5: Dept Leader/Outlet Manager →
+  // HR Manager → GM, plus Director when unbudgeted. An HR-Manager-submitted
+  // requisition skips straight to GM (§5 row 4) so the requester isn't asked to
+  // approve their own request (self-approval is blocked by the engine).
+  'hr/requisition': ({ budgeted = true, requestedByRole }) => {
+    const base: ApprovalStepDefinition[] =
+      requestedByRole === 'hrManager'
+        ? [{ sequence: 1, approverRole: 'generalManager' }]
+        : [
+            { sequence: 1, approverRole: 'outletManager' },
+            { sequence: 2, approverRole: 'hrManager' },
+            { sequence: 3, approverRole: 'generalManager' },
+          ]
+    if (!budgeted) {
+      base.push({ sequence: base.length + 1, approverRole: 'director' })
+    }
+    return base
+  },
   // operations/workOrder, ... — added as modules ship.
 }
 

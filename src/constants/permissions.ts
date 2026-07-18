@@ -20,6 +20,7 @@ export const PERMISSION_MODULES = {
   DASHBOARD: 'dashboard',
   EMPLOYEES: 'employees',
   RECRUITMENT: 'recruitment',
+  DISCIPLINARY: 'disciplinary',
   TRAINING: 'training',
   APPRAISALS: 'appraisals',
   DOCUMENTS: 'documents',
@@ -64,6 +65,15 @@ export const PERMISSIONS = {
   RECRUITMENT_CREATE: permission(PERMISSION_MODULES.RECRUITMENT, ACTIONS.CREATE),
   RECRUITMENT_UPDATE: permission(PERMISSION_MODULES.RECRUITMENT, ACTIONS.UPDATE),
   RECRUITMENT_APPROVE: permission(PERMISSION_MODULES.RECRUITMENT, ACTIONS.APPROVE),
+  RECRUITMENT_MANAGE: permission(PERMISSION_MODULES.RECRUITMENT, ACTIONS.MANAGE),
+
+  // Employee Disciplinary Action (employee-disciplinary-action.md §6). Department
+  // Leaders create/acknowledge for their own team; MANAGE is HR's cross-department
+  // grant. Acknowledgment entitlement per party is validated server-side by role.
+  DISCIPLINARY_CREATE: permission(PERMISSION_MODULES.DISCIPLINARY, ACTIONS.CREATE),
+  DISCIPLINARY_READ: permission(PERMISSION_MODULES.DISCIPLINARY, ACTIONS.READ),
+  DISCIPLINARY_ACKNOWLEDGE: permission(PERMISSION_MODULES.DISCIPLINARY, 'acknowledge'),
+  DISCIPLINARY_MANAGE: permission(PERMISSION_MODULES.DISCIPLINARY, ACTIONS.MANAGE),
 
   // Performance Appraisal — extends HR.md §10. All review types route through
   // GM approval (confirmed decision, not a doc default); insight generation

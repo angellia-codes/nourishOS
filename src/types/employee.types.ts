@@ -95,7 +95,9 @@ export type Religion = 'hindu' | 'christian' | 'muslim'
 /** Indonesian personal income tax (PPh21) status codes. */
 export type TaxStatus = 'TK0' | 'TK1' | 'TK2' | 'TK3' | 'K0' | 'K1' | 'K2' | 'K3'
 
-export type DisciplinaryType = 'coaching' | 'verbalWarning' | 'SP1' | 'SP2' | 'SP3' | 'termination'
+// DisciplinaryType is defined in disciplinary.types.ts (the shipped Employee
+// Disciplinary Action module, employee-disciplinary-action.md §3) — the PLANNED
+// stub that used to sit here was superseded by that real, lowercase-keyed type.
 
 /**
  * Sub-collection at employees/{employeeId}/compensation/current — split out

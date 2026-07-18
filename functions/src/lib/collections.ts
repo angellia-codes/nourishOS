@@ -14,6 +14,8 @@ export const COLLECTIONS = {
 
   EMPLOYEES: 'employees',
   EMPLOYEE_ACTIVITIES: 'employeeActivities',
+  RECRUITMENTS: 'recruitments',
+  DISCIPLINARY_ACTIONS: 'disciplinaryActions',
 
   APPROVAL_WORKFLOWS: 'approvalWorkflows',
   APPROVAL_REQUESTS: 'approvalRequests',

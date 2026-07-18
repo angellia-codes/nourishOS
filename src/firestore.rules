@@ -183,6 +183,33 @@ service cloud.firestore {
       allow write: if false; // createExpenseRequest / submitExpenseRequest / markExpensePaid + approval flow only
     }
 
+    // employee-requisition.md §7 — the requester reads their own; HR Manager /
+    // GM / Director / Super Admin read all; an outlet's manager (the step-1
+    // approver) reads their outlet's requisitions. Writes are Cloud-Function-
+    // only (createRequisition / submitRequisition / cancelRequisition + approval flow).
+    match /recruitments/{requisitionId} {
+      allow read: if isSignedIn() && (
+        resource.data.requestedBy == request.auth.uid ||
+        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
+        (hasAnyRole(['outletManager']) && resource.data.outletId == request.auth.token.outletId)
+      );
+      allow write: if false;
+    }
+
+    // employee-disciplinary-action.md §6 — HR Manager / GM / Super Admin read
+    // all; a Department Leader (outletManager) reads only their own department's
+    // records (a Kitchen Leader can't see a Floor employee's history). Employee
+    // self-view is deferred: the shipped Employee record carries no uid link, so
+    // rules can't match a signed-in user to their own employee doc yet. Writes
+    // are Cloud-Function-only (create/submit/acknowledge + scheduled expiry).
+    match /disciplinaryActions/{actionId} {
+      allow read: if isSignedIn() && (
+        hasAnyRole(['hrManager', 'generalManager', 'superAdmin']) ||
+        (hasAnyRole(['outletManager']) && resource.data.departmentId == request.auth.token.departmentId)
+      );
+      allow write: if false;
+    }
+
     // ---- Default deny ----
     match /{document=**} {
       allow read, write: if false;

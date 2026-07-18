@@ -23,6 +23,10 @@ export interface ApprovalRouteContext {
   amount?: number
   outletId?: string | null
   departmentId?: string | null
+  /** employee-requisition.md §5 — unbudgeted requisitions extend the chain to Director. */
+  budgeted?: boolean
+  /** Requester's roleId — lets a route skip a step the requester would otherwise self-approve (self-approval is blocked). */
+  requestedByRole?: string
 }
 
 /**

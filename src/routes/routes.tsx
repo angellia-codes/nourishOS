@@ -52,6 +52,12 @@ import { ExpenseRequestFormDemoPage } from '@/features/finance/ExpenseRequestFor
 import { ExpenseRequestListPage } from '@/features/finance/pages/ExpenseRequestListPage'
 import { ExpenseRequestFormPage } from '@/features/finance/pages/ExpenseRequestFormPage'
 import { ExpenseRequestDetailPage } from '@/features/finance/pages/ExpenseRequestDetailPage'
+import { RequisitionListPage } from '@/features/hr/recruitment/pages/RequisitionListPage'
+import { RequisitionFormPage } from '@/features/hr/recruitment/pages/RequisitionFormPage'
+import { RequisitionDetailPage } from '@/features/hr/recruitment/pages/RequisitionDetailPage'
+import { DisciplinaryListPage } from '@/features/hr/disciplinary/pages/DisciplinaryListPage'
+import { DisciplinaryFormPage } from '@/features/hr/disciplinary/pages/DisciplinaryFormPage'
+import { DisciplinaryDetailPage } from '@/features/hr/disciplinary/pages/DisciplinaryDetailPage'
 import { StockLevelListDemoPage } from '@/features/inventory/StockLevelListDemoPage'
 import { StockMovementFormDemoPage } from '@/features/inventory/StockMovementFormDemoPage'
 import { SopLibraryListDemoPage } from '@/features/documents/SopLibraryListDemoPage'
@@ -127,6 +133,12 @@ export const router = createBrowserRouter([
               { path: 'employees/:employeeId', element: <EmployeeProfilePage /> },
               { path: 'employees/:employeeId/edit', element: <EmployeeFormPage /> },
               { path: 'appraisals/:appraisalId', element: <AppraisalReviewPage /> },
+              { path: 'recruitment', element: <RequisitionListPage /> },
+              { path: 'recruitment/new', element: <RequisitionFormPage /> },
+              { path: 'recruitment/:requisitionId', element: <RequisitionDetailPage /> },
+              { path: 'disciplinary', element: <DisciplinaryListPage /> },
+              { path: 'disciplinary/new', element: <DisciplinaryFormPage /> },
+              { path: 'disciplinary/:actionId', element: <DisciplinaryDetailPage /> },
             ],
           },
           {
