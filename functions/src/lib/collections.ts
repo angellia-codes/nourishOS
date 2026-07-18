@@ -36,5 +36,7 @@ export const COLLECTIONS = {
   WORK_ORDERS: 'workOrders',
   LOST_FOUND_ITEMS: 'lostFoundItems',
 
+  EXPENSE_REQUESTS: 'expenseRequests',
+
   SYSTEM_SETTINGS: 'systemSettings',
 } as const

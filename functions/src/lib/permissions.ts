@@ -17,4 +17,6 @@ export const PERMISSIONS = {
   INCIDENTS_CREATE: 'incidents.create',
   INCIDENTS_MANAGE: 'incidents.manage',
   DAILY_UPDATES_SUBMIT: 'dailyUpdates.submit',
+  EXPENSE_REQUESTS_SUBMIT: 'expenseRequests.submit',
+  EXPENSE_REQUESTS_PAY: 'expenseRequests.pay',
 } as const

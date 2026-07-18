@@ -49,6 +49,9 @@ import { DashboardDemoPage } from '@/features/dashboard/DashboardDemoPage'
 import { ExpenseRequestListDemoPage } from '@/features/finance/ExpenseRequestListDemoPage'
 import { ExpenseRequestDetailDemoPage } from '@/features/finance/ExpenseRequestDetailDemoPage'
 import { ExpenseRequestFormDemoPage } from '@/features/finance/ExpenseRequestFormDemoPage'
+import { ExpenseRequestListPage } from '@/features/finance/pages/ExpenseRequestListPage'
+import { ExpenseRequestFormPage } from '@/features/finance/pages/ExpenseRequestFormPage'
+import { ExpenseRequestDetailPage } from '@/features/finance/pages/ExpenseRequestDetailPage'
 import { StockLevelListDemoPage } from '@/features/inventory/StockLevelListDemoPage'
 import { StockMovementFormDemoPage } from '@/features/inventory/StockMovementFormDemoPage'
 import { SopLibraryListDemoPage } from '@/features/documents/SopLibraryListDemoPage'
@@ -146,7 +149,14 @@ export const router = createBrowserRouter([
               { path: 'checkpoints/:checkpointId/patrol', element: <PatrolCapturePage /> },
             ],
           },
-          { path: 'finance', element: <ModulePlaceholder title="Finance" /> },
+          {
+            path: 'finance',
+            children: [
+              { index: true, element: <ExpenseRequestListPage /> },
+              { path: 'expenses/new', element: <ExpenseRequestFormPage /> },
+              { path: 'expenses/:expenseId', element: <ExpenseRequestDetailPage /> },
+            ],
+          },
           { path: 'purchasing', element: <ModulePlaceholder title="Purchasing" /> },
           { path: 'inventory', element: <ModulePlaceholder title="Inventory" /> },
           { path: 'crm', element: <ModulePlaceholder title="CRM" /> },

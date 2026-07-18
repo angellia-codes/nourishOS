@@ -95,6 +95,10 @@ export const PERMISSIONS = {
   EXPENSE_REQUESTS_SUBMIT: permission(PERMISSION_MODULES.EXPENSE_REQUESTS, ACTIONS.SUBMIT),
   EXPENSE_REQUESTS_APPROVE: permission(PERMISSION_MODULES.EXPENSE_REQUESTS, ACTIONS.APPROVE),
   EXPENSE_REQUESTS_REJECT: permission(PERMISSION_MODULES.EXPENSE_REQUESTS, ACTIONS.REJECT),
+  // expense-request.md §7 — disbursing money is a distinct action from
+  // approving it (approval authorizes; pay moves cash), so it gets its own
+  // Finance-only permission rather than riding on APPROVE.
+  EXPENSE_REQUESTS_PAY: permission(PERMISSION_MODULES.EXPENSE_REQUESTS, 'pay'),
 
   ANNOUNCEMENTS_PUBLISH: permission(PERMISSION_MODULES.ANNOUNCEMENTS, ACTIONS.PUBLISH),
 

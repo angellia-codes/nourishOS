@@ -169,6 +169,20 @@ service cloud.firestore {
       allow write: if false; // submitDailyReport Cloud Function only
     }
 
+    // ---- Finance: Expense Requests ----
+    // expense-request.md §7 view scope: requester sees own; Finance/GM/Director
+    // see all; the outlet's manager sees their outlet's requests (the "team"
+    // row — outletManager is the "Department Manager" approver). Money-moving
+    // writes are Cloud-Function-only like everything else.
+    match /expenseRequests/{requestId} {
+      allow read: if isSignedIn() && (
+        resource.data.requestedBy == request.auth.uid ||
+        hasAnyRole(['finance', 'generalManager', 'director', 'superAdmin']) ||
+        (hasAnyRole(['outletManager']) && resource.data.outletId == request.auth.token.outletId)
+      );
+      allow write: if false; // createExpenseRequest / submitExpenseRequest / markExpensePaid + approval flow only
+    }
+
     // ---- Default deny ----
     match /{document=**} {
       allow read, write: if false;

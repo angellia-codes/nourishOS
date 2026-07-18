@@ -48,3 +48,6 @@ export {
   sendComplianceAlerts,
   sendDailyDigest,
 } from './operations/dailyUpdates'
+
+// ---- Finance: Expense Requests ----
+export { createExpenseRequest, submitExpenseRequest, markExpensePaid } from './finance/expenseRequests'
