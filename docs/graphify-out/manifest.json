@@ -1,0 +1,12 @@
+{
+  "plans/candidate-application-portal.md": {
+    "mtime": 1784526932.112983,
+    "ast_hash": "2c8035698da047080de4fddd7adb4f2a",
+    "semantic_hash": "2c8035698da047080de4fddd7adb4f2a"
+  },
+  "specs/candidate-application-portal-design.md": {
+    "mtime": 1784528868.0733955,
+    "ast_hash": "df78aa389161f76ce9af0b229e413ea3",
+    "semantic_hash": "df78aa389161f76ce9af0b229e413ea3"
+  }
+}
