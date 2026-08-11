@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ShieldCheck, ChevronRight, AlertTriangle } from 'lucide-react'
-import { Card, CardContent, Spinner } from '@/components/ui'
+import { Card, CardContent, Spinner, StatusPill } from '@/components/ui'
 import { EmptyState } from '@/components/shared'
 import * as securityService from '@/features/security/services/securityService'
 import { formatRelativeTime, isPast } from '@/utils'
-import { cn } from '@/lib/utils'
 import type { Checkpoint } from '@/types'
 
 function isOverdue(checkpoint: Checkpoint): boolean {
@@ -55,26 +54,19 @@ export function CheckpointListPage() {
             onClick={() => navigate(`/security/checkpoints/${checkpoint.id}/patrol`)}
           >
             <CardContent className="flex items-center gap-4 p-4">
-              <div
-                className={cn(
-                  'flex h-10 w-10 shrink-0 items-center justify-center rounded-full',
-                  overdue ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success',
-                )}
-              >
-                {overdue ? (
-                  <AlertTriangle className="h-5 w-5" aria-hidden="true" />
-                ) : (
-                  <ShieldCheck className="h-5 w-5" aria-hidden="true" />
-                )}
-              </div>
-
               <div className="flex-1">
-                <p className="font-medium text-foreground">{checkpoint.name}</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-medium text-foreground">{checkpoint.name}</p>
+                  <StatusPill
+                    tone={overdue ? 'warning' : 'success'}
+                    icon={overdue ? AlertTriangle : ShieldCheck}
+                    label={overdue ? 'Overdue' : 'On Time'}
+                  />
+                </div>
                 <p className="text-xs text-muted-foreground">
                   {checkpoint.lastVisitedAt
                     ? `Last patrolled ${formatRelativeTime(checkpoint.lastVisitedAt)}`
                     : 'Never patrolled'}
-                  {overdue && ' \u00b7 Overdue'}
                 </p>
               </div>
 
