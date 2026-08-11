@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Lock, Plus, Trash2 } from 'lucide-react'
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Select, Spinner, Textarea } from '@/components/ui'
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Select, Spinner, StatusPill, Textarea } from '@/components/ui'
 import { useAuth, useToast } from '@/hooks'
 import { PRIORITY } from '@/constants/statuses'
 import * as employeeService from '@/features/hr/services/employeeService'
 import * as dailyUpdateService from '../dailyUpdateService'
-import { agingBadgeVariant, agingLabel } from '../dailyUpdateAging'
+import { agingIcon, agingLabel, agingTone } from '../dailyUpdateAging'
 import { CHALLENGE_CATEGORY_LABELS, formatReportDate } from '../dailyUpdateFormat'
 import type { ChallengeCategory, ChallengeSeverity, Employee, Task } from '@/types'
 
@@ -173,9 +173,11 @@ export function DailyUpdateFormPage() {
               <div key={review.task.id} className="flex flex-col gap-2 rounded-md border border-border p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-sm font-medium text-foreground">{review.task.title}</p>
-                  <Badge variant={agingBadgeVariant(review.task.daysOpen ?? 0)}>
-                    Day {review.task.daysOpen ?? 0} &middot; {agingLabel(review.task.daysOpen ?? 0)}
-                  </Badge>
+                  <StatusPill
+                    tone={agingTone(review.task.daysOpen ?? 0)}
+                    icon={agingIcon(review.task.daysOpen ?? 0)}
+                    label={`Day ${review.task.daysOpen ?? 0} · ${agingLabel(review.task.daysOpen ?? 0)}`}
+                  />
                 </div>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <Select
