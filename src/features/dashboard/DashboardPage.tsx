@@ -8,7 +8,7 @@ export function DashboardPage() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4">
       <div>
-        <h1 className="font-display text-2xl text-foreground">Good day, {firstName}</h1>
+        <h1 className="font-display text-2xl font-semibold text-foreground">Good day, {firstName}</h1>
         <p className="text-sm text-muted-foreground">{profile?.roleId}</p>
       </div>
 

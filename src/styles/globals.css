@@ -3,36 +3,41 @@
 @tailwind utilities;
 
 /**
- * Design tokens — sourced 1:1 from docs/core/STYLE_GUIDE.md (v2, Warm Utilitarian).
+ * Design tokens — sourced 1:1 from docs/core/STYLE_GUIDE.md (v3, Basalt).
  *
  * Note: values are plain hex, not shadcn's usual "H S% L%" triples.
  * tailwind.config.ts references these directly (e.g. bg-primary -> var(--color-primary)).
  * Simpler to keep in sync with the style guide than maintaining an HSL conversion.
+ *
+ * Status colors (success/warning/error/info) ARE the workflow ramp colors
+ * (Approved/Pending/Rejected/Submitted) — STYLE_GUIDE.md § Notifications.
+ * --color-accent shares warning's hex, same rationale as v2: one fewer color
+ * in the palette, "notable" and "caution" read the same here.
  */
 :root {
   /* Brand */
-  --color-primary: #b5502c; /* Terracotta / Spice */
-  --color-primary-foreground: #faf7f2;
-  --color-secondary: #3f4a3a; /* Deep Olive */
-  --color-secondary-foreground: #faf7f2;
-  --color-accent: #c08a2e; /* Warm Ochre — deliberately shares hex with Warning */
-  --color-accent-foreground: #2a2622;
+  --color-primary: #0e4f47; /* Pandan */
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #dde1de; /* neutral chrome — no second brand color, STYLE_GUIDE.md § Buttons */
+  --color-secondary-foreground: #12161a;
+  --color-accent: #b45309; /* shares hex with Warning, see note above */
+  --color-accent-foreground: #ffffff;
 
   /* Surfaces */
-  --color-background: #faf7f2; /* Warm Linen */
+  --color-background: #f4f5f3; /* cool paper, not cream */
   --color-surface: #ffffff;
-  --color-surface-sunken: #f2ede4; /* form inputs, nested panels, alternating rows */
-  --color-border: #e4dbcb;
+  --color-surface-sunken: #edefeb; /* form inputs, nested panels, alternating rows */
+  --color-border: #dde1de;
 
   /* Text */
-  --color-foreground: #2a2622;
-  --color-muted-foreground: #6e655a;
+  --color-foreground: #12161a;
+  --color-muted-foreground: #5a646e;
 
-  /* Status */
-  --color-success: #4c7a4c;
-  --color-warning: #c08a2e;
-  --color-error: #b23b3b;
-  --color-info: #3f6e8c;
+  /* Status — workflow ramp foregrounds */
+  --color-success: #15803d; /* Approved */
+  --color-warning: #b45309; /* Pending approval */
+  --color-error: #b91c1c; /* Rejected */
+  --color-info: #1d4ed8; /* Submitted */
 
   /* Radii — per STYLE_GUIDE.md §Border Radius (cards/dialogs 12px, buttons 8px) */
   --radius-sm: 4px;
@@ -42,25 +47,26 @@
 }
 
 .dark {
-  --color-primary: #d97b4f;
-  --color-primary-foreground: #211d19;
-  --color-secondary: #8fa383;
-  --color-secondary-foreground: #211d19;
-  --color-accent: #d9a64e;
-  --color-accent-foreground: #211d19;
+  /* Night pass — purpose-built, not an inversion of Basalt. STYLE_GUIDE.md § Dark mode */
+  --color-primary: #35d0a5;
+  --color-primary-foreground: #0e1214;
+  --color-secondary: #2a3338;
+  --color-secondary-foreground: #e8edea;
+  --color-accent: #d9822b; /* lifted warning tint for dark legibility */
+  --color-accent-foreground: #0e1214;
 
-  --color-background: #211d19;
-  --color-surface: #2a2622;
-  --color-surface-sunken: #201c18;
-  --color-border: #423b33;
+  --color-background: #0e1214;
+  --color-surface: #171c1f;
+  --color-surface-sunken: #141a1c;
+  --color-border: #2a3338;
 
-  --color-foreground: #f2ede4;
-  --color-muted-foreground: #b3a99b;
+  --color-foreground: #e8edea;
+  --color-muted-foreground: #93a0a3;
 
-  --color-success: #7faf7a;
-  --color-warning: #d9a64e;
-  --color-error: #d97066;
-  --color-info: #7fadc9;
+  --color-success: #34b368;
+  --color-warning: #d9822b;
+  --color-error: #e0554f;
+  --color-info: #5b8def;
 }
 
 @layer base {
@@ -69,6 +75,6 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'DM Sans', system-ui, sans-serif;
+    font-family: 'Archivo Variable', system-ui, sans-serif;
   }
 }

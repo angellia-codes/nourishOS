@@ -23,7 +23,7 @@ export function LoginPage() {
     <Card className="w-full max-w-sm">
       <CardContent className="flex flex-col items-center gap-6 p-8 text-center">
         <div>
-          <h1 className="font-display text-3xl text-primary">NourishOS</h1>
+          <h1 className="font-display text-3xl font-semibold text-primary">NourishOS</h1>
           <p className="mt-1 text-sm text-muted-foreground">One Platform. Every Department. Every Outlet.</p>
         </div>
 

@@ -15,7 +15,7 @@ export function Header() {
 
   return (
     <header className="flex h-[72px] shrink-0 items-center justify-between gap-4 border-b border-border bg-surface px-6">
-      <span className="shrink-0 font-display text-lg text-primary">NourishOS</span>
+      <span className="shrink-0 font-display text-lg font-semibold text-primary">NourishOS</span>
 
       <SearchBar />
 

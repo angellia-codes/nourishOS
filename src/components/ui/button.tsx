@@ -8,17 +8,18 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
+        // STYLE_GUIDE.md § Buttons (v3, Basalt): at most one filled primary per screen.
+        // Secondary/ghost are both neutral chrome — no second brand color — differ only by fill.
         primary: 'bg-primary text-primary-foreground hover:bg-primary/90',
-        // STYLE_GUIDE.md § Buttons (v2): secondary = filled Deep Olive; ghost = bordered, transparent fill
-        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/90',
+        secondary: 'border border-border bg-sunken text-secondary-foreground hover:bg-border/40',
         ghost: 'border border-border bg-transparent text-foreground hover:bg-border/50',
         danger: 'bg-destructive text-white hover:bg-destructive/90',
       },
       size: {
-        // STYLE_GUIDE.md: button height 44px, minimum width 120px
-        default: 'h-11 min-w-[120px] px-5',
+        // STYLE_GUIDE.md § Interaction rules: 48px minimum touch target, everywhere, always
+        default: 'h-12 min-w-[120px] px-5',
         sm: 'h-9 px-4 text-[13px]',
-        icon: 'h-10 w-10 rounded-full', // circular icon button per STYLE_GUIDE.md
+        icon: 'h-12 w-12 rounded-full', // circular icon button per STYLE_GUIDE.md
       },
     },
     defaultVariants: {

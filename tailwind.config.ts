@@ -44,10 +44,11 @@ export default {
         xl: 'var(--radius-xl)', // cards / dialogs per STYLE_GUIDE.md
       },
       fontFamily: {
-        // STYLE_GUIDE.md § Typography (v2): DM Sans working font, Fraunces display, JetBrains Mono for IDs/logs
-        sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
-        display: ['Fraunces', 'serif'], // dashboard titles / welcome messages only
-        mono: ['"JetBrains Mono"', 'monospace'],
+        // STYLE_GUIDE.md § Typography (v3, Basalt): Archivo Variable (UI/body), IBM Plex Mono (IDs/logs).
+        // Two families max — `display` reuses Archivo (heavier weight) rather than adding a third face.
+        sans: ['"Archivo Variable"', 'system-ui', 'sans-serif'],
+        display: ['"Archivo Variable"', 'system-ui', 'sans-serif'],
+        mono: ['"IBM Plex Mono"', 'monospace'],
       },
       spacing: {
         // 8-point grid per STYLE_GUIDE.md — extends Tailwind's default scale, doesn't replace it
@@ -58,9 +59,9 @@ export default {
         DEFAULT: '200ms', // STYLE_GUIDE.md motion: 150-250ms
       },
       boxShadow: {
-        // STYLE_GUIDE.md § Shadows — warm-tinted, not neutral black
-        card: '0 2px 10px rgba(80,55,30,.08)',
-        dialog: '0 12px 40px rgba(80,55,30,.16)',
+        // STYLE_GUIDE.md § Shadows — neutral cool-tinted (v3, Basalt), not warm
+        card: '0 2px 10px rgba(15,23,32,.08)',
+        dialog: '0 12px 40px rgba(15,23,32,.16)',
       },
     },
   },

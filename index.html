@@ -4,12 +4,13 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#B5502C" />
-    <!-- STYLE_GUIDE.md § Typography: DM Sans (working font), Fraunces (display), JetBrains Mono (IDs/logs) -->
+    <meta name="theme-color" content="#0E4F47" />
+    <!-- STYLE_GUIDE.md § Typography: Archivo Variable (UI/body), Archivo Narrow (dense HQ tables), IBM Plex Mono (IDs/logs) -->
+    <!-- ponytail: Google Fonts CDN, not self-hosted @fontsource. Basalt doc recommends self-host to avoid a DNS round-trip once the PWA service worker needs fonts cached — no service worker exists yet (CLAUDE.md), so CDN is the lazy-correct choice today. Revisit when PWA lands. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=JetBrains+Mono:wght@400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Archivo+Narrow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
     <title>NourishOS</title>
