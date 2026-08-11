@@ -108,7 +108,14 @@ function getSheet_(collection) {
 }
 
 function rowToDoc_(row) {
-  var fields = row[3] ? JSON.parse(row[3]) : {}
+  var fields = {}
+  if (row[3]) {
+    try {
+      fields = JSON.parse(row[3])
+    } catch (error) {
+      console.error('Skipping row with malformed json, id=' + row[0], error)
+    }
+  }
   fields.id = row[0]
   fields.createdAt = row[1]
   fields.updatedAt = row[2]
@@ -386,7 +393,7 @@ registerActions_({
         !payload.base64 ||
         !payload.fileName ||
         !payload.mimeType ||
-        !payload.fileSizeBytes ||
+        typeof payload.fileSizeBytes !== 'number' ||
         !payload.module ||
         !payload.resourceType ||
         !payload.resourceId

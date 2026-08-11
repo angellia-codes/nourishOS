@@ -31,8 +31,9 @@ live Firestore `roles/{roleId}` docs, not in the repo, so it has to be
 re-entered by hand from whatever's currently deployed.
 
 Deploy as a Web App (**Deploy → New deployment → Web app**, execute as you,
-access anyone) and copy the `/exec` URL — the frontend will need it as
-`VITE_APPS_SCRIPT_URL` once the transport swap (migration phase 3) lands.
+access anyone) and copy the `/exec` URL into `VITE_APPS_SCRIPT_URL` — the
+frontend transport swap has landed (`src/services/appsScript/client.ts`),
+so the app calls this Web App directly once the URL is set.
 
 ## What's here so far
 
@@ -55,3 +56,8 @@ The ~40 business-logic Cloud Functions haven't been ported to actions yet
 (only the generic reads + files + auth exist), and cron triggers aren't set
 up. Firebase itself is fully removed from the frontend and repo already —
 this project is the only backend now.
+
+`collection.list`/`collection.get` currently return the full unfiltered
+collection to any active user — no department/role scoping yet (the old
+`firestore.rules` conditions haven't been ported). Treat this as an open
+security gap until per-module actions land.
