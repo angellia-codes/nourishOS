@@ -54,6 +54,15 @@ var ROW_HEADERS = ['id', 'createdAt', 'updatedAt', 'json']
 function setupSpreadsheetAndDrive() {
   var props = PropertiesService.getScriptProperties()
 
+  if (props.getProperty('SPREADSHEET_ID')) {
+    throw new Error(
+      'Already set up (SPREADSHEET_ID is set) — this would create a duplicate ' +
+        'spreadsheet + Drive folder and orphan the existing one. Clear ' +
+        'SPREADSHEET_ID/DRIVE_ROOT_FOLDER_ID in Script Properties first if you ' +
+        'really want to re-provision.',
+    )
+  }
+
   var ss = SpreadsheetApp.create('NourishOS Data')
   var defaultSheet = ss.getSheets()[0]
 
