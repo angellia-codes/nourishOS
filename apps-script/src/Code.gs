@@ -342,6 +342,21 @@ function requirePermission_(user, permission) {
 
 var ROLES_ = { STAFF: 'staff' }
 
+// registerActions_/ACTIONS_ must exist before the Files/Api sections below
+// call registerActions_ at top level — Apps Script runs top-level statements
+// in file order every execution, so this can't sit down by doPost/doGet
+// where it reads (var initializers aren't hoisted with their value, only
+// declared; this bit us as "Cannot read properties of undefined (reading
+// 'files.upload')" until moved here).
+var ACTIONS_ = {}
+
+function registerActions_(map) {
+  Object.keys(map).forEach(function (name) {
+    if (ACTIONS_[name]) throw new Error('Duplicate action: ' + name)
+    ACTIONS_[name] = map[name]
+  })
+}
+
 // ============================================================================
 // Files — replaces Firebase Storage; direct port of
 // functions/src/shared/fileStorage/{validation,createFileMetadata,deleteFile}.ts
@@ -477,15 +492,9 @@ registerActions_({
 // ============================================================================
 // Api — doGet/doPost router. Mirrors callFunction('name', payload) 1:1: one
 // action name, one JSON payload, one envelope back.
+// (ACTIONS_/registerActions_ itself now lives up by the Auth section — see
+// the comment there for why.)
 // ============================================================================
-var ACTIONS_ = {}
-
-function registerActions_(map) {
-  Object.keys(map).forEach(function (name) {
-    if (ACTIONS_[name]) throw new Error('Duplicate action: ' + name)
-    ACTIONS_[name] = map[name]
-  })
-}
 
 // action: { public: true } skips requireActiveUser_ (only auth.loginWithGoogle today).
 registerActions_({
