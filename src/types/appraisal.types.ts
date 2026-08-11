@@ -1,4 +1,3 @@
-import type { Timestamp } from 'firebase/firestore'
 import type { BaseDocument } from './firestore.types'
 import type { ApprovalStatus } from '@/constants/statuses'
 import type { PositionId } from '@/constants/positions'
@@ -56,7 +55,7 @@ export interface AppraisalSubjectScore {
 export interface AppraisalAIInsights {
   trainingSuggestions: string[]
   developmentComment: string
-  generatedAt: Timestamp
+  generatedAt: string
   generatedBy: string // uid of whoever triggered generation
 }
 

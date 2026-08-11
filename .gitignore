@@ -28,8 +28,10 @@ dist-ssr
 *.sln
 *.sw?
 
-# Firebase
-.firebase/
-firebase-debug.log
-functions/lib/
-functions/node_modules/
+# Apps Script
+apps-script/node_modules/
+apps-script/.clasp.json
+apps-script/.clasprc.json
+
+# graphify cache
+graphify-out/

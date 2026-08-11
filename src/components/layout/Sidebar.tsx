@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard,
   Users,
+  CalendarDays,
   ClipboardList,
   Wallet,
   ShoppingCart,
@@ -22,6 +23,7 @@ import { useUIStore } from '@/store'
 const NAV_ITEMS = [
   { to: ROUTES.DASHBOARD, label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: ROUTES.HR, label: 'HR', icon: Users, end: false },
+  { to: ROUTES.CALENDAR, label: 'Calendar', icon: CalendarDays, end: false },
   { to: ROUTES.OPERATIONS, label: 'Operations', icon: ClipboardList, end: false },
   { to: ROUTES.SECURITY, label: 'Security', icon: Shield, end: false },
   { to: ROUTES.FINANCE, label: 'Finance', icon: Wallet, end: false },

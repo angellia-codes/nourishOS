@@ -1,4 +1,3 @@
-import type { Timestamp } from 'firebase/firestore'
 import type { Role } from '@/constants/roles'
 
 export interface UserProfile {
@@ -12,7 +11,7 @@ export interface UserProfile {
   outletId: string
   status: 'active' | 'inactive' | 'suspended' | 'terminated' | 'pending'
   theme?: 'light' | 'dark' | 'system'
-  lastLogin?: Timestamp
+  lastLogin?: string
 }
 
 /** Resolved permission set for the current session — computed from roleId, not stored per-user. */

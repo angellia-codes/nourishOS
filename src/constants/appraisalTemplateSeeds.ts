@@ -1,4 +1,4 @@
-import { POSITIONS, POSITION_LABELS } from './positions'
+import { POSITION_LABELS, type PositionId } from './positions'
 import type { AppraisalReviewType, AppraisalSubject } from '@/types'
 
 /**
@@ -16,7 +16,7 @@ import type { AppraisalReviewType, AppraisalSubject } from '@/types'
  */
 
 export interface AppraisalTemplateSeed {
-  positionId: (typeof POSITIONS)[keyof typeof POSITIONS]
+  positionId: PositionId
   positionLabel: string
   reviewType: AppraisalReviewType
   subjects: AppraisalSubject[]
@@ -29,7 +29,7 @@ function subjects(list: [string, string][]): AppraisalSubject[] {
 export const APPRAISAL_TEMPLATE_SEEDS: AppraisalTemplateSeed[] = [
   // ---------------------------------------------------------------- Waiter
   {
-    positionId: POSITIONS.WAITER,
+    positionId: 'waiter',
     positionLabel: POSITION_LABELS.waiter,
     reviewType: 'probation',
     subjects: subjects([
@@ -43,7 +43,7 @@ export const APPRAISAL_TEMPLATE_SEEDS: AppraisalTemplateSeed[] = [
     ]),
   },
   {
-    positionId: POSITIONS.WAITER,
+    positionId: 'waiter',
     positionLabel: POSITION_LABELS.waiter,
     reviewType: 'quarterly',
     subjects: subjects([
@@ -57,7 +57,7 @@ export const APPRAISAL_TEMPLATE_SEEDS: AppraisalTemplateSeed[] = [
     ]),
   },
   {
-    positionId: POSITIONS.WAITER,
+    positionId: 'waiter',
     positionLabel: POSITION_LABELS.waiter,
     reviewType: 'annual',
     subjects: subjects([
@@ -73,7 +73,7 @@ export const APPRAISAL_TEMPLATE_SEEDS: AppraisalTemplateSeed[] = [
 
   // --------------------------------------------------------------- Barista
   {
-    positionId: POSITIONS.BARISTA,
+    positionId: 'barista',
     positionLabel: POSITION_LABELS.barista,
     reviewType: 'probation',
     subjects: subjects([
@@ -86,7 +86,7 @@ export const APPRAISAL_TEMPLATE_SEEDS: AppraisalTemplateSeed[] = [
     ]),
   },
   {
-    positionId: POSITIONS.BARISTA,
+    positionId: 'barista',
     positionLabel: POSITION_LABELS.barista,
     reviewType: 'quarterly',
     subjects: subjects([
@@ -100,7 +100,7 @@ export const APPRAISAL_TEMPLATE_SEEDS: AppraisalTemplateSeed[] = [
     ]),
   },
   {
-    positionId: POSITIONS.BARISTA,
+    positionId: 'barista',
     positionLabel: POSITION_LABELS.barista,
     reviewType: 'annual',
     subjects: subjects([
@@ -115,7 +115,7 @@ export const APPRAISAL_TEMPLATE_SEEDS: AppraisalTemplateSeed[] = [
 
   // ------------------------------------------------------- Cook / Kitchen
   {
-    positionId: POSITIONS.COOK,
+    positionId: 'cook',
     positionLabel: POSITION_LABELS.cook,
     reviewType: 'probation',
     subjects: subjects([
@@ -128,7 +128,7 @@ export const APPRAISAL_TEMPLATE_SEEDS: AppraisalTemplateSeed[] = [
     ]),
   },
   {
-    positionId: POSITIONS.COOK,
+    positionId: 'cook',
     positionLabel: POSITION_LABELS.cook,
     reviewType: 'quarterly',
     subjects: subjects([
@@ -142,7 +142,7 @@ export const APPRAISAL_TEMPLATE_SEEDS: AppraisalTemplateSeed[] = [
     ]),
   },
   {
-    positionId: POSITIONS.COOK,
+    positionId: 'cook',
     positionLabel: POSITION_LABELS.cook,
     reviewType: 'annual',
     subjects: subjects([
@@ -157,7 +157,7 @@ export const APPRAISAL_TEMPLATE_SEEDS: AppraisalTemplateSeed[] = [
 
   // -------------------------------------------------------------- Cashier
   {
-    positionId: POSITIONS.CASHIER,
+    positionId: 'cashier',
     positionLabel: POSITION_LABELS.cashier,
     reviewType: 'probation',
     subjects: subjects([
@@ -170,7 +170,7 @@ export const APPRAISAL_TEMPLATE_SEEDS: AppraisalTemplateSeed[] = [
     ]),
   },
   {
-    positionId: POSITIONS.CASHIER,
+    positionId: 'cashier',
     positionLabel: POSITION_LABELS.cashier,
     reviewType: 'quarterly',
     subjects: subjects([
@@ -183,7 +183,7 @@ export const APPRAISAL_TEMPLATE_SEEDS: AppraisalTemplateSeed[] = [
     ]),
   },
   {
-    positionId: POSITIONS.CASHIER,
+    positionId: 'cashier',
     positionLabel: POSITION_LABELS.cashier,
     reviewType: 'annual',
     subjects: subjects([
@@ -196,10 +196,10 @@ export const APPRAISAL_TEMPLATE_SEEDS: AppraisalTemplateSeed[] = [
     ]),
   },
 
-  // --------------------------------------------------- Outlet/Dept Leader
+  // ----------------------------------------------------- Restaurant Manager
   {
-    positionId: POSITIONS.OUTLET_LEADER,
-    positionLabel: POSITION_LABELS.outletLeader,
+    positionId: 'restaurantManager',
+    positionLabel: POSITION_LABELS.restaurantManager,
     reviewType: 'probation',
     subjects: subjects([
       ['sop-understanding', 'Understanding of SOPs & Standards'],
@@ -210,8 +210,8 @@ export const APPRAISAL_TEMPLATE_SEEDS: AppraisalTemplateSeed[] = [
     ]),
   },
   {
-    positionId: POSITIONS.OUTLET_LEADER,
-    positionLabel: POSITION_LABELS.outletLeader,
+    positionId: 'restaurantManager',
+    positionLabel: POSITION_LABELS.restaurantManager,
     reviewType: 'quarterly',
     subjects: subjects([
       ['team-leadership', 'Team Leadership & Coaching'],
@@ -223,8 +223,8 @@ export const APPRAISAL_TEMPLATE_SEEDS: AppraisalTemplateSeed[] = [
     ]),
   },
   {
-    positionId: POSITIONS.OUTLET_LEADER,
-    positionLabel: POSITION_LABELS.outletLeader,
+    positionId: 'restaurantManager',
+    positionLabel: POSITION_LABELS.restaurantManager,
     reviewType: 'annual',
     subjects: subjects([
       ['team-performance-retention', 'Team Performance & Retention'],

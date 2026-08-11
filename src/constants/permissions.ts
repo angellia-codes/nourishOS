@@ -36,6 +36,7 @@ export const PERMISSION_MODULES = {
   LOST_FOUND: 'lostFound',
   INCIDENTS: 'incidents',
   DAILY_UPDATES: 'dailyUpdates',
+  CALENDAR: 'calendar',
 } as const
 
 export type PermissionModule = (typeof PERMISSION_MODULES)[keyof typeof PERMISSION_MODULES]
@@ -133,6 +134,14 @@ export const PERMISSIONS = {
   DAILY_UPDATES_SUBMIT: permission(PERMISSION_MODULES.DAILY_UPDATES, ACTIONS.SUBMIT),
   DAILY_UPDATES_READ: permission(PERMISSION_MODULES.DAILY_UPDATES, ACTIONS.READ),
   DAILY_UPDATES_READ_ALL: permission(PERMISSION_MODULES.DAILY_UPDATES, 'readAll'),
+
+  // Shared: Calendar Service (HR_OPERATIONS.md §7.3). READ is the agenda
+  // view; CREATE schedules an event; MANAGE covers editing and cancelling
+  // anyone's event — §7.2 gives Full to superAdmin/HR/GM and read-only to
+  // outlet leaders.
+  CALENDAR_READ: permission(PERMISSION_MODULES.CALENDAR, ACTIONS.READ),
+  CALENDAR_CREATE: permission(PERMISSION_MODULES.CALENDAR, ACTIONS.CREATE),
+  CALENDAR_MANAGE: permission(PERMISSION_MODULES.CALENDAR, ACTIONS.MANAGE),
 } as const
 
 export type PermissionString = (typeof PERMISSIONS)[keyof typeof PERMISSIONS]

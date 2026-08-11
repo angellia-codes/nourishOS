@@ -1,4 +1,3 @@
-import type { Timestamp } from 'firebase/firestore'
 import type { BaseDocument } from './firestore.types'
 import type { Priority } from '@/constants/statuses'
 
@@ -63,7 +62,7 @@ export interface IncidentReport extends BaseDocument {
   /** Overrides BaseDocument's generic status with this module's lifecycle. */
   status: IncidentStatus
   resolutionSummary?: string | null
-  resolvedAt?: Timestamp | null
+  resolvedAt?: string | null
   resolvedBy?: string | null
   reopenReason?: string | null
 }

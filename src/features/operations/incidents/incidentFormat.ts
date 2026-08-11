@@ -1,6 +1,18 @@
 import type { Priority } from '@/constants/statuses'
 import type { IncidentStatus, IncidentType } from '@/types'
 
+/** incident-report.md §3 — type-based routing (who owns the investigation). */
+export const INCIDENT_ROUTING: Record<IncidentType, string> = {
+  customerComplaint: 'Outlet/Department Leader',
+  foodSafety: 'Department Leader + HR (cc)',
+  workplaceInjury: 'HR Manager',
+  equipmentFailure: 'Engineering',
+  theft: 'Security',
+  securityIncident: 'Security',
+  utilityFailure: 'Engineering',
+  nearMiss: 'Department Leader',
+}
+
 /** "15 Jul 2026, 18:45" from a stored ISO datetime. */
 export function formatIncidentDateTime(isoDateTime: string): string {
   const date = new Date(isoDateTime)
@@ -58,7 +70,7 @@ export const INCIDENT_SEVERITY_VARIANT: Record<Priority, 'neutral' | 'success' |
   low: 'neutral',
 }
 
-/** Forward transition per incident-report.md §8 updateIncidentStatus (demo advance button). */
+/** Forward transition per incident-report.md §8 updateIncidentStatus. */
 export const INCIDENT_NEXT_STATUS: Partial<Record<IncidentStatus, IncidentStatus>> = {
   reported: 'underReview',
   underReview: 'investigating',

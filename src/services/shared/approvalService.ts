@@ -1,9 +1,8 @@
-import { orderBy, where } from 'firebase/firestore'
 import { callFunction } from '@/services/api'
-import { getDocument, queryDocuments, subscribeToDocument } from '@/services/firestore'
+import { getDocument, queryDocuments, subscribeToDocument, where, orderBy } from '@/services/firestore'
 import { COLLECTIONS } from '@/constants'
 import type { ApprovalRequest, ApprovalHistoryEntry } from '@/types'
-import type { Unsubscribe } from 'firebase/firestore'
+import type { Unsubscribe } from '@/services/firestore'
 
 /**
  * Client wrapper for the shared Approval Engine (approval_engine.md).

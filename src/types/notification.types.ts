@@ -1,4 +1,3 @@
-import type { Timestamp } from 'firebase/firestore'
 import type { BaseDocument } from './firestore.types'
 import type { NotificationPriority } from '@/constants/statuses'
 
@@ -15,6 +14,6 @@ export interface AppNotification extends BaseDocument {
   referenceId?: string
   actionUrl?: string
   isRead: boolean
-  readAt?: Timestamp
-  expiresAt?: Timestamp
+  readAt?: string
+  expiresAt?: string
 }

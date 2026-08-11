@@ -1,9 +1,8 @@
-import { orderBy, where } from 'firebase/firestore'
 import { callFunction } from '@/services/api'
-import { queryDocuments, subscribeToCollection } from '@/services/firestore'
+import { queryDocuments, subscribeToCollection, where, orderBy } from '@/services/firestore'
 import { COLLECTIONS } from '@/constants'
 import type { AppNotification } from '@/types'
-import type { Unsubscribe } from 'firebase/firestore'
+import type { Unsubscribe } from '@/services/firestore'
 
 /**
  * No "sendNotification" export here — per notifications.md §8, notifications

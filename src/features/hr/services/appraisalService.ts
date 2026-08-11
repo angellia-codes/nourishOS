@@ -1,6 +1,5 @@
-import { orderBy, where } from 'firebase/firestore'
 import { callFunction } from '@/services/api'
-import { getDocument, queryDocuments, subscribeToDocument } from '@/services/firestore'
+import { getDocument, queryDocuments, subscribeToDocument, where, orderBy } from '@/services/firestore'
 import { COLLECTIONS } from '@/constants'
 import type {
   Appraisal,
@@ -9,7 +8,7 @@ import type {
   AppraisalReviewType,
 } from '@/types'
 import type { PositionId } from '@/constants/positions'
-import type { Unsubscribe } from 'firebase/firestore'
+import type { Unsubscribe } from '@/services/firestore'
 
 export interface CreateAppraisalInput {
   employeeId: string

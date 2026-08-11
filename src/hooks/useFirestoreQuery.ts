@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { QueryConstraint } from 'firebase/firestore'
-import { subscribeToCollection } from '@/services/firestore'
+import { subscribeToCollection, type QueryConstraint } from '@/services/firestore'
 
 interface UseFirestoreQueryState<T> {
   data: T[]

@@ -512,7 +512,7 @@ Side panel.
 
 Library
 
-To be selected when the first chart ships — no chart library is installed today (demo dashboards use styled primitives only). Chart colors must come from the warm terracotta/olive palette per STYLE_GUIDE.md.
+To be selected when the first chart ships — no chart library is installed today. Chart colors must come from the warm terracotta/olive palette per STYLE_GUIDE.md.
 
 Supported
 

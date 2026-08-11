@@ -5,8 +5,7 @@ import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Select,
 import { useToast } from '@/hooks'
 import { fileService } from '@/services/shared'
 import * as lostFoundService from '../lostFoundService'
-import { RETENTION_DAYS } from '../lostFoundDemoData'
-import { LOST_FOUND_CATEGORY_LABELS, VALUE_TIER_LABELS } from '../lostFoundFormat'
+import { LOST_FOUND_CATEGORY_LABELS, RETENTION_DAYS, VALUE_TIER_LABELS } from '../lostFoundFormat'
 import type { LostFoundCategory, LostFoundValueTier } from '@/types'
 
 const TODAY = new Date().toISOString().slice(0, 10)

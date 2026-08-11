@@ -1,13 +1,11 @@
-import { Timestamp } from 'firebase/firestore'
-
-/** Normalizes a Firestore Timestamp | Date | undefined into a JS Date, or null if absent. */
-export function toDate(value: Timestamp | Date | null | undefined): Date | null {
+/** Normalizes an ISO 8601 string | Date | undefined into a JS Date, or null if absent. */
+export function toDate(value: string | Date | null | undefined): Date | null {
   if (!value) return null
-  return value instanceof Timestamp ? value.toDate() : value
+  return value instanceof Date ? value : new Date(value)
 }
 
 /** e.g. "7 Jul 2026" — for tables, lists, cards. */
-export function formatDate(value: Timestamp | Date | null | undefined): string {
+export function formatDate(value: string | Date | null | undefined): string {
   const date = toDate(value)
   if (!date) return '—'
   return new Intl.DateTimeFormat('en-GB', {
@@ -18,7 +16,7 @@ export function formatDate(value: Timestamp | Date | null | undefined): string {
 }
 
 /** e.g. "7 Jul 2026, 14:30" — for audit logs, activity feeds, timestamps needing time precision. */
-export function formatDateTime(value: Timestamp | Date | null | undefined): string {
+export function formatDateTime(value: string | Date | null | undefined): string {
   const date = toDate(value)
   if (!date) return '—'
   return new Intl.DateTimeFormat('en-GB', {
@@ -31,7 +29,7 @@ export function formatDateTime(value: Timestamp | Date | null | undefined): stri
 }
 
 /** e.g. "2 hours ago", "in 3 days" — for notifications, task due dates. */
-export function formatRelativeTime(value: Timestamp | Date | null | undefined): string {
+export function formatRelativeTime(value: string | Date | null | undefined): string {
   const date = toDate(value)
   if (!date) return '—'
 
@@ -56,7 +54,7 @@ export function formatRelativeTime(value: Timestamp | Date | null | undefined): 
 }
 
 /** True if the given date/timestamp is before right now — used for overdue task/checklist checks. */
-export function isPast(value: Timestamp | Date | null | undefined): boolean {
+export function isPast(value: string | Date | null | undefined): boolean {
   const date = toDate(value)
   return date ? date.getTime() < Date.now() : false
 }

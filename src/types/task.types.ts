@@ -1,4 +1,3 @@
-import type { Timestamp } from 'firebase/firestore'
 import type { BaseDocument } from './firestore.types'
 import type { TaskStatus, TaskType, Priority } from '@/constants/statuses'
 
@@ -14,7 +13,7 @@ export interface Task extends BaseDocument {
   assignedBy: string
   priority: Priority
   taskStatus: TaskStatus
-  dueDate?: Timestamp
+  dueDate?: string
   estimatedDurationMinutes?: number
   tags?: string[]
 

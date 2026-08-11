@@ -1,8 +1,10 @@
-import type { Timestamp } from 'firebase/firestore'
-
 /**
- * Standard fields every operational Firestore document carries.
+ * Standard fields every operational document carries.
  * Source: DATABASE.md §5, FIRESTORE_SCHEMA.md §3.
+ *
+ * createdAt/updatedAt are ISO 8601 strings (apps-script/src/Store.js stamps
+ * `new Date().toISOString()`), not Firestore Timestamps — see
+ * src/utils/date.ts for the parsing side.
  *
  * outletId/departmentId are optional at the type level because a few
  * collections (e.g. company-wide settings) are genuinely global — but
@@ -10,9 +12,9 @@ import type { Timestamp } from 'firebase/firestore'
  */
 export interface BaseDocument {
   id: string
-  createdAt: Timestamp
+  createdAt: string
   createdBy: string
-  updatedAt: Timestamp
+  updatedAt: string
   updatedBy: string
   outletId?: string
   departmentId?: string

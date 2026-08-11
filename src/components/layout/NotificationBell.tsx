@@ -8,13 +8,13 @@ import { where, orderBy, limit } from '@/services/firestore'
 import type { AppNotification } from '@/types'
 
 export function NotificationBell() {
-  const { user } = useAuth()
+  const { profile } = useAuth()
   const [open, setOpen] = useState(false)
 
   const { data: notifications } = useFirestoreQuery<AppNotification>(
     COLLECTIONS.NOTIFICATIONS,
-    user ? [where('recipientUid', '==', user.uid), orderBy('createdAt', 'desc'), limit(20)] : [],
-    [user?.uid],
+    profile ? [where('recipientUid', '==', profile.uid), orderBy('createdAt', 'desc'), limit(20)] : [],
+    [profile?.uid],
   )
 
   const unreadCount = notifications.filter((n) => !n.isRead).length

@@ -234,7 +234,6 @@ nourishos/
 │   ├── features/
 │   │     ├── auth/
 │   │     ├── dashboard/
-│   │     ├── demo/            (/demo mock-up hub)
 │   │     ├── hr/
 │   │     ├── security/
 │   │     ├── operations/

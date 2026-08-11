@@ -29,7 +29,7 @@ Level VIII Rank & File II / Junior Staff / Trainee & DW
 Chief Executive Officer (CEO)
 Director
 Group General Manager
-📈 Operations & Management
+📈 F&B Service
 Level I: Group Operational Manager
 Level II: Operational Manager
 Level III: Restaurant Manager | Wholefoods Manager
@@ -48,10 +48,10 @@ Level VIII: Wholefoods Cashier
 Level I: Group HR Manager
 Level III : Junior HR Manager
 Level V: Training & Development Supervisor
-Level VI: Group HR Admin
+Level VI: HR & General Admin
 📣 Sales, Marketing & Creative
 Level I: Director of Sales & Marketing
-Level II: Digital Creative & Marketing Manager
+Level II: Creative & Marketing Manager
 Level VI: Social Media Specialist | Jr. Graphic Designer
 📦 Purchasing & Logistics
 Level II: Purchasing Manager
@@ -74,11 +74,13 @@ Level V: Bar Supervisor
 Level VI: Bar Captain
 Level VII: Barista / Bartender
 Level VIII: Bar Back | Trainee | Daily Worker (DW)
-🛠️ Engineering, Security & Maintenance
+🛠️ Engineering & Maintenance
 Level III: Restaurant & Maintenance Manager
-Level V: Security Supervisor
 Level VII: Engineer (Civil) | Engineer (MEP)
-Level VIII: Security Guard | Public Area Attendant | Daily Worker (DW)
+Level VIII: Public Area Attendant | Daily Worker (DW)
+Security
+Level V: Security Supervisor
+Level VIII: Security Guard
 
 ---
 

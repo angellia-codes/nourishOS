@@ -11,6 +11,7 @@ export interface FileMetadata extends BaseDocument {
   fileType: SupportedFileType
   mimeType: string
   fileSizeBytes: number
+  /** Drive file ID (apps-script/src/Files.js) — not a Storage path despite the name. */
   storagePath: string
   downloadUrl?: string
   module: string

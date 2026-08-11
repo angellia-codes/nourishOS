@@ -137,6 +137,9 @@ export const COLLECTIONS = {
   FILE_VERSIONS: 'fileVersions',
   FILE_SHARES: 'fileShares',
 
+  // Shared: Calendar Service (HR_OPERATIONS.md §8.2)
+  CALENDAR_EVENTS: 'calendarEvents',
+
   // Shared: Search
   SEARCH_INDEX: 'searchIndex',
   SEARCH_HISTORY: 'searchHistory',

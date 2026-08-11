@@ -1,4 +1,3 @@
-import type { Timestamp } from 'firebase/firestore'
 import type { BaseDocument } from './firestore.types'
 
 /** lost-and-found-report.md §4 — category. */
@@ -52,15 +51,15 @@ export interface LostFoundItem extends BaseDocument {
   identifyingDetailsGiven?: string | null
   idVerified?: boolean | null
   /** Server timestamp of the moment the item was actually handed back — not a civil date like foundAt. */
-  returnedAt?: Timestamp | null
+  returnedAt?: string | null
   returnedBy?: string | null
 
   retentionExpiresAt: string // ISO date
   disposalMethod?: LostFoundDisposalMethod | null
   disposalNotes?: string | null
-  disposedAt?: Timestamp | null
+  disposedAt?: string | null
   disposedBy?: string | null
 
   /** Set once by checkLostFoundRetention so the "7 days out" notice fires only once. */
-  retentionWarnedAt?: Timestamp | null
+  retentionWarnedAt?: string | null
 }

@@ -1,9 +1,8 @@
-import { orderBy, where } from 'firebase/firestore'
 import { callFunction } from '@/services/api'
-import { queryDocuments, getDocument, subscribeToCollection } from '@/services/firestore'
+import { queryDocuments, getDocument, subscribeToCollection, where, orderBy } from '@/services/firestore'
 import { COLLECTIONS } from '@/constants'
 import type { Checkpoint, PatrolLog } from '@/types'
-import type { Unsubscribe } from 'firebase/firestore'
+import type { Unsubscribe } from '@/services/firestore'
 
 export interface CreatePatrolLogInput {
   checkpointId: string

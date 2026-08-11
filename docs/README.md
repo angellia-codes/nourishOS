@@ -394,4 +394,4 @@ NourishOS
 
 **Status**
 
-In development — shipped: core platform (auth/RBAC/dashboard shell), HR Appraisal (incl. AI insights), HR Employee Database, Security patrol/checkpoints; every other module has a frontend-only preview under `/demo`
+In development — shipped: core platform (auth/RBAC/dashboard shell), HR Appraisal (incl. AI insights), HR Employee Database, Security patrol/checkpoints, Operations (Lost & Found, Incident Reports, Daily Updates); every other module is a route placeholder

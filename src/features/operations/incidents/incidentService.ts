@@ -1,10 +1,9 @@
-import { orderBy, where } from 'firebase/firestore'
 import { callFunction } from '@/services/api'
-import { getDocument, subscribeToCollection } from '@/services/firestore'
+import { getDocument, subscribeToCollection, where, orderBy } from '@/services/firestore'
 import { COLLECTIONS } from '@/constants'
 import type { Priority } from '@/constants/statuses'
 import type { IncidentPerson, IncidentReport, IncidentStatus, IncidentType, IncidentWitness } from '@/types'
-import type { Unsubscribe } from 'firebase/firestore'
+import type { Unsubscribe } from '@/services/firestore'
 
 export interface CreateIncidentReportInput {
   title: string

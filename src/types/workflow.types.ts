@@ -1,4 +1,3 @@
-import type { Timestamp } from 'firebase/firestore'
 import type { BaseDocument } from './firestore.types'
 import type { ApprovalStatus, ApprovalAction } from '@/constants/statuses'
 import type { Role } from '@/constants/roles'
@@ -43,5 +42,5 @@ export interface ApprovalHistoryEntry {
   comments?: string
   previousStatus: ApprovalStatus
   newStatus: ApprovalStatus
-  timestamp: Timestamp
+  timestamp: string
 }

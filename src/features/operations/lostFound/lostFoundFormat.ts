@@ -2,6 +2,19 @@ import type { LostFoundCategory, LostFoundStatus, LostFoundValueTier } from '@/t
 
 export { formatReportDate as formatLostFoundDate } from '@/features/operations/dailyUpdates/dailyUpdateFormat'
 
+/** lost-and-found-report.md §5 — suggested category hold periods (days), pending policy sign-off. */
+export const RETENTION_DAYS: Record<LostFoundCategory, number> = {
+  documents: 90,
+  electronics: 60,
+  jewelry: 60,
+  wallet: 60,
+  bag: 30,
+  clothing: 30,
+  eyewear: 30,
+  keys: 30,
+  other: 14,
+}
+
 export const LOST_FOUND_CATEGORY_LABELS: Record<LostFoundCategory, string> = {
   electronics: 'Electronics',
   wallet: 'Wallet',

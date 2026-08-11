@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { orderBy, where } from 'firebase/firestore'
 import { ArrowLeft, ShieldAlert, Wrench } from 'lucide-react'
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Spinner, Textarea } from '@/components/ui'
 import { EmptyState, FileList, FileUpload, PermissionGuard } from '@/components/shared'
 import { useFirestoreDoc, useFirestoreQuery, usePermissions, useRole, useToast } from '@/hooks'
+import { where, orderBy } from '@/services/firestore'
 import { COLLECTIONS, PERMISSIONS } from '@/constants'
 import * as incidentService from '../incidentService'
 import {

@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom'
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui'
 import { useAuth } from '@/hooks'
 
@@ -19,10 +18,6 @@ export function DashboardPage() {
           <CardDescription>KPIs, pending approvals, and tasks land in a future milestone.</CardDescription>
         </CardHeader>
       </Card>
-
-      <Link to="/demo/appraisal" className="text-sm font-medium text-primary hover:underline">
-        Preview: Appraisal Review Form &rarr;
-      </Link>
     </div>
   )
 }

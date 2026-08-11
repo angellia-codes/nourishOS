@@ -1,4 +1,3 @@
-import type { Timestamp } from 'firebase/firestore'
 import type { AuditSeverity } from '@/constants/statuses'
 
 /**
@@ -9,7 +8,7 @@ import type { AuditSeverity } from '@/constants/statuses'
  */
 export interface AuditLogEntry {
   id: string
-  timestamp: Timestamp
+  timestamp: string
   eventType: string
   category: string
   module: string

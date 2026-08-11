@@ -1,4 +1,3 @@
-import type { Timestamp } from 'firebase/firestore'
 import type { BaseDocument } from './firestore.types'
 import type { ContractType, EmployeeActivityType, EmploymentStatus, Gender } from '@/constants/hr'
 
@@ -110,6 +109,6 @@ export interface EmployeeCompensation {
   transportationAllowance?: number
   bankAccountName?: string
   bankAccountNumber?: string
-  updatedAt: Timestamp
+  updatedAt: string
   updatedBy: string
 }

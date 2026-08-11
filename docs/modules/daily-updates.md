@@ -149,7 +149,7 @@ For `taskType: 'dailyUpdate'` tasks: `sourceModule = 'dailyReports'`, `reference
 | 8–14 | High Attention | Orange |
 | 15+ | Critical | Red |
 
-> Demo note: the `/demo` preview maps both Warning and High Attention to the shared `warning` Badge variant — the primitive Badge set has no orange yet. Labels stay distinct; the color split lands when an orange variant is added.
+> UI note: the feed maps both Warning and High Attention to the shared `warning` Badge variant — the primitive Badge set has no orange yet. Labels stay distinct; the color split lands when an orange variant is added.
 
 ### Escalation trigger
 | Days Open | Level | Recipient | Dashboard Flag |

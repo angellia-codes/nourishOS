@@ -5,7 +5,7 @@ Product: Nourish Operational System (NourishOS)
 
 Status: In development (milestone phase)
 
-> **Current state (2026-07-17):** shipped so far — core platform (Google auth, RBAC, layouts, navigation), HR Appraisal (incl. AI insights), HR Employee Database, and Security patrol/checkpoints (built ahead of plan; it was not one of the original phases below). Every other module currently ships as a frontend-only mock-up under `/demo` (see CLAUDE.md "Demo mock-up pages") ahead of its backend phase. The phase plan below is otherwise unchanged.
+> **Current state (2026-07-17):** shipped so far — core platform (Google auth, RBAC, layouts, navigation), HR Appraisal (incl. AI insights), HR Employee Database, and Security patrol/checkpoints (built ahead of plan; it was not one of the original phases below). Every other module is still a `<ModulePlaceholder>` route stub (the `/demo` mock-up previews were removed 2026-07-28). The phase plan below is otherwise unchanged.
 
 ---
 

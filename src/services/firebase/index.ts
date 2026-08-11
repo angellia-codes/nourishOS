@@ -1,6 +1,0 @@
-export { firebaseApp } from './app'
-export { auth, googleProvider } from './auth'
-export { db } from './firestore'
-export { storage } from './storage'
-export { functions } from './functions'
-export { firebaseConfig, useFirebaseEmulator } from './config'

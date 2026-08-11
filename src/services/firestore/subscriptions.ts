@@ -1,45 +1,74 @@
-import {
-  doc,
-  onSnapshot,
-  collection,
-  query,
-  type QueryConstraint,
-  type DocumentSnapshot,
-  type Unsubscribe,
-} from 'firebase/firestore'
-import { db } from '@/services/firebase'
-
-function mapSnap<T>(snap: DocumentSnapshot): T {
-  return { id: snap.id, ...snap.data() } as T
-}
+import { callAction } from '@/services/appsScript/client'
+import { applyConstraints, type Constraint, type Unsubscribe } from './constraints'
 
 /**
- * Subscribes to a single document. Calls onChange(null) if the document
- * doesn't exist (e.g. deleted, or never created) rather than treating that
- * as onError — a missing doc is valid application state.
+ * Realtime-shaped API kept for callers, backed by polling — Apps Script has
+ * no onSnapshot equivalent (accepted tradeoff, see the migration plan).
+ * Each subscription polls independently; interval is deliberately not
+ * configurable per call site yet (ponytail: add a param when some screen
+ * actually needs faster-than-10s feedback, not before).
  */
+const POLL_INTERVAL_MS = 10_000
+
 export function subscribeToDocument<T>(
   collectionName: string,
   id: string,
   onChange: (data: T | null) => void,
   onError?: (error: Error) => void,
 ): Unsubscribe {
-  return onSnapshot(
-    doc(db, collectionName, id),
-    (snap) => onChange(snap.exists() ? mapSnap<T>(snap) : null),
-    (error) => onError?.(error),
-  )
+  let lastJson: string | undefined
+  let cancelled = false
+
+  const tick = async () => {
+    try {
+      const doc = await callAction<T | null>('collection.get', { collection: collectionName, id })
+      if (cancelled) return
+      const json = JSON.stringify(doc)
+      if (json !== lastJson) {
+        lastJson = json
+        onChange(doc)
+      }
+    } catch (error) {
+      if (!cancelled) onError?.(error as Error)
+    }
+  }
+
+  void tick()
+  const intervalId = setInterval(tick, POLL_INTERVAL_MS)
+  return () => {
+    cancelled = true
+    clearInterval(intervalId)
+  }
 }
 
 export function subscribeToCollection<T>(
   collectionName: string,
-  constraints: QueryConstraint[],
+  constraints: Constraint[],
   onChange: (data: T[]) => void,
   onError?: (error: Error) => void,
 ): Unsubscribe {
-  return onSnapshot(
-    query(collection(db, collectionName), ...constraints),
-    (snap) => onChange(snap.docs.map((d) => mapSnap<T>(d))),
-    (error) => onError?.(error),
-  )
+  let lastJson: string | undefined
+  let cancelled = false
+
+  const tick = async () => {
+    try {
+      const docs = await callAction<T[]>('collection.list', { collection: collectionName })
+      if (cancelled) return
+      const filtered = applyConstraints(docs, constraints)
+      const json = JSON.stringify(filtered)
+      if (json !== lastJson) {
+        lastJson = json
+        onChange(filtered)
+      }
+    } catch (error) {
+      if (!cancelled) onError?.(error as Error)
+    }
+  }
+
+  void tick()
+  const intervalId = setInterval(tick, POLL_INTERVAL_MS)
+  return () => {
+    cancelled = true
+    clearInterval(intervalId)
+  }
 }
