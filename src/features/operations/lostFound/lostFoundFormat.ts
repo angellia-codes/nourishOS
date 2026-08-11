@@ -1,3 +1,5 @@
+import { Inbox, Clock, Check, AlertTriangle, Trash2, Gift, type LucideIcon } from 'lucide-react'
+import type { StatusTone } from '@/components/ui'
 import type { LostFoundCategory, LostFoundStatus, LostFoundValueTier } from '@/types'
 
 export { formatReportDate as formatLostFoundDate } from '@/features/operations/dailyUpdates/dailyUpdateFormat'
@@ -36,13 +38,23 @@ export const LOST_FOUND_STATUS_LABELS: Record<LostFoundStatus, string> = {
   donated: 'Donated',
 }
 
-export const LOST_FOUND_STATUS_VARIANT: Record<LostFoundStatus, 'neutral' | 'success' | 'warning' | 'error' | 'info'> = {
+/** STYLE_GUIDE.md § Shared components — StatusPill tone/icon mapping for the status Badge. */
+export const LOST_FOUND_STATUS_TONE: Record<LostFoundStatus, StatusTone> = {
   logged: 'info',
   claimPending: 'warning',
   returned: 'success',
   unclaimed: 'error',
   disposed: 'neutral',
   donated: 'neutral',
+}
+
+export const LOST_FOUND_STATUS_ICON: Record<LostFoundStatus, LucideIcon> = {
+  logged: Inbox,
+  claimPending: Clock,
+  returned: Check,
+  unclaimed: AlertTriangle,
+  disposed: Trash2,
+  donated: Gift,
 }
 
 export const VALUE_TIER_LABELS: Record<LostFoundValueTier, string> = {

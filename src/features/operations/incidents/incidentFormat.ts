@@ -1,3 +1,5 @@
+import { Inbox, Eye, Search, Check, CheckCheck, RotateCcw, type LucideIcon } from 'lucide-react'
+import type { StatusTone } from '@/components/ui'
 import type { Priority } from '@/constants/statuses'
 import type { IncidentStatus, IncidentType } from '@/types'
 
@@ -47,13 +49,23 @@ export const INCIDENT_STATUS_LABELS: Record<IncidentStatus, string> = {
   reopened: 'Reopened',
 }
 
-export const INCIDENT_STATUS_VARIANT: Record<IncidentStatus, 'neutral' | 'success' | 'warning' | 'error' | 'info'> = {
+/** STYLE_GUIDE.md § Shared components — StatusPill tone/icon mapping for the status Badge. */
+export const INCIDENT_STATUS_TONE: Record<IncidentStatus, StatusTone> = {
   reported: 'info',
   underReview: 'warning',
   investigating: 'warning',
   resolved: 'success',
-  closed: 'neutral',
+  closed: 'closed',
   reopened: 'error',
+}
+
+export const INCIDENT_STATUS_ICON: Record<IncidentStatus, LucideIcon> = {
+  reported: Inbox,
+  underReview: Eye,
+  investigating: Search,
+  resolved: Check,
+  closed: CheckCheck,
+  reopened: RotateCcw,
 }
 
 export const INCIDENT_SEVERITY_LABELS: Record<Priority, string> = {

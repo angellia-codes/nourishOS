@@ -39,6 +39,19 @@
   --color-error: #b91c1c; /* Rejected */
   --color-info: #1d4ed8; /* Submitted */
 
+  /* StatusPill — fill+icon+shape per state, STYLE_GUIDE.md § Color Palette (workflow status ramp) */
+  --color-status-draft: #64748b; /* no fill — dashed outline only */
+  --color-status-submitted: #e8eefb;
+  --color-status-submitted-foreground: #1d4ed8;
+  --color-status-pending: #fdf3e0;
+  --color-status-pending-foreground: #b45309;
+  --color-status-approved: #e6f4ea;
+  --color-status-approved-foreground: #15803d;
+  --color-status-rejected: #fbeaea;
+  --color-status-rejected-foreground: #b91c1c;
+  --color-status-completed: #334155; /* filled dark pill — the one inverted state */
+  --color-status-completed-foreground: #ffffff;
+
   /* Radii — per STYLE_GUIDE.md §Border Radius (cards/dialogs 12px, buttons 8px) */
   --radius-sm: 4px;
   --radius-md: 8px;
@@ -67,6 +80,19 @@
   --color-warning: #d9822b;
   --color-error: #e0554f;
   --color-info: #5b8def;
+
+  /* StatusPill dark — keep each state's foreground hue, 12-15% lightness bg tint. Never reuse light -bg values. */
+  --color-status-draft: #94a3b8;
+  --color-status-submitted: #172554;
+  --color-status-submitted-foreground: #60a5fa;
+  --color-status-pending: #451a03;
+  --color-status-pending-foreground: #fbbf24;
+  --color-status-approved: #022c22;
+  --color-status-approved-foreground: #34d399;
+  --color-status-rejected: #450a0a;
+  --color-status-rejected-foreground: #f87171;
+  --color-status-completed: #1e293b;
+  --color-status-completed-foreground: #cbd5e1;
 }
 
 @layer base {

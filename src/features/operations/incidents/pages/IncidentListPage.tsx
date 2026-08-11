@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus } from 'lucide-react'
-import { Badge, Button, Card, CardContent, Select, Spinner } from '@/components/ui'
+import { Badge, Button, Card, CardContent, Select, Spinner, StatusPill } from '@/components/ui'
 import { EmptyState, PermissionGuard } from '@/components/shared'
 import { PERMISSIONS } from '@/constants'
 import * as incidentService from '../incidentService'
 import {
   INCIDENT_SEVERITY_LABELS,
   INCIDENT_SEVERITY_VARIANT,
+  INCIDENT_STATUS_ICON,
   INCIDENT_STATUS_LABELS,
-  INCIDENT_STATUS_VARIANT,
+  INCIDENT_STATUS_TONE,
   INCIDENT_TYPE_LABELS,
   formatIncidentDateTime,
 } from '../incidentFormat'
@@ -87,7 +88,11 @@ export function IncidentListPage() {
                 <p className="font-medium text-foreground">{incident.title}</p>
                 <div className="flex items-center gap-2">
                   <Badge variant={INCIDENT_SEVERITY_VARIANT[incident.severity]}>{INCIDENT_SEVERITY_LABELS[incident.severity]}</Badge>
-                  <Badge variant={INCIDENT_STATUS_VARIANT[incident.status]}>{INCIDENT_STATUS_LABELS[incident.status]}</Badge>
+                  <StatusPill
+                    tone={INCIDENT_STATUS_TONE[incident.status]}
+                    icon={INCIDENT_STATUS_ICON[incident.status]}
+                    label={INCIDENT_STATUS_LABELS[incident.status]}
+                  />
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">

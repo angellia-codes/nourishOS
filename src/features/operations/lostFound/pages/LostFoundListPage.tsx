@@ -1,11 +1,19 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus } from 'lucide-react'
-import { Badge, Button, Card, CardContent, Input, Select, Spinner } from '@/components/ui'
+import { Badge, Button, Card, CardContent, Input, Select, Spinner, StatusPill } from '@/components/ui'
 import { EmptyState, PermissionGuard } from '@/components/shared'
 import { PERMISSIONS } from '@/constants'
 import * as lostFoundService from '../lostFoundService'
-import { formatLostFoundDate, LOST_FOUND_CATEGORY_LABELS, LOST_FOUND_STATUS_LABELS, LOST_FOUND_STATUS_VARIANT, VALUE_TIER_LABELS, VALUE_TIER_VARIANT } from '../lostFoundFormat'
+import {
+  formatLostFoundDate,
+  LOST_FOUND_CATEGORY_LABELS,
+  LOST_FOUND_STATUS_ICON,
+  LOST_FOUND_STATUS_LABELS,
+  LOST_FOUND_STATUS_TONE,
+  VALUE_TIER_LABELS,
+  VALUE_TIER_VARIANT,
+} from '../lostFoundFormat'
 import type { LostFoundCategory, LostFoundItem } from '@/types'
 
 /** lost-and-found-report.md §1/§6/§9. Search covers the "has anyone turned this in?" inquiry flow (§2 — no separate inquiry collection). */
@@ -97,7 +105,12 @@ export function LostFoundListPage() {
                 <p className="font-medium text-foreground">{item.itemDescription}</p>
                 <div className="flex items-center gap-2">
                   <Badge variant={VALUE_TIER_VARIANT[item.valueTier]}>{VALUE_TIER_LABELS[item.valueTier]}</Badge>
-                  <Badge variant={LOST_FOUND_STATUS_VARIANT[item.status]}>{LOST_FOUND_STATUS_LABELS[item.status]}</Badge>
+                  <StatusPill
+                    tone={LOST_FOUND_STATUS_TONE[item.status]}
+                    icon={LOST_FOUND_STATUS_ICON[item.status]}
+                    label={LOST_FOUND_STATUS_LABELS[item.status]}
+                    pulseDot={item.status === 'claimPending'}
+                  />
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">

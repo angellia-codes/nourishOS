@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Checkbox, Input, Label, Select, Spinner, Textarea } from '@/components/ui'
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Checkbox, Input, Label, Select, Spinner, StatusPill, Textarea } from '@/components/ui'
 import { FileList, PermissionGuard } from '@/components/shared'
 import { useFirestoreDoc, useFirestoreQuery, useToast } from '@/hooks'
 import { where, orderBy } from '@/services/firestore'
@@ -11,8 +11,9 @@ import * as lostFoundService from '../lostFoundService'
 import {
   formatLostFoundDate,
   LOST_FOUND_CATEGORY_LABELS,
+  LOST_FOUND_STATUS_ICON,
   LOST_FOUND_STATUS_LABELS,
-  LOST_FOUND_STATUS_VARIANT,
+  LOST_FOUND_STATUS_TONE,
   VALUE_TIER_LABELS,
   VALUE_TIER_VARIANT,
 } from '../lostFoundFormat'
@@ -221,7 +222,12 @@ export function LostFoundDetailPage() {
         <CardContent className="flex flex-col gap-3 p-4">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant={VALUE_TIER_VARIANT[item.valueTier]}>{VALUE_TIER_LABELS[item.valueTier]}</Badge>
-            <Badge variant={LOST_FOUND_STATUS_VARIANT[item.status]}>{LOST_FOUND_STATUS_LABELS[item.status]}</Badge>
+            <StatusPill
+              tone={LOST_FOUND_STATUS_TONE[item.status]}
+              icon={LOST_FOUND_STATUS_ICON[item.status]}
+              label={LOST_FOUND_STATUS_LABELS[item.status]}
+              pulseDot={item.status === 'claimPending'}
+            />
             <Badge variant="neutral">{LOST_FOUND_CATEGORY_LABELS[item.category]}</Badge>
           </div>
           <p className="text-sm text-muted-foreground">

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ShieldAlert, Wrench } from 'lucide-react'
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Spinner, Textarea } from '@/components/ui'
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Spinner, StatusPill, Textarea } from '@/components/ui'
 import { EmptyState, FileList, FileUpload, PermissionGuard } from '@/components/shared'
 import { useFirestoreDoc, useFirestoreQuery, usePermissions, useRole, useToast } from '@/hooks'
 import { where, orderBy } from '@/services/firestore'
@@ -11,8 +11,9 @@ import {
   INCIDENT_NEXT_STATUS,
   INCIDENT_SEVERITY_LABELS,
   INCIDENT_SEVERITY_VARIANT,
+  INCIDENT_STATUS_ICON,
   INCIDENT_STATUS_LABELS,
-  INCIDENT_STATUS_VARIANT,
+  INCIDENT_STATUS_TONE,
   INCIDENT_TYPE_LABELS,
   formatIncidentDateTime,
 } from '../incidentFormat'
@@ -115,7 +116,11 @@ export function IncidentDetailPage() {
         </div>
         <div className="flex items-center gap-2">
           <Badge variant={INCIDENT_SEVERITY_VARIANT[incident.severity]}>{INCIDENT_SEVERITY_LABELS[incident.severity]}</Badge>
-          <Badge variant={INCIDENT_STATUS_VARIANT[incident.status]}>{INCIDENT_STATUS_LABELS[incident.status]}</Badge>
+          <StatusPill
+            tone={INCIDENT_STATUS_TONE[incident.status]}
+            icon={INCIDENT_STATUS_ICON[incident.status]}
+            label={INCIDENT_STATUS_LABELS[incident.status]}
+          />
         </div>
       </div>
 

@@ -15,3 +15,4 @@ export { Breadcrumb, type BreadcrumbItem, type BreadcrumbProps } from './breadcr
 export { Tooltip, type TooltipProps } from './tooltip'
 export { Timeline, TimelineItem, type TimelineItemProps } from './timeline'
 export { Tabs, TabPanel, type TabItem, type TabsProps } from './tabs'
+export { StatusPill, type StatusPillProps, type StatusTone } from './status-pill'

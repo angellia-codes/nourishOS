@@ -36,6 +36,28 @@ export default {
         warning: 'var(--color-warning)',
         destructive: 'var(--color-error)',
         info: 'var(--color-info)',
+        // StatusPill workflow ramp — STYLE_GUIDE.md § Shared components / § Color Palette
+        'status-draft': 'var(--color-status-draft)',
+        'status-submitted': {
+          DEFAULT: 'var(--color-status-submitted)',
+          foreground: 'var(--color-status-submitted-foreground)',
+        },
+        'status-pending': {
+          DEFAULT: 'var(--color-status-pending)',
+          foreground: 'var(--color-status-pending-foreground)',
+        },
+        'status-approved': {
+          DEFAULT: 'var(--color-status-approved)',
+          foreground: 'var(--color-status-approved-foreground)',
+        },
+        'status-rejected': {
+          DEFAULT: 'var(--color-status-rejected)',
+          foreground: 'var(--color-status-rejected-foreground)',
+        },
+        'status-completed': {
+          DEFAULT: 'var(--color-status-completed)',
+          foreground: 'var(--color-status-completed-foreground)',
+        },
       },
       borderRadius: {
         sm: 'var(--radius-sm)',
