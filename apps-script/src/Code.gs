@@ -555,9 +555,9 @@ function doPost(e) {
 }
 
 function doGet(e) {
-  var action = e.parameter.action
-  var payload = e.parameter.payload ? JSON.parse(e.parameter.payload) : {}
-  return handleAction_(action, payload, e.parameter.sessionToken)
+  var params = (e && e.parameter) || {}
+  var payload = params.payload ? JSON.parse(params.payload) : {}
+  return handleAction_(params.action, payload, params.sessionToken)
 }
 
 function handleAction_(actionName, payload, sessionToken) {
