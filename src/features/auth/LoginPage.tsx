@@ -1,9 +1,13 @@
 import { useState } from 'react'
+import { useLocation, useNavigate, type Location } from 'react-router-dom'
 import { Button, Card, CardContent } from '@/components/ui'
 import { useAuth } from '@/hooks'
+import { ROUTES } from '@/constants'
 
 export function LoginPage() {
   const { signIn } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
   const [error, setError] = useState<string | null>(null)
   const [isSigningIn, setIsSigningIn] = useState(false)
 
@@ -12,6 +16,8 @@ export function LoginPage() {
     setIsSigningIn(true)
     try {
       await signIn()
+      const from = (location.state as { from?: Location } | null)?.from
+      navigate(from ? `${from.pathname}${from.search}` : ROUTES.DASHBOARD, { replace: true })
     } catch {
       setError('Unable to connect. Please try again.')
     } finally {
