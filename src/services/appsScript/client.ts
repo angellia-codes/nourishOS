@@ -71,7 +71,15 @@ export async function callAction<TResponse = void, TPayload = Record<string, unk
     }),
   })
 
-  const envelope = (await response.json()) as SuccessEnvelope<TResponse> | ErrorEnvelope
+  let envelope: SuccessEnvelope<TResponse> | ErrorEnvelope
+  try {
+    envelope = (await response.json()) as SuccessEnvelope<TResponse> | ErrorEnvelope
+  } catch {
+    // Apps Script occasionally serves an HTML error page instead of the JSON
+    // envelope (cold start, execution quota) — surface a clean retryable
+    // error instead of leaking the raw JSON.parse SyntaxError to the UI.
+    throw new AppsScriptError('unavailable', 'Server did not respond. Please try again.')
+  }
   if (!envelope.success) {
     throw new AppsScriptError(envelope.code, envelope.message, envelope.details)
   }
