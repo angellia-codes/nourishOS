@@ -1,0 +1,192 @@
+rules_version = '2';
+
+// Relies on custom claims {role, departmentId, outletId} kept in sync with
+// the users/{uid} document by functions/src/auth/syncUserClaims.ts. Reading
+// claims from the auth token (not a Firestore get()) keeps rule evaluation
+// fast and avoids the extra-read cost/latency of cross-document lookups.
+//
+// Scope note: this covers only the collections Milestone 3 touches (users,
+// appraisals, approval engine, tasks, notifications, files, audit — deny
+// only). Every other collection falls through to the deny-all match at the
+// bottom until its owning module adds real rules — per DATABASE.md §23,
+// nothing should ship with an open rule by omission.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function role() {
+      return request.auth.token.role;
+    }
+
+    function hasAnyRole(roles) {
+      return isSignedIn() && role() in roles;
+    }
+
+    function isElevated() {
+      return hasAnyRole(['superAdmin', 'director', 'generalManager']);
+    }
+
+    // ---- Core ----
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || hasAnyRole(['superAdmin', 'director', 'generalManager', 'hrManager']));
+      allow write: if false; // server-side only — user docs are maintained via superAdmin tooling; admin callables are planned (AUTHENTICATION.md §18)
+    }
+
+    // ---- HR: Employee Database ----
+    match /employees/{employeeId} {
+      // HR.md §22: HR/GM/Director full read; department leaders limited to
+      // their own department. Salary is deliberately NOT stored on this doc
+      // (see employee.types.ts) since rules can't hide individual fields.
+      allow read: if hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
+        (hasAnyRole(['kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader', 'wholefoodLeader', 'outletManager']) &&
+          resource.data.departmentId == request.auth.token.departmentId);
+      allow write: if false; // createEmployee / updateEmployee / archiveEmployee Cloud Functions only
+    }
+
+    match /employeeActivities/{activityId} {
+      allow read: if hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']);
+      allow write: if false; // written server-side alongside employee mutations
+    }
+
+    // ---- HR: Appraisal ----
+    match /appraisalTemplates/{templateId} {
+      allow read: if isSignedIn(); // needed to render the review form
+      allow write: if false; // seedAppraisalTemplates / future Settings UI Cloud Function only
+    }
+
+    match /appraisals/{appraisalId} {
+      allow read: if isSignedIn() && (
+        resource.data.employeeId == request.auth.uid ||
+        resource.data.reviewerId == request.auth.uid ||
+        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin'])
+      );
+      allow write: if false; // createAppraisal / submitAppraisal / approval flow only
+    }
+
+    // ---- Shared: Approval Engine ----
+    match /approvalRequests/{requestId} {
+      allow read: if isSignedIn() && (
+        resource.data.requestedBy == request.auth.uid ||
+        hasAnyRole(['hrManager', 'finance', 'generalManager', 'director', 'superAdmin'])
+      );
+      allow write: if false;
+    }
+
+    match /approvalSteps/{stepId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    match /approvalHistory/{historyId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // ---- Shared: Task Engine ----
+    match /tasks/{taskId} {
+      allow read: if isSignedIn() && (
+        request.auth.uid in resource.data.assignedTo ||
+        resource.data.assignedBy == request.auth.uid ||
+        isElevated()
+      );
+      allow write: if false;
+    }
+
+    // ---- Shared: Notifications ----
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && resource.data.recipientUid == request.auth.uid;
+      // markNotificationRead also goes through a Cloud Function rather than
+      // a direct client update, so every state change is auditable the
+      // same way a write from any other module would be.
+      allow write: if false;
+    }
+
+    // ---- Shared: Audit Log ----
+    // Never directly readable or writable by clients — always via the
+    // RBAC-scoped searchAuditLogs() Cloud Function (AUDIT_LOG.md §17).
+    match /auditLogs/{logId} {
+      allow read, write: if false;
+    }
+
+    // ---- Shared: File Storage metadata ----
+    match /files/{fileId} {
+      allow read: if isSignedIn();
+      allow write: if false; // createFileMetadata / deleteFile Cloud Functions only
+    }
+
+    // ---- Security ----
+    match /checkpoints/{checkpointId} {
+      allow read: if isSignedIn(); // needed to render the checkpoint list/patrol form
+      allow write: if false; // createCheckpoint Cloud Function only
+    }
+
+    match /patrolLogs/{logId} {
+      allow read: if isSignedIn() && (
+        resource.data.guardId == request.auth.uid ||
+        hasAnyRole(['security', 'generalManager', 'director', 'superAdmin'])
+      );
+      allow write: if false; // createPatrolLog Cloud Function only
+    }
+
+    // ---- Operations: Lost & Found ----
+    // Broad signed-in read, same shape as checkpoints — staff need to
+    // search prior found items to answer a customer inquiry (AC-8).
+    match /lostFoundItems/{itemId} {
+      allow read: if isSignedIn();
+      allow write: if false; // createLostFoundItem / claimLostFoundItem / disposeLostFoundItem Cloud Functions only
+    }
+
+    // ---- Operations: Incident Reports ----
+    // Workplace injury incidents deliberately do NOT get the outlet-wide
+    // leader/security/engineering branch below — per incident-report.md §7,
+    // the narrative (description/immediateActionTaken) can carry health
+    // information, and Firestore rules can't hide individual fields, only
+    // whole documents. Because §3's routing sends workplaceInjury only to
+    // hrManager, reporter-or-assignedToRole-or-elevated already limits
+    // access to exactly the right people without a separate subcollection.
+    match /incidentReports/{incidentId} {
+      allow read: if isSignedIn() && (
+        resource.data.reportedBy == request.auth.uid ||
+        resource.data.assignedToRole == role() ||
+        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
+        (resource.data.incidentType != 'workplaceInjury' &&
+          hasAnyRole(['kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader', 'wholefoodLeader', 'outletManager', 'security', 'engineering']) &&
+          resource.data.outletId == request.auth.token.outletId)
+      );
+      allow write: if false; // createIncidentReport / updateIncidentStatus / reopenIncident Cloud Functions only
+    }
+
+    // ---- Operations: Daily Updates ----
+    match /dailyReports/{reportId} {
+      allow read: if isSignedIn() && (
+        resource.data.submittedBy == request.auth.uid ||
+        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
+        resource.data.outletId == request.auth.token.outletId
+      );
+      allow write: if false; // submitDailyReport Cloud Function only
+    }
+
+    // ---- Shared: Executive Calendar ----
+    match /calendarEvents/{eventId} {
+      // HR_OPERATIONS.md §7.2: full access for the executive roles, read-only
+      // for outlet leaders, and participants can always see an event they've
+      // been invited to (otherwise the agenda would be empty for them).
+      allow read: if isSignedIn() && (
+        request.auth.uid in resource.data.participants ||
+        resource.data.createdBy == request.auth.uid ||
+        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
+        (hasAnyRole(['outletManager', 'kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader', 'wholefoodLeader']) &&
+          resource.data.outletId == request.auth.token.outletId)
+      );
+      allow write: if false; // createCalendarEvent / cancelCalendarEvent Cloud Functions only
+    }
+
+    // ---- Default deny ----
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    // node16, not commonjs: firebase-admin v12 exposes its subpaths
+    // ('firebase-admin/firestore' etc.) only through package.json "exports",
+    // which the legacy Node10 resolver that "module": "commonjs" implies does
+    // not read — every such import resolved to JS with no types. package.json
+    // has no "type": "module", so this still emits CommonJS for the runtime.
+    "module": "node16",
+    "moduleResolution": "node16",
+    "lib": ["ES2022"],
+    "outDir": "lib",
+    "rootDir": "src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "sourceMap": true
+  },
+  "include": ["src"],
+  "exclude": ["lib", "node_modules"]
+}

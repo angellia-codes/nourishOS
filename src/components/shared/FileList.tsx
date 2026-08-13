@@ -25,12 +25,13 @@ export function FileList({ files, onDeleted }: FileListProps) {
     }
   }
 
-  function handleOpen(file: FileMetadata) {
-    if (!file.downloadUrl) {
+  async function handleOpen(file: FileMetadata) {
+    try {
+      const url = await fileService.getFileDownloadUrl(file.storagePath)
+      window.open(url, '_blank', 'noopener,noreferrer')
+    } catch {
       toast.error('Failed to open file.')
-      return
     }
-    window.open(file.downloadUrl, '_blank', 'noopener,noreferrer')
   }
 
   if (files.length === 0) return null

@@ -40,7 +40,10 @@ export function subscribeToUpcomingEvents(onChange: (events: CalendarEvent[]) =>
 
   return subscribeToCollection<CalendarEvent>(
     COLLECTIONS.CALENDAR_EVENTS,
-    [where('startAt', '>=', startOfToday.toISOString()), orderBy('startAt', 'asc')],
+    // A Date here, not an ISO string — startAt is stored as a Firestore
+    // Timestamp (createCalendarEvent writes it that way) and the read layer
+    // normalises it back to an ISO string for CalendarEvent.
+    [where('startAt', '>=', startOfToday), orderBy('startAt', 'asc')],
     onChange,
   )
 }

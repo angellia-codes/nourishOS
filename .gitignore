@@ -28,10 +28,11 @@ dist-ssr
 *.sln
 *.sw?
 
-# Apps Script
-apps-script/node_modules/
-apps-script/.clasp.json
-apps-script/.clasprc.json
+# Firebase
+.firebase/
+firebase-debug.log
+functions/lib/
+functions/node_modules/
 
-# graphify cache
+# Generated knowledge graph (graphify skill output)
 graphify-out/

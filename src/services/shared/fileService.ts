@@ -1,3 +1,5 @@
+import { ref, uploadBytesResumable, getDownloadURL, type UploadTaskSnapshot } from 'firebase/storage'
+import { storage } from '@/services/firebase'
 import { callFunction } from '@/services/api'
 import type { FileMetadata } from '@/types'
 
@@ -9,34 +11,39 @@ export interface UploadFileInput {
   onProgress?: (percent: number) => void
 }
 
-function fileToBase64(file: File, onProgress?: (percent: number) => void): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onprogress = (e) => {
-      if (e.lengthComputable) onProgress?.(Math.round((e.loaded / e.total) * 100))
-    }
-    reader.onerror = () => reject(reader.error ?? new Error('Failed to read file.'))
-    reader.onload = () => {
-      const result = reader.result as string
-      // strip the "data:<mime>;base64," prefix — the backend only wants the payload
-      resolve(result.slice(result.indexOf(',') + 1))
-    }
-    reader.readAsDataURL(file)
-  })
+/** Per file_storage.md §6 folder structure: /{module}/{resourceType}/{resourceId}/{file}. */
+function buildStoragePath(module: string, resourceType: string, resourceId: string, fileName: string): string {
+  const timestamp = Date.now()
+  const safeName = fileName.replace(/[^a-zA-Z0-9.\-_]/g, '_')
+  return `${module}/${resourceType}/${resourceId}/${timestamp}_${safeName}`
 }
 
 /**
- * Uploads the file (as base64, apps-script/src/Files.js decodes it into
- * Drive) and writes its metadata row in one round trip — no separate
- * Storage-SDK step, no orphaned-blob-on-metadata-failure case to worry
- * about anymore (file_storage.md §22).
+ * Uploads the binary directly to Cloud Storage (client SDK, with progress —
+ * file_storage.md §22), then asks a Cloud Function to validate it (size,
+ * MIME type per §14) and write the Firestore metadata doc. If the metadata
+ * call fails, the blob is orphaned in Storage — acceptable for now, cleanup
+ * job is a Future Enhancement (§25), not blocking this milestone.
  */
 export async function uploadFile(input: UploadFileInput): Promise<FileMetadata> {
   const { file, module, resourceType, resourceId, onProgress } = input
-  const base64 = await fileToBase64(file, onProgress)
+  const storagePath = buildStoragePath(module, resourceType, resourceId, file.name)
+  const storageRef = ref(storage, storagePath)
 
-  return callFunction<FileMetadata>('files.upload', {
-    base64,
+  await new Promise<void>((resolve, reject) => {
+    const task = uploadBytesResumable(storageRef, file)
+    task.on(
+      'state_changed',
+      (snapshot: UploadTaskSnapshot) => {
+        onProgress?.(Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100))
+      },
+      reject,
+      () => resolve(),
+    )
+  })
+
+  return callFunction<FileMetadata>('createFileMetadata', {
+    storagePath,
     fileName: file.name,
     mimeType: file.type,
     fileSizeBytes: file.size,
@@ -46,7 +53,11 @@ export async function uploadFile(input: UploadFileInput): Promise<FileMetadata> 
   })
 }
 
-/** Soft-deletes via Apps Script action (file_storage.md §8) — never deletes the Drive file from the client. */
+export function getFileDownloadUrl(storagePath: string): Promise<string> {
+  return getDownloadURL(ref(storage, storagePath))
+}
+
+/** Soft-deletes via Cloud Function (file_storage.md §8) — never deletes the Storage object from the client. */
 export function deleteFile(fileId: string): Promise<void> {
-  return callFunction('files.delete', { fileId })
+  return callFunction('deleteFile', { fileId })
 }

@@ -2,9 +2,10 @@
  * Standard fields every operational document carries.
  * Source: DATABASE.md §5, FIRESTORE_SCHEMA.md §3.
  *
- * createdAt/updatedAt are ISO 8601 strings (apps-script/src/Store.js stamps
- * `new Date().toISOString()`), not Firestore Timestamps — see
- * src/utils/date.ts for the parsing side.
+ * createdAt/updatedAt are ISO 8601 strings, not Firestore Timestamps. Cloud
+ * Functions write real server Timestamps; the read layer converts them on the
+ * way out (src/services/firestore/normalize.ts) so `firebase/firestore` types
+ * never reach components — see src/utils/date.ts for the parsing side.
  *
  * outletId/departmentId are optional at the type level because a few
  * collections (e.g. company-wide settings) are genuinely global — but
