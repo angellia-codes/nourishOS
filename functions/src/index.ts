@@ -33,6 +33,14 @@ export { seedAppraisalTemplates, createAppraisal, submitAppraisal, generateAppra
 // ---- HR: Employee Database ----
 export { createEmployee, updateEmployee, archiveEmployee } from './hr/employees'
 
+// ---- Documents: Job Descriptions ----
+export {
+  createJobDescription,
+  updateJobDescription,
+  deleteJobDescription,
+  setJobDescriptionAccess,
+} from './documents/jobDescriptions'
+
 // ---- Operations: Lost & Found ----
 export {
   createLostFoundItem,

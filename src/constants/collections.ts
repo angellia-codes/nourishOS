@@ -36,6 +36,7 @@ export const COLLECTIONS = {
   // Documents
   SOPS: 'sops',
   DOCUMENTS: 'documents',
+  JOB_DESCRIPTIONS: 'jobDescriptions',
   DOCUMENT_VERSIONS: 'documentVersions',
   DOCUMENT_CATEGORIES: 'documentCategories',
   DOCUMENT_TAGS: 'documentTags',

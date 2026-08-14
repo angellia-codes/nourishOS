@@ -196,6 +196,27 @@ service cloud.firestore {
       allow write: if false; // seeded via Console; a Settings callable is planned (RBAC.md §16)
     }
 
+    // ---- Documents: Job Descriptions ----
+    // Which roles may read the register is runtime-editable, so it cannot ride
+    // on a custom claim the way every other rule here does. The allowlist doc
+    // is matched by literal id so the sibling *NumberSequences counters stay in
+    // the deny-all below, and the get() is the only cross-document lookup in
+    // this file — one read per query evaluation, cached for the request.
+    //
+    // Before a super admin saves an allowlist the doc does not exist, the get()
+    // yields null and this denies: closed by default, on purpose.
+    match /systemSettings/jobDescriptionAccess {
+      allow read: if isSignedIn(); // the Module Access page reads it back to prefill
+      allow write: if false; // setJobDescriptionAccess Cloud Function only
+    }
+
+    match /jobDescriptions/{jobDescriptionId} {
+      allow read: if isElevated() ||
+        (isSignedIn() &&
+          role() in get(/databases/$(database)/documents/systemSettings/jobDescriptionAccess).data.roleIds);
+      allow write: if false; // createJobDescription / updateJobDescription / deleteJobDescription only
+    }
+
     // ---- Default deny ----
     match /{document=**} {
       allow read, write: if false;

@@ -2,7 +2,14 @@ export { db, authAdmin, REGION } from './admin'
 export { COLLECTIONS } from './collections'
 export { AppError, handleError, type AppErrorCode } from './errors'
 export { successResponse } from './response'
-export { requireAuth, requireActiveUser, requirePermission, requireAnyPermission, type AuthedUser } from './rbac'
+export {
+  requireAuth,
+  requireActiveUser,
+  requirePermission,
+  requireAnyPermission,
+  requireSuperAdmin,
+  type AuthedUser,
+} from './rbac'
 export { recordAuditEvent, type RecordAuditEventInput } from './audit'
 export {
   newDocumentBaseFields,

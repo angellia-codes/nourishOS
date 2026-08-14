@@ -21,6 +21,9 @@ import { IncidentReportFormPage } from '@/features/operations/incidents/pages/In
 import { IncidentDetailPage } from '@/features/operations/incidents/pages/IncidentDetailPage'
 import { DailyUpdatesFeedPage } from '@/features/operations/dailyUpdates/pages/DailyUpdatesFeedPage'
 import { DailyUpdateFormPage } from '@/features/operations/dailyUpdates/pages/DailyUpdateFormPage'
+import { JobDescriptionListPage } from '@/features/documents/jobDescriptions/pages/JobDescriptionListPage'
+import { JobDescriptionFormPage } from '@/features/documents/jobDescriptions/pages/JobDescriptionFormPage'
+import { JobDescriptionAccessPage } from '@/features/documents/jobDescriptions/pages/JobDescriptionAccessPage'
 import { CalendarAgendaPage } from '@/features/calendar/pages/CalendarAgendaPage'
 import { CalendarEventFormPage } from '@/features/calendar/pages/CalendarEventFormPage'
 import { ROUTES } from '@/constants'
@@ -86,7 +89,18 @@ export const router = createBrowserRouter([
           { path: 'purchasing', element: <ModulePlaceholder title="Purchasing" /> },
           { path: 'inventory', element: <ModulePlaceholder title="Inventory" /> },
           { path: 'crm', element: <ModulePlaceholder title="CRM" /> },
-          { path: 'documents', element: <ModulePlaceholder title="Documents" /> },
+          {
+            // Job Descriptions is the only Documents sub-module built so far,
+            // so it holds the index — same as Daily Updates under /operations.
+            // Static segments before the :id route, or the param swallows them.
+            path: 'documents',
+            children: [
+              { index: true, element: <JobDescriptionListPage /> },
+              { path: 'job-descriptions/new', element: <JobDescriptionFormPage /> },
+              { path: 'job-descriptions/access', element: <JobDescriptionAccessPage /> },
+              { path: 'job-descriptions/:jobDescriptionId/edit', element: <JobDescriptionFormPage /> },
+            ],
+          },
           { path: 'communications', element: <ModulePlaceholder title="Communications" /> },
           { path: 'reports', element: <ModulePlaceholder title="Reports" /> },
           { path: 'settings', element: <ModulePlaceholder title="Settings" /> },

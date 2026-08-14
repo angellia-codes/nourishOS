@@ -75,3 +75,17 @@ export function requireAnyPermission(user: AuthedUser, permissions: string[]): v
     throw new AppError('permission-denied', 'You do not have permission to perform this action.')
   }
 }
+
+/**
+ * The one role-based gate in this codebase; everything else checks permission
+ * strings. superAdmin is deliberately absent from ROLE_PERMISSIONS
+ * (organization.ts) and its roles/superAdmin doc was seeded by hand, so a new
+ * permission string would not be in that document and every call would fail
+ * permission-denied until somebody edited Firestore. Comparing the role is the
+ * only check that is true on a fresh install.
+ */
+export function requireSuperAdmin(user: AuthedUser, action = 'perform this action'): void {
+  if (user.roleId !== 'superAdmin') {
+    throw new AppError('permission-denied', `Only a super admin can ${action}.`)
+  }
+}

@@ -30,6 +30,8 @@ export const COLLECTIONS = {
 
   CALENDAR_EVENTS: 'calendarEvents',
 
+  JOB_DESCRIPTIONS: 'jobDescriptions',
+
   CHECKPOINTS: 'checkpoints',
   PATROL_LOGS: 'patrolLogs',
 
