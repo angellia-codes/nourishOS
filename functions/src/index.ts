@@ -33,6 +33,22 @@ export { seedAppraisalTemplates, createAppraisal, submitAppraisal, generateAppra
 // ---- HR: Employee Database ----
 export { createEmployee, updateEmployee, archiveEmployee } from './hr/employees'
 
+// ---- HR: Recruitment (requisitions → candidates → interviews → onboarding) ----
+export {
+  createRequisition,
+  updateRequisition,
+  submitRequisition,
+  cancelRequisition,
+  createCandidate,
+  updateCandidate,
+  moveCandidateStage,
+  scheduleInterview,
+  recordInterviewOutcome,
+  cancelInterview,
+  updateOnboardingItem,
+  completeOnboarding,
+} from './hr/recruitment'
+
 // ---- Documents: Job Descriptions ----
 export {
   createJobDescription,
@@ -40,6 +56,9 @@ export {
   deleteJobDescription,
   setJobDescriptionAccess,
 } from './documents/jobDescriptions'
+
+// ---- Documents: SOP Library ----
+export { createSop, updateSop, deleteSop, setSopAccess } from './documents/sopLibrary'
 
 // ---- Operations: Lost & Found ----
 export {

@@ -1,1 +1,1 @@
-export { createCalendarEvent, cancelCalendarEvent } from './events'
+export { createCalendarEvent, cancelCalendarEvent, createCalendarEventInternal } from './events'

@@ -28,6 +28,12 @@ export interface CreateEmployeeInput {
   contractType: ContractType
   contractStartDate?: string
   contractEndDate?: string
+  /**
+   * Set when the form was opened from an onboarding checklist
+   * (/hr/employees/new?candidateId=…). The server links the new employee back
+   * to the candidate and its checklist.
+   */
+  candidateId?: string
 }
 
 export interface CreateEmployeeResult {

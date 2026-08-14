@@ -1,5 +1,5 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Select, Spinner, Textarea } from '@/components/ui'
 import { ErrorMessage } from '@/components/shared'
@@ -15,6 +15,7 @@ import {
   type Gender,
 } from '@/constants/hr'
 import * as employeeService from '@/features/hr/services/employeeService'
+import { getCandidate } from '@/features/hr/recruitment/recruitmentService'
 import { ApiError } from '@/services/api'
 import type { Employee } from '@/types'
 
@@ -102,6 +103,12 @@ export function EmployeeFormPage() {
   const isEdit = Boolean(employeeId)
   const navigate = useNavigate()
   const toast = useToast()
+  const [searchParams] = useSearchParams()
+  // Opened from an onboarding checklist: prefill what recruitment already knows
+  // and link the two records on save. Everything an employee record needs and a
+  // candidate record doesn't have (birth date, NIK, contract terms) is still
+  // typed here — which is exactly why hiring doesn't create the employee itself.
+  const candidateId = searchParams.get('candidateId')
 
   const [form, setForm] = useState<EmployeeFormState>(EMPTY_FORM)
   const [loading, setLoading] = useState(isEdit)
@@ -125,6 +132,27 @@ export function EmployeeFormPage() {
       cancelled = true
     }
   }, [employeeId])
+
+  useEffect(() => {
+    if (!candidateId || employeeId) return
+    let cancelled = false
+    getCandidate(candidateId).then((candidate) => {
+      if (cancelled || !candidate) return
+      setForm((prev) => ({
+        ...prev,
+        fullName: candidate.fullName,
+        phone: candidate.phone,
+        email: candidate.email ?? '',
+        position: candidate.positionApplied,
+        departmentId: candidate.departmentId ?? prev.departmentId,
+        outletId: candidate.outletId ?? prev.outletId,
+        joinDate: candidate.joinDate ?? prev.joinDate,
+      }))
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [candidateId, employeeId])
 
   function set<K extends keyof EmployeeFormState>(key: K) {
     return (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
@@ -170,6 +198,7 @@ export function EmployeeFormPage() {
       contractType: form.contractType,
       contractStartDate: form.contractStartDate || undefined,
       contractEndDate: form.contractEndDate || undefined,
+      candidateId: candidateId ?? undefined,
     }
 
     try {

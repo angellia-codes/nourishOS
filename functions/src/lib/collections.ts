@@ -15,6 +15,11 @@ export const COLLECTIONS = {
   EMPLOYEES: 'employees',
   EMPLOYEE_ACTIVITIES: 'employeeActivities',
 
+  RECRUITMENTS: 'recruitments',
+  CANDIDATES: 'candidates',
+  INTERVIEWS: 'interviews',
+  ONBOARDING_CHECKLISTS: 'onboardingChecklists',
+
   APPROVAL_WORKFLOWS: 'approvalWorkflows',
   APPROVAL_REQUESTS: 'approvalRequests',
   APPROVAL_STEPS: 'approvalSteps',
@@ -31,6 +36,7 @@ export const COLLECTIONS = {
   CALENDAR_EVENTS: 'calendarEvents',
 
   JOB_DESCRIPTIONS: 'jobDescriptions',
+  SOPS: 'sops',
 
   CHECKPOINTS: 'checkpoints',
   PATROL_LOGS: 'patrolLogs',

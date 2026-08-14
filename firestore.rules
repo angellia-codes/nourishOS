@@ -51,6 +51,43 @@ service cloud.firestore {
       allow write: if false; // written server-side alongside employee mutations
     }
 
+    // ---- HR: Recruitment ----
+    // employee-requisition.md §7: HR and above read every requisition; a
+    // department leader or outlet manager reads only their own outlet's. The
+    // outlet comes off the token claim, so a leader who transfers outlets
+    // loses the old outlet's rows as soon as the claim syncs.
+    function isHrOrAbove() {
+      return hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']);
+    }
+
+    function isLeader() {
+      return hasAnyRole(['kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader',
+        'wholefoodLeader', 'outletManager', 'restaurantManager']);
+    }
+
+    match /recruitments/{requisitionId} {
+      allow read: if isHrOrAbove() ||
+        (isLeader() && resource.data.outletId == request.auth.token.outletId);
+      allow write: if false; // createRequisition / updateRequisition / submitRequisition / cancelRequisition only
+    }
+
+    // Candidate records carry personal contact details, so they stay with HR
+    // and above — a leader sees the vacancy they raised, not the applicants.
+    match /candidates/{candidateId} {
+      allow read: if isHrOrAbove();
+      allow write: if false; // createCandidate / updateCandidate / moveCandidateStage only
+    }
+
+    match /interviews/{interviewId} {
+      allow read: if isHrOrAbove() || (isSignedIn() && resource.data.interviewerUid == request.auth.uid);
+      allow write: if false; // scheduleInterview / recordInterviewOutcome / cancelInterview only
+    }
+
+    match /onboardingChecklists/{checklistId} {
+      allow read: if isHrOrAbove();
+      allow write: if false; // written by moveCandidateStage; edited via updateOnboardingItem / completeOnboarding
+    }
+
     // ---- HR: Appraisal ----
     match /appraisalTemplates/{templateId} {
       allow read: if isSignedIn(); // needed to render the review form
@@ -200,8 +237,9 @@ service cloud.firestore {
     // Which roles may read the register is runtime-editable, so it cannot ride
     // on a custom claim the way every other rule here does. The allowlist doc
     // is matched by literal id so the sibling *NumberSequences counters stay in
-    // the deny-all below, and the get() is the only cross-document lookup in
-    // this file — one read per query evaluation, cached for the request.
+    // the deny-all below, and the get() is one of only two cross-document
+    // lookups in this file (the SOP library below is the other) — one read per
+    // query evaluation, cached for the request.
     //
     // Before a super admin saves an allowlist the doc does not exist, the get()
     // yields null and this denies: closed by default, on purpose.
@@ -215,6 +253,21 @@ service cloud.firestore {
         (isSignedIn() &&
           role() in get(/databases/$(database)/documents/systemSettings/jobDescriptionAccess).data.roleIds);
       allow write: if false; // createJobDescription / updateJobDescription / deleteJobDescription only
+    }
+
+    // ---- Documents: SOP Library ----
+    // Same pattern as Job Descriptions above, against its own allowlist doc, so
+    // granting a role the SOPs doesn't also grant it the job descriptions.
+    match /systemSettings/sopAccess {
+      allow read: if isSignedIn(); // the Module Access page reads it back to prefill
+      allow write: if false; // setSopAccess Cloud Function only
+    }
+
+    match /sops/{sopId} {
+      allow read: if isElevated() ||
+        (isSignedIn() &&
+          role() in get(/databases/$(database)/documents/systemSettings/sopAccess).data.roleIds);
+      allow write: if false; // createSop / updateSop / deleteSop only
     }
 
     // ---- Default deny ----

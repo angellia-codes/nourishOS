@@ -15,6 +15,14 @@ const APPROVAL_ROUTES: Record<string, ApprovalStepDefinition[]> = {
     { sequence: 1, approverRole: 'hrManager' },
     { sequence: 2, approverRole: 'generalManager' },
   ],
+  // employee-requisition.md §5 defines a conditional chain (Director joins when
+  // the request is unbudgeted). Shipped fixed for now — matching hr/appraisal —
+  // because that branch needs getApprovalRoute to take context; `budgeted` is
+  // captured on the requisition, so adding it later changes only this file.
+  'hr/requisition': [
+    { sequence: 1, approverRole: 'hrManager' },
+    { sequence: 2, approverRole: 'generalManager' },
+  ],
   'hr/contract': [
     { sequence: 1, approverRole: 'hrManager' },
     { sequence: 2, approverRole: 'generalManager' },

@@ -54,6 +54,11 @@ const BASE = ['dashboard.read', 'tasks.complete', 'documents.read', 'sops.read',
 /** Outlet leaders share one operational core; §5 then adds each one's ✅ columns on top. */
 const LEADER = [
   ...BASE,
+  // employee-requisition.md §7: department leaders and outlet managers raise
+  // requisitions for their own outlet; the approval chain (hrManager → GM) is
+  // what gates them, so they get create/read but never approve.
+  'recruitment.read',
+  'recruitment.create',
   'dailyUpdates.submit',
   'dailyUpdates.read',
   'incidents.create',

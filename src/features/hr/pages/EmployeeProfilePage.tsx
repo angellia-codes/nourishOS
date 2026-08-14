@@ -104,7 +104,7 @@ export function EmployeeProfilePage() {
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
       {/* Header */}
       <div className="flex items-start gap-3">
-        <Button type="button" variant="ghost" size="sm" onClick={() => navigate('/hr')} aria-label="Back to employees">
+        <Button type="button" variant="ghost" size="sm" onClick={() => navigate('/hr/employees')} aria-label="Back to employees">
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
         </Button>
         <Avatar name={employee.fullName} size="lg" />

@@ -20,6 +20,8 @@ export const COLLECTIONS = {
   EMPLOYEES: 'employees',
   RECRUITMENTS: 'recruitments',
   CANDIDATES: 'candidates',
+  INTERVIEWS: 'interviews',
+  ONBOARDING_CHECKLISTS: 'onboardingChecklists',
   CONTRACTS: 'contracts',
   // NOTE: 'performances' (DATABASE.md §13 / FIRESTORE_SCHEMA.md §13) is a loose
   // generic shape (employeeId, reviewerId, score, comments) — superseded by the

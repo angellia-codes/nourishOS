@@ -13,6 +13,7 @@ import {
   handleError,
   successResponse,
   PERMISSIONS,
+  type AuthedUser,
 } from '../../lib'
 import { sendNotificationInternal } from '../notifications'
 
@@ -118,80 +119,114 @@ async function findConflicts(startAt: Date, endAt: Date, participants: string[])
     })
 }
 
+/**
+ * Pure — no auth/RBAC check, no audit. The caller (the callable below, or
+ * another module's function such as scheduleInterview) owns both, the same
+ * split as submitApprovalInternal / createTaskInternal. `source` stamps the
+ * owning module and record so an event created by another feature can be
+ * traced back to it.
+ */
+export async function createCalendarEventInternal(
+  input: Partial<CreateCalendarEventInput>,
+  user: AuthedUser,
+  source?: { sourceModule: string; referenceId: string },
+): Promise<{ eventId: string; startAt: Date; endAt: Date }> {
+  if (
+    !input.title ||
+    !input.eventType ||
+    !EVENT_TYPES.includes(input.eventType) ||
+    !input.startAt ||
+    !input.endAt ||
+    !input.priority ||
+    !PRIORITIES.includes(input.priority) ||
+    !Array.isArray(input.participants) ||
+    input.participants.length === 0
+  ) {
+    throw new AppError(
+      'invalid-argument',
+      'title, eventType, startAt, endAt, priority, and at least one participant are required.',
+    )
+  }
+
+  const startAt = parseInstant(input.startAt, 'startAt')
+  const endAt = parseInstant(input.endAt, 'endAt')
+  if (endAt <= startAt) {
+    throw new AppError('invalid-argument', 'endAt must be after startAt.')
+  }
+
+  // §9.2-F07: warn once, then let the caller retry with an overrideReason.
+  // The client pulls `conflicts` off the error details (conflictsFromError).
+  if (!input.overrideReason) {
+    const conflicts = await findConflicts(startAt, endAt, input.participants)
+    if (conflicts.length > 0) {
+      throw new AppError(
+        'failed-precondition',
+        `${conflicts.length} participant${conflicts.length === 1 ? ' has' : 's have'} an overlapping commitment.`,
+        { conflicts },
+      )
+    }
+  }
+
+  const eventRef = db.collection(COLLECTIONS.CALENDAR_EVENTS).doc()
+  await eventRef.set({
+    title: input.title,
+    description: input.description ?? null,
+    eventType: input.eventType,
+    startAt: Timestamp.fromDate(startAt),
+    endAt: Timestamp.fromDate(endAt),
+    allDay: input.allDay ?? false,
+    participants: input.participants,
+    location: input.location ?? null,
+    priority: input.priority,
+    eventStatus: 'confirmed',
+    cancellationReason: null,
+    recurrenceRule: input.recurrenceRule ?? null,
+    outletId: user.outletId,
+    departmentId: user.departmentId,
+    sourceModule: source?.sourceModule ?? 'calendar',
+    referenceId: source?.referenceId ?? null,
+    gcalEventId: null,
+    syncStatus: 'skipped',
+    syncError: null,
+    lastSyncedAt: null,
+    ...newDocumentBaseFields(user.uid, 'confirmed'),
+  })
+
+  await Promise.all(
+    input.participants
+      .filter((uid) => uid !== user.uid)
+      .map((uid) =>
+        sendNotificationInternal({
+          type: 'alert',
+          title: 'New Calendar Event',
+          message: `${user.displayName} scheduled "${input.title}" for ${startAt.toISOString()}.`,
+          module: 'calendar',
+          priority: input.priority === 'critical' ? 'critical' : 'medium',
+          recipientUid: uid,
+          senderUid: user.uid,
+          referenceModule: 'calendar',
+          referenceId: eventRef.id,
+        }),
+      ),
+  )
+
+  return { eventId: eventRef.id, startAt, endAt }
+}
+
 export const createCalendarEvent = onCall({ region: REGION }, async (request) => {
   try {
     const user = await requireActiveUser(request)
     requirePermission(user, PERMISSIONS.CALENDAR_CREATE)
 
     const input = (request.data ?? {}) as Partial<CreateCalendarEventInput>
-
-    if (
-      !input.title ||
-      !input.eventType ||
-      !EVENT_TYPES.includes(input.eventType) ||
-      !input.startAt ||
-      !input.endAt ||
-      !input.priority ||
-      !PRIORITIES.includes(input.priority) ||
-      !Array.isArray(input.participants) ||
-      input.participants.length === 0
-    ) {
-      throw new AppError(
-        'invalid-argument',
-        'title, eventType, startAt, endAt, priority, and at least one participant are required.',
-      )
-    }
-
-    const startAt = parseInstant(input.startAt, 'startAt')
-    const endAt = parseInstant(input.endAt, 'endAt')
-    if (endAt <= startAt) {
-      throw new AppError('invalid-argument', 'endAt must be after startAt.')
-    }
-
-    // §9.2-F07: warn once, then let the caller retry with an overrideReason.
-    // The client pulls `conflicts` off the error details (conflictsFromError).
-    if (!input.overrideReason) {
-      const conflicts = await findConflicts(startAt, endAt, input.participants)
-      if (conflicts.length > 0) {
-        throw new AppError(
-          'failed-precondition',
-          `${conflicts.length} participant${conflicts.length === 1 ? ' has' : 's have'} an overlapping commitment.`,
-          { conflicts },
-        )
-      }
-    }
-
-    const eventRef = db.collection(COLLECTIONS.CALENDAR_EVENTS).doc()
-    await eventRef.set({
-      title: input.title,
-      description: input.description ?? null,
-      eventType: input.eventType,
-      startAt: Timestamp.fromDate(startAt),
-      endAt: Timestamp.fromDate(endAt),
-      allDay: input.allDay ?? false,
-      participants: input.participants,
-      location: input.location ?? null,
-      priority: input.priority,
-      eventStatus: 'confirmed',
-      cancellationReason: null,
-      recurrenceRule: input.recurrenceRule ?? null,
-      outletId: user.outletId,
-      departmentId: user.departmentId,
-      sourceModule: 'calendar',
-      referenceId: null,
-      gcalEventId: null,
-      syncStatus: 'skipped',
-      syncError: null,
-      lastSyncedAt: null,
-      ...newDocumentBaseFields(user.uid, 'confirmed'),
-    })
+    const { eventId, startAt, endAt } = await createCalendarEventInternal(input, user)
 
     await recordAuditEvent({
       eventType: 'CalendarEventCreated',
       category: 'Operations',
       module: 'calendar',
       resourceType: 'calendarEvent',
-      resourceId: eventRef.id,
+      resourceId: eventId,
       action: 'create',
       user,
       newValues: {
@@ -199,30 +234,12 @@ export const createCalendarEvent = onCall({ region: REGION }, async (request) =>
         eventType: input.eventType,
         startAt: startAt.toISOString(),
         endAt: endAt.toISOString(),
-        participantCount: input.participants.length,
+        participantCount: input.participants?.length ?? 0,
       },
       metadata: input.overrideReason ? { conflictOverrideReason: input.overrideReason } : undefined,
     })
 
-    await Promise.all(
-      input.participants
-        .filter((uid) => uid !== user.uid)
-        .map((uid) =>
-          sendNotificationInternal({
-            type: 'alert',
-            title: 'New Calendar Event',
-            message: `${user.displayName} scheduled "${input.title}" for ${startAt.toISOString()}.`,
-            module: 'calendar',
-            priority: input.priority === 'critical' ? 'critical' : 'medium',
-            recipientUid: uid,
-            senderUid: user.uid,
-            referenceModule: 'calendar',
-            referenceId: eventRef.id,
-          }),
-        ),
-    )
-
-    return successResponse({ eventId: eventRef.id }, 'Event scheduled.')
+    return successResponse({ eventId }, 'Event scheduled.')
   } catch (error) {
     handleError(error)
   }

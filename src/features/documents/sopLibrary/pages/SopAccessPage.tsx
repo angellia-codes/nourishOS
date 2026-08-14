@@ -5,17 +5,17 @@ import { Button, Card, CardContent, CardHeader, CardTitle, Checkbox, Label, Spin
 import { EmptyState } from '@/components/shared'
 import { ROLES, ROLE_LABELS } from '@/constants'
 import { useRole, useToast } from '@/hooks'
-import * as jobDescriptionService from '../jobDescriptionService'
+import * as sopService from '../sopService'
 import type { Role } from '@/constants/roles'
 
-const LIST_ROUTE = '/documents/job-descriptions'
+const LIST_ROUTE = '/documents/sop-library'
 
 /**
- * Which roles may read the Job Descriptions register.
+ * Which roles may read the SOP Library.
  *
- * This writes systemSettings/jobDescriptionAccess, which is exactly what the
- * firestore.rules `get()` reads — unticking a role revokes the read itself,
- * not just the nav item.
+ * This writes systemSettings/sopAccess, which is exactly what the
+ * firestore.rules `get()` reads — unticking a role revokes the read itself, not
+ * just the nav item.
  *
  * superAdmin/director/generalManager are shown ticked and locked: the rule's
  * isElevated() arm lets them through regardless, so offering a toggle that
@@ -25,7 +25,7 @@ const ALWAYS_ALLOWED: Role[] = [ROLES.SUPER_ADMIN, ROLES.DIRECTOR, ROLES.GENERAL
 
 const SELECTABLE_ROLES = (Object.values(ROLES) as Role[]).filter((role) => !ALWAYS_ALLOWED.includes(role))
 
-export function JobDescriptionAccessPage() {
+export function SopAccessPage() {
   const navigate = useNavigate()
   const toast = useToast()
   const { isRole } = useRole()
@@ -38,8 +38,8 @@ export function JobDescriptionAccessPage() {
   useEffect(() => {
     let cancelled = false
 
-    jobDescriptionService
-      .getJobDescriptionAccess()
+    sopService
+      .getSopAccess()
       .then((access) => {
         if (cancelled) return
         setSelected(access?.roleIds ?? [])
@@ -66,7 +66,7 @@ export function JobDescriptionAccessPage() {
   async function handleSave() {
     setSaving(true)
     try {
-      await jobDescriptionService.setJobDescriptionAccess(selected)
+      await sopService.setSopAccess(selected)
       toast.success('Module access updated.')
       navigate(LIST_ROUTE)
     } catch (error) {
@@ -81,10 +81,10 @@ export function JobDescriptionAccessPage() {
         <EmptyState
           icon={<Lock className="h-8 w-8" aria-hidden="true" />}
           title="Super admin only"
-          description="Only a super admin can change who has access to job descriptions."
+          description="Only a super admin can change who has access to the SOP library."
           action={
             <Button variant="secondary" onClick={() => navigate(LIST_ROUTE)}>
-              Back to Job Descriptions
+              Back to SOP Library
             </Button>
           }
         />
@@ -103,7 +103,7 @@ export function JobDescriptionAccessPage() {
   return (
     <Card className="mx-auto w-full max-w-2xl">
       <CardHeader>
-        <CardTitle>Job Descriptions — Module Access</CardTitle>
+        <CardTitle>SOP Library — Module Access</CardTitle>
         <p className="text-sm text-muted-foreground">
           Tick the roles that may open this module. Anyone not ticked sees an access-restricted message.
         </p>
@@ -112,8 +112,8 @@ export function JobDescriptionAccessPage() {
         <div className="flex flex-col gap-2">
           {ALWAYS_ALLOWED.map((role) => (
             <div key={role} className="flex items-center gap-3 rounded-md bg-sunken px-3 py-2 opacity-70">
-              <Checkbox id={`role-${role}`} checked disabled readOnly />
-              <Label htmlFor={`role-${role}`}>{ROLE_LABELS[role]}</Label>
+              <Checkbox id={`sop-role-${role}`} checked disabled readOnly />
+              <Label htmlFor={`sop-role-${role}`}>{ROLE_LABELS[role]}</Label>
               <span className="ml-auto text-xs text-muted-foreground">Always allowed</span>
             </div>
           ))}
@@ -121,11 +121,11 @@ export function JobDescriptionAccessPage() {
           {SELECTABLE_ROLES.map((role) => (
             <div key={role} className="flex items-center gap-3 px-3 py-2">
               <Checkbox
-                id={`role-${role}`}
+                id={`sop-role-${role}`}
                 checked={selected.includes(role)}
                 onChange={() => toggle(role)}
               />
-              <Label htmlFor={`role-${role}`}>{ROLE_LABELS[role]}</Label>
+              <Label htmlFor={`sop-role-${role}`}>{ROLE_LABELS[role]}</Label>
             </div>
           ))}
         </div>

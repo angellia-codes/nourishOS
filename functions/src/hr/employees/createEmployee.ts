@@ -7,6 +7,7 @@ import {
   requirePermission,
   recordAuditEvent,
   newDocumentBaseFields,
+  updatedFields,
   AppError,
   handleError,
   successResponse,
@@ -48,6 +49,13 @@ interface CreateEmployeeInput {
   contractType: ContractType
   contractStartDate?: string
   contractEndDate?: string
+  /**
+   * Set when the hire came through the recruitment pipeline — the employee
+   * form is opened as /hr/employees/new?candidateId=… from the onboarding
+   * checklist. Links the three records together rather than leaving the new
+   * employee unconnected to the candidate they were five minutes ago.
+   */
+  candidateId?: string
 }
 
 export const createEmployee = onCall({ region: REGION }, async (request) => {
@@ -135,6 +143,25 @@ export const createEmployee = onCall({ region: REGION }, async (request) => {
       resignationReason: null,
       ...newDocumentBaseFields(user.uid, 'active'),
     })
+
+    // Recruitment link: stamp the new employee id back onto the candidate and
+    // its onboarding checklist. Best-effort by design — a bad candidateId must
+    // not undo an employee record that is already written.
+    if (input.candidateId) {
+      const candidateRef = db.collection(COLLECTIONS.CANDIDATES).doc(input.candidateId)
+      if ((await candidateRef.get()).exists) {
+        await candidateRef.update({ employeeId: employeeRef.id, ...updatedFields(user.uid) })
+
+        const checklists = await db
+          .collection(COLLECTIONS.ONBOARDING_CHECKLISTS)
+          .where('candidateId', '==', input.candidateId)
+          .limit(1)
+          .get()
+        if (!checklists.empty) {
+          await checklists.docs[0].ref.update({ employeeId: employeeRef.id, ...updatedFields(user.uid) })
+        }
+      }
+    }
 
     await recordEmployeeActivity(
       { id: employeeRef.id, departmentId: input.departmentId, outletId: input.outletId },
