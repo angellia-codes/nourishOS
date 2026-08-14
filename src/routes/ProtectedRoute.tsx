@@ -27,7 +27,16 @@ export function ProtectedRoute() {
     )
   }
 
-  if (!isAuthenticated || !profile) {
+  // Signed in with no profile at all — a first-time account, not a rejected
+  // one. Send them to registration rather than a dead-end "access restricted"
+  // screen (AUTHENTICATION.md §5 deviation, see RegisterPage).
+  if (!profile) {
+    return <Navigate to={ROUTES.REGISTER} replace />
+  }
+
+  // Profile exists but isn't active (suspended, pending, terminated) — that
+  // is a real denial and registering again wouldn't change it.
+  if (!isAuthenticated) {
     return <Navigate to={ROUTES.UNAUTHORIZED} state={{ reason: error }} replace />
   }
 

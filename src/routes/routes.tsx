@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom'
 import { AuthLayout, DashboardLayout } from '@/layouts'
 import { ProtectedRoute } from './ProtectedRoute'
 import { LoginPage } from '@/features/auth/LoginPage'
+import { RegisterPage } from '@/features/auth/RegisterPage'
 import { UnauthorizedPage } from '@/features/auth/UnauthorizedPage'
 import { NotFoundPage } from '@/features/auth/NotFoundPage'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
@@ -30,6 +31,7 @@ export const router = createBrowserRouter([
     element: <AuthLayout />,
     children: [
       { path: ROUTES.LOGIN, element: <LoginPage /> },
+      { path: ROUTES.REGISTER, element: <RegisterPage /> },
       { path: ROUTES.UNAUTHORIZED, element: <UnauthorizedPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],

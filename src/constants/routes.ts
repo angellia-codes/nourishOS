@@ -1,6 +1,7 @@
 /** Source: AUTHENTICATION.md §10 (public vs protected routes), DESIGN.md §4 (primary nav). */
 export const ROUTES = {
   LOGIN: '/login',
+  REGISTER: '/register',
   UNAUTHORIZED: '/unauthorized',
   DASHBOARD: '/',
   HR: '/hr',

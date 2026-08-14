@@ -1,5 +1,6 @@
 // ---- Auth ----
 export { syncUserClaims } from './auth/syncUserClaims'
+export { registerUser } from './auth/registerUser'
 
 // ---- Shared: Approval Engine ----
 export {
