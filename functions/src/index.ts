@@ -13,7 +13,7 @@ export {
 } from './shared/approval'
 
 // ---- Shared: Task Engine ----
-export { createTask, assignTask, completeTask, cancelTask } from './shared/tasks'
+export { createTask, assignTask, completeTask, cancelTask, addTaskComment } from './shared/tasks'
 
 // ---- Shared: Notifications ----
 export { markNotificationRead, markAllNotificationsRead } from './shared/notifications'
@@ -32,6 +32,9 @@ export { seedAppraisalTemplates, createAppraisal, submitAppraisal, generateAppra
 
 // ---- HR: Employee Database ----
 export { createEmployee, updateEmployee, archiveEmployee } from './hr/employees'
+
+// ---- HR: Inventory (uniforms & assets) ----
+export { createInventoryItem, updateInventoryItem, receiveStock, issueStock, transferStock } from './hr/inventory'
 
 // ---- HR: Recruitment (requisitions → candidates → interviews → onboarding) ----
 export {
@@ -59,6 +62,24 @@ export {
 
 // ---- Documents: SOP Library ----
 export { createSop, updateSop, deleteSop, setSopAccess } from './documents/sopLibrary'
+
+// ---- Finance: Expense Requests ----
+export {
+  createExpenseRequest,
+  updateExpenseRequest,
+  submitExpenseRequest,
+  markExpensePaid,
+  closeExpenseRequest,
+} from './finance'
+
+// ---- Communications: Announcements (Broadcast is the emergency category) ----
+export {
+  createAnnouncement,
+  updateAnnouncement,
+  publishAnnouncement,
+  archiveAnnouncement,
+  recordAnnouncementRead,
+} from './communications/announcements'
 
 // ---- Operations: Lost & Found ----
 export {

@@ -34,6 +34,12 @@ export const COLLECTIONS = {
   TRAININGS: 'trainings',
   EMPLOYEE_ASSETS: 'employeeAssets',
   EMPLOYEE_ACTIVITIES: 'employeeActivities',
+  // HR Inventory (uniforms & assets) — deliberately distinct from the
+  // "Inventory" block below, which is reserved for the future F&B warehouse
+  // module (docs/modules/inventory.md) and has an incompatible schema.
+  HR_INVENTORY_ITEMS: 'hrInventoryItems',
+  HR_STOCK_LEVELS: 'hrStockLevels',
+  HR_STOCK_MOVEMENTS: 'hrStockMovements',
 
   // Documents
   SOPS: 'sops',

@@ -22,7 +22,12 @@ export interface ApprovalWorkflow extends BaseDocument {
 
 /** A live approval instance attached to a business object. Source: APPROVAL_ENGINE.md §4, §11. */
 export interface ApprovalRequest extends BaseDocument {
-  workflowId: string
+  /**
+   * Optional because the engine never writes it: routes are code-owned in
+   * functions/src/shared/approval/routes.ts, and the approvalWorkflows
+   * collection is declared but unused (approval_engine.md §17).
+   */
+  workflowId?: string
   module: string
   resourceType: string
   resourceId: string
@@ -30,6 +35,27 @@ export interface ApprovalRequest extends BaseDocument {
   currentStepIndex: number
   approvalStatus: ApprovalStatus
   priority?: 'critical' | 'high' | 'medium' | 'low'
+  /** The route snapshotted at submit time — immutable afterwards (submitApproval.ts). */
+  steps: ApprovalStepDefinition[]
+}
+
+/**
+ * The live step document. Only one exists per request at a time: approveStep
+ * closes the current one and creates the next, so this collection is a set of
+ * in-flight steps rather than a full ledger (that's approvalHistory).
+ *
+ * `approverRole` is a role string, not a uid — every user holding the role is a
+ * valid approver, which is why the personal queue is a role query.
+ */
+export interface ApprovalStep extends BaseDocument {
+  approvalRequestId: string
+  sequence: number
+  approverRole: Role
+  stepStatus: 'pending' | 'approved' | 'rejected' | 'returned'
+  approvedBy?: string
+  approvedAt?: string
+  rejectedBy?: string
+  rejectedAt?: string
 }
 
 /** Immutable per-step record. Source: APPROVAL_ENGINE.md §11. */

@@ -37,6 +37,7 @@ export const PERMISSION_MODULES = {
   INCIDENTS: 'incidents',
   DAILY_UPDATES: 'dailyUpdates',
   CALENDAR: 'calendar',
+  HR_INVENTORY: 'hrInventory',
 } as const
 
 export type PermissionModule = (typeof PERMISSION_MODULES)[keyof typeof PERMISSION_MODULES]
@@ -96,8 +97,17 @@ export const PERMISSIONS = {
   EXPENSE_REQUESTS_SUBMIT: permission(PERMISSION_MODULES.EXPENSE_REQUESTS, ACTIONS.SUBMIT),
   EXPENSE_REQUESTS_APPROVE: permission(PERMISSION_MODULES.EXPENSE_REQUESTS, ACTIONS.APPROVE),
   EXPENSE_REQUESTS_REJECT: permission(PERMISSION_MODULES.EXPENSE_REQUESTS, ACTIONS.REJECT),
+  // expense-request.md §7 — authorising the spend and moving the money are
+  // separate actions; Finance only.
+  EXPENSE_REQUESTS_PAY: permission(PERMISSION_MODULES.EXPENSE_REQUESTS, 'pay'),
 
+  // Communications — Announcements (communications.md §19). Reads are gated by
+  // firestore.rules against the resolved audience, not by a permission string,
+  // so there is no announcements.read. BROADCAST covers the emergency category,
+  // which §19 restricts to GM/Director/Super Admin.
+  ANNOUNCEMENTS_CREATE: permission(PERMISSION_MODULES.ANNOUNCEMENTS, ACTIONS.CREATE),
   ANNOUNCEMENTS_PUBLISH: permission(PERMISSION_MODULES.ANNOUNCEMENTS, ACTIONS.PUBLISH),
+  ANNOUNCEMENTS_BROADCAST: permission(PERMISSION_MODULES.ANNOUNCEMENTS, 'broadcast'),
 
   TASKS_ASSIGN: permission(PERMISSION_MODULES.TASKS, ACTIONS.ASSIGN),
   TASKS_COMPLETE: permission(PERMISSION_MODULES.TASKS, 'complete'),
@@ -142,6 +152,13 @@ export const PERMISSIONS = {
   CALENDAR_READ: permission(PERMISSION_MODULES.CALENDAR, ACTIONS.READ),
   CALENDAR_CREATE: permission(PERMISSION_MODULES.CALENDAR, ACTIONS.CREATE),
   CALENDAR_MANAGE: permission(PERMISSION_MODULES.CALENDAR, ACTIONS.MANAGE),
+
+  // HR Inventory — uniforms & assets (stock ledger, not per-serial tracking).
+  // MANAGE curates the item catalog; RECORD covers day-to-day movements
+  // (receive/issue/transfer), which outlet leaders also get since they run
+  // their own outlet's uniform stock — item-master edits stay HR's.
+  HR_INVENTORY_MANAGE: permission(PERMISSION_MODULES.HR_INVENTORY, ACTIONS.MANAGE),
+  HR_INVENTORY_RECORD: permission(PERMISSION_MODULES.HR_INVENTORY, 'record'),
 } as const
 
 export type PermissionString = (typeof PERMISSIONS)[keyof typeof PERMISSIONS]

@@ -14,6 +14,9 @@ export const COLLECTIONS = {
 
   EMPLOYEES: 'employees',
   EMPLOYEE_ACTIVITIES: 'employeeActivities',
+  HR_INVENTORY_ITEMS: 'hrInventoryItems',
+  HR_STOCK_LEVELS: 'hrStockLevels',
+  HR_STOCK_MOVEMENTS: 'hrStockMovements',
 
   RECRUITMENTS: 'recruitments',
   CANDIDATES: 'candidates',
@@ -26,8 +29,12 @@ export const COLLECTIONS = {
   APPROVAL_HISTORY: 'approvalHistory',
 
   TASKS: 'tasks',
+  TASK_COMMENTS: 'taskComments',
 
   NOTIFICATIONS: 'notifications',
+
+  ANNOUNCEMENTS: 'announcements',
+  ANNOUNCEMENT_READS: 'announcementReads',
 
   AUDIT_LOGS: 'auditLogs',
 
@@ -45,6 +52,8 @@ export const COLLECTIONS = {
   INCIDENT_REPORTS: 'incidentReports',
   WORK_ORDERS: 'workOrders',
   LOST_FOUND_ITEMS: 'lostFoundItems',
+
+  EXPENSE_REQUESTS: 'expenseRequests',
 
   SYSTEM_SETTINGS: 'systemSettings',
 } as const

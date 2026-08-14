@@ -10,7 +10,7 @@ import type { SubmitApprovalInternalInput } from './types'
  * resolved server-side from routes.ts; callers cannot supply steps.
  */
 export async function submitApprovalInternal(input: SubmitApprovalInternalInput): Promise<string> {
-  const steps = getApprovalRoute(input.module, input.resourceType)
+  const steps = getApprovalRoute(input.module, input.resourceType, input.context)
 
   const requestRef = db.collection(COLLECTIONS.APPROVAL_REQUESTS).doc()
   const firstStepRef = db.collection(COLLECTIONS.APPROVAL_STEPS).doc()

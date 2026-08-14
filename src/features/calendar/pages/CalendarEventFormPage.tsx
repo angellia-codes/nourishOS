@@ -15,6 +15,7 @@ import {
   Textarea,
 } from '@/components/ui'
 import { useToast } from '@/hooks'
+import { userService } from '@/services/shared'
 import { PRIORITY, type Priority } from '@/constants/statuses'
 import * as calendarService from '../calendarService'
 import { EVENT_TYPE_LABELS, formatIsoDateTime, toIsoInstant } from '../calendarFormat'
@@ -36,13 +37,13 @@ export function CalendarEventFormPage() {
   const [location, setLocation] = useState('')
   const [priority, setPriority] = useState<Priority>(PRIORITY.MEDIUM)
   const [participants, setParticipants] = useState<string[]>([])
-  const [options, setOptions] = useState<calendarService.ParticipantOption[]>([])
+  const [options, setOptions] = useState<userService.DirectoryUser[]>([])
   const [conflicts, setConflicts] = useState<CalendarConflict[] | null>(null)
   const [overrideReason, setOverrideReason] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    return calendarService.subscribeToParticipantOptions(setOptions)
+    return userService.subscribeToDirectory(setOptions)
   }, [])
 
   const canSubmit =

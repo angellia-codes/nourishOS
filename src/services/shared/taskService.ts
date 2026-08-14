@@ -1,7 +1,7 @@
 import { callFunction } from '@/services/api'
 import { queryDocuments, subscribeToCollection, where, orderBy } from '@/services/firestore'
 import { COLLECTIONS } from '@/constants'
-import type { Task } from '@/types'
+import type { Task, TaskComment } from '@/types'
 import type { Unsubscribe } from '@/services/firestore'
 
 export interface CreateTaskInput {
@@ -39,10 +39,46 @@ export function getMyTasks(uid: string): Promise<Task[]> {
   ])
 }
 
-export function subscribeToMyTasks(uid: string, onChange: (tasks: Task[]) => void): Unsubscribe {
+export function subscribeToMyTasks(
+  uid: string,
+  onChange: (tasks: Task[]) => void,
+  onError?: (error: Error) => void,
+): Unsubscribe {
   return subscribeToCollection<Task>(
     COLLECTIONS.TASKS,
     [where('assignedTo', 'array-contains', uid), orderBy('dueDate', 'asc')],
     onChange,
+    onError,
+  )
+}
+
+/** The other half of the task list — what this user handed out. Matches the `assignedBy == uid` branch of the tasks read rule. */
+export function subscribeToTasksAssignedByMe(
+  uid: string,
+  onChange: (tasks: Task[]) => void,
+  onError?: (error: Error) => void,
+): Unsubscribe {
+  return subscribeToCollection<Task>(
+    COLLECTIONS.TASKS,
+    [where('assignedBy', '==', uid), orderBy('dueDate', 'asc')],
+    onChange,
+    onError,
+  )
+}
+
+export function addTaskComment(input: { taskId: string; body: string }): Promise<{ commentId: string }> {
+  return callFunction('addTaskComment', input)
+}
+
+export function subscribeToTaskComments(
+  taskId: string,
+  onChange: (comments: TaskComment[]) => void,
+  onError?: (error: Error) => void,
+): Unsubscribe {
+  return subscribeToCollection<TaskComment>(
+    COLLECTIONS.TASK_COMMENTS,
+    [where('taskId', '==', taskId), orderBy('createdAt', 'asc')],
+    onChange,
+    onError,
   )
 }

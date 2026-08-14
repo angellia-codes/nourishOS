@@ -1,24 +1,29 @@
 import { AppError } from '../../lib'
-import type { ApprovalStepDefinition } from './types'
+import { buildExpenseApprovalSteps } from '../../finance/expenseSteps'
+import type { ApprovalRouteContext, ApprovalStepDefinition } from './types'
 
 /**
  * The ONLY place approval routes are defined. Keyed by `module/resourceType`.
  * Adding a new approvable resource = adding a line here (reviewed in a PR),
  * never trusting request.data — clients submit a resource identity only and
- * can no longer pick their own approvers. When routes need to vary by
- * amount/outlet (Finance thresholds, approval_engine.md §6), this value
- * becomes a (context) => steps function — the contract to callers doesn't
- * change.
+ * can no longer pick their own approvers.
+ *
+ * A route is either a fixed list of steps or a `(context) => steps` function
+ * for the cases approval_engine.md §6 describes — amount thresholds, outlet
+ * routing. The contract to callers is the same either way; what varies is
+ * whether the engine consults the context the caller assembled server-side.
  */
-const APPROVAL_ROUTES: Record<string, ApprovalStepDefinition[]> = {
+type ApprovalRoute = ApprovalStepDefinition[] | ((context: ApprovalRouteContext) => ApprovalStepDefinition[])
+
+const APPROVAL_ROUTES: Record<string, ApprovalRoute> = {
   'hr/appraisal': [
     { sequence: 1, approverRole: 'hrManager' },
     { sequence: 2, approverRole: 'generalManager' },
   ],
   // employee-requisition.md §5 defines a conditional chain (Director joins when
-  // the request is unbudgeted). Shipped fixed for now — matching hr/appraisal —
-  // because that branch needs getApprovalRoute to take context; `budgeted` is
-  // captured on the requisition, so adding it later changes only this file.
+  // the request is unbudgeted). Still shipped fixed — `budgeted` is captured on
+  // the requisition, so switching it to the function form below is now a
+  // change to this file and submitRequisition's context, nothing else.
   'hr/requisition': [
     { sequence: 1, approverRole: 'hrManager' },
     { sequence: 2, approverRole: 'generalManager' },
@@ -27,16 +32,24 @@ const APPROVAL_ROUTES: Record<string, ApprovalStepDefinition[]> = {
     { sequence: 1, approverRole: 'hrManager' },
     { sequence: 2, approverRole: 'generalManager' },
   ],
-  // finance/expense, operations/workOrder, ... — added as modules ship.
+  // The first conditional route — expense-request.md §3 / approval_engine.md §6.
+  'finance/expenseRequest': buildExpenseApprovalSteps,
+  // operations/workOrder, ... — added as modules ship.
 }
 
-export function getApprovalRoute(module: string, resourceType: string): ApprovalStepDefinition[] {
+export function getApprovalRoute(
+  module: string,
+  resourceType: string,
+  context: ApprovalRouteContext = {},
+): ApprovalStepDefinition[] {
   const route = APPROVAL_ROUTES[`${module}/${resourceType}`]
-  if (!route || route.length === 0) {
+  const steps = typeof route === 'function' ? route(context) : route
+
+  if (!steps || steps.length === 0) {
     throw new AppError(
       'failed-precondition',
       `No approval route is configured for ${module}/${resourceType}. Routes are defined server-side in shared/approval/routes.ts.`,
     )
   }
-  return route
+  return steps
 }

@@ -31,7 +31,13 @@ service cloud.firestore {
 
     // ---- Core ----
     match /users/{userId} {
-      allow read: if isSignedIn() && (request.auth.uid == userId || hasAnyRole(['superAdmin', 'director', 'generalManager', 'hrManager']));
+      // Internal staff directory: the doc holds work email, display name, role,
+      // department, outlet and status — nothing sensitive lives here (salary and
+      // NIK are deliberately off the employee doc too). Any signed-in user can
+      // read it because the task assignee picker and every other "who is this
+      // uid" lookup needs it, and restricting it to HR-and-above meant a leader
+      // could not assign the tasks communications.md §19 says they may assign.
+      allow read: if isSignedIn();
       allow write: if false; // server-side only — user docs are maintained via superAdmin tooling; admin callables are planned (AUTHENTICATION.md §18)
     }
 
@@ -88,6 +94,27 @@ service cloud.firestore {
       allow write: if false; // written by moveCandidateStage; edited via updateOnboardingItem / completeOnboarding
     }
 
+    // ---- HR: Inventory (uniforms & assets) ----
+    // Catalog and stock levels aren't sensitive — same openness as checkpoints,
+    // so staff can see what's on hand before asking HR to source it. The
+    // movement ledger carries unit cost, so it's scoped like expenseRequests:
+    // HR and above see everything, a leader sees their own outlet's activity.
+    match /hrInventoryItems/{itemId} {
+      allow read: if isSignedIn();
+      allow write: if false; // createInventoryItem / updateInventoryItem only
+    }
+
+    match /hrStockLevels/{stockLevelId} {
+      allow read: if isSignedIn();
+      allow write: if false; // written only inside receiveStock/issueStock/transferStock transactions
+    }
+
+    match /hrStockMovements/{movementId} {
+      allow read: if isHrOrAbove() ||
+        (isLeader() && resource.data.outletId == request.auth.token.outletId);
+      allow write: if false; // receiveStock / issueStock / transferStock only
+    }
+
     // ---- HR: Appraisal ----
     match /appraisalTemplates/{templateId} {
       allow read: if isSignedIn(); // needed to render the review form
@@ -130,6 +157,18 @@ service cloud.firestore {
         isElevated()
       );
       allow write: if false;
+    }
+
+    // Participants are denormalised onto each comment (addTaskComment) so this
+    // rule matches a plain `where taskId == …` query without a get() on the
+    // parent task — a get() per comment would cost a read each and could not be
+    // satisfied by any client query at all.
+    match /taskComments/{commentId} {
+      allow read: if isSignedIn() && (
+        request.auth.uid in resource.data.taskParticipants ||
+        isElevated()
+      );
+      allow write: if false; // addTaskComment Cloud Function only
     }
 
     // ---- Shared: Notifications ----
@@ -268,6 +307,45 @@ service cloud.firestore {
         (isSignedIn() &&
           role() in get(/databases/$(database)/documents/systemSettings/sopAccess).data.roleIds);
       allow write: if false; // createSop / updateSop / deleteSop only
+    }
+
+    // ---- Finance: Expense Requests ----
+    // expense-request.md §7's view column: own always, Finance and above see
+    // everything, and a department leader sees their own department's — that
+    // last branch exists so the leader approving step 1 can open the record the
+    // dashboard queue links them to. The list pages deliberately query only the
+    // first two branches (own, or unfiltered for Finance/elevated), because a
+    // list query that returns one unreadable row fails in its entirety.
+    match /expenseRequests/{requestId} {
+      allow read: if isSignedIn() && (
+        resource.data.requestedBy == request.auth.uid ||
+        hasAnyRole(['finance', 'generalManager', 'director', 'superAdmin']) ||
+        (isLeader() &&
+          resource.data.departmentId == request.auth.token.departmentId &&
+          resource.data.outletId == request.auth.token.outletId)
+      );
+      allow write: if false; // createExpenseRequest / updateExpenseRequest / submitExpenseRequest / markExpensePaid / closeExpenseRequest only
+    }
+
+    // ---- Communications: Announcements ----
+    // audienceUids is the author's outlet/department/role targeting resolved to
+    // concrete uids at publish time (functions/src/communications/announcements.ts).
+    // Rules and the feed query have to speak the same language — a list query
+    // fails outright if any returned document fails its read rule, and
+    // "outletIds is empty OR contains mine" is not expressible as a query. So
+    // both key off this one array. Drafts have it empty, archiving clears it.
+    match /announcements/{announcementId} {
+      allow read: if isSignedIn() && (
+        request.auth.uid in resource.data.audienceUids ||
+        resource.data.createdBy == request.auth.uid ||
+        isElevated()
+      );
+      allow write: if false; // createAnnouncement / updateAnnouncement / publishAnnouncement / archiveAnnouncement only
+    }
+
+    match /announcementReads/{readId} {
+      allow read: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow write: if false; // recordAnnouncementRead Cloud Function only
     }
 
     // ---- Default deny ----

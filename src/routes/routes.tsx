@@ -20,6 +20,10 @@ import { CandidateDetailPage } from '@/features/hr/recruitment/pages/CandidateDe
 import { InterviewFormPage } from '@/features/hr/recruitment/pages/InterviewFormPage'
 import { OnboardingListPage } from '@/features/hr/recruitment/pages/OnboardingListPage'
 import { OnboardingChecklistPage } from '@/features/hr/recruitment/pages/OnboardingChecklistPage'
+import { InventoryItemListPage } from '@/features/hr/inventory/pages/InventoryItemListPage'
+import { InventoryItemFormPage } from '@/features/hr/inventory/pages/InventoryItemFormPage'
+import { InventoryItemDetailPage } from '@/features/hr/inventory/pages/InventoryItemDetailPage'
+import { StockMovementFormPage } from '@/features/hr/inventory/pages/StockMovementFormPage'
 import { ModulePlaceholder } from '@/components/shared/ModulePlaceholder'
 import { CheckpointListPage } from '@/features/security/pages/CheckpointListPage'
 import { PatrolCapturePage } from '@/features/security/pages/PatrolCapturePage'
@@ -38,6 +42,16 @@ import { DocumentsHomePage } from '@/features/documents/pages/DocumentsHomePage'
 import { SopListPage } from '@/features/documents/sopLibrary/pages/SopListPage'
 import { SopFormPage } from '@/features/documents/sopLibrary/pages/SopFormPage'
 import { SopAccessPage } from '@/features/documents/sopLibrary/pages/SopAccessPage'
+import { ExpenseListPage } from '@/features/finance/expenses/pages/ExpenseListPage'
+import { ExpenseFormPage } from '@/features/finance/expenses/pages/ExpenseFormPage'
+import { ExpenseDetailPage } from '@/features/finance/expenses/pages/ExpenseDetailPage'
+import { CommunicationsHomePage } from '@/features/communications/pages/CommunicationsHomePage'
+import { AnnouncementListPage } from '@/features/communications/announcements/pages/AnnouncementListPage'
+import { AnnouncementFormPage } from '@/features/communications/announcements/pages/AnnouncementFormPage'
+import { AnnouncementDetailPage } from '@/features/communications/announcements/pages/AnnouncementDetailPage'
+import { TaskListPage } from '@/features/communications/tasks/pages/TaskListPage'
+import { TaskFormPage } from '@/features/communications/tasks/pages/TaskFormPage'
+import { TaskDetailPage } from '@/features/communications/tasks/pages/TaskDetailPage'
 import { CalendarAgendaPage } from '@/features/calendar/pages/CalendarAgendaPage'
 import { CalendarEventFormPage } from '@/features/calendar/pages/CalendarEventFormPage'
 import { ROUTES } from '@/constants'
@@ -85,6 +99,13 @@ export const router = createBrowserRouter([
               { path: 'candidates/:candidateId/interviews/new', element: <InterviewFormPage /> },
               { path: 'onboarding', element: <OnboardingListPage /> },
               { path: 'onboarding/:checklistId', element: <OnboardingChecklistPage /> },
+              { path: 'inventory', element: <InventoryItemListPage /> },
+              { path: 'inventory/new', element: <InventoryItemFormPage /> },
+              { path: 'inventory/:itemId', element: <InventoryItemDetailPage /> },
+              { path: 'inventory/:itemId/edit', element: <InventoryItemFormPage /> },
+              { path: 'inventory/:itemId/receive', element: <StockMovementFormPage /> },
+              { path: 'inventory/:itemId/issue', element: <StockMovementFormPage /> },
+              { path: 'inventory/:itemId/transfer', element: <StockMovementFormPage /> },
             ],
           },
           {
@@ -114,7 +135,18 @@ export const router = createBrowserRouter([
               { path: 'checkpoints/:checkpointId/patrol', element: <PatrolCapturePage /> },
             ],
           },
-          { path: 'finance', element: <ModulePlaceholder title="Finance" /> },
+          {
+            // One sub-module ships, so the index is the register itself rather
+            // than a hub — same shape as /operations being the Daily Updates
+            // feed. Static segments before the :id route.
+            path: 'finance',
+            children: [
+              { index: true, element: <ExpenseListPage /> },
+              { path: 'expenses/new', element: <ExpenseFormPage /> },
+              { path: 'expenses/:expenseRequestId', element: <ExpenseDetailPage /> },
+              { path: 'expenses/:expenseRequestId/edit', element: <ExpenseFormPage /> },
+            ],
+          },
           { path: 'purchasing', element: <ModulePlaceholder title="Purchasing" /> },
           { path: 'inventory', element: <ModulePlaceholder title="Inventory" /> },
           { path: 'crm', element: <ModulePlaceholder title="CRM" /> },
@@ -135,7 +167,22 @@ export const router = createBrowserRouter([
               { path: 'sop-library/:sopId/edit', element: <SopFormPage /> },
             ],
           },
-          { path: 'communications', element: <ModulePlaceholder title="Communications" /> },
+          {
+            // Announcements and Tasks ship, so the index is a hub. Static
+            // segments before the :id route in each group, or the param route
+            // swallows them.
+            path: 'communications',
+            children: [
+              { index: true, element: <CommunicationsHomePage /> },
+              { path: 'announcements', element: <AnnouncementListPage /> },
+              { path: 'announcements/new', element: <AnnouncementFormPage /> },
+              { path: 'announcements/:announcementId', element: <AnnouncementDetailPage /> },
+              { path: 'announcements/:announcementId/edit', element: <AnnouncementFormPage /> },
+              { path: 'tasks', element: <TaskListPage /> },
+              { path: 'tasks/new', element: <TaskFormPage /> },
+              { path: 'tasks/:taskId', element: <TaskDetailPage /> },
+            ],
+          },
           { path: 'reports', element: <ModulePlaceholder title="Reports" /> },
           { path: 'settings', element: <ModulePlaceholder title="Settings" /> },
           { path: '*', element: <NotFoundPage /> },

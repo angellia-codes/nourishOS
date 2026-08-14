@@ -71,6 +71,12 @@ const LEADER = [
   'training.read',
   'tasks.assign',
   'expenseRequests.submit',
+  // communications.md §19: Leader is "Limited" on Create Announcement and ❌ on
+  // Publish — they draft for their outlet, a manager or above publishes it.
+  'announcements.create',
+  // Leaders run their own outlet's uniform/asset stock day to day; item-master
+  // curation (hrInventory.manage) stays HR's.
+  'hrInventory.record',
 ]
 
 /**
@@ -92,7 +98,10 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'reports.create',
     'expenseRequests.approve',
     'expenseRequests.reject',
+    'announcements.create',
     'announcements.publish',
+    // communications.md §19: Broadcast Messages are GM/Director/Super Admin only.
+    'announcements.broadcast',
     'incidents.read',
     'lostFound.read',
     'dailyUpdates.read',
@@ -111,7 +120,9 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'reports.create',
     'expenseRequests.approve',
     'expenseRequests.reject',
+    'announcements.create',
     'announcements.publish',
+    'announcements.broadcast',
     'incidents.read',
     'lostFound.read',
     'dailyUpdates.submit',
@@ -143,6 +154,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'documents.publish',
     'reports.read',
     'reports.create',
+    'announcements.create',
     'announcements.publish',
     'expenseRequests.submit',
     'incidents.read',
@@ -151,12 +163,17 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'calendar.create',
     'calendar.manage',
     'tasks.assign',
+    'hrInventory.manage',
+    'hrInventory.record',
   ],
   finance: [
     ...BASE,
     'expenseRequests.submit',
     'expenseRequests.approve',
     'expenseRequests.reject',
+    // expense-request.md §7: paying is Finance-only, and deliberately not
+    // implied by approve — a GM who approved cannot also disburse.
+    'expenseRequests.pay',
     'reports.read',
     'reports.create',
     'employees.read',
@@ -199,6 +216,9 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'dailyUpdates.readAll',
     'reports.read',
     'calendar.create',
+    // §19 gives Manager "Limited" on Publish — scoped in practice by the
+    // audience they can pick, not by a second permission string.
+    'announcements.publish',
   ],
   // POSITIONS.md §3 Level III — runs one restaurant outlet end to end, so it
   // carries the same set outletManager did before it left the form.
@@ -209,6 +229,9 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'dailyUpdates.readAll',
     'reports.read',
     'calendar.create',
+    // §19 gives Manager "Limited" on Publish — scoped in practice by the
+    // audience they can pick, not by a second permission string.
+    'announcements.publish',
   ],
   // POSITIONS.md §3 Level VIII — rank & file, so the baseline staff set.
   wholefoodCashier: [
@@ -218,6 +241,6 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'incidents.create',
     'lostFound.create',
   ],
-  marketing: [...BASE, 'announcements.publish', 'documents.publish', 'reports.read'],
+  marketing: [...BASE, 'announcements.create', 'announcements.publish', 'documents.publish', 'reports.read'],
   staff: [...BASE, 'dailyUpdates.submit', 'dailyUpdates.read', 'incidents.create', 'lostFound.create'],
 }

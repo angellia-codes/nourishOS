@@ -19,6 +19,7 @@ export {
   addDaysIso,
   currentBusinessYear,
 } from './timestamps'
+export { allocateYearlyNumber } from './sequences'
 export { ANTHROPIC_API_KEY } from './secrets'
 export { PERMISSIONS } from './permissions'
 export { haversineDistanceMeters } from './geo'

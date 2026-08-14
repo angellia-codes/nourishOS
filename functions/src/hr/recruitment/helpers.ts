@@ -1,4 +1,4 @@
-import { db, COLLECTIONS, AppError, currentBusinessYear, requirePermission, type AuthedUser } from '../../lib'
+import { AppError, allocateYearlyNumber, requirePermission, type AuthedUser } from '../../lib'
 import { DEPARTMENT_ROLES, OUTLET_DEPARTMENTS } from '../../lib/organization'
 
 /**
@@ -128,32 +128,12 @@ export function requireOutletAndDepartment(outletId: unknown, departmentId: unkn
   return { outletId: outlet, departmentId: department }
 }
 
-/**
- * Per-year sequential document number, claimed inside a transaction so two
- * concurrent submissions can't collide — same shape as allocateEmployeeNumber.
- * The year comes from currentBusinessYear() (WITA), never toISOString().
- */
-async function allocateNumber(counterDocId: string, prefix: string): Promise<string> {
-  const year = currentBusinessYear()
-  const counterRef = db.collection(COLLECTIONS.SYSTEM_SETTINGS).doc(counterDocId)
-
-  const next = await db.runTransaction(async (tx) => {
-    const snap = await tx.get(counterRef)
-    const current = (snap.data()?.[String(year)] as number | undefined) ?? 0
-    const value = current + 1
-    tx.set(counterRef, { [String(year)]: value }, { merge: true })
-    return value
-  })
-
-  return `${prefix}-${year}-${String(next).padStart(4, '0')}`
-}
-
 /** REQ-2026-0042 — employee-requisition.md §3 Section A. */
 export function allocateRequisitionNumber(): Promise<string> {
-  return allocateNumber('requisitionNumberSequences', 'REQ')
+  return allocateYearlyNumber('requisitionNumberSequences', 'REQ')
 }
 
 /** C-2026-0007 — HR_OPERATIONS.md 9.4-F02. */
 export function allocateCandidateNumber(): Promise<string> {
-  return allocateNumber('candidateNumberSequences', 'C')
+  return allocateYearlyNumber('candidateNumberSequences', 'C')
 }

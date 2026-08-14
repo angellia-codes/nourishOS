@@ -23,4 +23,13 @@ export const PERMISSIONS = {
   DAILY_UPDATES_SUBMIT: 'dailyUpdates.submit',
   CALENDAR_CREATE: 'calendar.create',
   CALENDAR_MANAGE: 'calendar.manage',
+  EXPENSE_REQUESTS_SUBMIT: 'expenseRequests.submit',
+  // New: approving an expense and disbursing the money are different actions
+  // with different risk (expense-request.md §7), so they don't share a string.
+  EXPENSE_REQUESTS_PAY: 'expenseRequests.pay',
+  ANNOUNCEMENTS_CREATE: 'announcements.create',
+  ANNOUNCEMENTS_PUBLISH: 'announcements.publish',
+  ANNOUNCEMENTS_BROADCAST: 'announcements.broadcast',
+  HR_INVENTORY_MANAGE: 'hrInventory.manage',
+  HR_INVENTORY_RECORD: 'hrInventory.record',
 } as const
