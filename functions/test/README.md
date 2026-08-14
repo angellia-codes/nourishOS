@@ -10,6 +10,7 @@ beyond `firebase-admin` (already in `functions/node_modules`).
 | --- | --- |
 | `emulator-callables.mjs` | The HTTP callables: `createLostFoundItem` / `claimLostFoundItem` (Lost & Found), `createIncidentReport` / `updateIncidentStatus` (Incident Reports incl. type routing + auto work order + investigation task), `submitDailyReport` (Daily Updates incl. carried-forward blocking + task creation + duplicate-day guard). |
 | `emulator-scheduled.mjs` | The `onSchedule` functions: `carryForwardDailyTasks`, `checkDailyTaskEscalations`, `checkLostFoundRetention`, `sendComplianceAlerts`, `sendDailyDigest`. |
+| `timestamps.mjs` | The WITA date-key helpers in `src/lib/timestamps.ts`. Pure functions — **no emulator needed**, just a build. |
 
 ## Running
 
@@ -19,35 +20,27 @@ beyond `firebase-admin` (already in `functions/node_modules`).
    npm --prefix functions run build
    ```
 
-2. **Start the emulator suite.** The repo's Firebase config lives at
-   `src/firebase.json`, whose `functions.source` doesn't resolve when the CLI
-   treats `src/` as the project dir — so start the suite with a config whose
-   paths resolve from the repo root, e.g. a throwaway `firebase.emulator.json`:
-
-   ```json
-   {
-     "functions": { "source": "functions", "runtime": "nodejs20" },
-     "firestore": { "rules": "src/firestore.rules", "indexes": "src/firestore.indexes.json" },
-     "storage": { "rules": "src/storage.rules" },
-     "emulators": {
-       "auth": { "port": 9099 }, "functions": { "port": 5001 },
-       "firestore": { "port": 8080 }, "storage": { "port": 9199 },
-       "pubsub": { "port": 8085 }, "ui": { "port": 4000 }, "singleProjectMode": true
-     }
-   }
-   ```
+2. **Start the emulator suite.** Firebase config now lives at the repo root, so
+   `functions.source` resolves and no throwaway config is needed — run from the
+   root:
 
    ```
-   firebase emulators:start --config firebase.emulator.json --project demo-nourishos
+   firebase emulators:start --project demo-nourishos
    ```
 
-   The emulators need a JVM (Firestore/Auth/Storage are JVM-based).
+   The emulators need a JVM (Firestore/Auth/Storage are JVM-based). Add
+   `"pubsub": { "port": 8085 }` to `firebase.json`'s `emulators` block if you
+   want to drive the scheduled functions through pub/sub — see the note below
+   for why the script doesn't.
+
+   `timestamps.mjs` skips this step entirely; it only needs step 1.
 
 3. **Run a script** in another shell:
 
    ```
    node functions/test/emulator-callables.mjs
    node functions/test/emulator-scheduled.mjs
+   node functions/test/timestamps.mjs
    ```
 
    Each prints per-assertion ✓/✗ and exits non-zero on any failure.

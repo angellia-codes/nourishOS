@@ -1,10 +1,10 @@
 import { onSchedule } from 'firebase-functions/v2/scheduler'
 import { logger } from 'firebase-functions/v2'
-import { db, COLLECTIONS, REGION } from '../../lib'
+import { db, COLLECTIONS, REGION, BUSINESS_TIME_ZONE } from '../../lib'
 import { CLOSED_TASK_STATUSES, DAILY_UPDATE_TAG } from './helpers'
 
 /** daily-updates.md §6. Runs at 00:01 — increments daysOpen on every open dailyUpdate task, same doc, no duplicate rows. */
-export const carryForwardDailyTasks = onSchedule({ schedule: '1 0 * * *', region: REGION }, async () => {
+export const carryForwardDailyTasks = onSchedule({ schedule: '1 0 * * *', timeZone: BUSINESS_TIME_ZONE, region: REGION }, async () => {
   const tasksSnap = await db.collection(COLLECTIONS.TASKS).where('tags', 'array-contains', DAILY_UPDATE_TAG).get()
 
   for (const doc of tasksSnap.docs) {

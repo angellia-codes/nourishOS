@@ -36,3 +36,6 @@ functions/node_modules/
 
 # Generated knowledge graph (graphify skill output)
 graphify-out/
+
+# Claude Code local machine settings
+.claude/

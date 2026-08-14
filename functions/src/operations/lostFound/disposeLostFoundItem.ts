@@ -8,6 +8,7 @@ import {
   requirePermission,
   recordAuditEvent,
   updatedFields,
+  todayIso,
   AppError,
   handleError,
   successResponse,
@@ -48,7 +49,7 @@ export const disposeLostFoundItem = onCall({ region: REGION }, async (request) =
       throw new AppError('failed-precondition', `Item is already ${item.status}.`)
     }
 
-    const today = new Date().toISOString().slice(0, 10)
+    const today = todayIso()
     if (item.retentionExpiresAt > today && !input.overrideBeforeRetention) {
       throw new AppError(
         'failed-precondition',

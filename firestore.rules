@@ -184,6 +184,18 @@ service cloud.firestore {
       allow write: if false; // createCalendarEvent / cancelCalendarEvent Cloud Functions only
     }
 
+    // ---- RBAC: Role definitions ----
+    // AuthProvider reads the caller's own role doc to load permissions into
+    // the client store (RBAC.md §3: the client is UX only — Cloud Functions
+    // re-read roles/{roleId} themselves via requireActiveUser). Signed-in
+    // read rather than a self-only match on request.auth.token.role: that
+    // claim isn't set until syncUserClaims runs, so scoping the rule to it
+    // would deadlock a user's very first sign-in.
+    match /roles/{roleId} {
+      allow read: if isSignedIn();
+      allow write: if false; // seeded via Console; a Settings callable is planned (RBAC.md §16)
+    }
+
     // ---- Default deny ----
     match /{document=**} {
       allow read, write: if false;

@@ -1,6 +1,5 @@
 import { onCall } from 'firebase-functions/v2/https'
 import { FieldValue } from 'firebase-admin/firestore'
-import Anthropic from '@anthropic-ai/sdk'
 import {
   db,
   COLLECTIONS,
@@ -85,6 +84,11 @@ export const generateAppraisalInsights = onCall(
         })
         .join('\n')
 
+      // Imported here, not at module scope: firebase-functions loads this file
+      // on every cold start and during deploy-time function discovery, and the
+      // SDK costs seconds to require on a slow filesystem — enough to trip the
+      // CLI's discovery timeout. Only this one callable needs it.
+      const { default: Anthropic } = await import('@anthropic-ai/sdk')
       const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY.value() })
       const response = await client.messages.create({
         model: 'claude-opus-4-8',

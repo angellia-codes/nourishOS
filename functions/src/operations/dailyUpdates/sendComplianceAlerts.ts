@@ -1,6 +1,6 @@
 import { onSchedule } from 'firebase-functions/v2/scheduler'
 import { logger } from 'firebase-functions/v2'
-import { db, COLLECTIONS, REGION } from '../../lib'
+import { db, COLLECTIONS, REGION, BUSINESS_TIME_ZONE } from '../../lib'
 import { sendNotificationInternal } from '../../shared/notifications'
 import { todayIso } from './helpers'
 
@@ -13,7 +13,7 @@ const LEADER_ROLES = ['kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader
  * manager whether their own outlet+department submitted today, rather than
  * enumerating a config collection that doesn't exist. Runs at 17:00.
  */
-export const sendComplianceAlerts = onSchedule({ schedule: '0 17 * * *', region: REGION }, async () => {
+export const sendComplianceAlerts = onSchedule({ schedule: '0 17 * * *', timeZone: BUSINESS_TIME_ZONE, region: REGION }, async () => {
   const today = todayIso()
   const leadersSnap = await db
     .collection(COLLECTIONS.USERS)

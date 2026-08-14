@@ -1,12 +1,12 @@
 import { onSchedule } from 'firebase-functions/v2/scheduler'
-import { db, COLLECTIONS, REGION } from '../../lib'
+import { db, COLLECTIONS, REGION, BUSINESS_TIME_ZONE } from '../../lib'
 import { notifyUsersByRole } from '../../shared/notifications'
 import { CLOSED_TASK_STATUSES, DAILY_UPDATE_TAG, todayIso } from './helpers'
 
 const LEADER_ROLES = ['kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader', 'wholefoodLeader', 'outletManager']
 
 /** daily-updates.md §6, M17-F07. Runs at 08:00 — aggregates same-day compliance, escalated tasks, and open issues for GM + HR Manager. */
-export const sendDailyDigest = onSchedule({ schedule: '0 8 * * *', region: REGION }, async () => {
+export const sendDailyDigest = onSchedule({ schedule: '0 8 * * *', timeZone: BUSINESS_TIME_ZONE, region: REGION }, async () => {
   const today = todayIso()
 
   const [leadersSnap, reportsSnap, tasksSnap] = await Promise.all([

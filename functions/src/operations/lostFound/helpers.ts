@@ -1,4 +1,4 @@
-import { db, COLLECTIONS } from '../../lib'
+import { db, COLLECTIONS, currentBusinessYear } from '../../lib'
 
 export type LostFoundCategory =
   | 'electronics'
@@ -39,7 +39,7 @@ export function calculateRetentionExpiresAt(foundAt: string, category: LostFound
  * allocateEmployeeNumber (functions/src/hr/employees/helpers.ts).
  */
 export async function allocateLostFoundItemNumber(): Promise<string> {
-  const year = new Date().getUTCFullYear()
+  const year = currentBusinessYear()
   const key = `LF-${year}`
   const counterRef = db.collection(COLLECTIONS.SYSTEM_SETTINGS).doc('lostFoundItemNumberSequences')
 

@@ -4,7 +4,14 @@ export { AppError, handleError, type AppErrorCode } from './errors'
 export { successResponse } from './response'
 export { requireAuth, requireActiveUser, requirePermission, requireAnyPermission, type AuthedUser } from './rbac'
 export { recordAuditEvent, type RecordAuditEventInput } from './audit'
-export { newDocumentBaseFields, updatedFields } from './timestamps'
+export {
+  newDocumentBaseFields,
+  updatedFields,
+  BUSINESS_TIME_ZONE,
+  todayIso,
+  addDaysIso,
+  currentBusinessYear,
+} from './timestamps'
 export { ANTHROPIC_API_KEY } from './secrets'
 export { PERMISSIONS } from './permissions'
 export { haversineDistanceMeters } from './geo'

@@ -11,6 +11,5 @@ export const ESCALATION_THRESHOLDS: { daysOpen: number; level: 1 | 2 | 3 | 4; ro
   { daysOpen: 14, level: 4, role: 'generalManager' },
 ]
 
-export function todayIso(): string {
-  return new Date().toISOString().slice(0, 10)
-}
+/** Re-exported so existing call sites keep their './helpers' import — the WITA-aware implementation lives in lib/timestamps.ts. */
+export { todayIso } from '../../lib'

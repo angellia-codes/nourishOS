@@ -1,7 +1,7 @@
 import { onSchedule } from 'firebase-functions/v2/scheduler'
 import { FieldValue } from 'firebase-admin/firestore'
 import { logger } from 'firebase-functions/v2'
-import { db, COLLECTIONS, REGION } from '../../lib'
+import { db, COLLECTIONS, REGION, BUSINESS_TIME_ZONE, todayIso, addDaysIso } from '../../lib'
 import { notifyUsersByRole } from '../../shared/notifications'
 
 const WARNING_WINDOW_DAYS = 7
@@ -19,16 +19,14 @@ const WARNING_WINDOW_DAYS = 7
  * `retentionExpiredWarnedAt` field if the single-notice version proves too
  * quiet in practice.
  */
-export const checkLostFoundRetention = onSchedule({ schedule: 'every day 09:00', region: REGION }, async () => {
+export const checkLostFoundRetention = onSchedule({ schedule: 'every day 09:00', timeZone: BUSINESS_TIME_ZONE, region: REGION }, async () => {
   const itemsSnap = await db
     .collection(COLLECTIONS.LOST_FOUND_ITEMS)
     .where('status', 'in', ['logged', 'unclaimed'])
     .get()
 
-  const today = new Date().toISOString().slice(0, 10)
-  const warningThreshold = new Date()
-  warningThreshold.setUTCDate(warningThreshold.getUTCDate() + WARNING_WINDOW_DAYS)
-  const warningThresholdIso = warningThreshold.toISOString().slice(0, 10)
+  const today = todayIso()
+  const warningThresholdIso = addDaysIso(WARNING_WINDOW_DAYS, today)
 
   for (const doc of itemsSnap.docs) {
     const item = doc.data()

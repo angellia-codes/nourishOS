@@ -1,4 +1,4 @@
-import { db, COLLECTIONS } from '../../lib'
+import { db, COLLECTIONS, currentBusinessYear } from '../../lib'
 
 export type IncidentType =
   | 'customerComplaint'
@@ -46,7 +46,7 @@ export const INCIDENT_NEXT_STATUS: Partial<Record<IncidentStatus, IncidentStatus
  * transaction-counter shape as allocateEmployeeNumber / allocateLostFoundItemNumber.
  */
 export async function allocateIncidentNumber(): Promise<string> {
-  const year = new Date().getUTCFullYear()
+  const year = currentBusinessYear()
   const key = `INC-${year}`
   const counterRef = db.collection(COLLECTIONS.SYSTEM_SETTINGS).doc('incidentNumberSequences')
 
