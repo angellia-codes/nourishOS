@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Select, Spinner, Textarea } from '@/components/ui'
-import { useToast } from '@/hooks'
+import { useAuth, useToast } from '@/hooks'
+import { OUTLETS } from '@/constants'
 import { PRIORITY, type Priority } from '@/constants/statuses'
 import { INCIDENT_ROUTING, INCIDENT_SEVERITY_LABELS, INCIDENT_TYPE_LABELS } from '../incidentFormat'
 import * as incidentService from '../incidentService'
@@ -20,7 +21,9 @@ function newId(prefix: string): string {
 export function IncidentReportFormPage() {
   const navigate = useNavigate()
   const toast = useToast()
+  const { profile } = useAuth()
 
+  const [outletId, setOutletId] = useState('')
   const [title, setTitle] = useState('')
   const [incidentType, setIncidentType] = useState<IncidentType>('customerComplaint')
   const [severity, setSeverity] = useState<Priority>(PRIORITY.MEDIUM)
@@ -32,9 +35,18 @@ export function IncidentReportFormPage() {
   const [emergencyServices, setEmergencyServices] = useState<'yes' | 'no'>('no')
   const [submitting, setSubmitting] = useState(false)
 
+  useEffect(() => {
+    if (profile?.outletId) setOutletId((prev) => prev || profile.outletId)
+  }, [profile?.outletId])
+
   const isInjury = incidentType === 'workplaceInjury'
   const canSubmit =
-    title.trim() !== '' && description.trim() !== '' && occurredAt !== '' && location.trim() !== '' && immediateAction.trim() !== ''
+    outletId !== '' &&
+    title.trim() !== '' &&
+    description.trim() !== '' &&
+    occurredAt !== '' &&
+    location.trim() !== '' &&
+    immediateAction.trim() !== ''
 
   async function handleSubmit() {
     if (!canSubmit) return
@@ -50,6 +62,7 @@ export function IncidentReportFormPage() {
         peopleInvolved: people.map(({ id: _id, ...person }) => person),
         immediateActionTaken: immediateAction,
         emergencyServicesCalled: emergencyServices === 'yes',
+        outletId,
       })
       const workOrderNote = linkedWorkOrderId ? ' Linked work order created.' : ''
       toast.success(`${incidentNumber} reported and routed to ${INCIDENT_ROUTING[incidentType]}.${workOrderNote}`)
@@ -124,6 +137,17 @@ export function IncidentReportFormPage() {
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
               />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="incOutlet">Outlet *</Label>
+              <Select id="incOutlet" value={outletId} onChange={(e) => setOutletId(e.target.value)}>
+                <option value="">Select an outlet…</option>
+                {OUTLETS.map((outlet) => (
+                  <option key={outlet.id} value={outlet.id}>
+                    {outlet.name}
+                  </option>
+                ))}
+              </Select>
             </div>
           </div>
         </CardContent>

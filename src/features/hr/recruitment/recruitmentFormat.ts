@@ -13,7 +13,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import type { StatusTone } from '@/components/ui'
-import type { CandidateStage, RequisitionStatus, RequisitionUrgency } from '@/types'
+import type { Candidate, CandidateStage, RequisitionStatus, RequisitionUrgency } from '@/types'
 
 /**
  * Status → {tone, icon} maps for the recruitment module. Each module owns its
@@ -132,4 +132,14 @@ export function daysInStage(stageChangedAt: string | null | undefined): number {
   const changed = new Date(stageChangedAt).getTime()
   if (Number.isNaN(changed)) return 0
   return Math.max(0, Math.floor((Date.now() - changed) / 86_400_000))
+}
+
+/** Whole days from application to Hired (ST-06) — HR_OPERATIONS.md 9.4-F06, derived from stageHistory, never hired = null. */
+export function timeToHireDays(candidate: Candidate): number | null {
+  const hiredEntry = candidate.stageHistory.find((entry) => entry.to === 'ST-06')
+  if (!hiredEntry) return null
+  const applied = new Date(candidate.applicationDate).getTime()
+  const hired = new Date(hiredEntry.timestamp).getTime()
+  if (Number.isNaN(applied) || Number.isNaN(hired)) return null
+  return Math.max(0, Math.round((hired - applied) / 86_400_000))
 }

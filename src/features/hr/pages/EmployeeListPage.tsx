@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Download, Plus, Search } from 'lucide-react'
+import { Download, Plus, Search, Upload } from 'lucide-react'
 import { Avatar, Badge, Button, Card, CardContent, Input, Select, Spinner } from '@/components/ui'
 import { EmptyState, PermissionGuard } from '@/components/shared'
 import { PERMISSIONS } from '@/constants'
-import { EMPLOYMENT_STATUS_LABELS } from '@/constants/hr'
+import { EMPLOYMENT_STATUS_LABELS, RELIGION, RELIGION_LABELS } from '@/constants/hr'
 import * as employeeService from '@/features/hr/services/employeeService'
 import { exportEmployeesToCsv } from '@/features/hr/utils/employeeExport'
 import { isContractExpiringSoon, isProbationEndingSoon } from '@/features/hr/utils/employeeIndicators'
@@ -12,6 +12,11 @@ import { EMPLOYEE_SORT_FIELDS, EMPLOYEE_SORT_LABELS, sortEmployees, type Employe
 import type { Employee } from '@/types'
 
 type ActiveFilter = 'active' | 'inactive' | 'all'
+
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+]
 
 /**
  * Employee Database list — HR.md §5, HR_OPERATIONS.md §9.1. Search and
@@ -25,6 +30,8 @@ export function EmployeeListPage() {
   const [outletFilter, setOutletFilter] = useState('')
   const [departmentFilter, setDepartmentFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState<ActiveFilter>('active')
+  const [birthMonthFilter, setBirthMonthFilter] = useState('')
+  const [religionFilter, setReligionFilter] = useState('')
   const [sortField, setSortField] = useState<EmployeeSortField>(EMPLOYEE_SORT_FIELDS.NAME)
 
   useEffect(() => {
@@ -47,16 +54,16 @@ export function EmployeeListPage() {
       if (statusFilter !== 'all' && employee.status !== statusFilter) return false
       if (outletFilter && employee.outletId !== outletFilter) return false
       if (departmentFilter && employee.departmentId !== departmentFilter) return false
+      if (birthMonthFilter && String(new Date(employee.birthDate).getMonth()) !== birthMonthFilter) return false
+      if (religionFilter && employee.religion !== religionFilter) return false
       if (term.length >= 2) {
-        const haystack = [employee.fullName, employee.preferredName ?? '', employee.employeeNumber, employee.position]
-          .join(' ')
-          .toLowerCase()
+        const haystack = [employee.fullName, employee.employeeNumber, employee.position].join(' ').toLowerCase()
         if (!haystack.includes(term)) return false
       }
       return true
     })
     return sortEmployees(matches, sortField)
-  }, [employees, search, outletFilter, departmentFilter, statusFilter, sortField])
+  }, [employees, search, outletFilter, departmentFilter, birthMonthFilter, religionFilter, statusFilter, sortField])
 
   if (employees === null) {
     return (
@@ -80,6 +87,12 @@ export function EmployeeListPage() {
             <Button variant="secondary" onClick={() => exportEmployeesToCsv(filtered, 'employees.csv')}>
               <Download className="mr-1.5 h-4 w-4" aria-hidden="true" />
               Export
+            </Button>
+          </PermissionGuard>
+          <PermissionGuard permission={PERMISSIONS.EMPLOYEES_CREATE}>
+            <Button variant="secondary" onClick={() => navigate('/hr/employees/import')}>
+              <Upload className="mr-1.5 h-4 w-4" aria-hidden="true" />
+              Import
             </Button>
           </PermissionGuard>
           <PermissionGuard permission={PERMISSIONS.EMPLOYEES_CREATE}>
@@ -134,6 +147,22 @@ export function EmployeeListPage() {
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
           <option value="all">All statuses</option>
+        </Select>
+        <Select value={birthMonthFilter} onChange={(e) => setBirthMonthFilter(e.target.value)} aria-label="Filter by birth month">
+          <option value="">All birth months</option>
+          {MONTH_NAMES.map((name, index) => (
+            <option key={name} value={String(index)}>
+              {name}
+            </option>
+          ))}
+        </Select>
+        <Select value={religionFilter} onChange={(e) => setReligionFilter(e.target.value)} aria-label="Filter by religion">
+          <option value="">All religions</option>
+          {Object.values(RELIGION).map((religion) => (
+            <option key={religion} value={religion}>
+              {RELIGION_LABELS[religion]}
+            </option>
+          ))}
         </Select>
         <Select
           value={sortField}

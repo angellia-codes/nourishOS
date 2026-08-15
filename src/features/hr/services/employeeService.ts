@@ -1,18 +1,17 @@
 import { callFunction } from '@/services/api'
 import { getDocument, subscribeToCollection, where, orderBy } from '@/services/firestore'
 import { COLLECTIONS } from '@/constants'
-import type { ContractType, EmploymentStatus, Gender } from '@/constants/hr'
+import type { ContractType, DisciplinaryType, EmploymentStatus, Gender, Religion } from '@/constants/hr'
 import type { Employee, EmployeeActivity } from '@/types'
 import type { Unsubscribe } from '@/services/firestore'
 
 export interface CreateEmployeeInput {
   fullName: string
-  preferredName?: string
   gender: Gender
   birthDate: string
   nationalId?: string
   taxNumber?: string
-  religion?: string
+  religion?: Religion
   phone: string
   email: string
   address?: string
@@ -28,6 +27,11 @@ export interface CreateEmployeeInput {
   contractType: ContractType
   contractStartDate?: string
   contractEndDate?: string
+  disciplinaryType?: DisciplinaryType
+  disciplinaryStartPeriod?: string
+  disciplinaryEndPeriod?: string
+  recognitionType?: string
+  recognitionPeriod?: string
   /**
    * Set when the form was opened from an onboarding checklist
    * (/hr/employees/new?candidateId=…). The server links the new employee back
@@ -44,6 +48,19 @@ export interface CreateEmployeeResult {
 
 export function createEmployee(input: CreateEmployeeInput): Promise<CreateEmployeeResult> {
   return callFunction('createEmployee', input)
+}
+
+export interface ImportEmployeeRowResult {
+  index: number
+  success: boolean
+  employeeId?: string
+  employeeNumber?: string
+  error?: string
+}
+
+/** Bulk create — HR_OPERATIONS.md §9.1-F12. Partial success: a bad row is reported, not thrown. */
+export function importEmployees(rows: CreateEmployeeInput[]): Promise<{ results: ImportEmployeeRowResult[] }> {
+  return callFunction('importEmployees', { rows })
 }
 
 /** Server whitelists updatable fields; employeeNumber and separation state are rejected. */
@@ -65,6 +82,21 @@ export function archiveEmployee(
 
 export function getEmployee(employeeId: string): Promise<Employee | null> {
   return getDocument<Employee>(COLLECTIONS.EMPLOYEES, employeeId)
+}
+
+export interface EmployeeAuditLogEntry {
+  id: string
+  timestamp: string
+  eventType: string
+  action: string
+  userName: string
+  previousValues: Record<string, unknown> | null
+  newValues: Record<string, unknown> | null
+}
+
+/** auditLogs is closed to direct client reads — this is the one narrow, read-only exception (9.1-F07/F15). */
+export function getEmployeeAuditLog(employeeId: string): Promise<{ entries: EmployeeAuditLogEntry[] }> {
+  return callFunction('getEmployeeAuditLog', { employeeId })
 }
 
 /**

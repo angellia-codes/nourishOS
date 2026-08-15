@@ -16,6 +16,7 @@ import {
   type AuthedUser,
 } from '../../lib'
 import { sendNotificationInternal } from '../notifications'
+import { submitApprovalInternal } from '../approval'
 
 /**
  * Executive calendar writes — HR_OPERATIONS.md §8.2 / §9.2. The read side is
@@ -167,6 +168,11 @@ export async function createCalendarEventInternal(
     }
   }
 
+  // §9.2-F10: a companyEvent needs GM approval before it's confirmed — every
+  // other event type is confirmed immediately, same as before this existed.
+  const needsApproval = input.eventType === 'companyEvent'
+  const eventStatus = needsApproval ? 'pendingApproval' : 'confirmed'
+
   const eventRef = db.collection(COLLECTIONS.CALENDAR_EVENTS).doc()
   await eventRef.set({
     title: input.title,
@@ -178,8 +184,9 @@ export async function createCalendarEventInternal(
     participants: input.participants,
     location: input.location ?? null,
     priority: input.priority,
-    eventStatus: 'confirmed',
+    eventStatus,
     cancellationReason: null,
+    approvalRequestId: null,
     recurrenceRule: input.recurrenceRule ?? null,
     outletId: user.outletId,
     departmentId: user.departmentId,
@@ -189,8 +196,19 @@ export async function createCalendarEventInternal(
     syncStatus: 'skipped',
     syncError: null,
     lastSyncedAt: null,
-    ...newDocumentBaseFields(user.uid, 'confirmed'),
+    ...newDocumentBaseFields(user.uid, eventStatus),
   })
+
+  if (needsApproval) {
+    const approvalRequestId = await submitApprovalInternal({
+      module: 'calendar',
+      resourceType: 'companyEvent',
+      resourceId: eventRef.id,
+      requestedBy: user.uid,
+      priority: input.priority === 'critical' ? 'critical' : 'medium',
+    })
+    await eventRef.update({ approvalRequestId })
+  }
 
   await Promise.all(
     input.participants

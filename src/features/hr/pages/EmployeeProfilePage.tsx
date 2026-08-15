@@ -17,10 +17,12 @@ import {
   TimelineItem,
 } from '@/components/ui'
 import { ErrorMessage, FileList, FileUpload, PermissionGuard } from '@/components/shared'
-import { useFirestoreDoc, useFirestoreQuery, useToast } from '@/hooks'
+import { useFirestoreDoc, useFirestoreQuery, usePermissions, useToast } from '@/hooks'
 import { COLLECTIONS, PERMISSIONS } from '@/constants'
-import { CONTRACT_TYPE_LABELS, EMPLOYMENT_STATUS_LABELS } from '@/constants/hr'
+import { CONTRACT_TYPE_LABELS, DISCIPLINARY_TYPE_LABELS, EMPLOYMENT_STATUS_LABELS } from '@/constants/hr'
 import * as employeeService from '@/features/hr/services/employeeService'
+import * as disciplinaryService from '@/features/hr/disciplinary/disciplinaryService'
+import type { DisciplinaryRecord } from '@/types'
 import {
   formatIsoDate,
   formatTenure,
@@ -31,6 +33,14 @@ import { formatDateTime } from '@/utils'
 import { ApiError } from '@/services/api'
 import { where, orderBy } from '@/services/firestore'
 import type { Employee, EmployeeActivity, FileMetadata } from '@/types'
+import type { EmployeeAuditLogEntry } from '@/features/hr/services/employeeService'
+
+function describeAuditEntry(entry: EmployeeAuditLogEntry): string {
+  const changed = entry.newValues ? Object.keys(entry.newValues) : []
+  if (entry.action === 'create') return `${entry.userName} created this record.`
+  if (changed.length > 0) return `${entry.userName} updated ${changed.join(', ')}.`
+  return `${entry.userName} ${entry.action}d this record.`
+}
 
 function Field({ label, value }: { label: string; value: string | null | undefined }) {
   return (
@@ -46,14 +56,41 @@ export function EmployeeProfilePage() {
   const navigate = useNavigate()
   const toast = useToast()
 
+  const { can } = usePermissions()
   const { data: employee, loading } = useFirestoreDoc<Employee>(COLLECTIONS.EMPLOYEES, employeeId)
   const [activities, setActivities] = useState<EmployeeActivity[]>([])
+  const [auditEntries, setAuditEntries] = useState<EmployeeAuditLogEntry[] | null>(null)
+  const [disciplinaryRecords, setDisciplinaryRecords] = useState<DisciplinaryRecord[] | null>(null)
+
+  useEffect(() => {
+    if (!employeeId) return
+    let cancelled = false
+    disciplinaryService.listDisciplinaryRecords(employeeId).then((rows) => {
+      if (!cancelled) setDisciplinaryRecords(rows)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [employeeId])
 
   const { data: documents } = useFirestoreQuery<FileMetadata>(
     COLLECTIONS.FILES,
     employeeId
       ? [
           where('resourceType', '==', 'employee'),
+          where('resourceId', '==', employeeId),
+          where('fileStatus', '==', 'available'),
+          orderBy('createdAt', 'desc'),
+        ]
+      : [],
+    [employeeId],
+  )
+
+  const { data: contractFiles } = useFirestoreQuery<FileMetadata>(
+    COLLECTIONS.FILES,
+    employeeId
+      ? [
+          where('resourceType', '==', 'employeeContract'),
           where('resourceId', '==', employeeId),
           where('fileStatus', '==', 'available'),
           orderBy('createdAt', 'desc'),
@@ -72,6 +109,17 @@ export function EmployeeProfilePage() {
     if (!employeeId) return
     return employeeService.subscribeToEmployeeActivities(employeeId, setActivities)
   }, [employeeId])
+
+  useEffect(() => {
+    if (!employeeId || !can(PERMISSIONS.EMPLOYEES_UPDATE)) return
+    let cancelled = false
+    employeeService.getEmployeeAuditLog(employeeId).then((result) => {
+      if (!cancelled) setAuditEntries(result.entries)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [employeeId, can])
 
   async function handleArchive() {
     if (!employeeId || !resignationDate || !resignationReason.trim() || archiving) return
@@ -137,7 +185,6 @@ export function EmployeeProfilePage() {
           <CardTitle>Personal</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          <Field label="Preferred name" value={employee.preferredName} />
           <Field label="Gender" value={employee.gender === 'male' ? 'Male' : 'Female'} />
           <Field label="Birth date" value={formatIsoDate(employee.birthDate)} />
           <Field label="National ID (NIK)" value={employee.nationalId} />
@@ -180,7 +227,85 @@ export function EmployeeProfilePage() {
         </CardContent>
       </Card>
 
-      {/* Documents — HR.md §5 (ID card, NPWP, BPJS, contract, certificates) via the generic File Storage service */}
+      {/* Disciplinary & Recognition — §12.1, shown only when set to keep the common case clean */}
+      {(employee.disciplinaryType || employee.recognitionType) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Disciplinary & Recognition</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+            {employee.disciplinaryType && (
+              <>
+                <Field label="Disciplinary action" value={DISCIPLINARY_TYPE_LABELS[employee.disciplinaryType]} />
+                <Field label="Period start" value={formatIsoDate(employee.disciplinaryStartPeriod)} />
+                <Field label="Period end" value={formatIsoDate(employee.disciplinaryEndPeriod)} />
+              </>
+            )}
+            {employee.recognitionType && (
+              <>
+                <Field label="Recognition" value={employee.recognitionType} />
+                <Field label="Recognition period" value={formatIsoDate(employee.recognitionPeriod)} />
+              </>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Disciplinary Records — FEATURE_SPECIFICATIONS.md Module 3, the detail layer (investigation notes)
+          behind the summary card above. No auto-sync between the two; HR keeps both independently. */}
+      <PermissionGuard permission={PERMISSIONS.EMPLOYEES_UPDATE}>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between gap-2">
+            <CardTitle>Disciplinary Records</CardTitle>
+            <Button
+              variant="secondary"
+              onClick={() => navigate(`/hr/employees/${employeeId}/disciplinary/new`)}
+            >
+              New Record
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {disciplinaryRecords === null ? (
+              <div className="flex justify-center p-4">
+                <Spinner />
+              </div>
+            ) : disciplinaryRecords.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No disciplinary records.</p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {disciplinaryRecords.map((record) => (
+                  <button
+                    key={record.id}
+                    type="button"
+                    onClick={() => navigate(`/hr/employees/${employeeId}/disciplinary/${record.id}`)}
+                    className="flex items-center justify-between gap-2 rounded-md border border-border p-3 text-left hover:bg-border/30"
+                  >
+                    <span className="text-sm text-foreground">{DISCIPLINARY_TYPE_LABELS[record.type]}</span>
+                    <Badge variant={record.status === 'open' ? 'warning' : 'neutral'}>
+                      {record.status === 'open' ? 'Open' : 'Closed'}
+                    </Badge>
+                  </button>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </PermissionGuard>
+
+      {/* Contract — a distinct, PDF-only slot alongside the generic Documents bucket below */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Contract Document</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <PermissionGuard permission={PERMISSIONS.EMPLOYEES_UPDATE}>
+            <FileUpload module="hr" resourceType="employeeContract" resourceId={employee.id} accept="application/pdf" />
+          </PermissionGuard>
+          <FileList files={contractFiles} />
+        </CardContent>
+      </Card>
+
+      {/* Documents — HR.md §5 (ID card, NPWP, BPJS, certificates) via the generic File Storage service */}
       <Card>
         <CardHeader>
           <CardTitle>Documents</CardTitle>
@@ -227,6 +352,30 @@ export function EmployeeProfilePage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Change history — 9.1-F07/F15, read via a callable since auditLogs blocks direct client reads */}
+      <PermissionGuard permission={PERMISSIONS.EMPLOYEES_UPDATE}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Change History</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {auditEntries === null ? (
+              <div className="flex justify-center p-4">
+                <Spinner />
+              </div>
+            ) : auditEntries.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No changes recorded yet.</p>
+            ) : (
+              <Timeline>
+                {auditEntries.map((entry) => (
+                  <TimelineItem key={entry.id} title={describeAuditEntry(entry)} timestamp={formatDateTime(entry.timestamp)} />
+                ))}
+              </Timeline>
+            )}
+          </CardContent>
+        </Card>
+      </PermissionGuard>
 
       {/* Archive (soft delete) — E01-US03 */}
       {employee.status === 'active' && (

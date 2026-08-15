@@ -32,4 +32,9 @@ export const PERMISSIONS = {
   ANNOUNCEMENTS_BROADCAST: 'announcements.broadcast',
   HR_INVENTORY_MANAGE: 'hrInventory.manage',
   HR_INVENTORY_RECORD: 'hrInventory.record',
+  WORK_ORDERS_ASSIGN: 'workOrders.assign',
+  WORK_ORDERS_UPDATE: 'workOrders.update',
+  WORK_ORDERS_COMPLETE: 'workOrders.complete',
+  DOCUMENTS_PUBLISH: 'documents.publish',
+  CHECKLISTS_RECORD: 'checklists.record',
 } as const

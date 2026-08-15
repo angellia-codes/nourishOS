@@ -1,3 +1,7 @@
 export { createEmployee } from './createEmployee'
 export { updateEmployee } from './updateEmployee'
 export { archiveEmployee } from './archiveEmployee'
+export { importEmployees } from './importEmployees'
+export { getEmployeeAuditLog } from './getEmployeeAuditLog'
+export { contractAlerts } from './contractAlerts'
+export { createDisciplinaryRecord, addInvestigationNote, closeDisciplinaryRecord } from './disciplinaryRecords'

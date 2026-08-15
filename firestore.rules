@@ -57,6 +57,17 @@ service cloud.firestore {
       allow write: if false; // written server-side alongside employee mutations
     }
 
+    // ---- HR: Disciplinary Records ----
+    // FEATURE_SPECIFICATIONS.md Module 3 — Warning/Suspension records +
+    // Investigation Notes, the detail layer behind Employee's own 3
+    // disciplinary status fields. HR/elevated read only (no department-leader
+    // branch like /employees — that would need a get() to the employee doc
+    // for departmentId, and this is more sensitive than the base record).
+    match /disciplinaryActions/{recordId} {
+      allow read: if hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']);
+      allow write: if false; // createDisciplinaryRecord / addInvestigationNote / closeDisciplinaryRecord Cloud Functions only
+    }
+
     // ---- HR: Recruitment ----
     // employee-requisition.md §7: HR and above read every requisition; a
     // department leader or outlet manager reads only their own outlet's. The
@@ -235,6 +246,40 @@ service cloud.firestore {
       allow write: if false; // createIncidentReport / updateIncidentStatus / reopenIncident Cloud Functions only
     }
 
+    // ---- Operations: Work Orders ----
+    // FEATURE_SPECIFICATIONS.md Module 5 — same shape as incidentReports above:
+    // creator, the routed role, elevated roles, or an outlet-leader match.
+    match /workOrders/{workOrderId} {
+      allow read: if isSignedIn() && (
+        resource.data.createdBy == request.auth.uid ||
+        resource.data.assignedTo == request.auth.uid ||
+        resource.data.assignedToRole == role() ||
+        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
+        hasAnyRole(['kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader', 'wholefoodLeader', 'outletManager', 'engineering'])
+      );
+      allow write: if false; // createWorkOrder / updateWorkOrderStatus Cloud Functions only
+    }
+
+    // ---- Operations: Opening/Closing Checklists ----
+    // FEATURE_SPECIFICATIONS.md Module 5. Equality-only reads (no query from the
+    // client — the doc id is deterministic, outletId__date), so no composite
+    // index is needed either way.
+    match /openingChecklists/{checklistId} {
+      allow read: if isSignedIn() && (
+        resource.data.outletId == request.auth.token.outletId ||
+        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin'])
+      );
+      allow write: if false; // saveChecklistProgress Cloud Function only
+    }
+
+    match /closingChecklists/{checklistId} {
+      allow read: if isSignedIn() && (
+        resource.data.outletId == request.auth.token.outletId ||
+        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin'])
+      );
+      allow write: if false; // saveChecklistProgress Cloud Function only
+    }
+
     // ---- Operations: Daily Updates ----
     match /dailyReports/{reportId} {
       allow read: if isSignedIn() && (
@@ -307,6 +352,20 @@ service cloud.firestore {
         (isSignedIn() &&
           role() in get(/databases/$(database)/documents/systemSettings/sopAccess).data.roleIds);
       allow write: if false; // createSop / updateSop / deleteSop only
+    }
+
+    // ---- Documents: Company Forms + Templates ----
+    // FEATURE_SPECIFICATIONS.md Module 4. Unlike Job Descriptions/SOPs there is
+    // no runtime access-list doc — every signed-in user can read, matching the
+    // app's default unless a doc says otherwise.
+    match /companyForms/{formId} {
+      allow read: if isSignedIn();
+      allow write: if false; // createDocumentResource / updateDocumentResource / deleteDocumentResource only
+    }
+
+    match /templates/{templateId} {
+      allow read: if isSignedIn();
+      allow write: if false; // createDocumentResource / updateDocumentResource / deleteDocumentResource only
     }
 
     // ---- Finance: Expense Requests ----

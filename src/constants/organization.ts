@@ -49,12 +49,6 @@ export const DEPARTMENTS: readonly OrgOption[] = [
 ]
 
 /**
- * Departments present at every site regardless of concept — the four
- * OUTLETS_DEPARTMENTS.md §2 marks "Shared" or "HQ / Outlet Management".
- */
-const SHARED_DEPARTMENTS = ['admin_general']
-
-/**
  * Which departments a given outlet actually staffs.
  *
  * OUTLETS_DEPARTMENTS.md registers outlets and departments but never maps one
@@ -63,23 +57,26 @@ const SHARED_DEPARTMENTS = ['admin_general']
  * only at BOH, retail-scoped only at Wholefood, and so on. Adjust here when
  * an outlet's staffing changes — the register form and the server validation
  * both read this map.
+ *
+ * Admin & General (§2: "HQ / Outlet Management") is HQ-only — it staffs
+ * boh_nourish_group and nowhere else, not every outlet.
  */
 export const OUTLET_DEPARTMENTS: Record<string, readonly string[]> = {
-  nourish_ungasan: [...SHARED_DEPARTMENTS, 'cashier', 'fb_service', 'bar', 'kitchen', 'security'],
-  nourish_uluwatu: [...SHARED_DEPARTMENTS, 'cashier', 'fb_service', 'bar', 'kitchen', 'security'],
-  nourish_berawa: [...SHARED_DEPARTMENTS, 'cashier', 'fb_service', 'bar', 'kitchen', 'security'],
-  the_bakery_uluwatu: [...SHARED_DEPARTMENTS, 'cashier', 'bar',],
-  the_bakery_kitchen: [...SHARED_DEPARTMENTS, 'kitchen'],
-  wholefood_ungasan: [...SHARED_DEPARTMENTS, 'cashier', 'wholefood_retail'],
-  wholefood_uluwatu: [...SHARED_DEPARTMENTS, 'cashier', 'wholefood_retail'],
-  wholefood_berawa: [...SHARED_DEPARTMENTS, 'cashier', 'wholefood_retail'],
+  nourish_ungasan: ['cashier', 'fb_service', 'bar', 'kitchen', 'security'],
+  nourish_uluwatu: ['cashier', 'fb_service', 'bar', 'kitchen', 'security'],
+  nourish_berawa: ['cashier', 'fb_service', 'bar', 'kitchen', 'security'],
+  the_bakery_uluwatu: ['cashier', 'bar'],
+  the_bakery_kitchen: ['kitchen'],
+  wholefood_ungasan: ['wholefood_retail'],
+  wholefood_uluwatu: ['wholefood_retail'],
+  wholefood_berawa: ['wholefood_retail'],
   boh_nourish_group: [
-    ...SHARED_DEPARTMENTS,
+    'admin_general',
     'sales_marketing',
     'human_resources',
     'finance_accounting',
     'driver',
-    'engineering_pomec'
+    'engineering_pomec',
   ],
 }
 

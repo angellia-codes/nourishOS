@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Upload } from 'lucide-react'
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Select, Spinner, Textarea } from '@/components/ui'
-import { useToast } from '@/hooks'
+import { useAuth, useToast } from '@/hooks'
+import { OUTLETS } from '@/constants'
 import { fileService } from '@/services/shared'
 import * as lostFoundService from '../lostFoundService'
 import { LOST_FOUND_CATEGORY_LABELS, RETENTION_DAYS, VALUE_TIER_LABELS } from '../lostFoundFormat'
@@ -14,7 +15,9 @@ const TODAY = new Date().toISOString().slice(0, 10)
 export function LostFoundFormPage() {
   const navigate = useNavigate()
   const toast = useToast()
+  const { profile } = useAuth()
 
+  const [outletId, setOutletId] = useState('')
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState<LostFoundCategory>('other')
   const [valueTier, setValueTier] = useState<LostFoundValueTier>('low')
@@ -24,8 +27,17 @@ export function LostFoundFormPage() {
   const [photo, setPhoto] = useState<File | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
+  useEffect(() => {
+    if (profile?.outletId) setOutletId((prev) => prev || profile.outletId)
+  }, [profile?.outletId])
+
   const canSubmit =
-    description.trim() !== '' && foundLocation.trim() !== '' && storageLocation.trim() !== '' && foundAt !== '' && photo !== null
+    outletId !== '' &&
+    description.trim() !== '' &&
+    foundLocation.trim() !== '' &&
+    storageLocation.trim() !== '' &&
+    foundAt !== '' &&
+    photo !== null
 
   async function handleSubmit() {
     if (!canSubmit || !photo) return
@@ -38,6 +50,7 @@ export function LostFoundFormPage() {
         foundLocation,
         foundAt,
         storageLocation,
+        outletId,
       })
 
       // Create-then-attach — same order as Security Patrol's photo upload
@@ -130,6 +143,17 @@ export function LostFoundFormPage() {
           <CardTitle>Found Context</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="lfOutlet">Outlet *</Label>
+            <Select id="lfOutlet" value={outletId} onChange={(e) => setOutletId(e.target.value)}>
+              <option value="">Select an outlet…</option>
+              {OUTLETS.map((outlet) => (
+                <option key={outlet.id} value={outlet.id}>
+                  {outlet.name}
+                </option>
+              ))}
+            </Select>
+          </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="lfLocation">Found Location *</Label>
             <Input

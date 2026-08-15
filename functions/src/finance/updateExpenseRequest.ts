@@ -1,5 +1,6 @@
 import { onCall } from 'firebase-functions/v2/https'
 import { REGION, requireActiveUser, recordAuditEvent, updatedFields, AppError, handleError, successResponse } from '../lib'
+import { OUTLET_DEPARTMENTS } from '../lib/organization'
 import {
   loadExpenseRequest,
   normaliseItems,
@@ -36,6 +37,16 @@ export const updateExpenseRequest = onCall({ region: REGION }, async (request) =
     const { items, totalAmount } = normaliseItems(input.items ?? [])
     const costCenterId = typeof input.costCenterId === 'string' ? input.costCenterId.trim() || null : null
 
+    const outletId =
+      typeof input.outletId === 'string' && input.outletId ? input.outletId : (previous.outletId as string | undefined)
+    const departmentId =
+      typeof input.departmentId === 'string' && input.departmentId
+        ? input.departmentId
+        : (previous.departmentId as string | undefined)
+    if (outletId && !OUTLET_DEPARTMENTS[outletId]?.includes(departmentId ?? '')) {
+      throw new AppError('invalid-argument', 'Select a valid outlet/department pair.')
+    }
+
     await ref.update({
       purpose,
       category,
@@ -44,6 +55,8 @@ export const updateExpenseRequest = onCall({ region: REGION }, async (request) =
       notes,
       items,
       totalAmount,
+      outletId,
+      departmentId,
       ...updatedFields(user.uid),
     })
 

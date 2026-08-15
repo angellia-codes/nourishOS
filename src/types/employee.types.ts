@@ -1,5 +1,5 @@
 import type { BaseDocument } from './firestore.types'
-import type { ContractType, EmployeeActivityType, EmploymentStatus, Gender } from '@/constants/hr'
+import type { ContractType, DisciplinaryType, EmployeeActivityType, EmploymentStatus, Gender, Religion } from '@/constants/hr'
 
 /**
  * Employee master record — HR.md §5, HR_OPERATIONS.md §9.1 / §12.1.
@@ -22,14 +22,13 @@ export interface Employee extends BaseDocument {
 
   // Personal
   fullName: string
-  preferredName?: string | null
   gender: Gender
   birthDate: string
   /** KTP number (NIK). */
   nationalId?: string | null
   /** NPWP. */
   taxNumber?: string | null
-  religion?: string | null
+  religion?: Religion | null
   phone: string
   email: string
   address?: string | null
@@ -53,6 +52,13 @@ export interface Employee extends BaseDocument {
   contractStartDate?: string | null
   /** Required for fixed-term contracts — drives the expiring-soon flag (M01-F10). */
   contractEndDate?: string | null
+
+  // Disciplinary & Recognition — §12.1. recognitionType has no specced enum, so it stays free text.
+  disciplinaryType?: DisciplinaryType | null
+  disciplinaryStartPeriod?: string | null
+  disciplinaryEndPeriod?: string | null
+  recognitionType?: string | null
+  recognitionPeriod?: string | null
 
   // Separation — set by archiveEmployee only (E01-US03)
   resignationDate?: string | null
@@ -84,17 +90,8 @@ export interface EmployeeActivity extends BaseDocument {
 export type ProbationStatus = 'pending' | 'passed' | 'failed' | 'extended'
 export type MaritalStatus = 'single' | 'married' | 'divorced' | 'widowed'
 
-/**
- * PRD §12.1 lists hindu/christian/muslim only, reflecting current Bali
- * outlet staff composition. Flagging rather than silently expanding —
- * confirm with HR before this becomes the enforced enum long-term.
- */
-export type Religion = 'hindu' | 'christian' | 'muslim'
-
 /** Indonesian personal income tax (PPh21) status codes. */
 export type TaxStatus = 'TK0' | 'TK1' | 'TK2' | 'TK3' | 'K0' | 'K1' | 'K2' | 'K3'
-
-export type DisciplinaryType = 'coaching' | 'verbalWarning' | 'SP1' | 'SP2' | 'SP3' | 'termination'
 
 /**
  * Sub-collection at employees/{employeeId}/compensation/current — split out

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Lock, Plus, Trash2 } from 'lucide-react'
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Select, Spinner, StatusPill, Textarea } from '@/components/ui'
 import { useAuth, useToast } from '@/hooks'
+import { OUTLETS, DEPARTMENTS, OUTLET_DEPARTMENTS, optionsFor } from '@/constants'
 import { PRIORITY } from '@/constants/statuses'
 import * as employeeService from '@/features/hr/services/employeeService'
 import * as dailyUpdateService from '../dailyUpdateService'
@@ -73,6 +74,16 @@ export function DailyUpdateFormPage() {
   const [employees, setEmployees] = useState<Employee[]>([])
   const [reviews, setReviews] = useState<CarriedForwardReview[]>([])
 
+  const [outletId, setOutletId] = useState('')
+  const [departmentId, setDepartmentId] = useState('')
+
+  useEffect(() => {
+    if (profile?.outletId) setOutletId((prev) => prev || profile.outletId)
+    if (profile?.departmentId) setDepartmentId((prev) => prev || profile.departmentId)
+  }, [profile?.outletId, profile?.departmentId])
+
+  const departmentOptions = useMemo(() => optionsFor(OUTLET_DEPARTMENTS[outletId] ?? [], DEPARTMENTS), [outletId])
+
   useEffect(() => {
     if (!profile?.uid) return
     return dailyUpdateService.subscribeToMyCarriedForwardTasks(profile.uid, (tasks) => {
@@ -97,7 +108,13 @@ export function DailyUpdateFormPage() {
     [reviews],
   )
   const understaffed = Number(staffPresent) < Number(staffScheduled) && staffPresent !== '' && staffScheduled !== ''
-  const canSubmit = allReviewed && staffScheduled !== '' && staffPresent !== '' && (!understaffed || absences.length > 0)
+  const canSubmit =
+    allReviewed &&
+    outletId !== '' &&
+    departmentId !== '' &&
+    staffScheduled !== '' &&
+    staffPresent !== '' &&
+    (!understaffed || absences.length > 0)
 
   function updateReview(id: string, patch: Partial<Pick<CarriedForwardReview, 'status' | 'comment'>>) {
     setReviews((prev) => prev.map((r) => (r.task.id === id ? { ...r, ...patch } : r)))
@@ -108,6 +125,8 @@ export function DailyUpdateFormPage() {
     setSubmitting(true)
     try {
       await dailyUpdateService.submitDailyReport({
+        outletId,
+        departmentId,
         staffScheduled: Number(staffScheduled),
         staffPresent: Number(staffPresent),
         absences: absences.map(({ name, reason }) => ({ name, reason })),
@@ -156,10 +175,47 @@ export function DailyUpdateFormPage() {
         <div>
           <h1 className="text-xl font-semibold text-foreground">New Daily Update</h1>
           <p className="text-sm text-muted-foreground">
-            {profile?.displayName} &middot; {profile?.outletId} &middot; {profile?.departmentId} &middot; {formatReportDate(new Date().toISOString().slice(0, 10))}
+            {profile?.displayName} &middot; {formatReportDate(new Date().toISOString().slice(0, 10))}
           </p>
         </div>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Outlet &amp; Department</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="duOutlet">Outlet *</Label>
+            <Select
+              id="duOutlet"
+              value={outletId}
+              onChange={(e) => {
+                setOutletId(e.target.value)
+                setDepartmentId('')
+              }}
+            >
+              <option value="">Select an outlet…</option>
+              {OUTLETS.map((outlet) => (
+                <option key={outlet.id} value={outlet.id}>
+                  {outlet.name}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="duDepartment">Department *</Label>
+            <Select id="duDepartment" value={departmentId} disabled={outletId === ''} onChange={(e) => setDepartmentId(e.target.value)}>
+              <option value="">{outletId === '' ? 'Select an outlet first' : 'Select a department…'}</option>
+              {departmentOptions.map((department) => (
+                <option key={department.id} value={department.id}>
+                  {department.name}
+                </option>
+              ))}
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card className={allReviewed ? undefined : 'border-warning/40'}>
         <CardHeader>

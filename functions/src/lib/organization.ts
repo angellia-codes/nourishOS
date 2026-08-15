@@ -8,20 +8,22 @@
  * seeds those documents the first time a role is claimed.
  */
 
-const SHARED_DEPARTMENTS = ['admin_general']
-
-/** OUTLETS_DEPARTMENTS.md §1/§2 — see the client mirror for how this was derived. */
+/**
+ * OUTLETS_DEPARTMENTS.md §1/§2 — see the client mirror for how this was
+ * derived. Admin & General (§2: "HQ / Outlet Management") is HQ-only — it
+ * staffs boh_nourish_group and nowhere else.
+ */
 export const OUTLET_DEPARTMENTS: Record<string, readonly string[]> = {
-  nourish_ungasan: [...SHARED_DEPARTMENTS, 'cashier', 'fb_service', 'bar', 'kitchen', 'security'],
-  nourish_uluwatu: [...SHARED_DEPARTMENTS, 'cashier', 'fb_service', 'bar', 'kitchen', 'security'],
-  nourish_berawa: [...SHARED_DEPARTMENTS, 'cashier', 'fb_service', 'bar', 'kitchen', 'security'],
-  the_bakery_uluwatu: [...SHARED_DEPARTMENTS, 'cashier', 'bar'],
-  the_bakery_kitchen: [...SHARED_DEPARTMENTS, 'kitchen'],
-  wholefood_ungasan: [...SHARED_DEPARTMENTS, 'cashier', 'wholefood_retail'],
-  wholefood_uluwatu: [...SHARED_DEPARTMENTS, 'cashier', 'wholefood_retail'],
-  wholefood_berawa: [...SHARED_DEPARTMENTS, 'cashier', 'wholefood_retail'],
+  nourish_ungasan: ['cashier', 'fb_service', 'bar', 'kitchen', 'security'],
+  nourish_uluwatu: ['cashier', 'fb_service', 'bar', 'kitchen', 'security'],
+  nourish_berawa: ['cashier', 'fb_service', 'bar', 'kitchen', 'security'],
+  the_bakery_uluwatu: ['cashier', 'bar'],
+  the_bakery_kitchen: ['kitchen'],
+  wholefood_ungasan: ['wholefood_retail'],
+  wholefood_uluwatu: ['wholefood_retail'],
+  wholefood_berawa: ['wholefood_retail'],
   boh_nourish_group: [
-    ...SHARED_DEPARTMENTS,
+    'admin_general',
     'sales_marketing',
     'human_resources',
     'finance_accounting',
@@ -77,6 +79,8 @@ const LEADER = [
   // Leaders run their own outlet's uniform/asset stock day to day; item-master
   // curation (hrInventory.manage) stays HR's.
   'hrInventory.record',
+  // Opening/closing checklists are recorded by whoever runs the outlet's shift.
+  'checklists.record',
 ]
 
 /**
@@ -165,6 +169,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'tasks.assign',
     'hrInventory.manage',
     'hrInventory.record',
+    'checklists.record',
   ],
   finance: [
     ...BASE,

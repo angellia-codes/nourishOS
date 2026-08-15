@@ -9,6 +9,14 @@ export type ContractType = (typeof CONTRACT_TYPES)[number]
 
 export const GENDERS = ['male', 'female'] as const
 
+/** Mirrors src/constants/hr.ts DISCIPLINARY_TYPE (known frontend/functions duplication — keep in sync). */
+export const DISCIPLINARY_TYPES = ['coaching', 'verbalWarning', 'SP1', 'SP2', 'SP3', 'termination'] as const
+export type DisciplinaryType = (typeof DISCIPLINARY_TYPES)[number]
+
+/** Mirrors src/constants/hr.ts RELIGION (known frontend/functions duplication — keep in sync). */
+export const RELIGIONS = ['hindu', 'christian', 'catholic', 'islam', 'other'] as const
+export type Religion = (typeof RELIGIONS)[number]
+
 /** HR_OPERATIONS.md 9.1-F02: N- (PKWT/PKWTT/BOD/Freelance), DW- (Daily Worker), OJT-. */
 const EMPLOYEE_NUMBER_PREFIX: Record<EmploymentStatus, string> = {
   PKWT: 'N',

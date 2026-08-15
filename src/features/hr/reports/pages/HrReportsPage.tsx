@@ -8,6 +8,7 @@ import {
   Activity,
   PieChart,
   CalendarClock,
+  Filter,
 } from 'lucide-react'
 import { Button, Card, CardContent } from '@/components/ui'
 
@@ -65,6 +66,12 @@ const REPORTS = [
     icon: CalendarClock,
     title: 'Upcoming Activity and Budget',
     description: 'Interviews, onboarding, contract/probation ends and open vacancies ahead.',
+  },
+  {
+    to: '/hr/reports/recruitment-funnel',
+    icon: Filter,
+    title: 'Recruitment Funnel',
+    description: 'Pipeline funnel and time-to-hire, by position and department.',
   },
 ]
 

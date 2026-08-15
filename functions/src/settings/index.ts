@@ -1,0 +1,1 @@
+export { updateRolePermissions } from './updateRolePermissions'

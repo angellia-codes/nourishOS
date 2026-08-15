@@ -12,10 +12,13 @@ import {
   successResponse,
   PERMISSIONS,
 } from '../../lib'
+import { OUTLET_DEPARTMENTS } from '../../lib/organization'
 import {
   EMPLOYMENT_STATUSES,
   CONTRACT_TYPES,
   GENDERS,
+  DISCIPLINARY_TYPES,
+  RELIGIONS,
   type EmploymentStatus,
   type ContractType,
   assertContactFieldsUnique,
@@ -31,10 +34,8 @@ import {
  */
 const STRING_FIELDS = [
   'fullName',
-  'preferredName',
   'nationalId',
   'taxNumber',
-  'religion',
   'phone',
   'email',
   'address',
@@ -44,9 +45,18 @@ const STRING_FIELDS = [
   'departmentId',
   'outletId',
   'managerId',
+  'recognitionType',
 ] as const
 
-const DATE_FIELDS = ['birthDate', 'joinDate', 'contractStartDate', 'contractEndDate'] as const
+const DATE_FIELDS = [
+  'birthDate',
+  'joinDate',
+  'contractStartDate',
+  'contractEndDate',
+  'disciplinaryStartPeriod',
+  'disciplinaryEndPeriod',
+  'recognitionPeriod',
+] as const
 
 interface UpdateEmployeeInput {
   employeeId: string
@@ -104,6 +114,18 @@ export const updateEmployee = onCall({ region: REGION }, async (request) => {
       }
       changes.contractType = updates.contractType
     }
+    if ('disciplinaryType' in updates) {
+      if (updates.disciplinaryType !== null && !DISCIPLINARY_TYPES.includes(updates.disciplinaryType as (typeof DISCIPLINARY_TYPES)[number])) {
+        throw new AppError('invalid-argument', `disciplinaryType must be one of: ${DISCIPLINARY_TYPES.join(', ')}, or null.`)
+      }
+      changes.disciplinaryType = updates.disciplinaryType
+    }
+    if ('religion' in updates) {
+      if (updates.religion !== null && !RELIGIONS.includes(updates.religion as (typeof RELIGIONS)[number])) {
+        throw new AppError('invalid-argument', `religion must be one of: ${RELIGIONS.join(', ')}, or null.`)
+      }
+      changes.religion = updates.religion
+    }
     if ('probationMonths' in updates) {
       if (typeof updates.probationMonths !== 'number' || updates.probationMonths < 0) {
         throw new AppError('invalid-argument', 'probationMonths must be a non-negative number.')
@@ -127,6 +149,15 @@ export const updateEmployee = onCall({ region: REGION }, async (request) => {
     const joinDate = merged.joinDate as string
     if (new Date(`${joinDate}T00:00:00Z`).getTime() > Date.now()) {
       throw new AppError('invalid-argument', 'joinDate cannot be in the future.')
+    }
+    if ('departmentId' in changes || 'outletId' in changes) {
+      const departmentsForOutlet = OUTLET_DEPARTMENTS[merged.outletId as string]
+      if (!departmentsForOutlet) {
+        throw new AppError('invalid-argument', 'Select a valid outlet.')
+      }
+      if (!departmentsForOutlet.includes(merged.departmentId as string)) {
+        throw new AppError('invalid-argument', 'Select a department that exists at this outlet.')
+      }
     }
     if ('joinDate' in changes || 'probationMonths' in changes) {
       changes.probationEndDate = calculateProbationEndDate(joinDate, merged.probationMonths as number)

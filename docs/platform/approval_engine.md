@@ -20,8 +20,6 @@ Supported modules include:
 - Finance
 - Documents
 - Communications
-- Purchasing (Future)
-- Inventory (Future)
 
 ---
 
@@ -42,8 +40,6 @@ Supported modules include:
 Approval Engine
 │
 ├── Expense Requests
-├── Budget Requests
-├── Payment Requests
 ├── Employee Contracts
 ├── Recruitment Requests
 ├── Performance Reviews
@@ -185,9 +181,6 @@ Finance
 
 General Manager
 
-↓
-
-Director
 ```
 
 ---

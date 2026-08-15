@@ -14,6 +14,7 @@ export const COLLECTIONS = {
 
   EMPLOYEES: 'employees',
   EMPLOYEE_ACTIVITIES: 'employeeActivities',
+  DISCIPLINARY_ACTIONS: 'disciplinaryActions',
   HR_INVENTORY_ITEMS: 'hrInventoryItems',
   HR_STOCK_LEVELS: 'hrStockLevels',
   HR_STOCK_MOVEMENTS: 'hrStockMovements',
@@ -44,6 +45,8 @@ export const COLLECTIONS = {
 
   JOB_DESCRIPTIONS: 'jobDescriptions',
   SOPS: 'sops',
+  TEMPLATES: 'templates',
+  COMPANY_FORMS: 'companyForms',
 
   CHECKPOINTS: 'checkpoints',
   PATROL_LOGS: 'patrolLogs',
@@ -52,6 +55,8 @@ export const COLLECTIONS = {
   INCIDENT_REPORTS: 'incidentReports',
   WORK_ORDERS: 'workOrders',
   LOST_FOUND_ITEMS: 'lostFoundItems',
+  OPENING_CHECKLISTS: 'openingChecklists',
+  CLOSING_CHECKLISTS: 'closingChecklists',
 
   EXPENSE_REQUESTS: 'expenseRequests',
 

@@ -68,6 +68,62 @@ export const GENDERS = {
 export type Gender = (typeof GENDERS)[keyof typeof GENDERS]
 
 /**
+ * Revised per hand-off (2026-08-15) to the 5 values actually used: Hindu,
+ * Christian, Catholic, Islam, Other. Was a free `<Input>` before this
+ * revision — the stricter `Religion` union in employee.types.ts's PLANNED
+ * section was a different, incomplete list, so this is a new enum rather
+ * than promoting that one.
+ */
+export const RELIGION = {
+  HINDU: 'hindu',
+  CHRISTIAN: 'christian',
+  CATHOLIC: 'catholic',
+  ISLAM: 'islam',
+  OTHER: 'other',
+} as const
+
+export type Religion = (typeof RELIGION)[keyof typeof RELIGION]
+
+export const RELIGION_LABELS: Record<Religion, string> = {
+  hindu: 'Hindu',
+  christian: 'Christian',
+  catholic: 'Catholic',
+  islam: 'Islam',
+  other: 'Other',
+}
+
+/** Source: HR_OPERATIONS.md §12.1 disciplinaryType — escalation ladder. */
+export const DISCIPLINARY_TYPE = {
+  COACHING: 'coaching',
+  VERBAL_WARNING: 'verbalWarning',
+  SP1: 'SP1',
+  SP2: 'SP2',
+  SP3: 'SP3',
+  TERMINATION: 'termination',
+} as const
+
+export type DisciplinaryType = (typeof DISCIPLINARY_TYPE)[keyof typeof DISCIPLINARY_TYPE]
+
+export const DISCIPLINARY_TYPE_LABELS: Record<DisciplinaryType, string> = {
+  coaching: 'Coaching',
+  verbalWarning: 'Verbal Warning',
+  SP1: 'SP1 (First Warning Letter)',
+  SP2: 'SP2 (Second Warning Letter)',
+  SP3: 'SP3 (Final Warning Letter)',
+  termination: 'Termination',
+}
+
+/** Severity rank for sorting by disciplinary action (9.1-F06) — lower is less severe. */
+export const DISCIPLINARY_TYPE_RANK: Record<DisciplinaryType, number> = {
+  coaching: 1,
+  verbalWarning: 2,
+  SP1: 3,
+  SP2: 4,
+  SP3: 5,
+  termination: 6,
+}
+
+/**
  * Employee lifecycle events shown on the profile timeline — HR.md §13.
  * Written server-side alongside the mutation that caused them; more values
  * (promoted, transferred, trainingCompleted, …) arrive with their modules.

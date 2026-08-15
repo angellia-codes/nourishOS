@@ -6,9 +6,11 @@ import {
   requireActiveUser,
   recordAuditEvent,
   newDocumentBaseFields,
+  AppError,
   handleError,
   successResponse,
 } from '../lib'
+import { OUTLET_DEPARTMENTS } from '../lib/organization'
 import { normaliseItems, validateCategory, validateExpenseDate, validateNotes, validatePurpose } from './helpers'
 
 /**
@@ -34,6 +36,15 @@ export const createExpenseRequest = onCall({ region: REGION }, async (request) =
 
     const costCenterId = typeof input.costCenterId === 'string' ? input.costCenterId.trim() || null : null
 
+    // Overridable so staff who work across outlets/departments can attribute
+    // spend to where it actually happened, not their home outlet — validated
+    // as a real pair, defaults to the caller's own when omitted.
+    const outletId = typeof input.outletId === 'string' && input.outletId ? input.outletId : user.outletId
+    const departmentId = typeof input.departmentId === 'string' && input.departmentId ? input.departmentId : user.departmentId
+    if (outletId && !OUTLET_DEPARTMENTS[outletId]?.includes(departmentId ?? '')) {
+      throw new AppError('invalid-argument', 'Select a valid outlet/department pair.')
+    }
+
     const ref = db.collection(COLLECTIONS.EXPENSE_REQUESTS).doc()
     await ref.set({
       requestNumber: null, // allocated at submit — see submitExpenseRequest
@@ -50,10 +61,8 @@ export const createExpenseRequest = onCall({ region: REGION }, async (request) =
       paidAt: null,
       paidBy: null,
       paymentReference: null,
-      // Copied off the caller, never from input — the same rule
-      // createIncidentReport follows.
-      outletId: user.outletId,
-      departmentId: user.departmentId,
+      outletId,
+      departmentId,
       ...newDocumentBaseFields(user.uid, 'draft'),
     })
 

@@ -1,50 +1,51 @@
-import { callFunction } from '@/services/api'
+import { queryDocuments, where, orderBy, limit } from '@/services/firestore'
+import { COLLECTIONS } from '@/constants'
+import type { Employee, Sop, JobDescription, Announcement, Task } from '@/types'
 
-export interface SearchResultItem {
-  id: string
-  module: string
-  title: string
-  description?: string
-  status?: string
-  departmentId?: string
-  outletId?: string
-  updatedAt: string // ISO
-  actionUrl?: string
+export interface SearchResults {
+  employees: Employee[]
+  sops: Sop[]
+  jobDescriptions: JobDescription[]
+  announcements: Announcement[]
+  tasks: Task[]
 }
+
+/** Firestore has no full-text search — a range query bounded by the next codepoint is the standard prefix-match trick. */
+const PREFIX_UPPER_BOUND = String.fromCharCode(0xf8ff)
 
 /**
- * Routed through a Cloud Function rather than queried client-side — per
- * search.md §19, RBAC filtering happens at query time, not by trusting the
- * client to only ask for what it's allowed to see.
+ * Five independent prefix queries, each wrapped so a collection the caller
+ * can't read (rules-denied) just contributes zero results instead of
+ * failing the whole search. Work Orders isn't included yet (built same
+ * pass, not indexed here); "Reports" from the spec's list are aggregation
+ * pages, not records.
  */
-export function globalSearch(queryText: string): Promise<SearchResultItem[]> {
-  return callFunction('search', { query: queryText })
+async function prefixQuery<T>(collectionName: string, field: string, queryText: string): Promise<T[]> {
+  try {
+    return await queryDocuments<T>(collectionName, [
+      where(field, '>=', queryText),
+      where(field, '<=', queryText + PREFIX_UPPER_BOUND),
+      orderBy(field),
+      limit(10),
+    ])
+  } catch {
+    return []
+  }
 }
 
-export interface AdvancedSearchFilters {
-  module?: string
-  department?: string
-  outlet?: string
-  status?: string
-  dateFrom?: string // ISO
-  dateTo?: string // ISO
-}
+export async function searchAll(queryText: string): Promise<SearchResults> {
+  const q = queryText.trim()
+  if (!q) {
+    return { employees: [], sops: [], jobDescriptions: [], announcements: [], tasks: [] }
+  }
 
-export function advancedSearch(
-  queryText: string,
-  filters: AdvancedSearchFilters,
-): Promise<SearchResultItem[]> {
-  return callFunction('advancedSearch', { query: queryText, filters })
-}
+  const [employees, sops, jobDescriptions, announcements, tasks] = await Promise.all([
+    prefixQuery<Employee>(COLLECTIONS.EMPLOYEES, 'fullName', q),
+    prefixQuery<Sop>(COLLECTIONS.SOPS, 'topic', q),
+    prefixQuery<JobDescription>(COLLECTIONS.JOB_DESCRIPTIONS, 'title', q),
+    prefixQuery<Announcement>(COLLECTIONS.ANNOUNCEMENTS, 'title', q),
+    prefixQuery<Task>(COLLECTIONS.TASKS, 'title', q),
+  ])
 
-export function saveSearch(name: string, queryText: string, filters?: AdvancedSearchFilters): Promise<void> {
-  return callFunction('saveSearch', { name, query: queryText, filters })
-}
-
-export function deleteSavedSearch(searchId: string): Promise<void> {
-  return callFunction('deleteSavedSearch', { searchId })
-}
-
-export function getRecentSearches(): Promise<string[]> {
-  return callFunction('getRecentSearches')
+  return { employees, sops, jobDescriptions, announcements, tasks }
 }

@@ -11,6 +11,9 @@ export interface ExpenseRequestInput {
   items: ExpenseItem[]
   notes?: string
   costCenterId?: string
+  /** Both default to the caller's own if omitted. */
+  outletId?: string
+  departmentId?: string
 }
 
 export function createExpenseRequest(

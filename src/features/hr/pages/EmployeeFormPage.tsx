@@ -1,18 +1,25 @@
-import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Select, Spinner, Textarea } from '@/components/ui'
 import { ErrorMessage } from '@/components/shared'
 import { useToast } from '@/hooks'
+import { OUTLETS, DEPARTMENTS, OUTLET_DEPARTMENTS, optionsFor, type OrgOption } from '@/constants'
 import {
   CONTRACT_TYPE,
   CONTRACT_TYPE_LABELS,
+  DISCIPLINARY_TYPE,
+  DISCIPLINARY_TYPE_LABELS,
   EMPLOYMENT_STATUS,
   EMPLOYMENT_STATUS_LABELS,
   GENDERS,
+  RELIGION,
+  RELIGION_LABELS,
   type ContractType,
+  type DisciplinaryType,
   type EmploymentStatus,
   type Gender,
+  type Religion,
 } from '@/constants/hr'
 import * as employeeService from '@/features/hr/services/employeeService'
 import { getCandidate } from '@/features/hr/recruitment/recruitmentService'
@@ -21,12 +28,11 @@ import type { Employee } from '@/types'
 
 interface EmployeeFormState {
   fullName: string
-  preferredName: string
   gender: Gender
   birthDate: string
   nationalId: string
   taxNumber: string
-  religion: string
+  religion: Religion | ''
   phone: string
   email: string
   address: string
@@ -41,11 +47,15 @@ interface EmployeeFormState {
   contractType: ContractType
   contractStartDate: string
   contractEndDate: string
+  disciplinaryType: DisciplinaryType | ''
+  disciplinaryStartPeriod: string
+  disciplinaryEndPeriod: string
+  recognitionType: string
+  recognitionPeriod: string
 }
 
 const EMPTY_FORM: EmployeeFormState = {
   fullName: '',
-  preferredName: '',
   gender: 'male',
   birthDate: '',
   nationalId: '',
@@ -65,17 +75,21 @@ const EMPTY_FORM: EmployeeFormState = {
   contractType: 'fixedTerm',
   contractStartDate: '',
   contractEndDate: '',
+  disciplinaryType: '',
+  disciplinaryStartPeriod: '',
+  disciplinaryEndPeriod: '',
+  recognitionType: '',
+  recognitionPeriod: '',
 }
 
 function toFormState(employee: Employee): EmployeeFormState {
   return {
     fullName: employee.fullName,
-    preferredName: employee.preferredName ?? '',
     gender: employee.gender,
     birthDate: employee.birthDate,
     nationalId: employee.nationalId ?? '',
     taxNumber: employee.taxNumber ?? '',
-    religion: employee.religion ?? '',
+    religion: (employee.religion as Religion | undefined) ?? '',
     phone: employee.phone,
     email: employee.email,
     address: employee.address ?? '',
@@ -90,6 +104,11 @@ function toFormState(employee: Employee): EmployeeFormState {
     contractType: employee.contractType,
     contractStartDate: employee.contractStartDate ?? '',
     contractEndDate: employee.contractEndDate ?? '',
+    disciplinaryType: employee.disciplinaryType ?? '',
+    disciplinaryStartPeriod: employee.disciplinaryStartPeriod ?? '',
+    disciplinaryEndPeriod: employee.disciplinaryEndPeriod ?? '',
+    recognitionType: employee.recognitionType ?? '',
+    recognitionPeriod: employee.recognitionPeriod ?? '',
   }
 }
 
@@ -159,6 +178,37 @@ export function EmployeeFormPage() {
       setForm((prev) => ({ ...prev, [key]: e.target.value }))
   }
 
+  // A legacy record's stored outlet/department might not be in the org chart
+  // (these were free-text fields before this dropdown existed) — keep it
+  // selectable rather than silently blanking a value the form can't
+  // otherwise represent.
+  const outletOptions: OrgOption[] = useMemo(() => {
+    if (form.outletId && !OUTLETS.some((o) => o.id === form.outletId)) {
+      return [...OUTLETS, { id: form.outletId, name: `${form.outletId} (legacy)` }]
+    }
+    return [...OUTLETS]
+  }, [form.outletId])
+
+  const departmentOptions: OrgOption[] = useMemo(() => {
+    const opts = optionsFor(OUTLET_DEPARTMENTS[form.outletId] ?? [], DEPARTMENTS)
+    if (form.departmentId && !opts.some((d) => d.id === form.departmentId)) {
+      const legacy = DEPARTMENTS.find((d) => d.id === form.departmentId)
+      return [...opts, legacy ?? { id: form.departmentId, name: `${form.departmentId} (legacy)` }]
+    }
+    return opts
+  }, [form.outletId, form.departmentId])
+
+  // religion was a free-text field before this revision — a legacy value
+  // that doesn't match the enum stays selectable rather than silently
+  // blanking, same fallback shape as outletOptions above.
+  const religionOptions: { id: Religion | string; name: string }[] = useMemo(() => {
+    const base = Object.values(RELIGION).map((value) => ({ id: value, name: RELIGION_LABELS[value] }))
+    if (form.religion && !Object.values(RELIGION).includes(form.religion)) {
+      return [...base, { id: form.religion, name: `${form.religion} (legacy)` }]
+    }
+    return base
+  }, [form.religion])
+
   const requiredFilled =
     form.fullName.trim() &&
     form.birthDate &&
@@ -178,12 +228,11 @@ export function EmployeeFormPage() {
 
     const payload: employeeService.CreateEmployeeInput = {
       fullName: form.fullName.trim(),
-      preferredName: form.preferredName.trim() || undefined,
       gender: form.gender,
       birthDate: form.birthDate,
       nationalId: form.nationalId.trim() || undefined,
       taxNumber: form.taxNumber.trim() || undefined,
-      religion: form.religion.trim() || undefined,
+      religion: form.religion || undefined,
       phone: form.phone.trim(),
       email: form.email.trim(),
       address: form.address.trim() || undefined,
@@ -198,6 +247,11 @@ export function EmployeeFormPage() {
       contractType: form.contractType,
       contractStartDate: form.contractStartDate || undefined,
       contractEndDate: form.contractEndDate || undefined,
+      disciplinaryType: form.disciplinaryType || undefined,
+      disciplinaryStartPeriod: form.disciplinaryStartPeriod || undefined,
+      disciplinaryEndPeriod: form.disciplinaryEndPeriod || undefined,
+      recognitionType: form.recognitionType.trim() || undefined,
+      recognitionPeriod: form.recognitionPeriod || undefined,
       candidateId: candidateId ?? undefined,
     }
 
@@ -255,10 +309,6 @@ export function EmployeeFormPage() {
             <Input id="fullName" value={form.fullName} onChange={set('fullName')} required />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="preferredName">Preferred name</Label>
-            <Input id="preferredName" value={form.preferredName} onChange={set('preferredName')} />
-          </div>
-          <div className="flex flex-col gap-1.5">
             <Label htmlFor="gender">Gender *</Label>
             <Select id="gender" value={form.gender} onChange={set('gender')}>
               {Object.values(GENDERS).map((gender) => (
@@ -282,7 +332,14 @@ export function EmployeeFormPage() {
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="religion">Religion</Label>
-            <Input id="religion" value={form.religion} onChange={set('religion')} />
+            <Select id="religion" value={form.religion} onChange={set('religion')}>
+              <option value="">Select a religion…</option>
+              {religionOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.name}
+                </option>
+              ))}
+            </Select>
           </div>
         </CardContent>
       </Card>
@@ -340,12 +397,30 @@ export function EmployeeFormPage() {
             </Select>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="departmentId">Department *</Label>
-            <Input id="departmentId" value={form.departmentId} onChange={set('departmentId')} placeholder="kitchen" />
+            <Label htmlFor="outletId">Outlet *</Label>
+            <Select
+              id="outletId"
+              value={form.outletId}
+              onChange={(e) => setForm((prev) => ({ ...prev, outletId: e.target.value, departmentId: '' }))}
+            >
+              <option value="">Select an outlet…</option>
+              {outletOptions.map((outlet) => (
+                <option key={outlet.id} value={outlet.id}>
+                  {outlet.name}
+                </option>
+              ))}
+            </Select>
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="outletId">Outlet *</Label>
-            <Input id="outletId" value={form.outletId} onChange={set('outletId')} placeholder="berawa" />
+            <Label htmlFor="departmentId">Department *</Label>
+            <Select id="departmentId" value={form.departmentId} disabled={form.outletId === ''} onChange={set('departmentId')}>
+              <option value="">{form.outletId === '' ? 'Select an outlet first' : 'Select a department…'}</option>
+              {departmentOptions.map((department) => (
+                <option key={department.id} value={department.id}>
+                  {department.name}
+                </option>
+              ))}
+            </Select>
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="joinDate">Join date *</Label>
@@ -389,6 +464,52 @@ export function EmployeeFormPage() {
               Contract end {form.contractType === 'fixedTerm' ? '*' : ''}
             </Label>
             <Input id="contractEndDate" type="date" value={form.contractEndDate} onChange={set('contractEndDate')} />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Disciplinary & Recognition</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="disciplinaryType">Disciplinary action</Label>
+            <Select id="disciplinaryType" value={form.disciplinaryType} onChange={set('disciplinaryType')}>
+              <option value="">None</option>
+              {Object.values(DISCIPLINARY_TYPE).map((value) => (
+                <option key={value} value={value}>
+                  {DISCIPLINARY_TYPE_LABELS[value]}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div />
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="disciplinaryStartPeriod">Disciplinary period start</Label>
+            <Input
+              id="disciplinaryStartPeriod"
+              type="date"
+              value={form.disciplinaryStartPeriod}
+              onChange={set('disciplinaryStartPeriod')}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="disciplinaryEndPeriod">Disciplinary period end</Label>
+            <Input
+              id="disciplinaryEndPeriod"
+              type="date"
+              value={form.disciplinaryEndPeriod}
+              onChange={set('disciplinaryEndPeriod')}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="recognitionType">Recognition</Label>
+            <Input id="recognitionType" value={form.recognitionType} onChange={set('recognitionType')} />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="recognitionPeriod">Recognition period</Label>
+            <Input id="recognitionPeriod" type="date" value={form.recognitionPeriod} onChange={set('recognitionPeriod')} />
           </div>
         </CardContent>
       </Card>

@@ -5,7 +5,6 @@ import type { Employee } from '@/types'
 const CSV_COLUMNS: CsvColumn<Employee>[] = [
   { header: 'Employee Number', value: (e) => e.employeeNumber },
   { header: 'Full Name', value: (e) => e.fullName },
-  { header: 'Preferred Name', value: (e) => e.preferredName ?? '' },
   { header: 'Gender', value: (e) => (e.gender === 'male' ? 'Male' : 'Female') },
   { header: 'Position', value: (e) => e.position },
   { header: 'Department', value: (e) => e.departmentId },

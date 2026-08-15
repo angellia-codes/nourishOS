@@ -13,10 +13,12 @@ import {
   PERMISSIONS,
 } from '../../lib'
 import { notifyUsersByRole } from '../../shared/notifications'
+import { OUTLET_DEPARTMENTS } from '../../lib/organization'
 import { RETENTION_DAYS, calculateRetentionExpiresAt, allocateLostFoundItemNumber, type LostFoundCategory, type LostFoundValueTier } from './helpers'
 
 const CATEGORIES = Object.keys(RETENTION_DAYS) as LostFoundCategory[]
 const VALUE_TIERS: LostFoundValueTier[] = ['low', 'medium', 'high']
+const OUTLET_IDS = Object.keys(OUTLET_DEPARTMENTS)
 
 interface CreateLostFoundItemInput {
   itemDescription: string
@@ -26,6 +28,7 @@ interface CreateLostFoundItemInput {
   foundAt: string // 'YYYY-MM-DD'
   storageLocation: string
   linkedIncidentId?: string
+  outletId?: string
 }
 
 /** lost-and-found-report.md §7/§10. Photo mandatory is enforced client-side (upload happens right after this call resolves, same "create then attach" order as Security Patrol) — flagging as a known gap, not silently assumed solved. */
@@ -51,6 +54,9 @@ export const createLostFoundItem = onCall({ region: REGION }, async (request) =>
         'itemDescription, category, valueTier, foundLocation, foundAt, and storageLocation are required.',
       )
     }
+    if (input.outletId && !OUTLET_IDS.includes(input.outletId)) {
+      throw new AppError('invalid-argument', 'Select a valid outlet.')
+    }
 
     const itemNumber = await allocateLostFoundItemNumber()
     const retentionExpiresAt = calculateRetentionExpiresAt(input.foundAt, input.category)
@@ -66,7 +72,11 @@ export const createLostFoundItem = onCall({ region: REGION }, async (request) =>
       foundBy: user.uid,
       storageLocation: input.storageLocation,
       linkedIncidentId: input.linkedIncidentId ?? null,
-      outletId: user.outletId,
+      // Overridable so staff who work across outlets (drivers, roving
+      // security, HR visiting a site) can log the item at the outlet it was
+      // actually found, not their home outlet — validated above, defaults to
+      // the caller's own when omitted.
+      outletId: input.outletId ?? user.outletId,
       departmentId: user.departmentId,
       retentionExpiresAt,
       retentionWarnedAt: null,

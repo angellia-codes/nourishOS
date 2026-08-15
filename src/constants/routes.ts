@@ -8,14 +8,12 @@ export const ROUTES = {
   CALENDAR: '/calendar',
   OPERATIONS: '/operations',
   FINANCE: '/finance',
-  PURCHASING: '/purchasing',
-  INVENTORY: '/inventory',
-  CRM: '/crm',
   DOCUMENTS: '/documents',
   COMMUNICATIONS: '/communications',
   REPORTS: '/reports',
   SETTINGS: '/settings',
   SECURITY: '/security',
+  SEARCH: '/search',
 } as const
 
 export type RoutePath = (typeof ROUTES)[keyof typeof ROUTES]

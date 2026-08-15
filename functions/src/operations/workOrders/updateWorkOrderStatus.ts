@@ -1,0 +1,105 @@
+import { onCall } from 'firebase-functions/v2/https'
+import {
+  db,
+  COLLECTIONS,
+  REGION,
+  requireActiveUser,
+  requirePermission,
+  recordAuditEvent,
+  updatedFields,
+  AppError,
+  handleError,
+  successResponse,
+  PERMISSIONS,
+} from '../../lib'
+import { sendNotificationInternal } from '../../shared/notifications'
+import { WORK_ORDER_NEXT_STATUS, type WorkOrderStatus } from './helpers'
+
+interface UpdateWorkOrderStatusInput {
+  workOrderId: string
+  status: WorkOrderStatus
+  assignedTo?: string
+  resolutionNotes?: string
+}
+
+/**
+ * Permission required per transition — separate strings, same reasoning as
+ * expenseRequests.approve vs .pay: assigning, doing the work, and signing it
+ * off complete are different actions with different risk.
+ */
+const PERMISSION_FOR_STATUS: Partial<Record<WorkOrderStatus, string>> = {
+  assigned: PERMISSIONS.WORK_ORDERS_ASSIGN,
+  inProgress: PERMISSIONS.WORK_ORDERS_UPDATE,
+  completed: PERMISSIONS.WORK_ORDERS_COMPLETE,
+  closed: PERMISSIONS.WORK_ORDERS_UPDATE,
+}
+
+/** FEATURE_SPECIFICATIONS.md Module 5. Forward-only per WORK_ORDER_NEXT_STATUS, mirroring updateIncidentStatus. */
+export const updateWorkOrderStatus = onCall({ region: REGION }, async (request) => {
+  try {
+    const user = await requireActiveUser(request)
+
+    const input = (request.data ?? {}) as Partial<UpdateWorkOrderStatusInput>
+    if (!input.workOrderId || !input.status) {
+      throw new AppError('invalid-argument', 'workOrderId and status are required.')
+    }
+
+    const requiredPermission = PERMISSION_FOR_STATUS[input.status]
+    if (!requiredPermission) {
+      throw new AppError('invalid-argument', `Unknown status "${input.status}".`)
+    }
+    requirePermission(user, requiredPermission)
+
+    const ref = db.collection(COLLECTIONS.WORK_ORDERS).doc(input.workOrderId)
+    const snap = await ref.get()
+    if (!snap.exists) {
+      throw new AppError('not-found', 'Work order not found.')
+    }
+    const workOrder = snap.data()!
+
+    if (WORK_ORDER_NEXT_STATUS[workOrder.status as WorkOrderStatus] !== input.status) {
+      throw new AppError('failed-precondition', `Cannot move from ${workOrder.status} to ${input.status}.`)
+    }
+    if (input.status === 'assigned' && !input.assignedTo) {
+      throw new AppError('invalid-argument', 'assignedTo is required to assign a work order.')
+    }
+    if (input.status === 'completed' && !input.resolutionNotes) {
+      throw new AppError('invalid-argument', 'resolutionNotes is required to complete a work order.')
+    }
+
+    const updates: Record<string, unknown> = { status: input.status, ...updatedFields(user.uid) }
+    if (input.status === 'assigned') updates.assignedTo = input.assignedTo
+    if (input.status === 'completed') updates.resolutionNotes = input.resolutionNotes
+
+    await ref.update(updates)
+
+    await recordAuditEvent({
+      eventType: 'WorkOrderStatusChanged',
+      category: 'Operations',
+      module: 'operations',
+      resourceType: 'workOrder',
+      resourceId: ref.id,
+      action: 'update',
+      user,
+      previousValues: { status: workOrder.status },
+      newValues: { status: input.status },
+    })
+
+    if (workOrder.createdBy && workOrder.createdBy !== user.uid) {
+      await sendNotificationInternal({
+        type: 'alert',
+        title: 'Work Order Updated',
+        message: `"${workOrder.title}" is now ${input.status}.`,
+        module: 'operations',
+        priority: 'medium',
+        recipientUid: workOrder.createdBy,
+        referenceModule: 'operations',
+        referenceId: ref.id,
+      })
+    }
+
+    return successResponse({ workOrderId: ref.id }, 'Work order updated.')
+  } catch (error) {
+    return handleError(error)
+  }
+})

@@ -4,6 +4,8 @@ import { formatDate } from '@/utils'
 import { PendingApprovalsWidget } from './widgets/PendingApprovalsWidget'
 import { AssignedTasksWidget } from './widgets/AssignedTasksWidget'
 import { AnnouncementsWidget } from './widgets/AnnouncementsWidget'
+import { UpcomingCalendarWidget } from './widgets/UpcomingCalendarWidget'
+import { KpiCardsRow } from './widgets/KpiCardsRow'
 
 const OUTLET_NAMES: Record<string, string> = Object.fromEntries(OUTLETS.map((o) => [o.id, o.name]))
 const DEPARTMENT_NAMES: Record<string, string> = Object.fromEntries(DEPARTMENTS.map((d) => [d.id, d.name]))
@@ -16,8 +18,10 @@ function greeting(hour: number): string {
 }
 
 /**
- * The landing page — dashboard.md §4, cut to the three widgets that have data
- * behind them today (§9 approvals, §10 tasks, §12 announcements). KPI cards
+ * The landing page — dashboard.md §4, cut to the four widgets that have data
+ * behind them today (§9 approvals, §10 tasks, §12 announcements, and the
+ * Upcoming Calendar widget closing the §26 "Company calendar" wishlist item
+ * with the calendar module's existing subscribeToUpcomingEvents). KPI cards
  * (§7), quick actions (§8), the activity feed (§13) and the per-department and
  * per-role variants (§14/§15) are not built; §11's notifications widget is
  * deliberately absent because the header bell already is one.
@@ -25,6 +29,9 @@ function greeting(hour: number): string {
  * Every widget subscribes on its own and renders its own skeleton, so a slow
  * one never blocks the page (§21). There is no manual refresh (§18) — these are
  * live listeners, so there is nothing to refresh.
+ *
+ * KPI Cards (§7) landed after the fact, reusing the four widgets' own data
+ * wherever possible — see KpiCardsRow.
  */
 export function DashboardPage() {
   const { profile } = useAuth()
@@ -50,10 +57,13 @@ export function DashboardPage() {
         <p className="text-xs text-muted-foreground">{formatDate(new Date())}</p>
       </div>
 
+      <KpiCardsRow />
+
       <div className="grid gap-4 lg:grid-cols-2">
         <PendingApprovalsWidget />
         <AssignedTasksWidget />
         <AnnouncementsWidget />
+        <UpcomingCalendarWidget />
       </div>
     </div>
   )

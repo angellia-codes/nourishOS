@@ -62,15 +62,25 @@ export async function requireActiveUser(request: CallableRequest): Promise<Authe
   }
 }
 
-/** Throws permission-denied unless the caller's role grants `permission`. */
+/**
+ * Throws permission-denied unless the caller's role grants `permission`.
+ * superAdmin always passes: it's deliberately absent from ROLE_PERMISSIONS
+ * (organization.ts) and its roles/superAdmin doc was seeded by hand once, so
+ * every permission string added since has needed a manual Firestore edit to
+ * reach it — the exact bypass requireSuperAdmin already relies on, extended
+ * to every permission-string check instead of just the handful of callables
+ * that call requireSuperAdmin directly.
+ */
 export function requirePermission(user: AuthedUser, permission: string): void {
+  if (user.roleId === 'superAdmin') return
   if (!user.permissions.includes(permission)) {
     throw new AppError('permission-denied', 'You do not have permission to perform this action.')
   }
 }
 
-/** Throws permission-denied unless the caller holds at least one of `permissions`. */
+/** Throws permission-denied unless the caller holds at least one of `permissions`. superAdmin always passes — see requirePermission. */
 export function requireAnyPermission(user: AuthedUser, permissions: string[]): void {
+  if (user.roleId === 'superAdmin') return
   if (!permissions.some((permission) => user.permissions.includes(permission))) {
     throw new AppError('permission-denied', 'You do not have permission to perform this action.')
   }

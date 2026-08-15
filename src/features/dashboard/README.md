@@ -5,7 +5,7 @@ Role-aware dashboard widgets and layout.
 ## Built
 
 - **`DashboardPage.tsx`** — the landing page at `/`. Welcome banner (`docs/platform/dashboard.md` §6) plus
-  three widgets in a responsive grid. Each widget owns its own subscription and skeleton, so a slow one never
+  four widgets in a responsive grid. Each widget owns its own subscription and skeleton, so a slow one never
   blocks the page (§21).
 - **`widgets/DashboardWidget.tsx`** — the shared shell: title, count chip, optional "View all" link, skeleton
   rows while loading, an explicit empty state (§22), and a distinct message when a rules denial kills the
@@ -15,6 +15,9 @@ Role-aware dashboard widgets and layout.
   *Needs your decision* and *Your submissions*.
 - **`widgets/AssignedTasksWidget.tsx`** (§10) and **`widgets/AnnouncementsWidget.tsx`** (§12) — read-only
   views over the Communications module's own services and format modules.
+- **`widgets/UpcomingCalendarWidget.tsx`** — closes the §26 "Company calendar" wishlist item. Reuses the
+  calendar module's existing `subscribeToUpcomingEvents` unmodified (rules-scoped per viewer, same as
+  `/calendar`); confirmed events only, capped to 5 client-side like every other widget.
 - **`dashboardFormat.ts`** — approval status labels/tones and the `module/resourceType` → label + detail-route
   map, keyed exactly like `APPROVAL_ROUTES` in `functions/src/shared/approval/routes.ts`.
 
@@ -29,6 +32,7 @@ list — **adding an approver role outside that list means updating `firestore.r
 ## Planned
 
 KPI cards (§7), quick actions (§8), activity feed (§13), department widgets (§14) and the per-role variants
-(§15) are unbuilt. §11's notifications widget is deliberately absent: `src/components/layout/NotificationBell.tsx`
+(§15) are unbuilt. "Upcoming birthdays and anniversaries" (§26) — the other half of that wishlist bullet — is
+not built; there is no birthday/anniversary field on `Employee` to source it from. §11's notifications widget is deliberately absent: `src/components/layout/NotificationBell.tsx`
 already is one. §17's `getDashboardSummary()`/`getPendingApprovals()` aggregation callables are not built —
 every widget reads Firestore directly through a query that matches its own read rule.

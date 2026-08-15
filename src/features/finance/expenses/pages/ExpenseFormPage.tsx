@@ -13,7 +13,8 @@ import {
   Spinner,
   Textarea,
 } from '@/components/ui'
-import { useToast } from '@/hooks'
+import { useAuth, useToast } from '@/hooks'
+import { OUTLETS, DEPARTMENTS, OUTLET_DEPARTMENTS, optionsFor } from '@/constants'
 import * as expenseService from '../expenseService'
 import {
   EXPENSE_APPROVAL_THRESHOLD_IDR,
@@ -45,16 +46,27 @@ const EMPTY_ITEM: DraftItem = { description: '', amount: '' }
 export function ExpenseFormPage() {
   const navigate = useNavigate()
   const toast = useToast()
+  const { profile } = useAuth()
   const { expenseRequestId } = useParams<{ expenseRequestId: string }>()
   const isEdit = Boolean(expenseRequestId)
 
   const [loading, setLoading] = useState(isEdit)
   const [submitting, setSubmitting] = useState(false)
+  const [outletId, setOutletId] = useState('')
+  const [departmentId, setDepartmentId] = useState('')
   const [purpose, setPurpose] = useState('')
   const [category, setCategory] = useState<ExpenseCategory>('other')
   const [expenseDate, setExpenseDate] = useState(TODAY)
   const [notes, setNotes] = useState('')
   const [items, setItems] = useState<DraftItem[]>([{ ...EMPTY_ITEM }])
+
+  useEffect(() => {
+    if (isEdit) return
+    if (profile?.outletId) setOutletId((prev) => prev || profile.outletId)
+    if (profile?.departmentId) setDepartmentId((prev) => prev || profile.departmentId)
+  }, [isEdit, profile?.outletId, profile?.departmentId])
+
+  const departmentOptions = useMemo(() => optionsFor(OUTLET_DEPARTMENTS[outletId] ?? [], DEPARTMENTS), [outletId])
 
   useEffect(() => {
     if (!expenseRequestId) return
@@ -74,6 +86,8 @@ export function ExpenseFormPage() {
           navigate(`/finance/expenses/${expenseRequestId}`)
           return
         }
+        setOutletId(row.outletId ?? '')
+        setDepartmentId(row.departmentId ?? '')
         setPurpose(row.purpose)
         setCategory(row.category)
         setExpenseDate(row.expenseDate)
@@ -105,7 +119,13 @@ export function ExpenseFormPage() {
   )
 
   const total = parsedItems.reduce((sum, item) => sum + item.amount, 0)
-  const canSubmit = purpose.trim() !== '' && parsedItems.length > 0 && expenseDate !== '' && !submitting
+  const canSubmit =
+    outletId !== '' &&
+    departmentId !== '' &&
+    purpose.trim() !== '' &&
+    parsedItems.length > 0 &&
+    expenseDate !== '' &&
+    !submitting
 
   function updateItem(index: number, patch: Partial<DraftItem>) {
     setItems((current) => current.map((item, i) => (i === index ? { ...item, ...patch } : item)))
@@ -115,6 +135,8 @@ export function ExpenseFormPage() {
     setSubmitting(true)
     try {
       const input = {
+        outletId,
+        departmentId,
         purpose: purpose.trim(),
         category,
         expenseDate,
@@ -156,6 +178,37 @@ export function ExpenseFormPage() {
           <CardTitle>Request details</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="outletId">Outlet</Label>
+              <Select
+                id="outletId"
+                value={outletId}
+                onChange={(e) => {
+                  setOutletId(e.target.value)
+                  setDepartmentId('')
+                }}
+              >
+                <option value="">Select an outlet…</option>
+                {OUTLETS.map((outlet) => (
+                  <option key={outlet.id} value={outlet.id}>
+                    {outlet.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="departmentId">Department</Label>
+              <Select id="departmentId" value={departmentId} disabled={outletId === ''} onChange={(e) => setDepartmentId(e.target.value)}>
+                <option value="">{outletId === '' ? 'Select an outlet first' : 'Select a department…'}</option>
+                {departmentOptions.map((department) => (
+                  <option key={department.id} value={department.id}>
+                    {department.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="purpose">Purpose / justification</Label>
             <Textarea id="purpose" rows={4} value={purpose} maxLength={2000} onChange={(e) => setPurpose(e.target.value)} />

@@ -38,6 +38,7 @@ export const PERMISSION_MODULES = {
   DAILY_UPDATES: 'dailyUpdates',
   CALENDAR: 'calendar',
   HR_INVENTORY: 'hrInventory',
+  CHECKLISTS: 'checklists',
 } as const
 
 export type PermissionModule = (typeof PERMISSION_MODULES)[keyof typeof PERMISSION_MODULES]
@@ -159,6 +160,11 @@ export const PERMISSIONS = {
   // their own outlet's uniform stock — item-master edits stay HR's.
   HR_INVENTORY_MANAGE: permission(PERMISSION_MODULES.HR_INVENTORY, ACTIONS.MANAGE),
   HR_INVENTORY_RECORD: permission(PERMISSION_MODULES.HR_INVENTORY, 'record'),
+
+  // Operations — Opening/Closing Checklists (FEATURE_SPECIFICATIONS.md Module 5).
+  // One permission covers recording either checklist type — same trust level,
+  // outlet leaders run both.
+  CHECKLISTS_RECORD: permission(PERMISSION_MODULES.CHECKLISTS, 'record'),
 } as const
 
 export type PermissionString = (typeof PERMISSIONS)[keyof typeof PERMISSIONS]

@@ -31,7 +31,17 @@ export { createCheckpoint, createPatrolLog, checkOverdueCheckpoints } from './se
 export { seedAppraisalTemplates, createAppraisal, submitAppraisal, generateAppraisalInsights } from './hr/appraisal'
 
 // ---- HR: Employee Database ----
-export { createEmployee, updateEmployee, archiveEmployee } from './hr/employees'
+export {
+  createEmployee,
+  updateEmployee,
+  archiveEmployee,
+  importEmployees,
+  getEmployeeAuditLog,
+  contractAlerts,
+  createDisciplinaryRecord,
+  addInvestigationNote,
+  closeDisciplinaryRecord,
+} from './hr/employees'
 
 // ---- HR: Inventory (uniforms & assets) ----
 export { createInventoryItem, updateInventoryItem, receiveStock, issueStock, transferStock } from './hr/inventory'
@@ -63,6 +73,9 @@ export {
 // ---- Documents: SOP Library ----
 export { createSop, updateSop, deleteSop, setSopAccess } from './documents/sopLibrary'
 
+// ---- Documents: Company Forms + Templates ----
+export { createDocumentResource, updateDocumentResource, deleteDocumentResource } from './documents/resources'
+
 // ---- Finance: Expense Requests ----
 export {
   createExpenseRequest,
@@ -80,6 +93,12 @@ export {
   archiveAnnouncement,
   recordAnnouncementRead,
 } from './communications/announcements'
+
+// ---- Operations: Work Orders ----
+export { createWorkOrder, updateWorkOrderStatus } from './operations/workOrders'
+
+// ---- Operations: Checklists ----
+export { saveChecklistProgress } from './operations/checklists'
 
 // ---- Operations: Lost & Found ----
 export {
@@ -100,3 +119,6 @@ export {
   sendComplianceAlerts,
   sendDailyDigest,
 } from './operations/dailyUpdates'
+
+// ---- Settings: Roles & Permissions ----
+export { updateRolePermissions } from './settings'

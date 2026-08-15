@@ -14,7 +14,8 @@ export type CalendarEventType =
   | 'contractReview'
   | 'projectMilestone'
 
-export type CalendarEventStatus = 'confirmed' | 'cancelled'
+/** 'pendingApproval' is only ever set on companyEvent-type events routed through the Approval Engine (§9.2-F10). */
+export type CalendarEventStatus = 'confirmed' | 'pendingApproval' | 'cancelled'
 
 /** Push-sync state against Google Calendar — 'skipped' means the integration isn't provisioned yet. */
 export type CalendarSyncStatus = 'pending' | 'synced' | 'failed' | 'skipped'
@@ -45,6 +46,8 @@ export interface CalendarEvent extends BaseDocument {
 
   eventStatus: CalendarEventStatus
   cancellationReason?: string | null
+  /** Set only for a companyEvent awaiting approval — mirrors Requisition's identical field. */
+  approvalRequestId?: string | null
 
   /** RRULE body without the 'RRULE:' prefix — handed to Google as-is, not expanded server-side. */
   recurrenceRule?: string | null

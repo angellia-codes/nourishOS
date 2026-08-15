@@ -23,6 +23,7 @@ import {
   CANDIDATE_STAGE_ICON,
   CANDIDATE_STAGE_TONE,
   daysInStage,
+  timeToHireDays,
   formatDateTime,
 } from '../recruitmentFormat'
 import { CANDIDATE_STAGE_LABELS, type Candidate, type CandidateStage, type Interview } from '@/types'
@@ -201,6 +202,12 @@ export function CandidateDetailPage() {
             <p className="text-xs uppercase tracking-wide text-muted-foreground">Days in stage</p>
             <p>{daysInStage(candidate.stageChangedAt)}</p>
           </div>
+          {candidate.currentStage === 'ST-06' && (
+            <div>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Time to hire</p>
+              <p>{timeToHireDays(candidate) ?? '—'} days</p>
+            </div>
+          )}
           <div>
             <p className="text-xs uppercase tracking-wide text-muted-foreground">Interview scores</p>
             <p>

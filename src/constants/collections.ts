@@ -34,9 +34,9 @@ export const COLLECTIONS = {
   TRAININGS: 'trainings',
   EMPLOYEE_ASSETS: 'employeeAssets',
   EMPLOYEE_ACTIVITIES: 'employeeActivities',
-  // HR Inventory (uniforms & assets) — deliberately distinct from the
-  // "Inventory" block below, which is reserved for the future F&B warehouse
-  // module (docs/modules/inventory.md) and has an incompatible schema.
+  // HR Inventory (uniforms & assets) — the only inventory concept in the
+  // app; the separate top-level F&B warehouse module was cut (2026-08-15),
+  // see CLAUDE.md "Current state of the tree".
   HR_INVENTORY_ITEMS: 'hrInventoryItems',
   HR_STOCK_LEVELS: 'hrStockLevels',
   HR_STOCK_MOVEMENTS: 'hrStockMovements',
@@ -50,6 +50,7 @@ export const COLLECTIONS = {
   DOCUMENT_TAGS: 'documentTags',
   DOCUMENT_APPROVALS: 'documentApprovals',
   TEMPLATES: 'templates',
+  COMPANY_FORMS: 'companyForms',
   TRAINING_MODULES: 'trainingModules',
   KNOWLEDGE_BASE: 'knowledgeBase',
   DOCUMENT_ACKNOWLEDGEMENTS: 'documentAcknowledgements',
@@ -76,31 +77,6 @@ export const COLLECTIONS = {
   FINANCIAL_DOCUMENTS: 'financialDocuments',
   COST_CENTERS: 'costCenters',
   VENDORS: 'vendors',
-
-  // Purchasing
-  PURCHASE_REQUESTS: 'purchaseRequests',
-  PURCHASE_ORDERS: 'purchaseOrders',
-  RFQS: 'rfqs',
-  SUPPLIERS: 'suppliers',
-  GRNS: 'grns',
-  SUPPLIER_RATINGS: 'supplierRatings',
-
-  // Inventory
-  INVENTORY_ITEMS: 'inventoryItems',
-  STOCK_LEVELS: 'stockLevels',
-  STOCK_MOVEMENTS: 'stockMovements',
-  STOCK_TRANSFERS: 'stockTransfers',
-  STOCK_ADJUSTMENTS: 'stockAdjustments',
-  STOCK_OPNAME: 'stockOpname',
-  WASTE_LOGS: 'wasteLogs',
-  INVENTORY_VALUATION: 'inventoryValuation',
-
-  // CRM
-  CUSTOMERS: 'customers',
-  CUSTOMER_INTERACTIONS: 'customerInteractions',
-  CUSTOMER_FEEDBACK: 'customerFeedback',
-  CUSTOMER_SEGMENTS: 'customerSegments',
-  CUSTOMER_NOTES: 'customerNotes',
 
   // Communications
   ANNOUNCEMENTS: 'announcements',

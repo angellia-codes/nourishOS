@@ -52,6 +52,8 @@ export interface ExpenseRequest extends BaseDocument {
   purpose: string
   category: ExpenseCategory
   costCenterId?: string | null
+  // outletId/departmentId are BaseDocument fields — written server-side from
+  // the requester's own outlet/department, or an override the form now offers.
   /** ISO date, never in the future. */
   expenseDate: string
   /** Optional free text — context for the approver that isn't the justification itself. */

@@ -9,6 +9,7 @@ import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { AppraisalReviewPage } from '@/features/hr/pages/AppraisalReviewPage'
 import { EmployeeListPage } from '@/features/hr/pages/EmployeeListPage'
 import { EmployeeFormPage } from '@/features/hr/pages/EmployeeFormPage'
+import { EmployeeImportPage } from '@/features/hr/pages/EmployeeImportPage'
 import { EmployeeProfilePage } from '@/features/hr/pages/EmployeeProfilePage'
 import { HrHomePage } from '@/features/hr/pages/HrHomePage'
 import { RequisitionListPage } from '@/features/hr/recruitment/pages/RequisitionListPage'
@@ -33,6 +34,7 @@ import { ManningCostReportPage } from '@/features/hr/reports/pages/ManningCostRe
 import { EmployeeActivityReportPage } from '@/features/hr/reports/pages/EmployeeActivityReportPage'
 import { BudgetAndCostReportPage } from '@/features/hr/reports/pages/BudgetAndCostReportPage'
 import { UpcomingActivityBudgetReportPage } from '@/features/hr/reports/pages/UpcomingActivityBudgetReportPage'
+import { RecruitmentFunnelReportPage } from '@/features/hr/reports/pages/RecruitmentFunnelReportPage'
 import { ModulePlaceholder } from '@/components/shared/ModulePlaceholder'
 import { CheckpointListPage } from '@/features/security/pages/CheckpointListPage'
 import { PatrolCapturePage } from '@/features/security/pages/PatrolCapturePage'
@@ -44,6 +46,11 @@ import { IncidentReportFormPage } from '@/features/operations/incidents/pages/In
 import { IncidentDetailPage } from '@/features/operations/incidents/pages/IncidentDetailPage'
 import { DailyUpdatesFeedPage } from '@/features/operations/dailyUpdates/pages/DailyUpdatesFeedPage'
 import { DailyUpdateFormPage } from '@/features/operations/dailyUpdates/pages/DailyUpdateFormPage'
+import { OperationsHomePage } from '@/features/operations/pages/OperationsHomePage'
+import { WorkOrderListPage } from '@/features/operations/workOrders/pages/WorkOrderListPage'
+import { WorkOrderFormPage } from '@/features/operations/workOrders/pages/WorkOrderFormPage'
+import { WorkOrderDetailPage } from '@/features/operations/workOrders/pages/WorkOrderDetailPage'
+import { ChecklistPage } from '@/features/operations/checklists/ChecklistPage'
 import { JobDescriptionListPage } from '@/features/documents/jobDescriptions/pages/JobDescriptionListPage'
 import { JobDescriptionFormPage } from '@/features/documents/jobDescriptions/pages/JobDescriptionFormPage'
 import { JobDescriptionAccessPage } from '@/features/documents/jobDescriptions/pages/JobDescriptionAccessPage'
@@ -51,6 +58,10 @@ import { DocumentsHomePage } from '@/features/documents/pages/DocumentsHomePage'
 import { SopListPage } from '@/features/documents/sopLibrary/pages/SopListPage'
 import { SopFormPage } from '@/features/documents/sopLibrary/pages/SopFormPage'
 import { SopAccessPage } from '@/features/documents/sopLibrary/pages/SopAccessPage'
+import { CompanyFormListPage } from '@/features/documents/companyForms/pages/CompanyFormListPage'
+import { CompanyFormFormPage } from '@/features/documents/companyForms/pages/CompanyFormFormPage'
+import { TemplateListPage } from '@/features/documents/templates/pages/TemplateListPage'
+import { TemplateFormPage } from '@/features/documents/templates/pages/TemplateFormPage'
 import { ExpenseListPage } from '@/features/finance/expenses/pages/ExpenseListPage'
 import { ExpenseFormPage } from '@/features/finance/expenses/pages/ExpenseFormPage'
 import { ExpenseDetailPage } from '@/features/finance/expenses/pages/ExpenseDetailPage'
@@ -63,6 +74,10 @@ import { TaskFormPage } from '@/features/communications/tasks/pages/TaskFormPage
 import { TaskDetailPage } from '@/features/communications/tasks/pages/TaskDetailPage'
 import { CalendarAgendaPage } from '@/features/calendar/pages/CalendarAgendaPage'
 import { CalendarEventFormPage } from '@/features/calendar/pages/CalendarEventFormPage'
+import { RolePermissionsPage } from '@/features/settings/pages/RolePermissionsPage'
+import { DisciplinaryRecordFormPage } from '@/features/hr/disciplinary/pages/DisciplinaryRecordFormPage'
+import { DisciplinaryRecordDetailPage } from '@/features/hr/disciplinary/pages/DisciplinaryRecordDetailPage'
+import { SearchResultsPage } from '@/features/search/SearchResultsPage'
 import { ROUTES } from '@/constants'
 
 export const router = createBrowserRouter([
@@ -94,6 +109,7 @@ export const router = createBrowserRouter([
               { index: true, element: <HrHomePage /> },
               { path: 'employees', element: <EmployeeListPage /> },
               { path: 'employees/new', element: <EmployeeFormPage /> },
+              { path: 'employees/import', element: <EmployeeImportPage /> },
               { path: 'employees/:employeeId', element: <EmployeeProfilePage /> },
               { path: 'employees/:employeeId/edit', element: <EmployeeFormPage /> },
               { path: 'appraisals/:appraisalId', element: <AppraisalReviewPage /> },
@@ -101,6 +117,8 @@ export const router = createBrowserRouter([
               { path: 'requisitions/new', element: <RequisitionFormPage /> },
               { path: 'requisitions/:requisitionId', element: <RequisitionDetailPage /> },
               { path: 'requisitions/:requisitionId/edit', element: <RequisitionFormPage /> },
+              { path: 'employees/:employeeId/disciplinary/new', element: <DisciplinaryRecordFormPage /> },
+              { path: 'employees/:employeeId/disciplinary/:recordId', element: <DisciplinaryRecordDetailPage /> },
               { path: 'candidates', element: <CandidatePipelinePage /> },
               { path: 'candidates/new', element: <CandidateFormPage /> },
               { path: 'candidates/:candidateId', element: <CandidateDetailPage /> },
@@ -124,6 +142,7 @@ export const router = createBrowserRouter([
               { path: 'reports/employee-activity', element: <EmployeeActivityReportPage /> },
               { path: 'reports/budget-and-cost', element: <BudgetAndCostReportPage /> },
               { path: 'reports/upcoming-activity-budget', element: <UpcomingActivityBudgetReportPage /> },
+              { path: 'reports/recruitment-funnel', element: <RecruitmentFunnelReportPage /> },
             ],
           },
           {
@@ -134,9 +153,13 @@ export const router = createBrowserRouter([
             ],
           },
           {
+            // Operations became a hub once Work Orders and Checklists landed
+            // alongside the existing three — same "index becomes a hub" precedent
+            // as HR and Documents. Daily Updates moved off the bare index.
             path: 'operations',
             children: [
-              { index: true, element: <DailyUpdatesFeedPage /> },
+              { index: true, element: <OperationsHomePage /> },
+              { path: 'daily-updates', element: <DailyUpdatesFeedPage /> },
               { path: 'daily-updates/new', element: <DailyUpdateFormPage /> },
               { path: 'lost-found', element: <LostFoundListPage /> },
               { path: 'lost-found/new', element: <LostFoundFormPage /> },
@@ -144,6 +167,10 @@ export const router = createBrowserRouter([
               { path: 'incidents', element: <IncidentListPage /> },
               { path: 'incidents/new', element: <IncidentReportFormPage /> },
               { path: 'incidents/:incidentId', element: <IncidentDetailPage /> },
+              { path: 'work-orders', element: <WorkOrderListPage /> },
+              { path: 'work-orders/new', element: <WorkOrderFormPage /> },
+              { path: 'work-orders/:workOrderId', element: <WorkOrderDetailPage /> },
+              { path: 'checklists/:type', element: <ChecklistPage /> },
             ],
           },
           {
@@ -165,9 +192,6 @@ export const router = createBrowserRouter([
               { path: 'expenses/:expenseRequestId/edit', element: <ExpenseFormPage /> },
             ],
           },
-          { path: 'purchasing', element: <ModulePlaceholder title="Purchasing" /> },
-          { path: 'inventory', element: <ModulePlaceholder title="Inventory" /> },
-          { path: 'crm', element: <ModulePlaceholder title="CRM" /> },
           {
             // Two sub-modules ship, so the index is a hub rather than either
             // register. Static segments before the :id route in each group, or
@@ -183,6 +207,12 @@ export const router = createBrowserRouter([
               { path: 'sop-library/new', element: <SopFormPage /> },
               { path: 'sop-library/access', element: <SopAccessPage /> },
               { path: 'sop-library/:sopId/edit', element: <SopFormPage /> },
+              { path: 'company-forms', element: <CompanyFormListPage /> },
+              { path: 'company-forms/new', element: <CompanyFormFormPage /> },
+              { path: 'company-forms/:companyFormId/edit', element: <CompanyFormFormPage /> },
+              { path: 'templates', element: <TemplateListPage /> },
+              { path: 'templates/new', element: <TemplateFormPage /> },
+              { path: 'templates/:templateId/edit', element: <TemplateFormPage /> },
             ],
           },
           {
@@ -202,7 +232,8 @@ export const router = createBrowserRouter([
             ],
           },
           { path: 'reports', element: <ModulePlaceholder title="Reports" /> },
-          { path: 'settings', element: <ModulePlaceholder title="Settings" /> },
+          { path: 'settings', element: <RolePermissionsPage /> },
+          { path: 'search', element: <SearchResultsPage /> },
           { path: '*', element: <NotFoundPage /> },
         ],
       },

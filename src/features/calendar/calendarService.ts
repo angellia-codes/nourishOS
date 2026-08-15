@@ -49,6 +49,23 @@ export function subscribeToUpcomingEvents(onChange: (events: CalendarEvent[]) =>
 }
 
 /**
+ * Confirmed and cancelled events starting within [start, end) — the month
+ * view's query (HR_OPERATIONS.md §9.2-F01). Same single-range-field shape as
+ * subscribeToUpcomingEvents, so no new composite index is needed.
+ */
+export function subscribeToEventsInRange(
+  start: Date,
+  end: Date,
+  onChange: (events: CalendarEvent[]) => void,
+): Unsubscribe {
+  return subscribeToCollection<CalendarEvent>(
+    COLLECTIONS.CALENDAR_EVENTS,
+    [where('startAt', '>=', start), where('startAt', '<', end), orderBy('startAt', 'asc')],
+    onChange,
+  )
+}
+
+/**
  * Pulls the conflict list out of a rejected createCalendarEvent call. The
  * backend throws failed-precondition with `{ conflicts }` in details; anything
  * else is a real error and stays the caller's problem.
