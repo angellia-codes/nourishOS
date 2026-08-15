@@ -124,3 +124,19 @@ export function subscribeToStockMovements(
     onError,
   )
 }
+
+/**
+ * Full movement ledger, unfiltered — for the Manning Cost report. Same scale
+ * reasoning as subscribeToAllStockLevels.
+ */
+export function subscribeToAllStockMovements(
+  onChange: (movements: StockMovement[]) => void,
+  onError?: (error: Error) => void,
+): Unsubscribe {
+  return subscribeToCollection<StockMovement>(
+    COLLECTIONS.HR_STOCK_MOVEMENTS,
+    [orderBy('createdAt', 'desc')],
+    onChange,
+    onError,
+  )
+}

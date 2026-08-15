@@ -88,3 +88,16 @@ export function subscribeToEmployeeActivities(
     onChange,
   )
 }
+
+/** Cross-employee activity feed for the Employee Activity report — same scale reasoning as subscribeToEmployees. */
+export function subscribeToAllEmployeeActivities(
+  onChange: (activities: EmployeeActivity[]) => void,
+  onError?: (error: Error) => void,
+): Unsubscribe {
+  return subscribeToCollection<EmployeeActivity>(
+    COLLECTIONS.EMPLOYEE_ACTIVITIES,
+    [orderBy('createdAt', 'desc')],
+    onChange,
+    onError,
+  )
+}

@@ -175,6 +175,19 @@ export function listInterviewsForCandidate(candidateId: string): Promise<Intervi
   ])
 }
 
+/** Full interview schedule, unfiltered by candidate — for the Upcoming Activity and Budget report. */
+export function subscribeToAllInterviews(
+  onChange: (rows: Interview[]) => void,
+  onError: (error: Error) => void,
+): Unsubscribe {
+  return subscribeToCollection<Interview>(
+    COLLECTIONS.INTERVIEWS,
+    [where('isArchived', '==', false), orderBy('scheduledAt', 'asc')],
+    onChange,
+    onError,
+  )
+}
+
 // ---- Onboarding ----
 
 export function updateOnboardingItem(input: {

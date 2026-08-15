@@ -24,6 +24,15 @@ import { InventoryItemListPage } from '@/features/hr/inventory/pages/InventoryIt
 import { InventoryItemFormPage } from '@/features/hr/inventory/pages/InventoryItemFormPage'
 import { InventoryItemDetailPage } from '@/features/hr/inventory/pages/InventoryItemDetailPage'
 import { StockMovementFormPage } from '@/features/hr/inventory/pages/StockMovementFormPage'
+import { HrReportsPage } from '@/features/hr/reports/pages/HrReportsPage'
+import { ActiveEmployeeReportPage } from '@/features/hr/reports/pages/ActiveEmployeeReportPage'
+import { ResignedEmployeeReportPage } from '@/features/hr/reports/pages/ResignedEmployeeReportPage'
+import { EmployeeTurnoverReportPage } from '@/features/hr/reports/pages/EmployeeTurnoverReportPage'
+import { ManningBudgetReportPage } from '@/features/hr/reports/pages/ManningBudgetReportPage'
+import { ManningCostReportPage } from '@/features/hr/reports/pages/ManningCostReportPage'
+import { EmployeeActivityReportPage } from '@/features/hr/reports/pages/EmployeeActivityReportPage'
+import { BudgetAndCostReportPage } from '@/features/hr/reports/pages/BudgetAndCostReportPage'
+import { UpcomingActivityBudgetReportPage } from '@/features/hr/reports/pages/UpcomingActivityBudgetReportPage'
 import { ModulePlaceholder } from '@/components/shared/ModulePlaceholder'
 import { CheckpointListPage } from '@/features/security/pages/CheckpointListPage'
 import { PatrolCapturePage } from '@/features/security/pages/PatrolCapturePage'
@@ -106,6 +115,15 @@ export const router = createBrowserRouter([
               { path: 'inventory/:itemId/receive', element: <StockMovementFormPage /> },
               { path: 'inventory/:itemId/issue', element: <StockMovementFormPage /> },
               { path: 'inventory/:itemId/transfer', element: <StockMovementFormPage /> },
+              { path: 'reports', element: <HrReportsPage /> },
+              { path: 'reports/active-employees', element: <ActiveEmployeeReportPage /> },
+              { path: 'reports/resigned-employees', element: <ResignedEmployeeReportPage /> },
+              { path: 'reports/turnover', element: <EmployeeTurnoverReportPage /> },
+              { path: 'reports/manning-budget', element: <ManningBudgetReportPage /> },
+              { path: 'reports/manning-cost', element: <ManningCostReportPage /> },
+              { path: 'reports/employee-activity', element: <EmployeeActivityReportPage /> },
+              { path: 'reports/budget-and-cost', element: <BudgetAndCostReportPage /> },
+              { path: 'reports/upcoming-activity-budget', element: <UpcomingActivityBudgetReportPage /> },
             ],
           },
           {
