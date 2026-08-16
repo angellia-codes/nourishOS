@@ -14,7 +14,7 @@ import {
   successResponse,
   PERMISSIONS,
 } from '../../lib'
-import { DISCIPLINARY_TYPES, type DisciplinaryType } from './helpers'
+import { DISCIPLINARY_TYPES, recordEmployeeActivity, type DisciplinaryType } from './helpers'
 
 /**
  * FEATURE_SPECIFICATIONS.md Module 3 — Warning Records, Suspension Records,
@@ -62,6 +62,14 @@ export const createDisciplinaryRecord = onCall({ region: REGION }, async (reques
       investigationNotes: [],
       ...newDocumentBaseFields(user.uid, 'open'),
     })
+
+    const employee = employeeSnap.data()!
+    await recordEmployeeActivity(
+      { id: employeeId, departmentId: employee.departmentId as string, outletId: employee.outletId as string },
+      'disciplinaryWarning',
+      `Disciplinary action recorded: ${input.type}.`,
+      user,
+    )
 
     await recordAuditEvent({
       eventType: 'DisciplinaryRecordCreated',

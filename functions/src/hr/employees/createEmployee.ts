@@ -31,6 +31,7 @@ import {
   recordEmployeeActivity,
   requireIsoDate,
 } from './helpers'
+import { createContractInternal } from '../contracts/helpers'
 
 export interface CreateEmployeeInput {
   fullName: string
@@ -199,6 +200,12 @@ export async function createEmployeeInternal(
       }
     }
   }
+
+  await createContractInternal(
+    user,
+    { id: employeeRef.id, departmentId: input.departmentId, outletId: input.outletId },
+    { contractType: input.contractType as ContractType, contractStartDate: contractStartDate ?? joinDate, contractEndDate },
+  )
 
   await recordEmployeeActivity(
     { id: employeeRef.id, departmentId: input.departmentId, outletId: input.outletId },

@@ -68,6 +68,16 @@ export function getMyAppraisalsAsReviewer(reviewerId: string): Promise<Appraisal
   ])
 }
 
+/**
+ * All appraisals, newest first — Departments > People > Performance Review
+ * lists across every employee and filters by reviewType/status client-side
+ * (small roster, same convention as listDisciplinaryRecords / the HR Reports
+ * pages).
+ */
+export function listAllAppraisals(): Promise<Appraisal[]> {
+  return queryDocuments<Appraisal>(COLLECTIONS.APPRAISALS, [orderBy('createdAt', 'desc')])
+}
+
 /** Active template for a position + review type — the latest version only. */
 export async function getAppraisalTemplate(
   positionId: PositionId,

@@ -31,3 +31,14 @@ export function listDisciplinaryRecords(employeeId: string): Promise<Disciplinar
     orderBy('createdAt', 'desc'),
   ])
 }
+
+/**
+ * Cross-employee, newest first — Departments > People > Employee
+ * Communications lists every disciplinary record and filters by
+ * type/status/department client-side (small roster; avoids denormalizing
+ * departmentId onto the record just for this view, same convention as the
+ * HR Reports pages).
+ */
+export function listAllDisciplinaryRecords(): Promise<DisciplinaryRecord[]> {
+  return queryDocuments<DisciplinaryRecord>(COLLECTIONS.DISCIPLINARY_ACTIONS, [orderBy('createdAt', 'desc')])
+}

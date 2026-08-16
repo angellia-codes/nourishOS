@@ -28,7 +28,13 @@ export { createCalendarEvent, cancelCalendarEvent } from './shared/calendar'
 export { createCheckpoint, createPatrolLog, checkOverdueCheckpoints } from './security'
 
 // ---- HR: Appraisal ----
-export { seedAppraisalTemplates, createAppraisal, submitAppraisal, generateAppraisalInsights } from './hr/appraisal'
+export {
+  seedAppraisalTemplates,
+  createAppraisal,
+  submitAppraisal,
+  generateAppraisalInsights,
+  triggerProbationReviews,
+} from './hr/appraisal'
 
 // ---- HR: Employee Database ----
 export {
@@ -45,6 +51,12 @@ export {
 
 // ---- HR: Inventory (uniforms & assets) ----
 export { createInventoryItem, updateInventoryItem, receiveStock, issueStock, transferStock } from './hr/inventory'
+
+// ---- HR: Employment Contracts ----
+export { renewContract, terminateContract } from './hr/contracts'
+
+// ---- HR: Training ----
+export { createTraining, updateTraining, assignTraining, completeTraining } from './hr/training'
 
 // ---- HR: Recruitment (requisitions → candidates → interviews → onboarding) ----
 export {

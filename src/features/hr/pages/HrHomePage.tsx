@@ -1,12 +1,15 @@
 import { useNavigate } from 'react-router-dom'
-import { BarChart3, Boxes, ClipboardList, KanbanSquare, PackageCheck, Users } from 'lucide-react'
+import { BarChart3, Boxes, ClipboardList, GraduationCap, KanbanSquare, PackageCheck, Users } from 'lucide-react'
 import { Button, Card, CardContent } from '@/components/ui'
 
 /**
- * The HR hub. Six sub-modules ship: the employee register, the three halves
- * of the recruitment pipeline (requisitions → candidates → onboarding;
- * interviews hang off a candidate rather than standing alone), the
- * uniform/asset stock ledger, and the reports register.
+ * The HR hub. Seven sub-modules ship: the employee register, the three
+ * halves of the recruitment pipeline (requisitions → candidates →
+ * onboarding; interviews hang off a candidate rather than standing alone),
+ * the uniform/asset stock ledger, the training catalog, and the reports
+ * register. Employment Contracts is not a card here — like Disciplinary
+ * Records, it's reached from the employee profile since it's always
+ * employee-scoped, not a register of its own.
  *
  * No permission gating on the cards — each page enforces its own read access
  * through firestore.rules, so a card that leads to an empty list is honest
@@ -42,6 +45,12 @@ const SUB_MODULES = [
     icon: Boxes,
     title: 'Inventory',
     description: 'Uniform and asset stock, movements and cost.',
+  },
+  {
+    to: '/hr/training',
+    icon: GraduationCap,
+    title: 'Training',
+    description: 'Catalog, assignment and completion tracking.',
   },
   {
     to: '/hr/reports',

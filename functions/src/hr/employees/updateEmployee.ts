@@ -194,12 +194,21 @@ export const updateEmployee = onCall({ region: REGION }, async (request) => {
     await employeeRef.update({ ...changes, ...updatedFields(user.uid) })
 
     const changedFieldNames = Object.keys(changes).filter((key) => key !== 'probationEndDate')
-    await recordEmployeeActivity(
-      { id: employeeId, departmentId: merged.departmentId as string, outletId: merged.outletId as string },
-      'updated',
-      `Profile updated: ${changedFieldNames.join(', ')}.`,
-      user,
-    )
+    const activityEmployee = { id: employeeId, departmentId: merged.departmentId as string, outletId: merged.outletId as string }
+    // HR.md §13 names Promoted/Department Transfer/Outlet Transfer as distinct
+    // timeline events — a field-diff branch over what's already computed
+    // above, not a new audit system. `position` wins over the other two if
+    // several fields change in the same call, since a promotion is usually
+    // the more newsworthy event.
+    if ('position' in changes) {
+      await recordEmployeeActivity(activityEmployee, 'promoted', `Promoted to ${changes.position as string}.`, user)
+    } else if ('departmentId' in changes) {
+      await recordEmployeeActivity(activityEmployee, 'departmentTransfer', `Transferred to department ${changes.departmentId as string}.`, user)
+    } else if ('outletId' in changes) {
+      await recordEmployeeActivity(activityEmployee, 'outletTransfer', `Transferred to outlet ${changes.outletId as string}.`, user)
+    } else {
+      await recordEmployeeActivity(activityEmployee, 'updated', `Profile updated: ${changedFieldNames.join(', ')}.`, user)
+    }
 
     const previousValues: Record<string, unknown> = {}
     for (const key of Object.keys(changes)) previousValues[key] = existing[key] ?? null

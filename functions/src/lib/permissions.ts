@@ -14,6 +14,8 @@ export const PERMISSIONS = {
   APPRAISALS_SUBMIT: 'appraisals.submit',
   APPRAISALS_GENERATE_INSIGHTS: 'appraisals.generateInsights',
   APPRAISALS_MANAGE_TEMPLATES: 'appraisals.manageTemplates',
+  TRAINING_READ: 'training.read',
+  TRAINING_ASSIGN: 'training.assign',
   PATROLS_CREATE: 'security.create',
   CHECKPOINTS_MANAGE: 'security.manageCheckpoints',
   LOST_FOUND_CREATE: 'lostFound.create',

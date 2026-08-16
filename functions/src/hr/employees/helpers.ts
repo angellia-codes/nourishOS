@@ -88,10 +88,24 @@ export async function assertContactFieldsUnique(
   }
 }
 
+/** Mirrors src/constants/hr.ts EMPLOYEE_ACTIVITY_TYPE (known frontend/functions duplication — keep in sync). */
+export type EmployeeActivityType =
+  | 'hired'
+  | 'updated'
+  | 'archived'
+  | 'promoted'
+  | 'departmentTransfer'
+  | 'outletTransfer'
+  | 'disciplinaryWarning'
+  | 'appraisalCompleted'
+  | 'contractRenewed'
+  | 'contractTerminated'
+  | 'trainingCompleted'
+
 /** Appends one entry to the employee's profile timeline (HR.md §13). */
 export async function recordEmployeeActivity(
   employee: { id: string; departmentId?: string; outletId?: string },
-  activityType: 'hired' | 'updated' | 'archived',
+  activityType: EmployeeActivityType,
   description: string,
   user: AuthedUser,
 ): Promise<void> {

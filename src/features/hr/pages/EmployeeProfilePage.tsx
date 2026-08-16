@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Archive, Pencil } from 'lucide-react'
 import {
@@ -22,18 +22,95 @@ import { COLLECTIONS, PERMISSIONS } from '@/constants'
 import { CONTRACT_TYPE_LABELS, DISCIPLINARY_TYPE_LABELS, EMPLOYMENT_STATUS_LABELS } from '@/constants/hr'
 import * as employeeService from '@/features/hr/services/employeeService'
 import * as disciplinaryService from '@/features/hr/disciplinary/disciplinaryService'
-import type { DisciplinaryRecord } from '@/types'
+import * as contractService from '@/features/hr/contracts/contractService'
+import * as trainingService from '@/features/hr/training/trainingService'
+import type { Contract, DisciplinaryRecord, Training, TrainingAssignment } from '@/types'
 import {
   formatIsoDate,
   formatTenure,
   isContractExpiringSoon,
   isProbationEndingSoon,
 } from '@/features/hr/utils/employeeIndicators'
-import { formatDateTime } from '@/utils'
+import { formatDate, formatDateTime } from '@/utils'
 import { ApiError } from '@/services/api'
 import { where, orderBy } from '@/services/firestore'
 import type { Employee, EmployeeActivity, FileMetadata } from '@/types'
 import type { EmployeeAuditLogEntry } from '@/features/hr/services/employeeService'
+
+function ContractStatusBadge({ status }: { status: Contract['status'] }) {
+  if (status === 'active') return <Badge variant="success">Active</Badge>
+  if (status === 'terminated') return <Badge variant="error">Terminated</Badge>
+  return <Badge variant="neutral">Superseded</Badge>
+}
+
+/**
+ * One assignment row — its own component so the per-row certificate query
+ * isn't a hook called inside a loop. No manual reload after completing: the
+ * parent's assignments list is a live subscription, so the status flip
+ * appears on its own.
+ */
+function TrainingAssignmentRow({
+  assignment,
+  trainingTitle,
+}: {
+  assignment: TrainingAssignment
+  trainingTitle: string
+}) {
+  const toast = useToast()
+  const [completing, setCompleting] = useState(false)
+  const { data: certificates } = useFirestoreQuery<FileMetadata>(
+    COLLECTIONS.FILES,
+    assignment.status === 'completed'
+      ? [
+          where('resourceType', '==', 'trainingCertificate'),
+          where('resourceId', '==', assignment.id),
+          where('fileStatus', '==', 'available'),
+          orderBy('createdAt', 'desc'),
+        ]
+      : [],
+    [assignment.id, assignment.status],
+  )
+
+  async function handleComplete() {
+    setCompleting(true)
+    try {
+      await trainingService.completeTraining(assignment.id)
+      toast.success('Marked complete.')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to mark complete.')
+    } finally {
+      setCompleting(false)
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-2 rounded-md border border-border p-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-sm text-foreground">{trainingTitle}</p>
+          {assignment.dueDate && <p className="text-xs text-muted-foreground">Due {formatDate(assignment.dueDate)}</p>}
+        </div>
+        {assignment.status === 'completed' ? (
+          <Badge variant="success">Completed</Badge>
+        ) : (
+          <PermissionGuard permission={PERMISSIONS.TRAINING_ASSIGN}>
+            <Button variant="secondary" size="sm" disabled={completing} onClick={() => void handleComplete()}>
+              {completing ? <Spinner className="h-4 w-4" /> : 'Mark complete'}
+            </Button>
+          </PermissionGuard>
+        )}
+      </div>
+      {assignment.status === 'completed' && (
+        <div className="flex flex-col gap-2">
+          <PermissionGuard permission={PERMISSIONS.TRAINING_ASSIGN}>
+            <FileUpload module="hr" resourceType="trainingCertificate" resourceId={assignment.id} accept="application/pdf,image/*" />
+          </PermissionGuard>
+          <FileList files={certificates} />
+        </div>
+      )}
+    </div>
+  )
+}
 
 function describeAuditEntry(entry: EmployeeAuditLogEntry): string {
   const changed = entry.newValues ? Object.keys(entry.newValues) : []
@@ -61,6 +138,9 @@ export function EmployeeProfilePage() {
   const [activities, setActivities] = useState<EmployeeActivity[]>([])
   const [auditEntries, setAuditEntries] = useState<EmployeeAuditLogEntry[] | null>(null)
   const [disciplinaryRecords, setDisciplinaryRecords] = useState<DisciplinaryRecord[] | null>(null)
+  const [contracts, setContracts] = useState<Contract[] | null>(null)
+  const [trainingAssignments, setTrainingAssignments] = useState<TrainingAssignment[]>([])
+  const [trainings, setTrainings] = useState<Training[]>([])
 
   useEffect(() => {
     if (!employeeId) return
@@ -72,6 +152,26 @@ export function EmployeeProfilePage() {
       cancelled = true
     }
   }, [employeeId])
+
+  useEffect(() => {
+    if (!employeeId) return
+    let cancelled = false
+    contractService.listContractsForEmployee(employeeId).then((rows) => {
+      if (!cancelled) setContracts(rows)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [employeeId])
+
+  useEffect(() => {
+    if (!employeeId) return
+    return trainingService.subscribeToAssignmentsForEmployee(employeeId, setTrainingAssignments)
+  }, [employeeId])
+
+  useEffect(() => trainingService.subscribeToTrainings(setTrainings), [])
+
+  const trainingTitleById = useMemo(() => Object.fromEntries(trainings.map((t) => [t.id, t.title])), [trainings])
 
   const { data: documents } = useFirestoreQuery<FileMetadata>(
     COLLECTIONS.FILES,
@@ -285,6 +385,74 @@ export function EmployeeProfilePage() {
                       {record.status === 'open' ? 'Open' : 'Closed'}
                     </Badge>
                   </button>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </PermissionGuard>
+
+      {/* Contract History — HR.md §9, version-history behind Employment's flat contractType/dates above */}
+      <PermissionGuard permission={PERMISSIONS.EMPLOYEES_UPDATE}>
+        <Card>
+          <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
+            <CardTitle>Contract History</CardTitle>
+            <div className="flex gap-2">
+              {contracts?.some((c) => c.status === 'active') && (
+                <Button variant="secondary" size="sm" onClick={() => navigate(`/hr/employees/${employeeId}/contracts/terminate`)}>
+                  Terminate
+                </Button>
+              )}
+              <Button variant="secondary" size="sm" onClick={() => navigate(`/hr/employees/${employeeId}/contracts/renew`)}>
+                Renew
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {contracts === null ? (
+              <div className="flex justify-center p-4">
+                <Spinner />
+              </div>
+            ) : contracts.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No contract history.</p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {contracts.map((contract) => (
+                  <div key={contract.id} className="flex items-center justify-between gap-2 rounded-md border border-border p-3">
+                    <div>
+                      <p className="text-sm text-foreground">
+                        v{contract.version} · {CONTRACT_TYPE_LABELS[contract.contractType]}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatIsoDate(contract.contractStartDate)} – {contract.contractEndDate ? formatIsoDate(contract.contractEndDate) : 'No end date'}
+                      </p>
+                    </div>
+                    <ContractStatusBadge status={contract.status} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </PermissionGuard>
+
+      {/* Training — HR.md §11 */}
+      <PermissionGuard permission={PERMISSIONS.EMPLOYEES_UPDATE}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Training</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {trainingAssignments.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No training assigned.</p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {trainingAssignments.map((assignment) => (
+                  <TrainingAssignmentRow
+                    key={assignment.id}
+                    assignment={assignment}
+                    trainingTitle={trainingTitleById[assignment.trainingId] ?? assignment.trainingId}
+                  />
                 ))}
               </div>
             )}

@@ -32,6 +32,7 @@ export const COLLECTIONS = {
   APPRAISALS: 'appraisals',
   DISCIPLINARY_ACTIONS: 'disciplinaryActions',
   TRAININGS: 'trainings',
+  TRAINING_ASSIGNMENTS: 'trainingAssignments',
   EMPLOYEE_ASSETS: 'employeeAssets',
   EMPLOYEE_ACTIVITIES: 'employeeActivities',
   // HR Inventory (uniforms & assets) — the only inventory concept in the

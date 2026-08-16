@@ -77,6 +77,11 @@ import { CalendarEventFormPage } from '@/features/calendar/pages/CalendarEventFo
 import { RolePermissionsPage } from '@/features/settings/pages/RolePermissionsPage'
 import { DisciplinaryRecordFormPage } from '@/features/hr/disciplinary/pages/DisciplinaryRecordFormPage'
 import { DisciplinaryRecordDetailPage } from '@/features/hr/disciplinary/pages/DisciplinaryRecordDetailPage'
+import { ContractRenewPage } from '@/features/hr/contracts/pages/ContractRenewPage'
+import { ContractTerminatePage } from '@/features/hr/contracts/pages/ContractTerminatePage'
+import { TrainingCatalogListPage } from '@/features/hr/training/pages/TrainingCatalogListPage'
+import { TrainingFormPage } from '@/features/hr/training/pages/TrainingFormPage'
+import { TrainingDetailPage } from '@/features/hr/training/pages/TrainingDetailPage'
 import { SearchResultsPage } from '@/features/search/SearchResultsPage'
 import { ROUTES } from '@/constants'
 
@@ -119,6 +124,8 @@ export const router = createBrowserRouter([
               { path: 'requisitions/:requisitionId/edit', element: <RequisitionFormPage /> },
               { path: 'employees/:employeeId/disciplinary/new', element: <DisciplinaryRecordFormPage /> },
               { path: 'employees/:employeeId/disciplinary/:recordId', element: <DisciplinaryRecordDetailPage /> },
+              { path: 'employees/:employeeId/contracts/renew', element: <ContractRenewPage /> },
+              { path: 'employees/:employeeId/contracts/terminate', element: <ContractTerminatePage /> },
               { path: 'candidates', element: <CandidatePipelinePage /> },
               { path: 'candidates/new', element: <CandidateFormPage /> },
               { path: 'candidates/:candidateId', element: <CandidateDetailPage /> },
@@ -133,6 +140,10 @@ export const router = createBrowserRouter([
               { path: 'inventory/:itemId/receive', element: <StockMovementFormPage /> },
               { path: 'inventory/:itemId/issue', element: <StockMovementFormPage /> },
               { path: 'inventory/:itemId/transfer', element: <StockMovementFormPage /> },
+              { path: 'training', element: <TrainingCatalogListPage /> },
+              { path: 'training/new', element: <TrainingFormPage /> },
+              { path: 'training/:trainingId', element: <TrainingDetailPage /> },
+              { path: 'training/:trainingId/edit', element: <TrainingFormPage /> },
               { path: 'reports', element: <HrReportsPage /> },
               { path: 'reports/active-employees', element: <ActiveEmployeeReportPage /> },
               { path: 'reports/resigned-employees', element: <ResignedEmployeeReportPage /> },

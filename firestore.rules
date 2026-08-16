@@ -68,6 +68,16 @@ service cloud.firestore {
       allow write: if false; // createDisciplinaryRecord / addInvestigationNote / closeDisciplinaryRecord Cloud Functions only
     }
 
+    // ---- HR: Employment Contracts ----
+    // HR.md §9. One row per contract version, append-only history behind
+    // Employee's flat contractType/contractStartDate/contractEndDate cache.
+    // HR/elevated read only — same sensitivity level as disciplinaryActions,
+    // no department-leader branch.
+    match /contracts/{contractId} {
+      allow read: if hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']);
+      allow write: if false; // renewContract / terminateContract Cloud Functions only (createContractInternal on hire)
+    }
+
     // ---- HR: Recruitment ----
     // employee-requisition.md §7: HR and above read every requisition; a
     // department leader or outlet manager reads only their own outlet's. The
@@ -124,6 +134,22 @@ service cloud.firestore {
       allow read: if isHrOrAbove() ||
         (isLeader() && resource.data.outletId == request.auth.token.outletId);
       allow write: if false; // receiveStock / issueStock / transferStock only
+    }
+
+    // ---- HR: Training ----
+    // HR.md §11. Catalog isn't sensitive — same openness as hrInventoryItems.
+    // Assignments denormalize departmentId at write time (assignTraining) so
+    // a department leader can see their own team's assigned/overdue training
+    // (HR.md §22: Assign Training is "Limited" for Department Leader).
+    match /trainings/{trainingId} {
+      allow read: if isSignedIn();
+      allow write: if false; // createTraining / updateTraining Cloud Functions only
+    }
+
+    match /trainingAssignments/{assignmentId} {
+      allow read: if isHrOrAbove() ||
+        (isLeader() && resource.data.departmentId == request.auth.token.departmentId);
+      allow write: if false; // assignTraining / completeTraining Cloud Functions only
     }
 
     // ---- HR: Appraisal ----

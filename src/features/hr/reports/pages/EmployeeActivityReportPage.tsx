@@ -12,6 +12,14 @@ const ACTIVITY_TYPE_LABELS: Record<EmployeeActivityType, string> = {
   hired: 'Hired',
   updated: 'Updated',
   archived: 'Archived',
+  promoted: 'Promoted',
+  departmentTransfer: 'Department Transfer',
+  outletTransfer: 'Outlet Transfer',
+  disciplinaryWarning: 'Disciplinary Warning',
+  appraisalCompleted: 'Performance Review',
+  contractRenewed: 'Contract Renewed',
+  contractTerminated: 'Contract Terminated',
+  trainingCompleted: 'Training Completed',
 }
 
 interface ActivityRow extends EmployeeActivity {

@@ -125,13 +125,41 @@ export const DISCIPLINARY_TYPE_RANK: Record<DisciplinaryType, number> = {
 
 /**
  * Employee lifecycle events shown on the profile timeline — HR.md §13.
- * Written server-side alongside the mutation that caused them; more values
- * (promoted, transferred, trainingCompleted, …) arrive with their modules.
+ * Written server-side alongside the mutation that caused them.
  */
 export const EMPLOYEE_ACTIVITY_TYPE = {
   HIRED: 'hired',
   UPDATED: 'updated',
   ARCHIVED: 'archived',
+  PROMOTED: 'promoted',
+  DEPARTMENT_TRANSFER: 'departmentTransfer',
+  OUTLET_TRANSFER: 'outletTransfer',
+  DISCIPLINARY_WARNING: 'disciplinaryWarning',
+  APPRAISAL_COMPLETED: 'appraisalCompleted',
+  CONTRACT_RENEWED: 'contractRenewed',
+  CONTRACT_TERMINATED: 'contractTerminated',
+  TRAINING_COMPLETED: 'trainingCompleted',
 } as const
 
 export type EmployeeActivityType = (typeof EMPLOYEE_ACTIVITY_TYPE)[keyof typeof EMPLOYEE_ACTIVITY_TYPE]
+
+/** Source: HR_OPERATIONS.md §11 Training Types. */
+export const TRAINING_TYPE = {
+  SOP: 'sop',
+  SAFETY: 'safety',
+  FOOD_SAFETY: 'foodSafety',
+  CUSTOMER_SERVICE: 'customerService',
+  LEADERSHIP: 'leadership',
+  TECHNICAL: 'technical',
+} as const
+
+export type TrainingType = (typeof TRAINING_TYPE)[keyof typeof TRAINING_TYPE]
+
+export const TRAINING_TYPE_LABELS: Record<TrainingType, string> = {
+  sop: 'SOP',
+  safety: 'Safety',
+  foodSafety: 'Food Safety',
+  customerService: 'Customer Service',
+  leadership: 'Leadership',
+  technical: 'Technical Skills',
+}
