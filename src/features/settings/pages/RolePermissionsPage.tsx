@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Lock } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Lock, SlidersHorizontal } from 'lucide-react'
 import { Button, Card, CardContent, CardHeader, CardTitle, Checkbox, Label, Select, Spinner } from '@/components/ui'
 import { EmptyState } from '@/components/shared'
 import { ROLES, ROLE_LABELS, PERMISSIONS } from '@/constants'
@@ -51,6 +52,7 @@ function sameSet(a: Set<string>, b: string[]): boolean {
  * editing permissions would live inside the system it edits.
  */
 export function RolePermissionsPage() {
+  const navigate = useNavigate()
   const { isRole } = useRole()
   const isSuperAdmin = isRole(ROLES.SUPER_ADMIN)
   const toast = useToast()
@@ -105,9 +107,30 @@ export function RolePermissionsPage() {
     }
   }
 
+  // Communication Settings is self-service (every signed-in user manages their
+  // own notification preferences and muted channels), unlike everything else on
+  // this page — so it renders above the super-admin gate rather than behind it.
+  const communicationSettingsCard = (
+    <Card>
+      <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <SlidersHorizontal className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <div className="min-w-0">
+            <p className="font-medium text-foreground">Communication Settings</p>
+            <p className="text-sm text-muted-foreground">Notification preferences and muted channels.</p>
+          </div>
+        </div>
+        <Button variant="secondary" onClick={() => navigate('/settings/communications')}>
+          Open
+        </Button>
+      </CardContent>
+    </Card>
+  )
+
   if (!isSuperAdmin) {
     return (
-      <div className="mx-auto max-w-2xl">
+      <div className="mx-auto flex max-w-2xl flex-col gap-4">
+        {communicationSettingsCard}
         <EmptyState
           icon={<Lock className="h-8 w-8" aria-hidden="true" />}
           title="Super admin only"
@@ -119,6 +142,8 @@ export function RolePermissionsPage() {
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
+      {communicationSettingsCard}
+
       <div>
         <h1 className="text-xl font-semibold text-foreground">Roles & Permissions</h1>
         <p className="text-sm text-muted-foreground">Pick a role, then toggle which permissions it grants.</p>

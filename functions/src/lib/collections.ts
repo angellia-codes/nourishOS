@@ -39,6 +39,11 @@ export const COLLECTIONS = {
 
   ANNOUNCEMENTS: 'announcements',
   ANNOUNCEMENT_READS: 'announcementReads',
+  CHAT_CHANNELS: 'chatChannels',
+  CHAT_MESSAGES: 'chatMessages',
+  MENTIONS: 'mentions',
+  ACTIVITY_FEED: 'activityFeed',
+  COMMUNICATION_SETTINGS: 'communicationSettings',
 
   AUDIT_LOGS: 'auditLogs',
 

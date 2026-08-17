@@ -2,6 +2,7 @@ import { Moon, Sun, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { SearchBar } from './SearchBar'
 import { NotificationBell } from './NotificationBell'
+import { ChatBell } from './ChatBell'
 import { useAuth } from '@/hooks'
 import { useThemeStore } from '@/store'
 
@@ -30,6 +31,7 @@ export function Header() {
           {isDark ? <Sun className="h-4 w-4" aria-hidden="true" /> : <Moon className="h-4 w-4" aria-hidden="true" />}
         </Button>
 
+        <ChatBell />
         <NotificationBell />
 
         <div className="mx-1 hidden text-right sm:block">

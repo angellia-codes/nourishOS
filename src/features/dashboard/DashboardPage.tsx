@@ -5,6 +5,8 @@ import { PendingApprovalsWidget } from './widgets/PendingApprovalsWidget'
 import { AssignedTasksWidget } from './widgets/AssignedTasksWidget'
 import { AnnouncementsWidget } from './widgets/AnnouncementsWidget'
 import { UpcomingCalendarWidget } from './widgets/UpcomingCalendarWidget'
+import { TeamActivityWidget } from './widgets/TeamActivityWidget'
+import { RecentlyCompletedTasksWidget } from './widgets/RecentlyCompletedTasksWidget'
 import { KpiCardsRow } from './widgets/KpiCardsRow'
 
 const OUTLET_NAMES: Record<string, string> = Object.fromEntries(OUTLETS.map((o) => [o.id, o.name]))
@@ -18,11 +20,12 @@ function greeting(hour: number): string {
 }
 
 /**
- * The landing page — dashboard.md §4, cut to the four widgets that have data
- * behind them today (§9 approvals, §10 tasks, §12 announcements, and the
- * Upcoming Calendar widget closing the §26 "Company calendar" wishlist item
- * with the calendar module's existing subscribeToUpcomingEvents). KPI cards
- * (§7), quick actions (§8), the activity feed (§13) and the per-department and
+ * The landing page — dashboard.md §4. Six widgets: §9 approvals, §10 tasks,
+ * §12 announcements, the Upcoming Calendar widget (closing the §26 "Company
+ * calendar" wishlist item with the calendar module's existing
+ * subscribeToUpcomingEvents), and two added alongside communications.md's
+ * Activity Feed (§10/§15 Team Activity, §15 Recently Completed Tasks). KPI
+ * cards (§7) and quick actions (§8) landed separately; the per-department and
  * per-role variants (§14/§15) are not built; §11's notifications widget is
  * deliberately absent because the header bell already is one.
  *
@@ -64,6 +67,8 @@ export function DashboardPage() {
         <AssignedTasksWidget />
         <AnnouncementsWidget />
         <UpcomingCalendarWidget />
+        <TeamActivityWidget />
+        <RecentlyCompletedTasksWidget />
       </div>
     </div>
   )

@@ -40,6 +40,7 @@ export {
 export {
   createEmployee,
   updateEmployee,
+  updateEmployeeCompensation,
   archiveEmployee,
   importEmployees,
   getEmployeeAuditLog,
@@ -105,6 +106,12 @@ export {
   archiveAnnouncement,
   recordAnnouncementRead,
 } from './communications/announcements'
+
+// ---- Communications: Team Chat ----
+export { createChannel, sendMessage } from './communications/chat'
+
+// ---- Communications: Communication Settings ----
+export { updateCommunicationSettings } from './communications/communicationSettings'
 
 // ---- Operations: Work Orders ----
 export { createWorkOrder, updateWorkOrderStatus } from './operations/workOrders'

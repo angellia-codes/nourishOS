@@ -5,6 +5,7 @@ import { Avatar, Badge, Button, Card, CardContent, Input, Select, Spinner } from
 import { EmptyState, PermissionGuard } from '@/components/shared'
 import { PERMISSIONS } from '@/constants'
 import { EMPLOYMENT_STATUS_LABELS, RELIGION, RELIGION_LABELS } from '@/constants/hr'
+import { POSITION_LABELS } from '@/constants/positions'
 import * as employeeService from '@/features/hr/services/employeeService'
 import { exportEmployeesToCsv } from '@/features/hr/utils/employeeExport'
 import { isContractExpiringSoon, isProbationEndingSoon } from '@/features/hr/utils/employeeIndicators'
@@ -17,6 +18,11 @@ const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
 ]
+
+/** position is a PositionId (POSITIONS.md §3 catalog) going forward; legacy free-text values fall back to themselves. */
+function positionLabel(position: string): string {
+  return POSITION_LABELS[position as keyof typeof POSITION_LABELS] ?? position
+}
 
 /**
  * Employee Database list — HR.md §5, HR_OPERATIONS.md §9.1. Search and
@@ -57,7 +63,7 @@ export function EmployeeListPage() {
       if (birthMonthFilter && String(new Date(employee.birthDate).getMonth()) !== birthMonthFilter) return false
       if (religionFilter && employee.religion !== religionFilter) return false
       if (term.length >= 2) {
-        const haystack = [employee.fullName, employee.employeeNumber, employee.position].join(' ').toLowerCase()
+        const haystack = [employee.fullName, employee.employeeNumber, positionLabel(employee.position)].join(' ').toLowerCase()
         if (!haystack.includes(term)) return false
       }
       return true
@@ -200,7 +206,7 @@ export function EmployeeListPage() {
                       <span className="text-xs text-muted-foreground">{employee.employeeNumber}</span>
                     </div>
                     <p className="truncate text-xs text-muted-foreground">
-                      {employee.position} &middot; {EMPLOYMENT_STATUS_LABELS[employee.employmentStatus]} &middot;{' '}
+                      {positionLabel(employee.position)} &middot; {EMPLOYMENT_STATUS_LABELS[employee.employmentStatus]} &middot;{' '}
                       {employee.outletId}
                     </p>
                   </div>

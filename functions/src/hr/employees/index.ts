@@ -1,5 +1,6 @@
 export { createEmployee } from './createEmployee'
 export { updateEmployee } from './updateEmployee'
+export { updateEmployeeCompensation } from './updateEmployeeCompensation'
 export { archiveEmployee } from './archiveEmployee'
 export { importEmployees } from './importEmployees'
 export { getEmployeeAuditLog } from './getEmployeeAuditLog'

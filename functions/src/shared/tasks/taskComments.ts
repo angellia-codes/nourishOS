@@ -12,6 +12,7 @@ import {
   successResponse,
 } from '../../lib'
 import { sendNotificationInternal } from '../notifications'
+import { recordMentionsInternal } from '../activity'
 
 /**
  * Task comments — TASK_ENGINE.md §5 ("Comments"), communications.md §6.
@@ -29,7 +30,11 @@ export const addTaskComment = onCall({ region: REGION }, async (request) => {
   try {
     const user = await requireActiveUser(request)
 
-    const { taskId, body } = (request.data ?? {}) as { taskId?: string; body?: string }
+    const { taskId, body, mentionedUids: rawMentionedUids } = (request.data ?? {}) as {
+      taskId?: string
+      body?: string
+      mentionedUids?: string[]
+    }
     if (!taskId?.trim()) {
       throw new AppError('invalid-argument', 'taskId is required.')
     }
@@ -56,14 +61,29 @@ export const addTaskComment = onCall({ region: REGION }, async (request) => {
       throw new AppError('permission-denied', 'Only someone assigned to this task can comment on it.')
     }
 
+    const mentionedUids = Array.isArray(rawMentionedUids) ? rawMentionedUids.filter((uid) => typeof uid === 'string') : []
+
     const ref = db.collection(COLLECTIONS.TASK_COMMENTS).doc()
     await ref.set({
       taskId: taskRef.id,
       body: comment,
       taskParticipants: participants,
+      mentionedUids,
       ...newDocumentBaseFields(user.uid),
     })
     await taskRef.update({ updatedAt: FieldValue.serverTimestamp(), updatedBy: user.uid })
+
+    if (mentionedUids.length > 0) {
+      await recordMentionsInternal({
+        mentionedUids,
+        mentionedBy: user.uid,
+        mentionedByName: user.displayName,
+        sourceModule: 'tasks',
+        sourceId: taskRef.id,
+        snippet: comment,
+        actionUrl: `/communications/tasks/${taskRef.id}`,
+      })
+    }
 
     await Promise.all(
       participants

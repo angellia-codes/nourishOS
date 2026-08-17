@@ -10,9 +10,9 @@ import {
   CardTitle,
   Spinner,
   StatusPill,
-  Textarea,
 } from '@/components/ui'
 import { EmptyState } from '@/components/shared'
+import { MentionAutocomplete } from '@/features/communications/chat/components/MentionAutocomplete'
 import { COLLECTIONS } from '@/constants'
 import { useAuth, useFirestoreDoc, useToast } from '@/hooks'
 import { taskService, userService } from '@/services/shared'
@@ -44,6 +44,7 @@ export function TaskDetailPage() {
   const [comments, setComments] = useState<TaskComment[]>([])
   const [names, setNames] = useState<Record<string, string>>({})
   const [draft, setDraft] = useState('')
+  const [mentionedUids, setMentionedUids] = useState<string[]>([])
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
@@ -205,21 +206,23 @@ export function TaskDetailPage() {
 
           {(isAssignee || isCreator) && (
             <div className="flex flex-col gap-2">
-              <Textarea
-                rows={3}
+              <MentionAutocomplete
                 value={draft}
+                onValueChange={setDraft}
+                mentionedUids={mentionedUids}
+                onMentionedUidsChange={setMentionedUids}
+                rows={3}
                 maxLength={2000}
-                aria-label="Add a comment"
-                placeholder="Add a comment"
-                onChange={(e) => setDraft(e.target.value)}
+                placeholder="Add a comment — type @ to mention someone"
               />
               <Button
                 className="self-end"
                 disabled={busy || draft.trim() === ''}
                 onClick={() =>
                   void run(async () => {
-                    await taskService.addTaskComment({ taskId, body: draft.trim() })
+                    await taskService.addTaskComment({ taskId, body: draft.trim(), mentionedUids })
                     setDraft('')
+                    setMentionedUids([])
                   }, 'Comment added.')
                 }
               >

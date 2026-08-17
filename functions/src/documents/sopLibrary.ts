@@ -13,6 +13,7 @@ import {
   successResponse,
 } from '../lib'
 import { DEPARTMENT_ROLES, ROLE_PERMISSIONS } from '../lib/organization'
+import { recordActivityInternal } from '../shared/activity'
 
 /**
  * SOP Library — documents.md §6 ("Maintain all approved operational procedures",
@@ -113,6 +114,17 @@ export const createSop = onCall({ region: REGION }, async (request) => {
       action: 'create',
       user,
       newValues: fields,
+    })
+
+    await recordActivityInternal({
+      eventType: 'SopPublished',
+      module: 'documents',
+      title: `SOP published: ${fields.topic}`,
+      resourceType: 'sop',
+      resourceId: ref.id,
+      actorUid: user.uid,
+      // No per-SOP detail route exists (sop-library only has list/new/edit/access) — link to the list.
+      actionUrl: '/documents/sop-library',
     })
 
     return successResponse({ sopId: ref.id }, 'SOP added.')

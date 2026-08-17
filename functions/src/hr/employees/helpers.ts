@@ -17,6 +17,14 @@ export type DisciplinaryType = (typeof DISCIPLINARY_TYPES)[number]
 export const RELIGIONS = ['hindu', 'christian', 'catholic', 'islam', 'other'] as const
 export type Religion = (typeof RELIGIONS)[number]
 
+/** Mirrors src/constants/hr.ts PROBATION_STATUS (known frontend/functions duplication — keep in sync). */
+export const PROBATION_STATUSES = ['pending', 'passed', 'failed', 'extended'] as const
+export type ProbationStatus = (typeof PROBATION_STATUSES)[number]
+
+/** Mirrors src/constants/hr.ts TAX_STATUS (known frontend/functions duplication — keep in sync). */
+export const TAX_STATUSES = ['TK0', 'TK1', 'TK2', 'TK3', 'K0', 'K1', 'K2', 'K3'] as const
+export type TaxStatus = (typeof TAX_STATUSES)[number]
+
 /** HR_OPERATIONS.md 9.1-F02: N- (PKWT/PKWTT/BOD/Freelance), DW- (Daily Worker), OJT-. */
 const EMPLOYEE_NUMBER_PREFIX: Record<EmploymentStatus, string> = {
   PKWT: 'N',

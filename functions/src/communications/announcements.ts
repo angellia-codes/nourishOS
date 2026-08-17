@@ -17,6 +17,7 @@ import {
 } from '../lib'
 import { OUTLET_DEPARTMENTS, DEPARTMENT_ROLES, ROLE_PERMISSIONS } from '../lib/organization'
 import { sendNotificationInternal } from '../shared/notifications'
+import { recordActivityInternal } from '../shared/activity'
 
 /**
  * Announcements — communications.md §5, with Broadcast (§13) folded in as the
@@ -198,6 +199,16 @@ async function publishInternal(
         }),
       ),
   )
+
+  await recordActivityInternal({
+    eventType: 'AnnouncementPublished',
+    module: 'communications',
+    title: fields.category === 'emergency' ? `Broadcast: ${fields.title}` : `Announcement published: ${fields.title}`,
+    resourceType: 'announcement',
+    resourceId: announcementId,
+    actorUid: user.uid,
+    actionUrl: `/communications/announcements/${announcementId}`,
+  })
 
   return audienceUids
 }

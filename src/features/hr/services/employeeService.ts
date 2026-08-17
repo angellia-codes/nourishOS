@@ -1,8 +1,8 @@
 import { callFunction } from '@/services/api'
 import { getDocument, subscribeToCollection, where, orderBy } from '@/services/firestore'
 import { COLLECTIONS } from '@/constants'
-import type { ContractType, DisciplinaryType, EmploymentStatus, Gender, Religion } from '@/constants/hr'
-import type { Employee, EmployeeActivity } from '@/types'
+import type { ContractType, DisciplinaryType, EmploymentStatus, Gender, ProbationStatus, Religion, TaxStatus } from '@/constants/hr'
+import type { Employee, EmployeeActivity, EmployeeCompensation } from '@/types'
 import type { Unsubscribe } from '@/services/firestore'
 
 export interface CreateEmployeeInput {
@@ -15,8 +15,14 @@ export interface CreateEmployeeInput {
   phone: string
   email: string
   address?: string
+  permanentAddress?: string
+  domicileAddress?: string
   emergencyContactName?: string
   emergencyContactPhone?: string
+  motherName?: string
+  bpjsTk?: string
+  bpjsKesehatan?: string
+  personalTaxStatus?: TaxStatus
   position: string
   departmentId: string
   outletId: string
@@ -66,7 +72,7 @@ export function importEmployees(rows: CreateEmployeeInput[]): Promise<{ results:
 /** Server whitelists updatable fields; employeeNumber and separation state are rejected. */
 export function updateEmployee(
   employeeId: string,
-  updates: Partial<CreateEmployeeInput> & { managerId?: string | null },
+  updates: Partial<CreateEmployeeInput> & { managerId?: string | null; probationStatus?: ProbationStatus | null },
 ): Promise<{ employeeId: string }> {
   return callFunction('updateEmployee', { employeeId, updates })
 }
@@ -82,6 +88,24 @@ export function archiveEmployee(
 
 export function getEmployee(employeeId: string): Promise<Employee | null> {
   return getDocument<Employee>(COLLECTIONS.EMPLOYEES, employeeId)
+}
+
+export interface UpdateEmployeeCompensationInput {
+  basicSalary: number
+  positionAllowance?: number
+  phoneAllowance?: number
+  transportationAllowance?: number
+  bankAccountName?: string
+  bankAccountNumber?: string
+}
+
+/** §12.1 — hrManager/superAdmin only; firestore.rules gates the read half. */
+export function updateEmployeeCompensation(employeeId: string, input: UpdateEmployeeCompensationInput): Promise<void> {
+  return callFunction('updateEmployeeCompensation', { employeeId, ...input })
+}
+
+export function getEmployeeCompensation(employeeId: string): Promise<EmployeeCompensation | null> {
+  return getDocument<EmployeeCompensation>(`${COLLECTIONS.EMPLOYEES}/${employeeId}/compensation`, 'current')
 }
 
 export interface EmployeeAuditLogEntry {

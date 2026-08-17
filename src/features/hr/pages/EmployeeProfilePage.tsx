@@ -20,6 +20,7 @@ import { ErrorMessage, FileList, FileUpload, PermissionGuard } from '@/component
 import { useFirestoreDoc, useFirestoreQuery, usePermissions, useToast } from '@/hooks'
 import { COLLECTIONS, PERMISSIONS } from '@/constants'
 import { CONTRACT_TYPE_LABELS, DISCIPLINARY_TYPE_LABELS, EMPLOYMENT_STATUS_LABELS } from '@/constants/hr'
+import { POSITION_LABELS } from '@/constants/positions'
 import * as employeeService from '@/features/hr/services/employeeService'
 import * as disciplinaryService from '@/features/hr/disciplinary/disciplinaryService'
 import * as contractService from '@/features/hr/contracts/contractService'
@@ -34,7 +35,7 @@ import {
 import { formatDate, formatDateTime } from '@/utils'
 import { ApiError } from '@/services/api'
 import { where, orderBy } from '@/services/firestore'
-import type { Employee, EmployeeActivity, FileMetadata } from '@/types'
+import type { Employee, EmployeeActivity, EmployeeCompensation, FileMetadata } from '@/types'
 import type { EmployeeAuditLogEntry } from '@/features/hr/services/employeeService'
 
 function ContractStatusBadge({ status }: { status: Contract['status'] }) {
@@ -221,6 +222,92 @@ export function EmployeeProfilePage() {
     }
   }, [employeeId, can])
 
+  // §12.1 — hrManager/superAdmin only; firestore.rules blocks this read for
+  // everyone else, so don't even attempt it without the permission.
+  const [compensation, setCompensation] = useState<EmployeeCompensation | null>(null)
+  const [loadingCompensation, setLoadingCompensation] = useState(false)
+  const [showCompensationForm, setShowCompensationForm] = useState(false)
+  const [compensationForm, setCompensationForm] = useState({
+    basicSalary: '',
+    positionAllowance: '',
+    phoneAllowance: '',
+    transportationAllowance: '',
+    bankAccountName: '',
+    bankAccountNumber: '',
+  })
+  const [savingCompensation, setSavingCompensation] = useState(false)
+  const [compensationError, setCompensationError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!employeeId || !can(PERMISSIONS.EMPLOYEES_READ_SENSITIVE)) return
+    let cancelled = false
+    setLoadingCompensation(true)
+    setCompensationError(null)
+    employeeService
+      .getEmployeeCompensation(employeeId)
+      .then((result) => {
+        if (cancelled) return
+        setCompensation(result)
+        setLoadingCompensation(false)
+      })
+      .catch((error) => {
+        if (cancelled) return
+        // Most likely cause: the ID token's role claim hasn't caught up with
+        // a recent role change yet (root CLAUDE.md Gotchas — up to ~1h, or a
+        // forced refresh) even though the client-side permission check above
+        // already passed off the live Firestore profile.
+        setCompensationError(
+          error instanceof Error && 'code' in error && (error as { code?: string }).code === 'permission-denied'
+            ? 'Access denied loading compensation — if your role changed recently, sign out and back in to refresh your session.'
+            : 'Failed to load compensation.',
+        )
+        setLoadingCompensation(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [employeeId, can])
+
+  function openCompensationForm() {
+    setCompensationForm({
+      basicSalary: compensation?.basicSalary != null ? String(compensation.basicSalary) : '',
+      positionAllowance: compensation?.positionAllowance != null ? String(compensation.positionAllowance) : '',
+      phoneAllowance: compensation?.phoneAllowance != null ? String(compensation.phoneAllowance) : '',
+      transportationAllowance:
+        compensation?.transportationAllowance != null ? String(compensation.transportationAllowance) : '',
+      bankAccountName: compensation?.bankAccountName ?? '',
+      bankAccountNumber: compensation?.bankAccountNumber ?? '',
+    })
+    setCompensationError(null)
+    setShowCompensationForm(true)
+  }
+
+  async function handleSaveCompensation() {
+    if (!employeeId || savingCompensation) return
+    setSavingCompensation(true)
+    setCompensationError(null)
+    try {
+      await employeeService.updateEmployeeCompensation(employeeId, {
+        basicSalary: Number(compensationForm.basicSalary) || 0,
+        positionAllowance: compensationForm.positionAllowance ? Number(compensationForm.positionAllowance) : undefined,
+        phoneAllowance: compensationForm.phoneAllowance ? Number(compensationForm.phoneAllowance) : undefined,
+        transportationAllowance: compensationForm.transportationAllowance
+          ? Number(compensationForm.transportationAllowance)
+          : undefined,
+        bankAccountName: compensationForm.bankAccountName.trim() || undefined,
+        bankAccountNumber: compensationForm.bankAccountNumber.trim() || undefined,
+      })
+      const result = await employeeService.getEmployeeCompensation(employeeId)
+      setCompensation(result)
+      setShowCompensationForm(false)
+      toast.success('Compensation updated.')
+    } catch (error) {
+      setCompensationError(error instanceof ApiError ? error.message : 'Something went wrong. Please try again.')
+    } finally {
+      setSavingCompensation(false)
+    }
+  }
+
   async function handleArchive() {
     if (!employeeId || !resignationDate || !resignationReason.trim() || archiving) return
     setArchiving(true)
@@ -268,7 +355,7 @@ export function EmployeeProfilePage() {
             {isContractExpiringSoon(employee) && <Badge variant="error">Contract expiring</Badge>}
           </div>
           <p className="text-sm text-muted-foreground">
-            {employee.employeeNumber} &middot; {employee.position} &middot; Tenure {formatTenure(employee.joinDate)}
+            {employee.employeeNumber} &middot; {POSITION_LABELS[employee.position as keyof typeof POSITION_LABELS] ?? employee.position} &middot; Tenure {formatTenure(employee.joinDate)}
           </p>
         </div>
         <PermissionGuard permission={PERMISSIONS.EMPLOYEES_UPDATE}>
@@ -326,6 +413,119 @@ export function EmployeeProfilePage() {
           <Field label="Contract end" value={formatIsoDate(employee.contractEndDate)} />
         </CardContent>
       </Card>
+
+      {/* Compensation — §12.1 salary/allowances/bank, hrManager/superAdmin only */}
+      <PermissionGuard permission={PERMISSIONS.EMPLOYEES_READ_SENSITIVE}>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between gap-2">
+            <CardTitle>Compensation</CardTitle>
+            {!showCompensationForm && (
+              <Button variant="secondary" size="sm" onClick={openCompensationForm}>
+                {compensation ? 'Edit' : 'Set compensation'}
+              </Button>
+            )}
+          </CardHeader>
+          <CardContent>
+            {showCompensationForm ? (
+              <div className="flex flex-col gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="basicSalary">Basic salary *</Label>
+                    <Input
+                      id="basicSalary"
+                      type="number"
+                      min={0}
+                      value={compensationForm.basicSalary}
+                      onChange={(e) => setCompensationForm((prev) => ({ ...prev, basicSalary: e.target.value }))}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="positionAllowance">Position allowance</Label>
+                    <Input
+                      id="positionAllowance"
+                      type="number"
+                      min={0}
+                      value={compensationForm.positionAllowance}
+                      onChange={(e) => setCompensationForm((prev) => ({ ...prev, positionAllowance: e.target.value }))}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="phoneAllowance">Phone allowance</Label>
+                    <Input
+                      id="phoneAllowance"
+                      type="number"
+                      min={0}
+                      value={compensationForm.phoneAllowance}
+                      onChange={(e) => setCompensationForm((prev) => ({ ...prev, phoneAllowance: e.target.value }))}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="transportationAllowance">Transportation allowance</Label>
+                    <Input
+                      id="transportationAllowance"
+                      type="number"
+                      min={0}
+                      value={compensationForm.transportationAllowance}
+                      onChange={(e) =>
+                        setCompensationForm((prev) => ({ ...prev, transportationAllowance: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="bankAccountName">Bank account name</Label>
+                    <Input
+                      id="bankAccountName"
+                      value={compensationForm.bankAccountName}
+                      onChange={(e) => setCompensationForm((prev) => ({ ...prev, bankAccountName: e.target.value }))}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="bankAccountNumber">Bank account number</Label>
+                    <Input
+                      id="bankAccountNumber"
+                      value={compensationForm.bankAccountNumber}
+                      onChange={(e) => setCompensationForm((prev) => ({ ...prev, bankAccountNumber: e.target.value }))}
+                    />
+                  </div>
+                </div>
+                {compensationError && <ErrorMessage message={compensationError} />}
+                <div className="flex justify-end gap-2">
+                  <Button variant="secondary" onClick={() => setShowCompensationForm(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => void handleSaveCompensation()}
+                    disabled={!compensationForm.basicSalary}
+                    loading={savingCompensation}
+                  >
+                    Save
+                  </Button>
+                </div>
+              </div>
+            ) : loadingCompensation ? (
+              <div className="flex justify-center p-4">
+                <Spinner />
+              </div>
+            ) : compensationError ? (
+              <ErrorMessage message={compensationError} />
+            ) : compensation ? (
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                <Field label="Basic salary" value={compensation.basicSalary.toLocaleString('id-ID')} />
+                <Field label="Position allowance" value={compensation.positionAllowance?.toLocaleString('id-ID')} />
+                <Field label="Phone allowance" value={compensation.phoneAllowance?.toLocaleString('id-ID')} />
+                <Field
+                  label="Transportation allowance"
+                  value={compensation.transportationAllowance?.toLocaleString('id-ID')}
+                />
+                <Field label="Bank account name" value={compensation.bankAccountName} />
+                <Field label="Bank account number" value={compensation.bankAccountNumber} />
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No compensation data on file.</p>
+            )}
+          </CardContent>
+        </Card>
+      </PermissionGuard>
 
       {/* Disciplinary & Recognition — §12.1, shown only when set to keep the common case clean */}
       {(employee.disciplinaryType || employee.recognitionType) && (

@@ -14,6 +14,7 @@ import {
   PERMISSIONS,
 } from '../../lib'
 import { recordEmployeeActivity } from '../employees/helpers'
+import { recordActivityInternal } from '../../shared/activity'
 
 interface CompleteTrainingInput {
   assignmentId: string
@@ -50,6 +51,7 @@ export const completeTraining = onCall({ region: REGION }, async (request) => {
       ...updatedFields(user.uid),
     })
 
+    let activityTitle = 'Training completed'
     const employeeSnap = await db.collection(COLLECTIONS.EMPLOYEES).doc(assignment.employeeId as string).get()
     if (employeeSnap.exists) {
       const trainingSnap = await db.collection(COLLECTIONS.TRAININGS).doc(assignment.trainingId as string).get()
@@ -61,6 +63,7 @@ export const completeTraining = onCall({ region: REGION }, async (request) => {
         `Completed training: ${trainingTitle}.`,
         user,
       )
+      activityTitle = `${employee.fullName as string} completed training: ${trainingTitle}`
     }
 
     await recordAuditEvent({
@@ -72,6 +75,16 @@ export const completeTraining = onCall({ region: REGION }, async (request) => {
       action: 'update',
       user,
       newValues: { status: 'completed' },
+    })
+
+    await recordActivityInternal({
+      eventType: 'TrainingCompleted',
+      module: 'hr',
+      title: activityTitle,
+      resourceType: 'trainingAssignment',
+      resourceId: assignmentId.trim(),
+      actorUid: user.uid,
+      actionUrl: null,
     })
 
     return successResponse({ assignmentId: assignmentId.trim() }, 'Training marked complete.')

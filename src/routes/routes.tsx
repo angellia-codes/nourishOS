@@ -72,6 +72,9 @@ import { AnnouncementDetailPage } from '@/features/communications/announcements/
 import { TaskListPage } from '@/features/communications/tasks/pages/TaskListPage'
 import { TaskFormPage } from '@/features/communications/tasks/pages/TaskFormPage'
 import { TaskDetailPage } from '@/features/communications/tasks/pages/TaskDetailPage'
+import { ChatChannelFormPage } from '@/features/communications/chat/pages/ChatChannelFormPage'
+import { ChatChannelPage } from '@/features/communications/chat/pages/ChatChannelPage'
+import { CommunicationSettingsPage } from '@/features/settings/pages/CommunicationSettingsPage'
 import { CalendarAgendaPage } from '@/features/calendar/pages/CalendarAgendaPage'
 import { CalendarEventFormPage } from '@/features/calendar/pages/CalendarEventFormPage'
 import { RolePermissionsPage } from '@/features/settings/pages/RolePermissionsPage'
@@ -240,10 +243,13 @@ export const router = createBrowserRouter([
               { path: 'tasks', element: <TaskListPage /> },
               { path: 'tasks/new', element: <TaskFormPage /> },
               { path: 'tasks/:taskId', element: <TaskDetailPage /> },
+              { path: 'chat/new', element: <ChatChannelFormPage /> },
+              { path: 'chat/:channelId', element: <ChatChannelPage /> },
             ],
           },
           { path: 'reports', element: <ModulePlaceholder title="Reports" /> },
           { path: 'settings', element: <RolePermissionsPage /> },
+          { path: 'settings/communications', element: <CommunicationSettingsPage /> },
           { path: 'search', element: <SearchResultsPage /> },
           { path: '*', element: <NotFoundPage /> },
         ],

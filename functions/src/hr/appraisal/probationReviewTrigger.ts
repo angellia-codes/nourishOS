@@ -46,11 +46,13 @@ export const triggerProbationReviews = onSchedule(
 
         await createAppraisalInternal(SYSTEM_USER, {
           employeeId: doc.id,
-          // Employee.position is free text, not validated against the
-          // PositionId catalog — most positions have no seeded probation
-          // template, so this throws failed-precondition for the majority
-          // of employees today. Pre-existing gap (see functions/CLAUDE.md),
-          // not something this trigger introduces; handled below.
+          // Employee.position is now validated against the PositionId catalog
+          // at create/update time (functions/src/lib/positions.ts), so this
+          // matches AppraisalTemplateSeed.positionId for employees hired since
+          // that change. Still throws failed-precondition for (a) legacy
+          // employees whose position predates the catalog and (b) positions
+          // with no seeded probation template yet — both handled below by
+          // notifying hrManager instead of failing silently.
           positionId: employee.position as string,
           reviewType: 'probation',
           periodLabel: 'Probation - Day 100',

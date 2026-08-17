@@ -143,6 +143,48 @@ export const EMPLOYEE_ACTIVITY_TYPE = {
 
 export type EmployeeActivityType = (typeof EMPLOYEE_ACTIVITY_TYPE)[keyof typeof EMPLOYEE_ACTIVITY_TYPE]
 
+/** Source: HR_OPERATIONS.md §12.1 probationStatus. Promoted out of employee.types.ts's PLANNED section — the shape was already correct, just unused. */
+export const PROBATION_STATUS = {
+  PENDING: 'pending',
+  PASSED: 'passed',
+  FAILED: 'failed',
+  EXTENDED: 'extended',
+} as const
+
+export type ProbationStatus = (typeof PROBATION_STATUS)[keyof typeof PROBATION_STATUS]
+
+export const PROBATION_STATUS_LABELS: Record<ProbationStatus, string> = {
+  pending: 'Pending',
+  passed: 'Passed',
+  failed: 'Failed',
+  extended: 'Extended',
+}
+
+/** Indonesian PPh21 personal income tax status — HR_OPERATIONS.md §12.1 personalTaxStatus. Promoted out of employee.types.ts's PLANNED section, same as ProbationStatus above. */
+export const TAX_STATUS = {
+  TK0: 'TK0',
+  TK1: 'TK1',
+  TK2: 'TK2',
+  TK3: 'TK3',
+  K0: 'K0',
+  K1: 'K1',
+  K2: 'K2',
+  K3: 'K3',
+} as const
+
+export type TaxStatus = (typeof TAX_STATUS)[keyof typeof TAX_STATUS]
+
+export const TAX_STATUS_LABELS: Record<TaxStatus, string> = {
+  TK0: 'TK0 — Single, 0 dependents',
+  TK1: 'TK1 — Single, 1 dependent',
+  TK2: 'TK2 — Single, 2 dependents',
+  TK3: 'TK3 — Single, 3 dependents',
+  K0: 'K0 — Married, 0 dependents',
+  K1: 'K1 — Married, 1 dependent',
+  K2: 'K2 — Married, 2 dependents',
+  K3: 'K3 — Married, 3 dependents',
+}
+
 /** Source: HR_OPERATIONS.md §11 Training Types. */
 export const TRAINING_TYPE = {
   SOP: 'sop',

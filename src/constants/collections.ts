@@ -86,6 +86,8 @@ export const COLLECTIONS = {
   CHAT_MESSAGES: 'chatMessages',
   DIRECT_MESSAGES: 'directMessages',
   MENTIONS: 'mentions',
+  ACTIVITY_FEED: 'activityFeed',
+  COMMUNICATION_SETTINGS: 'communicationSettings',
 
   // Reports
   REPORTS: 'reports',

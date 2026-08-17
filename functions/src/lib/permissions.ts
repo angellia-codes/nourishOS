@@ -6,6 +6,7 @@ export const PERMISSIONS = {
   EMPLOYEES_CREATE: 'employees.create',
   EMPLOYEES_UPDATE: 'employees.update',
   EMPLOYEES_DELETE: 'employees.delete',
+  EMPLOYEES_READ_SENSITIVE: 'employees.readSensitive',
   RECRUITMENT_READ: 'recruitment.read',
   RECRUITMENT_CREATE: 'recruitment.create',
   RECRUITMENT_UPDATE: 'recruitment.update',
@@ -39,4 +40,6 @@ export const PERMISSIONS = {
   WORK_ORDERS_COMPLETE: 'workOrders.complete',
   DOCUMENTS_PUBLISH: 'documents.publish',
   CHECKLISTS_RECORD: 'checklists.record',
+  CHAT_SEND: 'chat.send',
+  CHAT_MANAGE_CHANNELS: 'chat.manageChannels',
 } as const

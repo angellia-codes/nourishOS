@@ -17,6 +17,7 @@ import {
   type ContractType,
   type Religion,
 } from '@/constants/hr'
+import { POSITION_LABELS, positionsFor, type PositionId } from '@/constants/positions'
 import { useToast } from '@/hooks'
 import * as employeeService from '@/features/hr/services/employeeService'
 import { toCsv, downloadCsv, parseCsv, type CsvColumn } from '@/utils/csv'
@@ -61,7 +62,7 @@ const TEMPLATE_EXAMPLE: Record<string, string> = {
   Address: '',
   'Emergency Contact Name': '',
   'Emergency Contact Phone': '',
-  Position: 'Barista',
+  Position: POSITION_LABELS.barista,
   Department: 'Kitchen',
   Outlet: 'Nourish Berawa',
   'Manager Employee Number': '',
@@ -117,13 +118,18 @@ function buildRow(raw: Record<string, string>, index: number, employeeIdByNumber
   const email = get('Email')
   if (!email) errors.push('Email is required')
 
-  const position = get('Position')
-  if (!position) errors.push('Position is required')
-
   const outletId = findOrgOption(get('Outlet'), [...OUTLETS])
   if (!outletId) errors.push('Outlet not recognized')
   const departmentId = outletId ? findOrgOption(get('Department'), optionsFor(OUTLET_DEPARTMENTS[outletId] ?? [], DEPARTMENTS)) : null
   if (outletId && !departmentId) errors.push('Department not recognized for this outlet')
+
+  // Position is scoped to department + outlet (POSITIONS.md §3 catalog) —
+  // resolved after both so the allow-list is known.
+  const positionRaw = get('Position')
+  const positionIds = departmentId && outletId ? positionsFor(outletId, departmentId) : []
+  const position = departmentId && outletId ? resolveEnum(positionRaw, positionIds as PositionId[], POSITION_LABELS) : null
+  if (!positionRaw) errors.push('Position is required')
+  else if (departmentId && outletId && !position) errors.push('Position not recognized for this department and outlet')
 
   const employmentStatus = resolveEnum(
     get('Employment Status'),
@@ -148,7 +154,7 @@ function buildRow(raw: Record<string, string>, index: number, employeeIdByNumber
   const managerId = managerNumber ? employeeIdByNumber.get(managerNumber) : undefined
   if (managerNumber && !managerId) errors.push('Manager Employee Number not found')
 
-  if (!gender || !outletId || !departmentId || !employmentStatus || !contractType || errors.length > 0) {
+  if (!gender || !outletId || !departmentId || !position || !employmentStatus || !contractType || errors.length > 0) {
     return { index, raw, input: null, clientErrors: errors }
   }
 

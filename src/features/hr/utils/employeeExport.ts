@@ -1,12 +1,13 @@
 import { toCsv, downloadCsv, type CsvColumn } from '@/utils/csv'
 import { EMPLOYMENT_STATUS_LABELS, CONTRACT_TYPE_LABELS } from '@/constants/hr'
+import { POSITION_LABELS } from '@/constants/positions'
 import type { Employee } from '@/types'
 
 const CSV_COLUMNS: CsvColumn<Employee>[] = [
   { header: 'Employee Number', value: (e) => e.employeeNumber },
   { header: 'Full Name', value: (e) => e.fullName },
   { header: 'Gender', value: (e) => (e.gender === 'male' ? 'Male' : 'Female') },
-  { header: 'Position', value: (e) => e.position },
+  { header: 'Position', value: (e) => POSITION_LABELS[e.position as keyof typeof POSITION_LABELS] ?? e.position },
   { header: 'Department', value: (e) => e.departmentId },
   { header: 'Outlet', value: (e) => e.outletId },
   { header: 'Employment Status', value: (e) => EMPLOYMENT_STATUS_LABELS[e.employmentStatus] },

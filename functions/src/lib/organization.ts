@@ -51,7 +51,7 @@ export const DEPARTMENT_ROLES: Record<string, readonly string[]> = {
 }
 
 /** Granted to every role — the shell everyone needs to see anything at all (RBAC.md §5, Dashboard/Tasks/Notifications rows). */
-const BASE = ['dashboard.read', 'tasks.complete', 'documents.read', 'sops.read', 'calendar.read']
+const BASE = ['dashboard.read', 'tasks.complete', 'documents.read', 'sops.read', 'calendar.read', 'chat.send']
 
 /** Outlet leaders share one operational core; §5 then adds each one's ✅ columns on top. */
 const LEADER = [
@@ -81,6 +81,9 @@ const LEADER = [
   'hrInventory.record',
   // Opening/closing checklists are recorded by whoever runs the outlet's shift.
   'checklists.record',
+  // communications.md §7: creating/archiving a chat channel, same trust
+  // level as assigning a task — Leader and above.
+  'chat.manageChannels',
 ]
 
 /**
@@ -111,6 +114,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'dailyUpdates.read',
     'dailyUpdates.readAll',
     'tasks.assign',
+    'chat.manageChannels',
   ],
   generalManager: [
     ...BASE,
@@ -135,6 +139,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'calendar.create',
     'calendar.manage',
     'tasks.assign',
+    'chat.manageChannels',
   ],
   hrManager: [
     ...BASE,
@@ -170,6 +175,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'hrInventory.manage',
     'hrInventory.record',
     'checklists.record',
+    'chat.manageChannels',
   ],
   finance: [
     ...BASE,

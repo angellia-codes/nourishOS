@@ -52,6 +52,25 @@ export function subscribeToMyTasks(
   )
 }
 
+/**
+ * dashboard.md §15 "Recently Completed Tasks" widget. No orderBy here on
+ * purpose — assignedTo+taskStatus is the composite index this needs;
+ * adding completedAt as a third field would need a second one for five rows
+ * of a dashboard widget, so this sorts/slices client-side instead.
+ */
+export function subscribeToMyCompletedTasks(
+  uid: string,
+  onChange: (tasks: Task[]) => void,
+  onError?: (error: Error) => void,
+): Unsubscribe {
+  return subscribeToCollection<Task>(
+    COLLECTIONS.TASKS,
+    [where('assignedTo', 'array-contains', uid), where('taskStatus', '==', 'completed')],
+    onChange,
+    onError,
+  )
+}
+
 /** The other half of the task list — what this user handed out. Matches the `assignedBy == uid` branch of the tasks read rule. */
 export function subscribeToTasksAssignedByMe(
   uid: string,
@@ -66,7 +85,11 @@ export function subscribeToTasksAssignedByMe(
   )
 }
 
-export function addTaskComment(input: { taskId: string; body: string }): Promise<{ commentId: string }> {
+export function addTaskComment(input: {
+  taskId: string
+  body: string
+  mentionedUids?: string[]
+}): Promise<{ commentId: string }> {
   return callFunction('addTaskComment', input)
 }
 

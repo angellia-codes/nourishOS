@@ -5,6 +5,7 @@ import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Select,
 import { ErrorMessage } from '@/components/shared'
 import { useToast } from '@/hooks'
 import { OUTLETS, DEPARTMENTS, OUTLET_DEPARTMENTS, optionsFor, type OrgOption } from '@/constants'
+import { POSITION_LABELS, positionsFor, type PositionId } from '@/constants/positions'
 import {
   CONTRACT_TYPE,
   CONTRACT_TYPE_LABELS,
@@ -13,13 +14,19 @@ import {
   EMPLOYMENT_STATUS,
   EMPLOYMENT_STATUS_LABELS,
   GENDERS,
+  PROBATION_STATUS,
+  PROBATION_STATUS_LABELS,
   RELIGION,
   RELIGION_LABELS,
+  TAX_STATUS,
+  TAX_STATUS_LABELS,
   type ContractType,
   type DisciplinaryType,
   type EmploymentStatus,
   type Gender,
+  type ProbationStatus,
   type Religion,
+  type TaxStatus,
 } from '@/constants/hr'
 import * as employeeService from '@/features/hr/services/employeeService'
 import { getCandidate } from '@/features/hr/recruitment/recruitmentService'
@@ -36,14 +43,22 @@ interface EmployeeFormState {
   phone: string
   email: string
   address: string
+  permanentAddress: string
+  domicileAddress: string
   emergencyContactName: string
   emergencyContactPhone: string
+  motherName: string
+  bpjsTk: string
+  bpjsKesehatan: string
+  personalTaxStatus: TaxStatus | ''
   position: string
   departmentId: string
   outletId: string
   employmentStatus: EmploymentStatus
   joinDate: string
   probationMonths: string
+  /** Edit-only — a new hire always starts 'pending' server-side, so this isn't offered on create. */
+  probationStatus: ProbationStatus | ''
   contractType: ContractType
   contractStartDate: string
   contractEndDate: string
@@ -64,14 +79,21 @@ const EMPTY_FORM: EmployeeFormState = {
   phone: '',
   email: '',
   address: '',
+  permanentAddress: '',
+  domicileAddress: '',
   emergencyContactName: '',
   emergencyContactPhone: '',
+  motherName: '',
+  bpjsTk: '',
+  bpjsKesehatan: '',
+  personalTaxStatus: '',
   position: '',
   departmentId: '',
   outletId: '',
   employmentStatus: EMPLOYMENT_STATUS.FIXED_TERM,
   joinDate: '',
   probationMonths: '3',
+  probationStatus: '',
   contractType: 'fixedTerm',
   contractStartDate: '',
   contractEndDate: '',
@@ -93,14 +115,21 @@ function toFormState(employee: Employee): EmployeeFormState {
     phone: employee.phone,
     email: employee.email,
     address: employee.address ?? '',
+    permanentAddress: employee.permanentAddress ?? '',
+    domicileAddress: employee.domicileAddress ?? '',
     emergencyContactName: employee.emergencyContactName ?? '',
     emergencyContactPhone: employee.emergencyContactPhone ?? '',
+    motherName: employee.motherName ?? '',
+    bpjsTk: employee.bpjsTk ?? '',
+    bpjsKesehatan: employee.bpjsKesehatan ?? '',
+    personalTaxStatus: (employee.personalTaxStatus as TaxStatus | undefined) ?? '',
     position: employee.position,
     departmentId: employee.departmentId,
     outletId: employee.outletId,
     employmentStatus: employee.employmentStatus,
     joinDate: employee.joinDate,
     probationMonths: String(employee.probationMonths),
+    probationStatus: (employee.probationStatus as ProbationStatus | undefined) ?? '',
     contractType: employee.contractType,
     contractStartDate: employee.contractStartDate ?? '',
     contractEndDate: employee.contractEndDate ?? '',
@@ -198,6 +227,19 @@ export function EmployeeFormPage() {
     return opts
   }, [form.outletId, form.departmentId])
 
+  // position was a free-text field before this revision — same legacy
+  // fallback shape as outletOptions/departmentOptions/religionOptions, so an
+  // existing value that predates the catalog (or came from a candidate's
+  // free-text positionApplied) stays selectable rather than silently blanking.
+  const positionOptions: { id: string; name: string }[] = useMemo(() => {
+    const ids = positionsFor(form.outletId, form.departmentId)
+    const base = ids.map((id) => ({ id, name: POSITION_LABELS[id] }))
+    if (form.position && !ids.includes(form.position as PositionId)) {
+      return [...base, { id: form.position, name: `${form.position} (legacy)` }]
+    }
+    return base
+  }, [form.outletId, form.departmentId, form.position])
+
   // religion was a free-text field before this revision — a legacy value
   // that doesn't match the enum stays selectable rather than silently
   // blanking, same fallback shape as outletOptions above.
@@ -236,8 +278,14 @@ export function EmployeeFormPage() {
       phone: form.phone.trim(),
       email: form.email.trim(),
       address: form.address.trim() || undefined,
+      permanentAddress: form.permanentAddress.trim() || undefined,
+      domicileAddress: form.domicileAddress.trim() || undefined,
       emergencyContactName: form.emergencyContactName.trim() || undefined,
       emergencyContactPhone: form.emergencyContactPhone.trim() || undefined,
+      motherName: form.motherName.trim() || undefined,
+      bpjsTk: form.bpjsTk.trim() || undefined,
+      bpjsKesehatan: form.bpjsKesehatan.trim() || undefined,
+      personalTaxStatus: form.personalTaxStatus || undefined,
       position: form.position.trim(),
       departmentId: form.departmentId.trim(),
       outletId: form.outletId.trim(),
@@ -257,7 +305,10 @@ export function EmployeeFormPage() {
 
     try {
       if (isEdit && employeeId) {
-        await employeeService.updateEmployee(employeeId, payload)
+        await employeeService.updateEmployee(employeeId, {
+          ...payload,
+          probationStatus: form.probationStatus || undefined,
+        })
         toast.success('Employee updated.')
         navigate(`/hr/employees/${employeeId}`)
       } else {
@@ -383,10 +434,6 @@ export function EmployeeFormPage() {
         </CardHeader>
         <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="position">Position *</Label>
-            <Input id="position" value={form.position} onChange={set('position')} />
-          </div>
-          <div className="flex flex-col gap-1.5">
             <Label htmlFor="employmentStatus">Employment status *</Label>
             <Select id="employmentStatus" value={form.employmentStatus} onChange={set('employmentStatus')}>
               {Object.values(EMPLOYMENT_STATUS).map((value) => (
@@ -401,7 +448,7 @@ export function EmployeeFormPage() {
             <Select
               id="outletId"
               value={form.outletId}
-              onChange={(e) => setForm((prev) => ({ ...prev, outletId: e.target.value, departmentId: '' }))}
+              onChange={(e) => setForm((prev) => ({ ...prev, outletId: e.target.value, departmentId: '', position: '' }))}
             >
               <option value="">Select an outlet…</option>
               {outletOptions.map((outlet) => (
@@ -413,11 +460,27 @@ export function EmployeeFormPage() {
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="departmentId">Department *</Label>
-            <Select id="departmentId" value={form.departmentId} disabled={form.outletId === ''} onChange={set('departmentId')}>
+            <Select
+              id="departmentId"
+              value={form.departmentId}
+              disabled={form.outletId === ''}
+              onChange={(e) => setForm((prev) => ({ ...prev, departmentId: e.target.value, position: '' }))}
+            >
               <option value="">{form.outletId === '' ? 'Select an outlet first' : 'Select a department…'}</option>
               {departmentOptions.map((department) => (
                 <option key={department.id} value={department.id}>
                   {department.name}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="position">Position *</Label>
+            <Select id="position" value={form.position} disabled={form.departmentId === ''} onChange={set('position')}>
+              <option value="">{form.departmentId === '' ? 'Select a department first' : 'Select a position…'}</option>
+              {positionOptions.map((position) => (
+                <option key={position.id} value={position.id}>
+                  {position.name}
                 </option>
               ))}
             </Select>

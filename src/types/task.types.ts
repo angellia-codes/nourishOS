@@ -41,4 +41,6 @@ export interface TaskComment extends BaseDocument {
   taskId: string
   body: string
   taskParticipants: string[]
+  /** @-mentioned uids picked from the directory autocomplete — communications.md §11. */
+  mentionedUids: string[]
 }

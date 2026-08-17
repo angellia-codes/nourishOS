@@ -4,6 +4,7 @@ import { Button, Select, Spinner } from '@/components/ui'
 import { EmptyState, ReportTable, type ReportTableColumn } from '@/components/shared'
 import { DEPARTMENTS, OUTLETS } from '@/constants'
 import { EMPLOYMENT_STATUS_LABELS } from '@/constants/hr'
+import { POSITION_LABELS } from '@/constants/positions'
 import * as employeeService from '@/features/hr/services/employeeService'
 import { exportEmployeesToCsv } from '@/features/hr/utils/employeeExport'
 import { formatTenure } from '@/features/hr/utils/employeeIndicators'
@@ -15,7 +16,7 @@ const DEPARTMENT_NAMES: Record<string, string> = Object.fromEntries(DEPARTMENTS.
 const COLUMNS: ReportTableColumn<Employee>[] = [
   { header: 'Employee Number', value: (e) => e.employeeNumber },
   { header: 'Name', value: (e) => e.fullName },
-  { header: 'Position', value: (e) => e.position },
+  { header: 'Position', value: (e) => POSITION_LABELS[e.position as keyof typeof POSITION_LABELS] ?? e.position },
   { header: 'Department', value: (e) => DEPARTMENT_NAMES[e.departmentId] ?? e.departmentId },
   { header: 'Outlet', value: (e) => OUTLET_NAMES[e.outletId] ?? e.outletId },
   { header: 'Employment Status', value: (e) => EMPLOYMENT_STATUS_LABELS[e.employmentStatus] },

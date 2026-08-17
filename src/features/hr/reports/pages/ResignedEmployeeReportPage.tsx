@@ -3,6 +3,7 @@ import { Download } from 'lucide-react'
 import { Button, Input, Select, Spinner } from '@/components/ui'
 import { EmptyState, ReportTable, type ReportTableColumn } from '@/components/shared'
 import { DEPARTMENTS, OUTLETS } from '@/constants'
+import { POSITION_LABELS } from '@/constants/positions'
 import { toCsv, downloadCsv, type CsvColumn } from '@/utils/csv'
 import * as employeeService from '@/features/hr/services/employeeService'
 import type { Employee } from '@/types'
@@ -13,7 +14,7 @@ const DEPARTMENT_NAMES: Record<string, string> = Object.fromEntries(DEPARTMENTS.
 const CSV_COLUMNS: CsvColumn<Employee>[] = [
   { header: 'Employee Number', value: (e) => e.employeeNumber },
   { header: 'Name', value: (e) => e.fullName },
-  { header: 'Position', value: (e) => e.position },
+  { header: 'Position', value: (e) => POSITION_LABELS[e.position as keyof typeof POSITION_LABELS] ?? e.position },
   { header: 'Department', value: (e) => DEPARTMENT_NAMES[e.departmentId] ?? e.departmentId },
   { header: 'Outlet', value: (e) => OUTLET_NAMES[e.outletId] ?? e.outletId },
   { header: 'Join Date', value: (e) => e.joinDate },

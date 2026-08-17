@@ -13,6 +13,7 @@ import {
   successResponse,
 } from '../../lib'
 import { sendNotificationInternal } from '../notifications'
+import { recordActivityInternal } from '../activity'
 
 /** Mirrors TASK_TYPE / PRIORITY in src/constants/statuses.ts (TASK_ENGINE.md §4, §7) — known duplication, keep in sync. */
 const TASK_TYPES = [
@@ -260,6 +261,16 @@ export const completeTask = onCall({ region: REGION }, async (request) => {
       action: 'complete',
       user,
       metadata: { comment: comment?.trim() || null },
+    })
+
+    await recordActivityInternal({
+      eventType: 'TaskCompleted',
+      module: task.sourceModule,
+      title: `Task completed: ${task.title}`,
+      resourceType: 'task',
+      resourceId: taskId,
+      actorUid: user.uid,
+      actionUrl: `/communications/tasks/${taskId}`,
     })
 
     return successResponse(undefined, 'Task completed.')

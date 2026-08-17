@@ -15,16 +15,20 @@ import {
   type AuthedUser,
 } from '../../lib'
 import { OUTLET_DEPARTMENTS } from '../../lib/organization'
+import { POSITION_LABELS, positionsFor } from '../../lib/positions'
+import { recordActivityInternal } from '../../shared/activity'
 import {
   EMPLOYMENT_STATUSES,
   CONTRACT_TYPES,
   GENDERS,
   DISCIPLINARY_TYPES,
   RELIGIONS,
+  TAX_STATUSES,
   type EmploymentStatus,
   type ContractType,
   type DisciplinaryType,
   type Religion,
+  type TaxStatus,
   allocateEmployeeNumber,
   assertContactFieldsUnique,
   calculateProbationEndDate,
@@ -43,8 +47,14 @@ export interface CreateEmployeeInput {
   phone: string
   email: string
   address?: string
+  permanentAddress?: string
+  domicileAddress?: string
   emergencyContactName?: string
   emergencyContactPhone?: string
+  motherName?: string
+  bpjsTk?: string
+  bpjsKesehatan?: string
+  personalTaxStatus?: TaxStatus
   position: string
   departmentId: string
   outletId: string
@@ -91,6 +101,12 @@ export async function createEmployeeInternal(
   if (!departmentsForOutlet.includes(input.departmentId)) {
     throw new AppError('invalid-argument', 'Select a department that exists at this outlet.')
   }
+  // POSITIONS.md §3 catalog, scoped per department — closes the gap
+  // probationReviewTrigger.ts flags: position must now match the id
+  // AppraisalTemplateSeed.positionId keys off, not free text.
+  if (!positionsFor(input.outletId, input.departmentId).includes(input.position.trim())) {
+    throw new AppError('invalid-argument', 'Select a valid position for this department.')
+  }
   if (!GENDERS.includes(input.gender as (typeof GENDERS)[number])) {
     throw new AppError('invalid-argument', `gender must be one of: ${GENDERS.join(', ')}.`)
   }
@@ -127,6 +143,9 @@ export async function createEmployeeInternal(
   if (input.religion && !RELIGIONS.includes(input.religion)) {
     throw new AppError('invalid-argument', `religion must be one of: ${RELIGIONS.join(', ')}.`)
   }
+  if (input.personalTaxStatus && !TAX_STATUSES.includes(input.personalTaxStatus)) {
+    throw new AppError('invalid-argument', `personalTaxStatus must be one of: ${TAX_STATUSES.join(', ')}.`)
+  }
   const disciplinaryStartPeriod = input.disciplinaryStartPeriod
     ? requireIsoDate(input.disciplinaryStartPeriod, 'disciplinaryStartPeriod')
     : null
@@ -159,8 +178,14 @@ export async function createEmployeeInternal(
     phone: input.phone.trim(),
     email: input.email.trim(),
     address: input.address?.trim() || null,
+    permanentAddress: input.permanentAddress?.trim() || null,
+    domicileAddress: input.domicileAddress?.trim() || null,
     emergencyContactName: input.emergencyContactName?.trim() || null,
     emergencyContactPhone: input.emergencyContactPhone?.trim() || null,
+    motherName: input.motherName?.trim() || null,
+    bpjsTk: input.bpjsTk?.trim() || null,
+    bpjsKesehatan: input.bpjsKesehatan?.trim() || null,
+    personalTaxStatus: input.personalTaxStatus ?? null,
     position: input.position.trim(),
     departmentId: input.departmentId,
     outletId: input.outletId,
@@ -169,6 +194,8 @@ export async function createEmployeeInternal(
     joinDate,
     probationMonths: input.probationMonths,
     probationEndDate: calculateProbationEndDate(joinDate, input.probationMonths),
+    // §12.1: every new hire starts pending — reviewed later on the profile.
+    probationStatus: 'pending',
     contractType: input.contractType,
     contractStartDate,
     contractEndDate,
@@ -207,10 +234,12 @@ export async function createEmployeeInternal(
     { contractType: input.contractType as ContractType, contractStartDate: contractStartDate ?? joinDate, contractEndDate },
   )
 
+  const positionLabel = POSITION_LABELS[input.position.trim()] ?? input.position.trim()
+
   await recordEmployeeActivity(
     { id: employeeRef.id, departmentId: input.departmentId, outletId: input.outletId },
     'hired',
-    `Hired as ${input.position.trim()} (${employeeNumber}).`,
+    `Hired as ${positionLabel} (${employeeNumber}).`,
     user,
   )
 
@@ -223,6 +252,16 @@ export async function createEmployeeInternal(
     action: 'create',
     user,
     newValues: { employeeNumber, fullName: input.fullName.trim(), position: input.position.trim() },
+  })
+
+  await recordActivityInternal({
+    eventType: 'EmployeeJoined',
+    module: 'hr',
+    title: `${input.fullName.trim()} joined as ${positionLabel}`,
+    resourceType: 'employee',
+    resourceId: employeeRef.id,
+    actorUid: user.uid,
+    actionUrl: `/hr/employees/${employeeRef.id}`,
   })
 
   return { employeeId: employeeRef.id, employeeNumber }

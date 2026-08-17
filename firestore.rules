@@ -50,6 +50,13 @@ service cloud.firestore {
         (hasAnyRole(['kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader', 'wholefoodLeader', 'outletManager']) &&
           resource.data.departmentId == request.auth.token.departmentId);
       allow write: if false; // createEmployee / updateEmployee / archiveEmployee Cloud Functions only
+
+      // §12.1: salary/allowance/bank data — split out since the rule above
+      // can't hide individual fields from GM/Director/department leaders.
+      match /compensation/{document=**} {
+        allow read: if hasAnyRole(['hrManager', 'superAdmin']);
+        allow write: if false; // updateEmployeeCompensation Cloud Function only
+      }
     }
 
     match /employeeActivities/{activityId} {
@@ -222,6 +229,49 @@ service cloud.firestore {
     // RBAC-scoped searchAuditLogs() Cloud Function (AUDIT_LOG.md §17).
     match /auditLogs/{logId} {
       allow read, write: if false;
+    }
+
+    // ---- Communications: Team Chat / Activity Feed / Mentions / Settings ----
+    match /chatChannels/{channelId} {
+      allow read: if isSignedIn() && (
+        resource.data.scopeType == 'company' ||
+        (resource.data.scopeType == 'department' && resource.data.departmentId == request.auth.token.departmentId) ||
+        (resource.data.scopeType == 'outlet' && resource.data.outletId == request.auth.token.outletId) ||
+        isElevated()
+      );
+      allow write: if false; // createChannel Cloud Function only
+    }
+
+    // scopeType/departmentId/outletId are denormalised from the parent
+    // channel onto every message at send time — same reason taskComments
+    // denormalises taskParticipants: a list query fails wholesale if any
+    // returned doc fails its own read rule, so every message in a
+    // channelId query must evaluate the identical, self-contained branch.
+    match /chatMessages/{messageId} {
+      allow read: if isSignedIn() && (
+        resource.data.scopeType == 'company' ||
+        (resource.data.scopeType == 'department' && resource.data.departmentId == request.auth.token.departmentId) ||
+        (resource.data.scopeType == 'outlet' && resource.data.outletId == request.auth.token.outletId) ||
+        isElevated()
+      );
+      allow write: if false; // sendMessage Cloud Function only
+    }
+
+    // Company-wide, informational — communications.md §10's generic
+    // "company activities" framing, no audience scoping.
+    match /activityFeed/{activityId} {
+      allow read: if isSignedIn();
+      allow write: if false; // recordActivityInternal only, called from other callables
+    }
+
+    match /mentions/{mentionId} {
+      allow read: if isSignedIn() && (resource.data.mentionedUid == request.auth.uid || isElevated());
+      allow write: if false; // written internally alongside sendMessage / addTaskComment
+    }
+
+    match /communicationSettings/{uid} {
+      allow read: if isSignedIn() && uid == request.auth.uid;
+      allow write: if false; // updateCommunicationSettings Cloud Function only
     }
 
     // ---- Shared: File Storage metadata ----

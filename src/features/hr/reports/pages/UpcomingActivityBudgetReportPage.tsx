@@ -3,6 +3,7 @@ import { AlertTriangle } from 'lucide-react'
 import { Select, Spinner } from '@/components/ui'
 import { EmptyState, ReportTable, type ReportTableColumn } from '@/components/shared'
 import { formatDate, formatDateTime } from '@/utils/date'
+import { POSITION_LABELS } from '@/constants/positions'
 import * as employeeService from '@/features/hr/services/employeeService'
 import * as recruitmentService from '@/features/hr/recruitment/recruitmentService'
 import type { Employee, Interview, OnboardingChecklist, Requisition } from '@/types'
@@ -69,7 +70,7 @@ function buildRows(
         id: `contract-${employee.id}`,
         sortKey: employee.contractEndDate,
         type: 'Contract Expiry',
-        description: `${employee.fullName} — ${employee.position}`,
+        description: `${employee.fullName} — ${POSITION_LABELS[employee.position as keyof typeof POSITION_LABELS] ?? employee.position}`,
         date: formatDate(employee.contractEndDate),
       })
     }
@@ -78,7 +79,7 @@ function buildRows(
         id: `probation-${employee.id}`,
         sortKey: employee.probationEndDate,
         type: 'Probation End',
-        description: `${employee.fullName} — ${employee.position}`,
+        description: `${employee.fullName} — ${POSITION_LABELS[employee.position as keyof typeof POSITION_LABELS] ?? employee.position}`,
         date: formatDate(employee.probationEndDate),
       })
     }

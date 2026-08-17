@@ -39,6 +39,7 @@ export const PERMISSION_MODULES = {
   CALENDAR: 'calendar',
   HR_INVENTORY: 'hrInventory',
   CHECKLISTS: 'checklists',
+  CHAT: 'chat',
 } as const
 
 export type PermissionModule = (typeof PERMISSION_MODULES)[keyof typeof PERMISSION_MODULES]
@@ -112,6 +113,13 @@ export const PERMISSIONS = {
 
   TASKS_ASSIGN: permission(PERMISSION_MODULES.TASKS, ACTIONS.ASSIGN),
   TASKS_COMPLETE: permission(PERMISSION_MODULES.TASKS, 'complete'),
+
+  // Communications — Team Chat (communications.md §7/§19). SEND covers
+  // sending in any channel you're in scope for (everyone, per §19's
+  // Employee ✅ row); MANAGE_CHANNELS gates creating/archiving channels
+  // themselves, restricted to Leader and above like Assign Task is.
+  CHAT_SEND: permission(PERMISSION_MODULES.CHAT, 'send'),
+  CHAT_MANAGE_CHANNELS: permission(PERMISSION_MODULES.CHAT, 'manageChannels'),
 
   SETTINGS_MANAGE: permission(PERMISSION_MODULES.SETTINGS, ACTIONS.MANAGE),
   USERS_MANAGE: permission(PERMISSION_MODULES.USERS, ACTIONS.MANAGE),

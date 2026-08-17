@@ -3,10 +3,17 @@ import { Megaphone, ListChecks } from 'lucide-react'
 import { Button, Card, CardContent } from '@/components/ui'
 
 /**
- * The Communications hub — communications.md §4. Two sub-modules ship today.
- * Team Chat, Direct Messages, Activity Feed, Mentions and Communication
- * Settings are not built; the Notification Center is the bell in the header
- * rather than a page of its own.
+ * The Communications hub — communications.md §4. Direct Messages and File
+ * Sharing as its own surface are not built (not requested). Three
+ * capabilities are deliberately not a page here, each with its own header/
+ * dashboard entry point instead: the Notification Center (§9, the header
+ * bell), the Activity Feed (§10, the dashboard's Team Activity widget), and
+ * Team Chat's channel list (§7, the header's Team Chat button) — channel
+ * conversations (`/communications/chat/:channelId`) and channel creation
+ * (`/communications/chat/new`) still have real pages, reached from that
+ * button, since a header dropdown can't host actual messaging. Communication
+ * Settings (§14) moved to Settings (`/settings/communications`) since it's
+ * account-level configuration, not a Communications record.
  *
  * No permission gating on the cards: each page enforces its own access through
  * firestore.rules, so a card that leads somewhere restricted is honest about
