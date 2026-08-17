@@ -13,6 +13,7 @@ import {
   AppError,
   handleError,
   successResponse,
+  type AuthedUser,
 } from '../../lib'
 import { sendNotificationInternal } from '../../shared/notifications'
 import {
@@ -267,7 +268,7 @@ export const moveCandidateStage = onCall({ region: REGION }, async (request) => 
     let onboardingChecklistId: string | null = null
 
     if (target === HIRED_STAGE) {
-      onboardingChecklistId = await recordHire(candidate, id, confirmedJoinDate!, user.uid)
+      onboardingChecklistId = await recordHire(candidate, id, confirmedJoinDate!, user)
     }
 
     // The requisition owner asked for this headcount; they are the one who
@@ -314,14 +315,19 @@ export const moveCandidateStage = onCall({ region: REGION }, async (request) => 
  * Counts a hire against its requisition and opens the onboarding checklist.
  * The requisition is updated in a transaction because two hires against the
  * last opening would otherwise both read filledCount and both under-count.
+ * `recordAuditEvent` fires after the transaction commits, same as every other
+ * audit call-site — never inside the transaction itself.
  */
 async function recordHire(
   candidate: FirebaseFirestore.DocumentData,
   candidateId: string,
   joinDate: string,
-  actorUid: string,
+  user: AuthedUser,
 ): Promise<string> {
   const requisitionRef = db.collection(COLLECTIONS.RECRUITMENTS).doc(candidate.requisitionId)
+  let completed = false
+  let completedFilledCount = 0
+  let completedOpenings = 0
 
   await db.runTransaction(async (tx) => {
     const snap = await tx.get(requisitionRef)
@@ -329,17 +335,40 @@ async function recordHire(
     const requisition = snap.data()!
 
     const filledCount = (requisition.filledCount ?? 0) + 1
-    const complete = filledCount >= (requisition.openings ?? 1)
+    const openings = (requisition.openings ?? 1) as number
+    const complete = filledCount >= openings
 
     tx.update(requisitionRef, {
       filledCount,
       hiredCandidateIds: FieldValue.arrayUnion(candidateId),
       vacancyStage: complete ? 'filled' : 'offering',
-      ...(complete ? { status: 'completed' } : {}),
+      ...(complete ? { status: 'completed', completedAt: Timestamp.now() } : {}),
       updatedAt: Timestamp.now(),
-      updatedBy: actorUid,
+      updatedBy: user.uid,
     })
+
+    completed = complete
+    completedFilledCount = filledCount
+    completedOpenings = openings
   })
+
+  if (completed) {
+    await recordAuditEvent({
+      eventType: 'RequisitionCompleted',
+      category: 'HR',
+      module: 'hr',
+      resourceType: 'requisition',
+      resourceId: candidate.requisitionId,
+      action: 'update',
+      user,
+      newValues: {
+        status: 'completed',
+        vacancyStage: 'filled',
+        filledCount: completedFilledCount,
+        openings: completedOpenings,
+      },
+    })
+  }
 
   return createOnboardingChecklistInternal({
     candidateId,
@@ -348,6 +377,6 @@ async function recordHire(
     outletId: candidate.outletId,
     departmentId: candidate.departmentId,
     joinDate,
-    actorUid,
+    actorUid: user.uid,
   })
 }

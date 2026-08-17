@@ -11,6 +11,7 @@ import {
   AppError,
   handleError,
   successResponse,
+  type AuthedUser,
 } from '../../lib'
 import { sendNotificationInternal } from '../notifications'
 import { recordActivityInternal } from '../activity'
@@ -221,6 +222,65 @@ export const assignTask = onCall({ region: REGION }, async (request) => {
   }
 })
 
+export interface CompleteTaskInternalInput {
+  taskId: string
+  actorUser: AuthedUser
+  comment?: string
+}
+
+/**
+ * Internal — the mutation half of completeTask, minus the "must be an
+ * assignee" check (that's caller-facing policy, not an invariant). Other
+ * Cloud Functions that complete a task as a side effect of their own,
+ * already-authorized action (e.g. submitExitInterview closing the "Exit
+ * Interview" offboarding task) call this directly with the real caller they
+ * already resolved via requireActiveUser, instead of round-tripping through
+ * the client-facing callable.
+ */
+export async function completeTaskInternal(input: CompleteTaskInternalInput): Promise<void> {
+  const taskRef = db.collection(COLLECTIONS.TASKS).doc(input.taskId)
+  const taskSnap = await taskRef.get()
+  if (!taskSnap.exists) {
+    throw new AppError('not-found', 'Task not found.')
+  }
+  const task = taskSnap.data()!
+
+  if (TERMINAL_TASK_STATUSES.includes(task.taskStatus)) {
+    throw new AppError('failed-precondition', `This task is already ${task.taskStatus}.`)
+  }
+
+  const actorUid = input.actorUser.uid
+
+  await taskRef.update({
+    taskStatus: 'completed',
+    completedBy: actorUid,
+    completedAt: FieldValue.serverTimestamp(),
+    completionComment: input.comment?.trim() || null,
+    ...updatedFields(actorUid),
+  })
+
+  await recordAuditEvent({
+    eventType: 'TaskCompleted',
+    category: 'Tasks',
+    module: task.sourceModule,
+    resourceType: 'task',
+    resourceId: input.taskId,
+    action: 'complete',
+    user: input.actorUser,
+    metadata: { comment: input.comment?.trim() || null },
+  })
+
+  await recordActivityInternal({
+    eventType: 'TaskCompleted',
+    module: task.sourceModule,
+    title: `Task completed: ${task.title as string}`,
+    resourceType: 'task',
+    resourceId: input.taskId,
+    actorUid,
+    actionUrl: `/communications/tasks/${input.taskId}`,
+  })
+}
+
 export const completeTask = onCall({ region: REGION }, async (request) => {
   try {
     const user = await requireActiveUser(request)
@@ -230,48 +290,16 @@ export const completeTask = onCall({ region: REGION }, async (request) => {
       throw new AppError('invalid-argument', 'taskId is required.')
     }
 
-    const taskRef = db.collection(COLLECTIONS.TASKS).doc(taskId)
-    const taskSnap = await taskRef.get()
+    const taskSnap = await db.collection(COLLECTIONS.TASKS).doc(taskId).get()
     if (!taskSnap.exists) {
       throw new AppError('not-found', 'Task not found.')
     }
     const task = taskSnap.data()!
-
-    if (TERMINAL_TASK_STATUSES.includes(task.taskStatus)) {
-      throw new AppError('failed-precondition', `This task is already ${task.taskStatus}.`)
-    }
     if (!(task.assignedTo as string[]).includes(user.uid)) {
       throw new AppError('permission-denied', 'Only an assignee can complete this task.')
     }
 
-    await taskRef.update({
-      taskStatus: 'completed',
-      completedBy: user.uid,
-      completedAt: FieldValue.serverTimestamp(),
-      completionComment: comment?.trim() || null,
-      ...updatedFields(user.uid),
-    })
-
-    await recordAuditEvent({
-      eventType: 'TaskCompleted',
-      category: 'Tasks',
-      module: task.sourceModule,
-      resourceType: 'task',
-      resourceId: taskId,
-      action: 'complete',
-      user,
-      metadata: { comment: comment?.trim() || null },
-    })
-
-    await recordActivityInternal({
-      eventType: 'TaskCompleted',
-      module: task.sourceModule,
-      title: `Task completed: ${task.title}`,
-      resourceType: 'task',
-      resourceId: taskId,
-      actorUid: user.uid,
-      actionUrl: `/communications/tasks/${taskId}`,
-    })
+    await completeTaskInternal({ taskId, actorUser: user, comment })
 
     return successResponse(undefined, 'Task completed.')
   } catch (error) {

@@ -40,6 +40,7 @@ export const PERMISSION_MODULES = {
   HR_INVENTORY: 'hrInventory',
   CHECKLISTS: 'checklists',
   CHAT: 'chat',
+  EXIT_INTERVIEWS: 'exitInterviews',
 } as const
 
 export type PermissionModule = (typeof PERMISSION_MODULES)[keyof typeof PERMISSION_MODULES]
@@ -64,10 +65,19 @@ export const PERMISSIONS = {
   EMPLOYEES_EXPORT: permission(PERMISSION_MODULES.EMPLOYEES, ACTIONS.EXPORT),
   EMPLOYEES_READ_SENSITIVE: permission(PERMISSION_MODULES.EMPLOYEES, 'readSensitive'),
 
+  // exit-interview.md §4: same string gates both reading a record and
+  // conducting/submitting one — HR Manager/Super Admin only, a harder wall
+  // than the rest of the offboarding checklist (that stays on employees.update).
+  EXIT_INTERVIEWS_VIEW: permission(PERMISSION_MODULES.EXIT_INTERVIEWS, 'view'),
+
   RECRUITMENT_READ: permission(PERMISSION_MODULES.RECRUITMENT, ACTIONS.READ),
   RECRUITMENT_CREATE: permission(PERMISSION_MODULES.RECRUITMENT, ACTIONS.CREATE),
   RECRUITMENT_UPDATE: permission(PERMISSION_MODULES.RECRUITMENT, ACTIONS.UPDATE),
   RECRUITMENT_APPROVE: permission(PERMISSION_MODULES.RECRUITMENT, ACTIONS.APPROVE),
+  // employee-requisition.md §7's view_compensation, camelCase per this
+  // codebase's convention (same as employees.readSensitive) rather than the
+  // doc's literal spelling.
+  RECRUITMENT_VIEW_COMPENSATION: permission(PERMISSION_MODULES.RECRUITMENT, 'viewCompensation'),
 
   // Performance Appraisal — extends HR.md §10. All review types route through
   // GM approval (confirmed decision, not a doc default); insight generation

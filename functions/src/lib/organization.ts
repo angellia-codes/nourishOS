@@ -99,6 +99,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     ...BASE,
     'employees.read',
     'recruitment.read',
+    'recruitment.viewCompensation',
     'appraisals.read',
     'training.read',
     'reports.read',
@@ -120,6 +121,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     ...BASE,
     'employees.read',
     'recruitment.read',
+    'recruitment.viewCompensation',
     'appraisals.read',
     'appraisals.approve',
     'appraisals.reject',
@@ -153,6 +155,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'recruitment.create',
     'recruitment.update',
     'recruitment.approve',
+    'recruitment.viewCompensation',
     'appraisals.read',
     'appraisals.create',
     'appraisals.submit',
@@ -176,6 +179,9 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'hrInventory.record',
     'checklists.record',
     'chat.manageChannels',
+    // exit-interview.md §4: gates both reading exitInterviews records and
+    // conducting/submitting one.
+    'exitInterviews.view',
   ],
   finance: [
     ...BASE,

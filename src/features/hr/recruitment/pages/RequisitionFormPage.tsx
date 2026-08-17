@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Lock } from 'lucide-react'
 import {
@@ -16,9 +16,11 @@ import {
 } from '@/components/ui'
 import { EmptyState } from '@/components/shared'
 import { DEPARTMENTS, OUTLETS, OUTLET_DEPARTMENTS, PERMISSIONS } from '@/constants'
+import { POSITION_LABELS, positionsFor, type PositionId } from '@/constants/positions'
 import { useAuth, usePermissions, useToast } from '@/hooks'
 import * as recruitmentService from '../recruitmentService'
 import { EMPLOYMENT_TYPE_LABELS, REQUISITION_TYPE_LABELS } from '../recruitmentFormat'
+import type { Employee } from '@/types'
 
 const LIST_ROUTE = '/hr/requisitions'
 const DEPARTMENT_NAMES: Record<string, string> = Object.fromEntries(
@@ -57,6 +59,8 @@ export function RequisitionFormPage() {
   const [requirements, setRequirements] = useState('')
   const [workSchedule, setWorkSchedule] = useState('')
   const [budgeted, setBudgeted] = useState(true)
+
+  const [activeEmployees, setActiveEmployees] = useState<Employee[]>([])
 
   const [loading, setLoading] = useState(isEdit)
   const [submitting, setSubmitting] = useState(false)
@@ -104,7 +108,33 @@ export function RequisitionFormPage() {
     }
   }, [requisitionId])
 
+  useEffect(() => {
+    if (requisitionType !== 'replacement' || departmentId === '') {
+      setActiveEmployees([])
+      return
+    }
+    let cancelled = false
+    recruitmentService.listActiveEmployeesInDepartment(departmentId).then((rows) => {
+      if (!cancelled) setActiveEmployees(rows)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [requisitionType, departmentId])
+
   const departmentOptions = OUTLET_DEPARTMENTS[outletId] ?? []
+
+  // Same legacy-value-fallback pattern EmployeeFormPage's Position select
+  // already established: an existing value outside the current catalog (e.g.
+  // after a department change) stays selectable rather than silently blanking.
+  const positionOptions: { id: string; name: string }[] = useMemo(() => {
+    const ids = positionsFor(outletId, departmentId)
+    const base = ids.map((id) => ({ id, name: POSITION_LABELS[id] ?? id }))
+    if (position && !ids.includes(position as PositionId)) {
+      return [...base, { id: position, name: `${position} (legacy)` }]
+    }
+    return base
+  }, [outletId, departmentId, position])
   const canSubmit =
     outletId !== '' &&
     departmentId !== '' &&
@@ -215,6 +245,7 @@ export function RequisitionFormPage() {
               onChange={(e) => {
                 setOutletId(e.target.value)
                 setDepartmentId('')
+                setPosition('')
               }}
             >
               <option value="">Select an outlet…</option>
@@ -232,7 +263,10 @@ export function RequisitionFormPage() {
               id="reqDepartment"
               value={departmentId}
               disabled={outletId === ''}
-              onChange={(e) => setDepartmentId(e.target.value)}
+              onChange={(e) => {
+                setDepartmentId(e.target.value)
+                setPosition('')
+              }}
             >
               <option value="">{outletId === '' ? 'Select an outlet first' : 'Select a department…'}</option>
               {departmentOptions.map((id) => (
@@ -245,13 +279,19 @@ export function RequisitionFormPage() {
 
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="reqPosition">Position *</Label>
-            <Input
+            <Select
               id="reqPosition"
               value={position}
-              maxLength={120}
-              placeholder="e.g. Line Cook"
+              disabled={departmentId === ''}
               onChange={(e) => setPosition(e.target.value)}
-            />
+            >
+              <option value="">{departmentId === '' ? 'Select a department first' : 'Select a position…'}</option>
+              {positionOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.name}
+                </option>
+              ))}
+            </Select>
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -307,12 +347,22 @@ export function RequisitionFormPage() {
 
           {requisitionType === 'replacement' && (
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="reqReplacing">Replacing (employee number or name) *</Label>
-              <Input
+              <Label htmlFor="reqReplacing">Replacing *</Label>
+              <Select
                 id="reqReplacing"
                 value={replacingEmployeeId}
+                disabled={departmentId === ''}
                 onChange={(e) => setReplacingEmployeeId(e.target.value)}
-              />
+              >
+                <option value="">
+                  {departmentId === '' ? 'Select a department first' : 'Select the employee being replaced…'}
+                </option>
+                {activeEmployees.map((employee) => (
+                  <option key={employee.id} value={employee.id}>
+                    {employee.fullName} ({employee.employeeNumber})
+                  </option>
+                ))}
+              </Select>
             </div>
           )}
 

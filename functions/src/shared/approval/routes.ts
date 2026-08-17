@@ -21,9 +21,9 @@ const APPROVAL_ROUTES: Record<string, ApprovalRoute> = {
     { sequence: 2, approverRole: 'generalManager' },
   ],
   // employee-requisition.md §5 defines a conditional chain (Director joins when
-  // the request is unbudgeted). Still shipped fixed — `budgeted` is captured on
-  // the requisition, so switching it to the function form below is now a
-  // change to this file and submitRequisition's context, nothing else.
+  // the request is unbudgeted) — confirmed with the user this is NOT being
+  // built: a permanent product decision, not an open TODO. Director keeps
+  // read-only access to requisitions regardless of `budgeted`.
   'hr/requisition': [
     { sequence: 1, approverRole: 'hrManager' },
     { sequence: 2, approverRole: 'generalManager' },

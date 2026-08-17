@@ -21,6 +21,10 @@ import { CandidateDetailPage } from '@/features/hr/recruitment/pages/CandidateDe
 import { InterviewFormPage } from '@/features/hr/recruitment/pages/InterviewFormPage'
 import { OnboardingListPage } from '@/features/hr/recruitment/pages/OnboardingListPage'
 import { OnboardingChecklistPage } from '@/features/hr/recruitment/pages/OnboardingChecklistPage'
+import { OffboardingListPage } from '@/features/hr/offboarding/pages/OffboardingListPage'
+import { OffboardingChecklistPage } from '@/features/hr/offboarding/pages/OffboardingChecklistPage'
+import { ClearanceStatementPage } from '@/features/hr/offboarding/pages/ClearanceStatementPage'
+import { ExitInterviewFormPage } from '@/features/hr/offboarding/pages/ExitInterviewFormPage'
 import { InventoryItemListPage } from '@/features/hr/inventory/pages/InventoryItemListPage'
 import { InventoryItemFormPage } from '@/features/hr/inventory/pages/InventoryItemFormPage'
 import { InventoryItemDetailPage } from '@/features/hr/inventory/pages/InventoryItemDetailPage'
@@ -35,6 +39,7 @@ import { EmployeeActivityReportPage } from '@/features/hr/reports/pages/Employee
 import { BudgetAndCostReportPage } from '@/features/hr/reports/pages/BudgetAndCostReportPage'
 import { UpcomingActivityBudgetReportPage } from '@/features/hr/reports/pages/UpcomingActivityBudgetReportPage'
 import { RecruitmentFunnelReportPage } from '@/features/hr/reports/pages/RecruitmentFunnelReportPage'
+import { ExitInterviewInsightsReportPage } from '@/features/hr/reports/pages/ExitInterviewInsightsReportPage'
 import { ModulePlaceholder } from '@/components/shared/ModulePlaceholder'
 import { CheckpointListPage } from '@/features/security/pages/CheckpointListPage'
 import { PatrolCapturePage } from '@/features/security/pages/PatrolCapturePage'
@@ -136,6 +141,10 @@ export const router = createBrowserRouter([
               { path: 'candidates/:candidateId/interviews/new', element: <InterviewFormPage /> },
               { path: 'onboarding', element: <OnboardingListPage /> },
               { path: 'onboarding/:checklistId', element: <OnboardingChecklistPage /> },
+              { path: 'offboarding', element: <OffboardingListPage /> },
+              { path: 'offboarding/:checklistId', element: <OffboardingChecklistPage /> },
+              { path: 'offboarding/:checklistId/statement', element: <ClearanceStatementPage /> },
+              { path: 'offboarding/:checklistId/exit-interview', element: <ExitInterviewFormPage /> },
               { path: 'inventory', element: <InventoryItemListPage /> },
               { path: 'inventory/new', element: <InventoryItemFormPage /> },
               { path: 'inventory/:itemId', element: <InventoryItemDetailPage /> },
@@ -157,6 +166,7 @@ export const router = createBrowserRouter([
               { path: 'reports/budget-and-cost', element: <BudgetAndCostReportPage /> },
               { path: 'reports/upcoming-activity-budget', element: <UpcomingActivityBudgetReportPage /> },
               { path: 'reports/recruitment-funnel', element: <RecruitmentFunnelReportPage /> },
+              { path: 'reports/exit-interview-insights', element: <ExitInterviewInsightsReportPage /> },
             ],
           },
           {

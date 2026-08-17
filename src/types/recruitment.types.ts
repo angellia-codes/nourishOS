@@ -6,10 +6,10 @@ import type { BaseDocument } from './firestore.types'
  * opens a vacancy, candidates are raised against it, interviews are scheduled
  * per candidate, and hiring one generates an onboarding checklist.
  *
- * Deliberately not built in this pass (see the module README): the compensation
- * subdocument (employee-requisition.md §3-C), the conditional Director step for
- * unbudgeted requests (§5), and the WhatsApp templates in HR_OPERATIONS.md §9.5
- * — there is no Fonnte adapter, so everything notifies in-app.
+ * Deliberately not built, permanently (see the module README): the conditional
+ * Director step for unbudgeted requests (§5) — a confirmed product decision,
+ * not an open gap — and the WhatsApp templates in HR_OPERATIONS.md §9.5, since
+ * there is no Fonnte adapter, so everything notifies in-app.
  */
 
 /**
@@ -63,6 +63,26 @@ export interface Requisition extends BaseDocument {
   approvalRequestId?: string | null
   hiredCandidateIds: string[]
   filledCount: number
+  /** Set by the approval-resolved handler the moment status flips to 'approved' — null until then. */
+  approvedAt?: string | null
+  /** Set when filledCount reaches openings (status flips to 'completed') — employee-requisition.md §9's time-to-fill anchor. */
+  completedAt?: string | null
+}
+
+/**
+ * recruitments/{requisitionId}/confidential/compensation — employee-requisition.md
+ * §3-C/§4. Split into its own restricted subcollection for the same reason
+ * EmployeeCompensation is: firestore.rules can't hide individual fields, and
+ * the parent requisition doc is readable by leaders/HR/GM/Director alike.
+ */
+export interface RequisitionCompensation {
+  salaryMin: number
+  salaryMax: number
+  positionAllowance?: number | null
+  phoneAllowance?: number | null
+  transportationAllowance?: number | null
+  updatedAt: string
+  updatedBy: string
 }
 
 /** HR_OPERATIONS.md §9.4 pipeline stages. */

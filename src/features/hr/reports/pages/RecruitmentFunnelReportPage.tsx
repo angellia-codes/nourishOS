@@ -4,7 +4,7 @@ import { Spinner } from '@/components/ui'
 import { EmptyState, ReportTable, type ReportTableColumn } from '@/components/shared'
 import { DEPARTMENTS, OUTLETS } from '@/constants'
 import * as recruitmentService from '@/features/hr/recruitment/recruitmentService'
-import { timeToHireDays } from '@/features/hr/recruitment/recruitmentFormat'
+import { timeToFillDays, timeToHireDays } from '@/features/hr/recruitment/recruitmentFormat'
 import type { Candidate, CandidateStage, Requisition } from '@/types'
 import { CANDIDATE_STAGE_LABELS, CANDIDATE_STAGES } from '@/types'
 
@@ -67,6 +67,19 @@ const TIME_TO_HIRE_COLUMNS: ReportTableColumn<TimeToHireRow>[] = [
   { header: 'Avg. Time to Hire (days)', value: (r) => String(r.averageDays), align: 'right' },
 ]
 
+interface TimeToFillRow {
+  requisitionId: string
+  requisitionNumber: string
+  position: string
+  days: number
+}
+
+const TIME_TO_FILL_COLUMNS: ReportTableColumn<TimeToFillRow>[] = [
+  { header: 'Requisition', value: (r) => r.requisitionNumber },
+  { header: 'Position', value: (r) => r.position },
+  { header: 'Time to Fill (days)', value: (r) => String(r.days), align: 'right' },
+]
+
 /** hr.md §16 / HR_OPERATIONS.md 9.4-F08 — pipeline funnel and time-to-hire, by position and department. */
 export function RecruitmentFunnelReportPage() {
   const [candidates, setCandidates] = useState<Candidate[] | null>(null)
@@ -124,6 +137,17 @@ export function RecruitmentFunnelReportPage() {
         (_c, requisition) => (requisition ? (OUTLET_NAMES[requisition.outletId] ?? requisition.outletId) : 'Unknown'),
       ),
     [candidates, requisitionsById],
+  )
+
+  const timeToFillRows = useMemo(
+    () =>
+      (requisitions ?? [])
+        .map((r): TimeToFillRow | null => {
+          const days = timeToFillDays(r)
+          return days === null ? null : { requisitionId: r.id, requisitionNumber: r.requisitionNumber ?? r.id, position: r.position, days }
+        })
+        .filter((row): row is TimeToFillRow => row !== null),
+    [requisitions],
   )
 
   if (candidates === null || requisitions === null) {
@@ -195,6 +219,16 @@ export function RecruitmentFunnelReportPage() {
           <EmptyState title="No hires yet" />
         ) : (
           <ReportTable columns={TIME_TO_HIRE_COLUMNS} rows={byOutlet} rowKey={(r) => r.key} />
+        )}
+      </div>
+
+      <div>
+        <h2 className="mb-2 text-sm font-medium text-muted-foreground">Time to Fill — by Requisition</h2>
+        <p className="mb-2 text-xs text-muted-foreground">employee-requisition.md §9 — approval to last opening filled.</p>
+        {timeToFillRows.length === 0 ? (
+          <EmptyState title="No requisitions fully filled yet" />
+        ) : (
+          <ReportTable columns={TIME_TO_FILL_COLUMNS} rows={timeToFillRows} rowKey={(r) => r.requisitionId} />
         )}
       </div>
     </div>

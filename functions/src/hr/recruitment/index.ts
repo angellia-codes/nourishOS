@@ -6,6 +6,7 @@ import { createTaskInternal } from '../../shared/tasks'
 import { sendNotificationInternal, notifyUsersByRole } from '../../shared/notifications'
 
 export { createRequisition, updateRequisition, submitRequisition, cancelRequisition } from './requisitions'
+export { updateRequisitionCompensation } from './requisitionCompensation'
 export { createCandidate, updateCandidate, moveCandidateStage } from './candidates'
 export { scheduleInterview, recordInterviewOutcome, cancelInterview } from './interviews'
 export { updateOnboardingItem, completeOnboarding } from './onboarding'

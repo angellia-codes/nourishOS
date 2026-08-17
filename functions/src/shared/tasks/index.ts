@@ -1,3 +1,3 @@
-export { createTask, assignTask, completeTask, cancelTask, createTaskInternal } from './tasks'
-export type { CreateTaskInternalInput } from './tasks'
+export { createTask, assignTask, completeTask, cancelTask, createTaskInternal, completeTaskInternal } from './tasks'
+export type { CreateTaskInternalInput, CompleteTaskInternalInput } from './tasks'
 export { addTaskComment } from './taskComments'

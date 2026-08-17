@@ -13,7 +13,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import type { StatusTone } from '@/components/ui'
-import type { Candidate, CandidateStage, RequisitionStatus, RequisitionUrgency } from '@/types'
+import type { Candidate, CandidateStage, Requisition, RequisitionStatus, RequisitionUrgency } from '@/types'
 
 /**
  * Status → {tone, icon} maps for the recruitment module. Each module owns its
@@ -142,4 +142,18 @@ export function timeToHireDays(candidate: Candidate): number | null {
   const hired = new Date(hiredEntry.timestamp).getTime()
   if (Number.isNaN(applied) || Number.isNaN(hired)) return null
   return Math.max(0, Math.round((hired - applied) / 86_400_000))
+}
+
+/**
+ * Whole days from approval to the requisition being fully filled —
+ * employee-requisition.md §9's time-to-fill metric. Requisition-level, unlike
+ * timeToHireDays above (per-candidate) — null until both approvedAt and
+ * completedAt exist.
+ */
+export function timeToFillDays(requisition: Requisition): number | null {
+  if (!requisition.approvedAt || !requisition.completedAt) return null
+  const approved = new Date(requisition.approvedAt).getTime()
+  const completed = new Date(requisition.completedAt).getTime()
+  if (Number.isNaN(approved) || Number.isNaN(completed)) return null
+  return Math.max(0, Math.round((completed - approved) / 86_400_000))
 }

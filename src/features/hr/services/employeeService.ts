@@ -77,13 +77,19 @@ export function updateEmployee(
   return callFunction('updateEmployee', { employeeId, updates })
 }
 
-/** Soft-delete (E01-US03) — resignation date and reason are mandatory server-side. */
+/**
+ * Soft-delete (E01-US03) — resignation date, reason and last working date are
+ * mandatory server-side. Also the offboarding trigger: the returned
+ * offboardingChecklistId is employee-onboarding-exit-checklist.md §5's OUT
+ * checklist, generated in the same call.
+ */
 export function archiveEmployee(
   employeeId: string,
   resignationDate: string,
   resignationReason: string,
-): Promise<{ employeeId: string }> {
-  return callFunction('archiveEmployee', { employeeId, resignationDate, resignationReason })
+  lastWorkingDate: string,
+): Promise<{ employeeId: string; offboardingChecklistId: string }> {
+  return callFunction('archiveEmployee', { employeeId, resignationDate, resignationReason, lastWorkingDate })
 }
 
 export function getEmployee(employeeId: string): Promise<Employee | null> {

@@ -1,11 +1,13 @@
 import { useNavigate } from 'react-router-dom'
-import { BarChart3, Boxes, ClipboardList, GraduationCap, KanbanSquare, PackageCheck, Users } from 'lucide-react'
+import { BarChart3, Boxes, ClipboardList, GraduationCap, KanbanSquare, LogOut, PackageCheck, Users } from 'lucide-react'
 import { Button, Card, CardContent } from '@/components/ui'
 
 /**
- * The HR hub. Seven sub-modules ship: the employee register, the three
+ * The HR hub. Eight sub-modules ship: the employee register, the three
  * halves of the recruitment pipeline (requisitions → candidates →
  * onboarding; interviews hang off a candidate rather than standing alone),
+ * offboarding (exit checklists, clearance and exit interviews — the OUT
+ * counterpart to onboarding, triggered from Archive on the employee profile),
  * the uniform/asset stock ledger, the training catalog, and the reports
  * register. Employment Contracts is not a card here — like Disciplinary
  * Records, it's reached from the employee profile since it's always
@@ -39,6 +41,12 @@ const SUB_MODULES = [
     icon: PackageCheck,
     title: 'Onboarding',
     description: 'Document checklists for new hires.',
+  },
+  {
+    to: '/hr/offboarding',
+    icon: LogOut,
+    title: 'Offboarding',
+    description: 'Exit checklists, clearance and exit interviews.',
   },
   {
     to: '/hr/inventory',

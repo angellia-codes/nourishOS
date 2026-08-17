@@ -26,6 +26,8 @@ export const COLLECTIONS = {
   CANDIDATES: 'candidates',
   INTERVIEWS: 'interviews',
   ONBOARDING_CHECKLISTS: 'onboardingChecklists',
+  OFFBOARDING_CHECKLISTS: 'offboardingChecklists',
+  EXIT_INTERVIEWS: 'exitInterviews',
 
   APPROVAL_WORKFLOWS: 'approvalWorkflows',
   APPROVAL_REQUESTS: 'approvalRequests',

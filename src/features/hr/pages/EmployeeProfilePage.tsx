@@ -25,6 +25,7 @@ import * as employeeService from '@/features/hr/services/employeeService'
 import * as disciplinaryService from '@/features/hr/disciplinary/disciplinaryService'
 import * as contractService from '@/features/hr/contracts/contractService'
 import * as trainingService from '@/features/hr/training/trainingService'
+import * as offboardingService from '@/features/hr/offboarding/offboardingService'
 import type { Contract, DisciplinaryRecord, Training, TrainingAssignment } from '@/types'
 import {
   formatIsoDate,
@@ -203,8 +204,22 @@ export function EmployeeProfilePage() {
   const [showArchiveForm, setShowArchiveForm] = useState(false)
   const [resignationDate, setResignationDate] = useState('')
   const [resignationReason, setResignationReason] = useState('')
+  const [lastWorkingDate, setLastWorkingDate] = useState('')
   const [archiving, setArchiving] = useState(false)
   const [archiveError, setArchiveError] = useState<string | null>(null)
+
+  const [offboardingChecklistId, setOffboardingChecklistId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!employeeId) return
+    let cancelled = false
+    offboardingService.getOffboardingChecklistForEmployee(employeeId).then((row) => {
+      if (!cancelled) setOffboardingChecklistId(row?.id ?? null)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [employeeId])
 
   useEffect(() => {
     if (!employeeId) return
@@ -309,11 +324,12 @@ export function EmployeeProfilePage() {
   }
 
   async function handleArchive() {
-    if (!employeeId || !resignationDate || !resignationReason.trim() || archiving) return
+    if (!employeeId || !resignationDate || !resignationReason.trim() || !lastWorkingDate || archiving) return
     setArchiving(true)
     setArchiveError(null)
     try {
-      await employeeService.archiveEmployee(employeeId, resignationDate, resignationReason.trim())
+      const result = await employeeService.archiveEmployee(employeeId, resignationDate, resignationReason.trim(), lastWorkingDate)
+      setOffboardingChecklistId(result.offboardingChecklistId)
       toast.success('Employee archived.')
       setShowArchiveForm(false)
     } catch (error) {
@@ -692,9 +708,19 @@ export function EmployeeProfilePage() {
           <CardHeader>
             <CardTitle>Separation</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-2 gap-4">
-            <Field label="Resignation date" value={formatIsoDate(employee.resignationDate)} />
-            <Field label="Reason" value={employee.resignationReason} />
+          <CardContent className="flex flex-col gap-4">
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Resignation date" value={formatIsoDate(employee.resignationDate)} />
+              <Field label="Last working date" value={formatIsoDate(employee.lastWorkingDate)} />
+              <Field label="Reason" value={employee.resignationReason} />
+            </div>
+            {offboardingChecklistId && (
+              <div className="flex justify-end">
+                <Button variant="secondary" size="sm" onClick={() => navigate(`/hr/offboarding/${offboardingChecklistId}`)}>
+                  View offboarding checklist
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -768,6 +794,16 @@ export function EmployeeProfilePage() {
                       onChange={(e) => setResignationDate(e.target.value)}
                     />
                   </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="lastWorkingDate">Last working date *</Label>
+                    <Input
+                      id="lastWorkingDate"
+                      type="date"
+                      min={resignationDate || undefined}
+                      value={lastWorkingDate}
+                      onChange={(e) => setLastWorkingDate(e.target.value)}
+                    />
+                  </div>
                   <div className="flex flex-col gap-1.5 sm:col-span-2">
                     <Label htmlFor="resignationReason">Reason *</Label>
                     <Textarea
@@ -785,7 +821,7 @@ export function EmployeeProfilePage() {
                   <Button
                     variant="danger"
                     onClick={handleArchive}
-                    disabled={!resignationDate || !resignationReason.trim()}
+                    disabled={!resignationDate || !resignationReason.trim() || !lastWorkingDate}
                     loading={archiving}
                   >
                     Confirm Archive

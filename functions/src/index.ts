@@ -48,6 +48,10 @@ export {
   createDisciplinaryRecord,
   addInvestigationNote,
   closeDisciplinaryRecord,
+  updateOffboardingItem,
+  completeOffboarding,
+  submitExitInterview,
+  getExitInterviewInsights,
 } from './hr/employees'
 
 // ---- HR: Inventory (uniforms & assets) ----
@@ -73,6 +77,7 @@ export {
   cancelInterview,
   updateOnboardingItem,
   completeOnboarding,
+  updateRequisitionCompensation,
 } from './hr/recruitment'
 
 // ---- Documents: Job Descriptions ----

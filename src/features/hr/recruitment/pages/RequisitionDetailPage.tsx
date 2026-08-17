@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, UserPlus } from 'lucide-react'
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, Spinner, StatusPill } from '@/components/ui'
-import { EmptyState } from '@/components/shared'
-import { DEPARTMENTS, OUTLETS, PERMISSIONS } from '@/constants'
-import { useAuth, usePermissions, useToast } from '@/hooks'
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Spinner, StatusPill } from '@/components/ui'
+import { EmptyState, ErrorMessage, FileList, FileUpload, PermissionGuard } from '@/components/shared'
+import { COLLECTIONS, DEPARTMENTS, OUTLETS, PERMISSIONS } from '@/constants'
+import { useAuth, useFirestoreQuery, usePermissions, useToast } from '@/hooks'
+import { where, orderBy } from '@/services/firestore'
+import { ApiError } from '@/services/api'
 import * as recruitmentService from '../recruitmentService'
 import {
   CANDIDATE_STAGE_ICON,
@@ -15,7 +17,7 @@ import {
   REQUISITION_STATUS_TONE,
   REQUISITION_TYPE_LABELS,
 } from '../recruitmentFormat'
-import { CANDIDATE_STAGE_LABELS, type Candidate, type Requisition } from '@/types'
+import { CANDIDATE_STAGE_LABELS, type Candidate, type FileMetadata, type Requisition, type RequisitionCompensation } from '@/types'
 
 const LIST_ROUTE = '/hr/requisitions'
 const OUTLET_NAMES: Record<string, string> = Object.fromEntries(OUTLETS.map((outlet) => [outlet.id, outlet.name]))
@@ -64,6 +66,92 @@ export function RequisitionDetailPage() {
   useEffect(() => {
     load().catch(() => setLoading(false))
   }, [load])
+
+  // Compensation — employee-requisition.md §3-C, hrManager/generalManager/director/superAdmin only.
+  const [compensation, setCompensation] = useState<RequisitionCompensation | null>(null)
+  const [loadingCompensation, setLoadingCompensation] = useState(false)
+  const [showCompensationForm, setShowCompensationForm] = useState(false)
+  const [compensationForm, setCompensationForm] = useState({
+    salaryMin: '',
+    salaryMax: '',
+    positionAllowance: '',
+    phoneAllowance: '',
+    transportationAllowance: '',
+  })
+  const [savingCompensation, setSavingCompensation] = useState(false)
+  const [compensationError, setCompensationError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!requisitionId || !can(PERMISSIONS.RECRUITMENT_VIEW_COMPENSATION)) return
+    let cancelled = false
+    setLoadingCompensation(true)
+    recruitmentService
+      .getRequisitionCompensation(requisitionId)
+      .then((result) => {
+        if (cancelled) return
+        setCompensation(result)
+        setLoadingCompensation(false)
+      })
+      .catch(() => {
+        if (cancelled) return
+        setCompensationError('Failed to load compensation.')
+        setLoadingCompensation(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [requisitionId, can])
+
+  function openCompensationForm() {
+    setCompensationForm({
+      salaryMin: compensation?.salaryMin != null ? String(compensation.salaryMin) : '',
+      salaryMax: compensation?.salaryMax != null ? String(compensation.salaryMax) : '',
+      positionAllowance: compensation?.positionAllowance != null ? String(compensation.positionAllowance) : '',
+      phoneAllowance: compensation?.phoneAllowance != null ? String(compensation.phoneAllowance) : '',
+      transportationAllowance:
+        compensation?.transportationAllowance != null ? String(compensation.transportationAllowance) : '',
+    })
+    setCompensationError(null)
+    setShowCompensationForm(true)
+  }
+
+  async function handleSaveCompensation() {
+    if (!requisitionId || savingCompensation) return
+    setSavingCompensation(true)
+    setCompensationError(null)
+    try {
+      await recruitmentService.updateRequisitionCompensation(requisitionId, {
+        salaryMin: Number(compensationForm.salaryMin) || 0,
+        salaryMax: Number(compensationForm.salaryMax) || 0,
+        positionAllowance: compensationForm.positionAllowance ? Number(compensationForm.positionAllowance) : undefined,
+        phoneAllowance: compensationForm.phoneAllowance ? Number(compensationForm.phoneAllowance) : undefined,
+        transportationAllowance: compensationForm.transportationAllowance
+          ? Number(compensationForm.transportationAllowance)
+          : undefined,
+      })
+      const result = await recruitmentService.getRequisitionCompensation(requisitionId)
+      setCompensation(result)
+      setShowCompensationForm(false)
+      toast.success('Compensation updated.')
+    } catch (error) {
+      setCompensationError(error instanceof ApiError ? error.message : 'Something went wrong. Please try again.')
+    } finally {
+      setSavingCompensation(false)
+    }
+  }
+
+  const { data: attachments } = useFirestoreQuery<FileMetadata>(
+    COLLECTIONS.FILES,
+    requisitionId
+      ? [
+          where('resourceType', '==', 'requisitionAttachment'),
+          where('resourceId', '==', requisitionId),
+          where('fileStatus', '==', 'available'),
+          orderBy('createdAt', 'desc'),
+        ]
+      : [],
+    [requisitionId],
+  )
 
   if (loading) {
     return (
@@ -170,6 +258,122 @@ export function RequisitionDetailPage() {
           <Field label="Key responsibilities" value={requisition.responsibilities} />
           <Field label="Requirements" value={requisition.requirements} />
           <Field label="Work schedule" value={requisition.workSchedule} />
+        </CardContent>
+      </Card>
+
+      {/* Compensation — §3-C salary range/allowances, hrManager/GM/Director/superAdmin only */}
+      <PermissionGuard permission={PERMISSIONS.RECRUITMENT_VIEW_COMPENSATION}>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between gap-2">
+            <CardTitle>Compensation</CardTitle>
+            {!showCompensationForm && (
+              <Button variant="secondary" size="sm" onClick={openCompensationForm}>
+                {compensation ? 'Edit' : 'Set compensation'}
+              </Button>
+            )}
+          </CardHeader>
+          <CardContent>
+            {showCompensationForm ? (
+              <div className="flex flex-col gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="salaryMin">Salary min (IDR) *</Label>
+                    <Input
+                      id="salaryMin"
+                      type="number"
+                      min={0}
+                      value={compensationForm.salaryMin}
+                      onChange={(e) => setCompensationForm((prev) => ({ ...prev, salaryMin: e.target.value }))}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="salaryMax">Salary max (IDR) *</Label>
+                    <Input
+                      id="salaryMax"
+                      type="number"
+                      min={0}
+                      value={compensationForm.salaryMax}
+                      onChange={(e) => setCompensationForm((prev) => ({ ...prev, salaryMax: e.target.value }))}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="positionAllowance">Position allowance</Label>
+                    <Input
+                      id="positionAllowance"
+                      type="number"
+                      min={0}
+                      value={compensationForm.positionAllowance}
+                      onChange={(e) => setCompensationForm((prev) => ({ ...prev, positionAllowance: e.target.value }))}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="phoneAllowance">Phone allowance</Label>
+                    <Input
+                      id="phoneAllowance"
+                      type="number"
+                      min={0}
+                      value={compensationForm.phoneAllowance}
+                      onChange={(e) => setCompensationForm((prev) => ({ ...prev, phoneAllowance: e.target.value }))}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="transportationAllowance">Transportation allowance</Label>
+                    <Input
+                      id="transportationAllowance"
+                      type="number"
+                      min={0}
+                      value={compensationForm.transportationAllowance}
+                      onChange={(e) =>
+                        setCompensationForm((prev) => ({ ...prev, transportationAllowance: e.target.value }))
+                      }
+                    />
+                  </div>
+                </div>
+                {compensationError && <ErrorMessage message={compensationError} />}
+                <div className="flex justify-end gap-2">
+                  <Button variant="secondary" onClick={() => setShowCompensationForm(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => void handleSaveCompensation()}
+                    disabled={!compensationForm.salaryMin || !compensationForm.salaryMax}
+                    loading={savingCompensation}
+                  >
+                    Save
+                  </Button>
+                </div>
+              </div>
+            ) : loadingCompensation ? (
+              <div className="flex justify-center p-4">
+                <Spinner />
+              </div>
+            ) : compensationError ? (
+              <ErrorMessage message={compensationError} />
+            ) : compensation ? (
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                <Field label="Salary range" value={`${compensation.salaryMin.toLocaleString('id-ID')} – ${compensation.salaryMax.toLocaleString('id-ID')}`} />
+                <Field label="Position allowance" value={compensation.positionAllowance?.toLocaleString('id-ID') ?? '—'} />
+                <Field label="Phone allowance" value={compensation.phoneAllowance?.toLocaleString('id-ID') ?? '—'} />
+                <Field
+                  label="Transportation allowance"
+                  value={compensation.transportationAllowance?.toLocaleString('id-ID') ?? '—'}
+                />
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No compensation data on file.</p>
+            )}
+          </CardContent>
+        </Card>
+      </PermissionGuard>
+
+      {/* Attachments — §3-D org chart excerpt, workload evidence, event brief */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Attachments</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          {canAct && <FileUpload module="hr" resourceType="requisitionAttachment" resourceId={id} />}
+          <FileList files={attachments} />
         </CardContent>
       </Card>
 

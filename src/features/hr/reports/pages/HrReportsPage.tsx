@@ -9,14 +9,17 @@ import {
   PieChart,
   CalendarClock,
   Filter,
+  MessageCircleQuestion,
 } from 'lucide-react'
 import { Button, Card, CardContent } from '@/components/ui'
 
 /**
- * HR Reports hub — hr.md §16. Eight reports over data the HR sub-modules
+ * HR Reports hub — hr.md §16. Ten reports over data the HR sub-modules
  * already collect (employees, requisitions, HR Inventory). No permission
  * gating on the cards, same as HrHomePage: each report reads collections
- * already gated by firestore.rules.
+ * already gated by firestore.rules — except Exit Interview Insights, which
+ * calls a callable instead of reading exitInterviews directly (see that
+ * page's own comment).
  */
 const REPORTS = [
   {
@@ -72,6 +75,12 @@ const REPORTS = [
     icon: Filter,
     title: 'Recruitment Funnel',
     description: 'Pipeline funnel and time-to-hire, by position and department.',
+  },
+  {
+    to: '/hr/reports/exit-interview-insights',
+    icon: MessageCircleQuestion,
+    title: 'Exit Interview Insights',
+    description: 'Turnover reasons, satisfaction trend and manager ratings (aggregate only).',
   },
 ]
 

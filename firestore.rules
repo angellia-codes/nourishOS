@@ -103,6 +103,13 @@ service cloud.firestore {
       allow read: if isHrOrAbove() ||
         (isLeader() && resource.data.outletId == request.auth.token.outletId);
       allow write: if false; // createRequisition / updateRequisition / submitRequisition / cancelRequisition only
+
+      // employee-requisition.md §3-C/§7: salary range — narrower than the
+      // parent doc's read rule above (no leader branch).
+      match /confidential/{document=**} {
+        allow read: if hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']);
+        allow write: if false; // updateRequisitionCompensation Cloud Function only
+      }
     }
 
     // Candidate records carry personal contact details, so they stay with HR
@@ -120,6 +127,23 @@ service cloud.firestore {
     match /onboardingChecklists/{checklistId} {
       allow read: if isHrOrAbove();
       allow write: if false; // written by moveCandidateStage; edited via updateOnboardingItem / completeOnboarding
+    }
+
+    // ---- HR: Offboarding & Exit ----
+    // employee-onboarding-exit-checklist.md §5.
+    match /offboardingChecklists/{checklistId} {
+      allow read: if isHrOrAbove();
+      allow write: if false; // written by archiveEmployee; edited via updateOffboardingItem / completeOffboarding
+    }
+
+    // exit-interview.md §4: individual records are hrManager/superAdmin only —
+    // deliberately NOT generalManager/director like the rest of HR's sensitive
+    // collections. GM/Director get rollups through getExitInterviewInsights
+    // instead of a direct collection read (the §6 minimum-N safeguard has to
+    // be enforced server-side, which a firestore.rules read rule can't do).
+    match /exitInterviews/{interviewId} {
+      allow read: if hasAnyRole(['hrManager', 'superAdmin']);
+      allow write: if false; // submitExitInterview Cloud Function only
     }
 
     // ---- HR: Inventory (uniforms & assets) ----

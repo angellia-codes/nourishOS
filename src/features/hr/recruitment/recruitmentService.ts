@@ -5,9 +5,11 @@ import type { Unsubscribe } from '@/services/firestore'
 import type {
   Candidate,
   CandidateStage,
+  Employee,
   Interview,
   OnboardingChecklist,
   Requisition,
+  RequisitionCompensation,
 } from '@/types'
 
 /**
@@ -79,6 +81,41 @@ export function listOpenRequisitions(): Promise<Requisition[]> {
     where('isArchived', '==', false),
     orderBy('createdAt', 'desc'),
   ]).then((rows) => rows.filter((row) => row.status === 'approved'))
+}
+
+export interface UpdateRequisitionCompensationInput {
+  salaryMin: number
+  salaryMax: number
+  positionAllowance?: number
+  phoneAllowance?: number
+  transportationAllowance?: number
+}
+
+/** employee-requisition.md §3-C — hrManager/generalManager/director/superAdmin only; firestore.rules gates the read half. */
+export function updateRequisitionCompensation(
+  requisitionId: string,
+  input: UpdateRequisitionCompensationInput,
+): Promise<void> {
+  return callFunction('updateRequisitionCompensation', { requisitionId, ...input })
+}
+
+export function getRequisitionCompensation(requisitionId: string): Promise<RequisitionCompensation | null> {
+  return getDocument<RequisitionCompensation>(`${COLLECTIONS.RECRUITMENTS}/${requisitionId}/confidential`, 'compensation')
+}
+
+/**
+ * One-shot — the Replacing Employee picker doesn't need a live listener.
+ * Scoped to the requisition's own department: firestore.rules only lets a
+ * department leader read employees in their own department (HR/GM/Director/
+ * superAdmin read everyone regardless), and a "replacement" only makes sense
+ * within the same team anyway.
+ */
+export function listActiveEmployeesInDepartment(departmentId: string): Promise<Employee[]> {
+  return queryDocuments<Employee>(COLLECTIONS.EMPLOYEES, [
+    where('status', '==', 'active'),
+    where('departmentId', '==', departmentId),
+    orderBy('fullName'),
+  ])
 }
 
 // ---- Candidates ----

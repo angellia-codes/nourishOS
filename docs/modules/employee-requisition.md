@@ -124,8 +124,7 @@ interface RequisitionCompensation {
 | --- | --- | --- |
 | Budgeted, replacement | Dept Leader/Outlet Manager → HR Manager → GM | 48h |
 | Budgeted, new position | Dept Leader/Outlet Manager → HR Manager → GM | 48h |
-| **Not budgeted** (any type) | ... → GM → **Director** | 48h |
-| Requested by HR Manager directly | GM (single step; +Director if unbudgeted) | 48h |
+| Requested by HR Manager directly →  GM  (if unbudgeted) | 48h |
 
 Sequential multi-step via existing Approval Engine — same pattern as Performance Appraisal (HR Manager → GM). No new approval logic; this is workflow definition config only (roadmap item #9).
 

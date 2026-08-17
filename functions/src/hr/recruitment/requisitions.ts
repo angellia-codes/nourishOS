@@ -14,6 +14,8 @@ import {
   type AuthedUser,
 } from '../../lib'
 import { submitApprovalInternal } from '../../shared/approval'
+import { sendNotificationInternal } from '../../shared/notifications'
+import { positionsFor } from '../../lib/positions'
 import {
   EMPLOYMENT_TYPES,
   REQUISITION_TYPES,
@@ -36,16 +38,13 @@ import {
  * its approval completes, and candidates can only be raised against an
  * approved requisition (§10 criterion 6, enforced in candidates.ts).
  *
- * Two deliberate deviations from that spec, both scope calls rather than gaps:
- *
- * 1. The approval chain is fixed — hrManager → generalManager, registered in
- *    shared/approval/routes.ts as 'hr/requisition'. §5's conditional Director
- *    step for unbudgeted requests would need getApprovalRoute to take context;
- *    `budgeted` is still captured, so adding that branch later is a routes.ts
- *    change, not a data migration.
- * 2. No `recruitments/{id}/confidential/compensation` subdocument (§3-C).
- *    Nothing consumes a salary range yet, and it needs its own rules block and
- *    permission to be worth writing.
+ * One confirmed, permanent deviation from that spec: the approval chain is
+ * fixed — hrManager → generalManager, registered in shared/approval/routes.ts
+ * as 'hr/requisition' — regardless of `budgeted`. §5's conditional Director
+ * step for unbudgeted requests is a deliberate product decision NOT to build,
+ * not an unfinished gap: Director keeps read-only access to requisitions,
+ * full stop. `budgeted` is still captured on the record (it's part of the
+ * justification a leader raises), it just never reaches the approval route.
  */
 
 /** A type alias, not an interface — recordAuditEvent's Record<string, unknown> fields need the implicit index signature. */
@@ -67,7 +66,7 @@ type RequisitionFields = {
   budgeted: boolean
 }
 
-function validateFields(input: Record<string, unknown>): RequisitionFields {
+async function validateFields(input: Record<string, unknown>): Promise<RequisitionFields> {
   const { outletId, departmentId } = requireOutletAndDepartment(input.outletId, input.departmentId)
 
   const openings = Number(input.openings)
@@ -92,12 +91,26 @@ function validateFields(input: Record<string, unknown>): RequisitionFields {
   let replacingEmployeeId: string | null = null
   if (requisitionType === 'replacement') {
     replacingEmployeeId = requireText(input.replacingEmployeeId, 'Replacing employee', 200)
+    // Same "assigned manager must be an active employee" check createEmployee.ts
+    // already makes — a replacement has to name a real, currently-active hire.
+    const replacingSnap = await db.collection(COLLECTIONS.EMPLOYEES).doc(replacingEmployeeId).get()
+    if (!replacingSnap.exists || replacingSnap.data()?.status !== 'active') {
+      throw new AppError('failed-precondition', 'Replacing employee must be an active employee.')
+    }
+  }
+
+  const position = requireText(input.position, 'Position', 120)
+  // Same POSITIONS.md §3 catalog createEmployee.ts/updateEmployee.ts already
+  // validate against — a requisition's target title has to be a real,
+  // department-scoped position, not free text.
+  if (!positionsFor(outletId, departmentId).includes(position)) {
+    throw new AppError('invalid-argument', 'Select a valid position for this department.')
   }
 
   return {
     outletId,
     departmentId,
-    position: requireText(input.position, 'Position', 120),
+    position,
     openings,
     employmentType,
     contractMonths,
@@ -141,7 +154,7 @@ export const createRequisition = onCall({ region: REGION }, async (request) => {
     const user = await requireActiveUser(request)
     requireRecruitmentPermission(user, PERMISSIONS.RECRUITMENT_CREATE)
 
-    const fields = validateFields((request.data ?? {}) as Record<string, unknown>)
+    const fields = await validateFields((request.data ?? {}) as Record<string, unknown>)
 
     // §7: leaders raise requisitions for their own outlet only. HR/GM/Director
     // carry recruitment.update and are cross-outlet by design.
@@ -193,7 +206,7 @@ export const updateRequisition = onCall({ region: REGION }, async (request) => {
       throw new AppError('failed-precondition', 'Only a draft requisition can be edited.')
     }
 
-    const fields = validateFields(data)
+    const fields = await validateFields(data)
     await ref.update({ ...fields, ...updatedFields(user.uid) })
 
     await recordAuditEvent({
@@ -294,17 +307,45 @@ export const cancelRequisition = onCall({ region: REGION }, async (request) => {
       throw new AppError('failed-precondition', 'That requisition can no longer be cancelled.')
     }
 
-    if (requisition.status === 'approved' && confirm !== true) {
+    if (requisition.status === 'approved') {
       const live = await db
         .collection(COLLECTIONS.CANDIDATES)
         .where('requisitionId', '==', ref.id)
         .where('isArchived', '==', false)
-        .limit(1)
         .get()
+
       if (!live.empty) {
-        throw new AppError(
-          'failed-precondition',
-          'This requisition still has candidates in the pipeline. Confirm to cancel it anyway.',
+        if (confirm !== true) {
+          throw new AppError(
+            'failed-precondition',
+            'This requisition still has candidates in the pipeline. Confirm to cancel it anyway.',
+          )
+        }
+
+        // §6: cancelling an approved requisition with active candidates
+        // notifies whoever still has an interview scheduled against one of them.
+        const candidateIds = live.docs.map((doc) => doc.id)
+        const interviewSnap = await db
+          .collection(COLLECTIONS.INTERVIEWS)
+          .where('candidateId', 'in', candidateIds.slice(0, 30))
+          .where('outcome', '==', 'pending')
+          .get()
+
+        const interviewerUids = new Set(interviewSnap.docs.map((doc) => doc.data().interviewerUid as string))
+        await Promise.all(
+          Array.from(interviewerUids).map((interviewerUid) =>
+            sendNotificationInternal({
+              type: 'alert',
+              title: 'Requisition cancelled',
+              message: `${(requisition.requisitionNumber as string | null) ?? 'The requisition'} was cancelled. Your scheduled interview's candidate no longer has an open vacancy to be hired into.`,
+              module: 'hr',
+              priority: 'high',
+              recipientUid: interviewerUid,
+              senderUid: user.uid,
+              referenceModule: 'hr',
+              referenceId: ref.id,
+            }),
+          ),
         )
       }
     }

@@ -86,6 +86,8 @@ export interface Employee extends BaseDocument {
   // Separation — set by archiveEmployee only (E01-US03)
   resignationDate?: string | null
   resignationReason?: string | null
+  /** Actual final working day — distinct from resignationDate (when the resignation was recorded). employee-onboarding-exit-checklist.md §3. */
+  lastWorkingDate?: string | null
 
   /** Overrides BaseDocument's generic status: 'active' | 'inactive'. */
   status: 'active' | 'inactive'
