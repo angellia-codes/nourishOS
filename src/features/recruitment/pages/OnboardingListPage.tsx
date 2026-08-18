@@ -73,7 +73,7 @@ export function OnboardingListPage() {
         rows.map((row) => {
           const outstanding = outstandingMandatory(row)
           return (
-            <Card key={row.id} className="cursor-pointer" onClick={() => navigate(`/hr/onboarding/${row.id}`)}>
+            <Card key={row.id} className="cursor-pointer" onClick={() => navigate(`/recruitment/onboarding/${row.id}`)}>
               <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
                 <div className="min-w-0">
                   <p className="font-medium text-foreground">{row.candidateName}</p>
@@ -92,7 +92,7 @@ export function OnboardingListPage() {
                       label={outstanding === 0 ? 'Ready to close' : `${outstanding} required outstanding`}
                     />
                   )}
-                  <Button variant="secondary" onClick={() => navigate(`/hr/onboarding/${row.id}`)}>
+                  <Button variant="secondary" onClick={() => navigate(`/recruitment/onboarding/${row.id}`)}>
                     Open
                   </Button>
                 </div>

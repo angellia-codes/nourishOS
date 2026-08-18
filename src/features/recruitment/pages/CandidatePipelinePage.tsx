@@ -92,7 +92,7 @@ export function CandidatePipelinePage() {
             {showClosed ? 'Hide closed' : 'Show rejected & withdrawn'}
           </Button>
           {can(PERMISSIONS.RECRUITMENT_CREATE) && (
-            <Button onClick={() => navigate('/hr/candidates/new')}>
+            <Button onClick={() => navigate('/recruitment/candidates/new')}>
               <Plus className="mr-1 h-4 w-4" aria-hidden="true" />
               Add candidate
             </Button>
@@ -132,7 +132,7 @@ export function CandidatePipelinePage() {
                       <Card
                         key={candidate.id}
                         className="cursor-pointer"
-                        onClick={() => navigate(`/hr/candidates/${candidate.id}`)}
+                        onClick={() => navigate(`/recruitment/candidates/${candidate.id}`)}
                       >
                         <CardContent className="flex flex-col gap-1 p-3">
                           <p className="font-mono text-[11px] text-muted-foreground">{candidate.candidateNumber}</p>

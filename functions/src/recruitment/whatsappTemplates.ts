@@ -1,6 +1,6 @@
 import { logger } from 'firebase-functions/v2'
-import { BUSINESS_TIME_ZONE } from '../../lib'
-import { hrContactDetails, sendWhatsApp } from '../../shared/notifications'
+import { BUSINESS_TIME_ZONE } from '../lib'
+import { hrContactDetails, sendWhatsApp } from '../shared/notifications'
 import type { CandidateStage } from './helpers'
 
 /**

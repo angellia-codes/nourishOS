@@ -20,7 +20,7 @@ import * as recruitmentService from '../recruitmentService'
 import { CANDIDATE_SOURCE_LABELS } from '../recruitmentFormat'
 import type { Requisition } from '@/types'
 
-const LIST_ROUTE = '/hr/candidates'
+const LIST_ROUTE = '/recruitment/candidates'
 
 /**
  * Candidate intake — HR_OPERATIONS.md E04-US01.
@@ -118,7 +118,7 @@ export function CandidateFormPage() {
       if (candidateId) {
         await recruitmentService.updateCandidate({ ...base, candidateId })
         toast.success('Candidate updated.')
-        navigate(`/hr/candidates/${candidateId}`)
+        navigate(`/recruitment/candidates/${candidateId}`)
       } else {
         const { candidateId: newId, candidateNumber } = await recruitmentService.createCandidate({
           ...base,
@@ -126,7 +126,7 @@ export function CandidateFormPage() {
           allowDuplicate,
         })
         toast.success(`${candidateNumber} added to the pipeline.`)
-        navigate(`/hr/candidates/${newId}`)
+        navigate(`/recruitment/candidates/${newId}`)
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not save. Please try again.'

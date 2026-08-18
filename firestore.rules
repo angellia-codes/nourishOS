@@ -47,7 +47,16 @@ service cloud.firestore {
       // their own department. Salary is deliberately NOT stored on this doc
       // (see employee.types.ts) since rules can't hide individual fields.
       allow read: if hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
-        (hasAnyRole(['kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader', 'wholefoodLeader', 'outletManager']) &&
+        // restaurantManager replaced outletManager on the registration form but
+        // was never added here, so its dashboard headcount tile read denied.
+        // The /hr module is hidden from these roles (routes.tsx) — this read
+        // backs the "Active Employees (Dept)" KPI tile, not a page.
+        // Every department head, scoped to their own department: the list
+        // matches DEPARTMENT_ROLES[dept][0], which is what KpiCardsRow uses to
+        // decide someone is a department manager. Without the back-office roles
+        // here their headcount tile read denies.
+        (hasAnyRole(['kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader', 'wholefoodLeader',
+          'outletManager', 'restaurantManager', 'finance', 'purchasing', 'security', 'engineering', 'marketing']) &&
           resource.data.departmentId == request.auth.token.departmentId);
       allow write: if false; // createEmployee / updateEmployee / archiveEmployee Cloud Functions only
 
@@ -99,9 +108,16 @@ service cloud.firestore {
         'wholefoodLeader', 'outletManager', 'restaurantManager']);
     }
 
+    // Requisitions are raised by every department head, not only the
+    // outlet-facing leader roles — mirrors recruitment.create in
+    // ROLE_PERMISSIONS, so a head can read back what they submitted.
+    function isDepartmentHead() {
+      return isLeader() || hasAnyRole(['finance', 'purchasing', 'security', 'engineering', 'marketing']);
+    }
+
     match /recruitments/{requisitionId} {
       allow read: if isHrOrAbove() ||
-        (isLeader() && resource.data.outletId == request.auth.token.outletId);
+        (isDepartmentHead() && resource.data.outletId == request.auth.token.outletId);
       allow write: if false; // createRequisition / updateRequisition / submitRequisition / cancelRequisition only
 
       // employee-requisition.md §3-C/§7: salary range — narrower than the
@@ -163,7 +179,7 @@ service cloud.firestore {
 
     match /hrStockMovements/{movementId} {
       allow read: if isHrOrAbove() ||
-        (isLeader() && resource.data.outletId == request.auth.token.outletId);
+        (isDepartmentHead() && resource.data.outletId == request.auth.token.outletId);
       allow write: if false; // receiveStock / issueStock / transferStock only
     }
 
@@ -355,7 +371,13 @@ service cloud.firestore {
         resource.data.assignedTo == request.auth.uid ||
         resource.data.assignedToRole == role() ||
         hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
-        hasAnyRole(['kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader', 'wholefoodLeader', 'outletManager', 'engineering'])
+        hasAnyRole([
+          'kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader', 'wholefoodLeader',
+          'outletManager', 'restaurantManager', 'engineering',
+          // Every role that can raise a work order can read the queue it
+          // raised into — mirrors workOrders.create in ROLE_PERMISSIONS.
+          'finance', 'purchasing',
+        ])
       );
       allow write: if false; // createWorkOrder / updateWorkOrderStatus Cloud Functions only
     }

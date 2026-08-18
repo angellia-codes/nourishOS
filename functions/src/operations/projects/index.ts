@@ -9,7 +9,7 @@ export { createProject, updateProject, submitProject, moveProjectColumn } from '
 /**
  * Module-load-time registration (shared/approval/registry.ts): when the
  * 'operations/project' route resolves, mirror the outcome onto the project —
- * HR_OPERATIONS.md §9.10. Same shape as hr/recruitment's 'requisition' handler.
+ * HR_OPERATIONS.md §9.10. Same shape as recruitment's 'requisition' handler.
  *
  * This is the only place a project reaches the board: `column` stays 'backlog'
  * until an approval says otherwise, so §9.8's kanban can never show work that

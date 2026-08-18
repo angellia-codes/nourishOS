@@ -86,7 +86,7 @@ export function RequisitionListPage() {
           </p>
         </div>
         {canCreate && (
-          <Button onClick={() => navigate('/hr/requisitions/new')}>
+          <Button onClick={() => navigate('/recruitment/requisitions/new')}>
             <Plus className="mr-1 h-4 w-4" aria-hidden="true" />
             New requisition
           </Button>
@@ -121,7 +121,7 @@ export function RequisitionListPage() {
         />
       ) : (
         visible.map((row) => (
-          <Card key={row.id} className="cursor-pointer" onClick={() => navigate(`/hr/requisitions/${row.id}`)}>
+          <Card key={row.id} className="cursor-pointer" onClick={() => navigate(`/recruitment/requisitions/${row.id}`)}>
             <CardContent className="flex flex-wrap items-start justify-between gap-3 p-4">
               <div className="min-w-0">
                 <p className="font-mono text-xs text-muted-foreground">{row.requisitionNumber ?? 'Draft'}</p>

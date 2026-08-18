@@ -22,7 +22,7 @@ import * as recruitmentService from '../recruitmentService'
 import { EMPLOYMENT_TYPE_LABELS, REQUISITION_TYPE_LABELS } from '../recruitmentFormat'
 import type { Employee } from '@/types'
 
-const LIST_ROUTE = '/hr/requisitions'
+const LIST_ROUTE = '/recruitment/requisitions'
 const DEPARTMENT_NAMES: Record<string, string> = Object.fromEntries(
   DEPARTMENTS.map((department) => [department.id, department.name]),
 )
@@ -173,11 +173,11 @@ export function RequisitionFormPage() {
       if (requisitionId) {
         await recruitmentService.updateRequisition({ ...input, requisitionId })
         toast.success('Requisition updated.')
-        navigate(`/hr/requisitions/${requisitionId}`)
+        navigate(`/recruitment/requisitions/${requisitionId}`)
       } else {
         const { requisitionId: newId } = await recruitmentService.createRequisition(input)
         toast.success('Draft saved. Submit it when you are ready for approval.')
-        navigate(`/hr/requisitions/${newId}`)
+        navigate(`/recruitment/requisitions/${newId}`)
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Could not save. Please try again.')

@@ -14,7 +14,7 @@ import {
 } from '../../lib'
 import { completeTaskInternal } from '../../shared/tasks'
 import { requireIsoDate } from './helpers'
-import { requireText, requireOneOf, CANDIDATE_SOURCES } from '../recruitment/helpers'
+import { requireText, requireOneOf, CANDIDATE_SOURCES } from '../../recruitment/helpers'
 
 /** exit-interview.md §3. */
 const JOIN_REASONS = [

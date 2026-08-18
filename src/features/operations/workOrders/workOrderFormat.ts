@@ -3,6 +3,15 @@ import type { StatusTone } from '@/components/ui'
 import type { Priority } from '@/constants/statuses'
 import type { WorkOrderStatus } from '@/types'
 
+/**
+ * Photos are plain `files` documents; the resourceType separates the
+ * condition-on-arrival shot from the proof-of-completion one. Mirrors
+ * functions/src/operations/workOrders/helpers.ts, which gates completion on
+ * an after photo existing.
+ */
+export const WORK_ORDER_PHOTO_BEFORE = 'workOrder'
+export const WORK_ORDER_PHOTO_AFTER = 'workOrderAfter'
+
 /** FEATURE_SPECIFICATIONS.md Module 5 — Request → Assign → In Progress → Completed → Closed. */
 export const WORK_ORDER_STATUS_LABELS: Record<WorkOrderStatus, string> = {
   open: 'Open',

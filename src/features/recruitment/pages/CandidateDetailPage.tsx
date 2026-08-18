@@ -28,7 +28,7 @@ import {
 } from '../recruitmentFormat'
 import { CANDIDATE_STAGE_LABELS, type Candidate, type CandidateStage, type Interview } from '@/types'
 
-const LIST_ROUTE = '/hr/candidates'
+const LIST_ROUTE = '/recruitment/candidates'
 
 /**
  * Which stages a candidate can move to from here — mirrors
@@ -130,7 +130,7 @@ export function CandidateDetailPage() {
       setTargetStage('')
       setStageReason('')
       if (onboardingChecklistId) {
-        navigate(`/hr/onboarding/${onboardingChecklistId}`)
+        navigate(`/recruitment/onboarding/${onboardingChecklistId}`)
         return
       }
       await load()
@@ -278,7 +278,7 @@ export function CandidateDetailPage() {
           Interviews ({interviews.length})
         </h2>
         {canManage && (
-          <Button variant="secondary" onClick={() => navigate(`/hr/candidates/${id}/interviews/new`)}>
+          <Button variant="secondary" onClick={() => navigate(`/recruitment/candidates/${id}/interviews/new`)}>
             <CalendarPlus className="mr-1 h-4 w-4" aria-hidden="true" />
             Schedule interview
           </Button>

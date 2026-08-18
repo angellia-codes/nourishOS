@@ -3,7 +3,7 @@ import { Lock } from 'lucide-react'
 import { Spinner } from '@/components/ui'
 import { EmptyState, ReportTable, type ReportTableColumn } from '@/components/shared'
 import * as employeeService from '@/features/hr/services/employeeService'
-import * as recruitmentService from '@/features/hr/recruitment/recruitmentService'
+import * as recruitmentService from '@/features/recruitment/recruitmentService'
 import { buildManningBudgetRows, type ManningBudgetRow } from '../utils/manningBudget'
 import type { Employee, Requisition } from '@/types'
 

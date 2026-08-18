@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Briefcase } from 'lucide-react'
 import { StatusPill } from '@/components/ui'
 import { OUTLETS } from '@/constants'
-import * as recruitmentService from '@/features/hr/recruitment/recruitmentService'
-import { URGENCY_ICON, URGENCY_TONE } from '@/features/hr/recruitment/recruitmentFormat'
+import * as recruitmentService from '@/features/recruitment/recruitmentService'
+import { URGENCY_ICON, URGENCY_TONE } from '@/features/recruitment/recruitmentFormat'
 import { DashboardWidget, WidgetRow } from './DashboardWidget'
 import type { Requisition } from '@/types'
 
@@ -46,14 +46,14 @@ export function OpenPositionsWidget() {
       title="Open Positions"
       icon={Briefcase}
       count={requisitions === null ? undefined : open.length}
-      viewAllTo="/hr/requisitions"
+      viewAllTo="/recruitment/requisitions"
       loading={requisitions === null}
       denied={denied}
       emptyText="No open vacancies right now."
     >
       <div className="flex flex-col gap-2">
         {open.slice(0, MAX_ROWS).map((requisition) => (
-          <WidgetRow key={requisition.id} to={`/hr/requisitions/${requisition.id}`}>
+          <WidgetRow key={requisition.id} to={`/recruitment/requisitions/${requisition.id}`}>
             <div className="min-w-0">
               <p className="truncate text-sm font-medium text-foreground">
                 {requisition.openings - requisition.filledCount} × {requisition.position}

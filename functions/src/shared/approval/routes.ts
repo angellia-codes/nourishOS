@@ -24,7 +24,7 @@ const APPROVAL_ROUTES: Record<string, ApprovalRoute> = {
   // the request is unbudgeted) — confirmed with the user this is NOT being
   // built: a permanent product decision, not an open TODO. Director keeps
   // read-only access to requisitions regardless of `budgeted`.
-  'hr/requisition': [
+  'recruitment/requisition': [
     { sequence: 1, approverRole: 'hrManager' },
     { sequence: 2, approverRole: 'generalManager' },
   ],

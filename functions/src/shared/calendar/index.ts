@@ -10,7 +10,7 @@ export { pushEventToGoogle, deleteEventFromGoogle } from './googleSync'
 /**
  * Module-load-time registration (shared/approval/registry.ts): when the
  * 'calendar/companyEvent' route resolves, mirror the outcome onto the event —
- * §9.2-F10. Same shape as hr/recruitment/index.ts's 'requisition' handler.
+ * §9.2-F10. Same shape as recruitment/index.ts's 'requisition' handler.
  */
 registerApprovalResolvedHandler('companyEvent', async (event) => {
   const ref = db.collection(COLLECTIONS.CALENDAR_EVENTS).doc(event.resourceId)

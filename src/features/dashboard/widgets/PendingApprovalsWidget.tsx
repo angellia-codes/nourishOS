@@ -75,7 +75,7 @@ export function PendingApprovalsWidget() {
       icon={Stamp}
       count={loading ? undefined : total}
       // No "View all": there is no approval queue page, and pointing at
-      // /hr/requisitions would send an approver to a resource list that shows
+      // /recruitment/requisitions would send an approver to a resource list that shows
       // approved requisitions rather than the ones awaiting them.
       loading={loading}
       denied={denied}

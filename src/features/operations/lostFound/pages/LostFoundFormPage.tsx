@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Upload } from 'lucide-react'
+import { Upload, Camera } from 'lucide-react'
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Select, Spinner, Textarea } from '@/components/ui'
 import { useAuth, useToast } from '@/hooks'
 import { OUTLETS } from '@/constants'
@@ -130,6 +130,18 @@ export function LostFoundFormPage() {
                 id="lfPhoto"
                 type="file"
                 accept="image/*"
+                className="hidden"
+                onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
+              />
+            </label>
+            {/* `capture` opens the camera on mobile; desktop ignores it and shows the picker. */}
+            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-md border border-border px-3 py-2 text-sm hover:border-primary/50">
+              <Camera className="h-4 w-4" aria-hidden="true" />
+              Take a photo
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
                 className="hidden"
                 onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
               />

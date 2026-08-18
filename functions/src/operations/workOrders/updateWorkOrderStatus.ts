@@ -13,12 +13,15 @@ import {
   PERMISSIONS,
 } from '../../lib'
 import { sendNotificationInternal } from '../../shared/notifications'
-import { WORK_ORDER_NEXT_STATUS, type WorkOrderStatus } from './helpers'
+import { WORK_ORDER_NEXT_STATUS, WORK_ORDER_PHOTO_AFTER, type WorkOrderStatus } from './helpers'
 
 interface UpdateWorkOrderStatusInput {
   workOrderId: string
   status: WorkOrderStatus
+  /** Omitted on an `assigned` move means the caller is accepting the job themselves. */
   assignedTo?: string
+  /** Required on `inProgress` — the "still working on it" note, appended to progressNotes. */
+  notes?: string
   resolutionNotes?: string
 }
 
@@ -60,15 +63,41 @@ export const updateWorkOrderStatus = onCall({ region: REGION }, async (request) 
     if (WORK_ORDER_NEXT_STATUS[workOrder.status as WorkOrderStatus] !== input.status) {
       throw new AppError('failed-precondition', `Cannot move from ${workOrder.status} to ${input.status}.`)
     }
-    if (input.status === 'assigned' && !input.assignedTo) {
-      throw new AppError('invalid-argument', 'assignedTo is required to assign a work order.')
+    // An engineer accepting the job is the same transition as a manager
+    // assigning it — the only difference is who ends up in assignedTo, so
+    // acceptance is the default rather than a second callable.
+    const assignedTo = input.status === 'assigned' ? (input.assignedTo || user.uid) : undefined
+
+    if (input.status === 'inProgress' && !input.notes?.trim()) {
+      throw new AppError('invalid-argument', 'A progress note is required while the job is still open.')
     }
-    if (input.status === 'completed' && !input.resolutionNotes) {
-      throw new AppError('invalid-argument', 'resolutionNotes is required to complete a work order.')
+    if (input.status === 'completed') {
+      if (!input.resolutionNotes) {
+        throw new AppError('invalid-argument', 'resolutionNotes is required to complete a work order.')
+      }
+      // "Done" has to be evidenced, not asserted: the after photo is a
+      // precondition of completion, checked here rather than only in the UI.
+      const afterPhotos = await db
+        .collection(COLLECTIONS.FILES)
+        .where('resourceType', '==', WORK_ORDER_PHOTO_AFTER)
+        .where('resourceId', '==', ref.id)
+        .where('fileStatus', '==', 'available')
+        .limit(1)
+        .get()
+      if (afterPhotos.empty) {
+        throw new AppError('failed-precondition', 'Upload an after photo before completing this work order.')
+      }
     }
 
     const updates: Record<string, unknown> = { status: input.status, ...updatedFields(user.uid) }
-    if (input.status === 'assigned') updates.assignedTo = input.assignedTo
+    if (assignedTo) updates.assignedTo = assignedTo
+    if (input.status === 'inProgress') {
+      const progressNotes = (workOrder.progressNotes as unknown[] | undefined) ?? []
+      updates.progressNotes = [
+        ...progressNotes,
+        { note: input.notes!.trim(), by: user.uid, at: new Date().toISOString() },
+      ]
+    }
     if (input.status === 'completed') updates.resolutionNotes = input.resolutionNotes
 
     await ref.update(updates)

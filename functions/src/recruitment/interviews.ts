@@ -12,14 +12,14 @@ import {
   AppError,
   handleError,
   successResponse,
-} from '../../lib'
-import { createCalendarEventInternal } from '../../shared/calendar'
-import { createTaskInternal } from '../../shared/tasks'
-import { sendNotificationInternal, whatsAppTargetForUid } from '../../shared/notifications'
+} from '../lib'
+import { createCalendarEventInternal } from '../shared/calendar'
+import { createTaskInternal } from '../shared/tasks'
+import { sendNotificationInternal, whatsAppTargetForUid } from '../shared/notifications'
 import { STAGE_LABELS, requireRecruitmentPermission, requireText, type CandidateStage } from './helpers'
 import { HR_INTERVIEW_STAGE, USER_INTERVIEW_STAGE } from './candidates'
 import { notifyInterviewScheduled } from './whatsappTemplates'
-import { FONNTE_TOKEN, GOOGLE_CALENDAR_SA_KEY } from '../../lib/secrets'
+import { FONNTE_TOKEN, GOOGLE_CALENDAR_SA_KEY } from '../lib/secrets'
 
 /**
  * Interview stage — HR_OPERATIONS.md §9.4-F05 (scheduling linked to the

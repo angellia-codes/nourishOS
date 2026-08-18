@@ -29,7 +29,7 @@ import {
   type TaxStatus,
 } from '@/constants/hr'
 import * as employeeService from '@/features/hr/services/employeeService'
-import { getCandidate } from '@/features/hr/recruitment/recruitmentService'
+import { getCandidate } from '@/features/recruitment/recruitmentService'
 import { ApiError } from '@/services/api'
 import type { Employee } from '@/types'
 

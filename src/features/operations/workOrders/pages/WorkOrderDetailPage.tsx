@@ -7,8 +7,11 @@ import { useFirestoreDoc, useFirestoreQuery, usePermissions, useToast } from '@/
 import { COLLECTIONS, PERMISSIONS } from '@/constants'
 import { where, orderBy } from '@/services/firestore'
 import { subscribeToDirectory, type DirectoryUser } from '@/services/shared/userService'
+import { formatDateTime } from '@/utils/date'
 import * as workOrderService from '../workOrderService'
 import {
+  WORK_ORDER_PHOTO_AFTER,
+  WORK_ORDER_PHOTO_BEFORE,
   WORK_ORDER_PRIORITY_LABELS,
   WORK_ORDER_PRIORITY_VARIANT,
   WORK_ORDER_STATUS_ICON,
@@ -38,11 +41,23 @@ export function WorkOrderDetailPage() {
   const { can } = usePermissions()
 
   const { data: workOrder, loading } = useFirestoreDoc<WorkOrder>(COLLECTIONS.WORK_ORDERS, workOrderId)
-  const { data: attachments } = useFirestoreQuery<FileMetadata>(
+  const { data: beforePhotos } = useFirestoreQuery<FileMetadata>(
     COLLECTIONS.FILES,
     workOrderId
       ? [
-          where('resourceType', '==', 'workOrder'),
+          where('resourceType', '==', WORK_ORDER_PHOTO_BEFORE),
+          where('resourceId', '==', workOrderId),
+          where('fileStatus', '==', 'available'),
+          orderBy('createdAt', 'desc'),
+        ]
+      : [],
+    [workOrderId],
+  )
+  const { data: afterPhotos } = useFirestoreQuery<FileMetadata>(
+    COLLECTIONS.FILES,
+    workOrderId
+      ? [
+          where('resourceType', '==', WORK_ORDER_PHOTO_AFTER),
           where('resourceId', '==', workOrderId),
           where('fileStatus', '==', 'available'),
           orderBy('createdAt', 'desc'),
@@ -52,6 +67,7 @@ export function WorkOrderDetailPage() {
   )
   const [directory, setDirectory] = useState<DirectoryUser[]>([])
   const [assignee, setAssignee] = useState('')
+  const [progressNote, setProgressNote] = useState('')
   const [resolutionNotes, setResolutionNotes] = useState('')
   const [advancing, setAdvancing] = useState(false)
 
@@ -84,20 +100,26 @@ export function WorkOrderDetailPage() {
   const requiredPermission = nextStatus ? PERMISSION_FOR_STATUS[nextStatus] : undefined
   const canAdvance = requiredPermission ? can(requiredPermission) : false
   const requiresAssignee = nextStatus === 'assigned'
+  const requiresProgressNote = nextStatus === 'inProgress'
   const requiresResolutionNotes = nextStatus === 'completed'
+  // updateWorkOrderStatus rejects a completion with no after photo; mirror
+  // that here so the button explains itself instead of failing on submit.
+  const missingAfterPhoto = requiresResolutionNotes && afterPhotos.length === 0
 
   async function handleAdvance() {
     if (!nextStatus || !workOrder) return
-    if (requiresAssignee && !assignee) return
-    if (requiresResolutionNotes && !resolutionNotes.trim()) return
+    if (requiresProgressNote && !progressNote.trim()) return
+    if (requiresResolutionNotes && (!resolutionNotes.trim() || missingAfterPhoto)) return
     setAdvancing(true)
     try {
       await workOrderService.updateWorkOrderStatus({
         workOrderId: workOrder.id,
         status: nextStatus,
-        assignedTo: requiresAssignee ? assignee : undefined,
+        assignedTo: requiresAssignee && assignee ? assignee : undefined,
+        notes: requiresProgressNote ? progressNote : undefined,
         resolutionNotes: requiresResolutionNotes ? resolutionNotes : undefined,
       })
+      setProgressNote('')
       toast.success(`Status moved to ${WORK_ORDER_STATUS_LABELS[nextStatus]}.`)
     } catch {
       toast.error('Failed to update status. Please try again.')
@@ -137,13 +159,52 @@ export function WorkOrderDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Photos</CardTitle>
+          <CardTitle>Photos — Before</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
-          <FileList files={attachments} />
-          <FileUpload module="operations" resourceType="workOrder" resourceId={workOrder.id} accept="image/*" />
+          <FileList files={beforePhotos} />
+          <FileUpload
+            module="operations"
+            resourceType={WORK_ORDER_PHOTO_BEFORE}
+            resourceId={workOrder.id}
+            accept="image/*"
+            camera
+          />
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Photos — After</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          <p className="text-xs text-muted-foreground">Required before a work order can be completed.</p>
+          <FileList files={afterPhotos} />
+          <FileUpload
+            module="operations"
+            resourceType={WORK_ORDER_PHOTO_AFTER}
+            resourceId={workOrder.id}
+            accept="image/*"
+            camera
+          />
+        </CardContent>
+      </Card>
+
+      {workOrder.progressNotes?.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Progress Notes</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2">
+            {workOrder.progressNotes.map((entry) => (
+              <div key={`${entry.at}-${entry.by}`} className="rounded-md border border-border p-2">
+                <p className="text-sm text-foreground">{entry.note}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{formatDateTime(entry.at)}</p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {workOrder.resolutionNotes && (
         <Card>
@@ -162,13 +223,23 @@ export function WorkOrderDetailPage() {
           <CardContent className="flex flex-col gap-3">
             {requiresAssignee && (
               <Select aria-label="Assign to" value={assignee} onChange={(e) => setAssignee(e.target.value)}>
-                <option value="">Select an engineer…</option>
+                <option value="">Accept it myself</option>
                 {directory.map((user) => (
                   <option key={user.uid} value={user.uid}>
                     {user.displayName}
                   </option>
                 ))}
               </Select>
+            )}
+            {requiresProgressNote && (
+              <Textarea
+                placeholder="What is the status? (required while the job is open) *"
+                value={progressNote}
+                onChange={(e) => setProgressNote(e.target.value)}
+              />
+            )}
+            {missingAfterPhoto && (
+              <p className="text-sm text-destructive">Upload an after photo above before completing this work order.</p>
             )}
             {requiresResolutionNotes && (
               <Textarea
@@ -181,7 +252,9 @@ export function WorkOrderDetailPage() {
               <Button
                 type="button"
                 disabled={
-                  advancing || (requiresAssignee && !assignee) || (requiresResolutionNotes && !resolutionNotes.trim())
+                  advancing ||
+                  (requiresProgressNote && !progressNote.trim()) ||
+                  (requiresResolutionNotes && (!resolutionNotes.trim() || missingAfterPhoto))
                 }
                 onClick={handleAdvance}
               >

@@ -88,6 +88,9 @@ const LEADER = [
   // Management — they raise and read, GM approval (§9.10) opens the project.
   'projects.read',
   'projects.create',
+  // Whoever runs the floor raises the maintenance request; engineering still
+  // owns assign/update/complete, so raising one grants no power over it.
+  'workOrders.create',
 ]
 
 /**
@@ -100,6 +103,7 @@ const LEADER = [
  */
 export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
   director: [
+    'workOrders.create',
     ...BASE,
     'employees.read',
     'recruitment.read',
@@ -126,6 +130,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'chat.manageChannels',
   ],
   generalManager: [
+    'workOrders.create',
     ...BASE,
     'employees.read',
     'recruitment.read',
@@ -156,6 +161,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'chat.manageChannels',
   ],
   hrManager: [
+    'workOrders.create',
     ...BASE,
     'employees.read',
     'employees.create',
@@ -199,6 +205,9 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'exitInterviews.view',
   ],
   finance: [
+    'recruitment.read',
+    'recruitment.create',
+    'workOrders.create',
     ...BASE,
     'expenseRequests.submit',
     'expenseRequests.approve',
@@ -211,7 +220,16 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'employees.read',
     'tasks.assign',
   ],
-  purchasing: [...BASE, 'expenseRequests.submit', 'reports.read', 'tasks.assign'],
+  purchasing: [
+    ...BASE,
+    'expenseRequests.submit',
+    'reports.read',
+    'tasks.assign',
+    'workOrders.create',
+    'workOrders.update',
+    'recruitment.read',
+    'recruitment.create',
+  ],
   kitchenLeader: LEADER,
   bakeryLeader: LEADER,
   wholefoodLeader: LEADER,
@@ -219,6 +237,8 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
   // §5 gives Floor Leader ✅ on Incident Reports — they own the guest-facing incidents.
   floorLeader: [...LEADER, 'incidents.manage', 'lostFound.manage'],
   security: [
+    'recruitment.read',
+    'recruitment.create',
     ...BASE,
     'security.create',
     'security.read',
@@ -232,6 +252,9 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'dailyUpdates.read',
   ],
   engineering: [
+    'recruitment.read',
+    'recruitment.create',
+    'workOrders.create',
     ...BASE,
     'workOrders.assign',
     'workOrders.update',
@@ -273,6 +296,14 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'incidents.create',
     'lostFound.create',
   ],
-  marketing: [...BASE, 'announcements.create', 'announcements.publish', 'documents.publish', 'reports.read'],
+  marketing: [
+    ...BASE,
+    'announcements.create',
+    'announcements.publish',
+    'documents.publish',
+    'reports.read',
+    'recruitment.read',
+    'recruitment.create',
+  ],
   staff: [...BASE, 'dailyUpdates.submit', 'dailyUpdates.read', 'incidents.create', 'lostFound.create'],
 }

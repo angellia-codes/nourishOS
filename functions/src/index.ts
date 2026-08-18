@@ -79,7 +79,7 @@ export {
   completeOnboarding,
   updateRequisitionCompensation,
   sendInterviewReminders,
-} from './hr/recruitment'
+} from './recruitment'
 
 // ---- Documents: Job Descriptions ----
 export {
@@ -120,7 +120,7 @@ export { createChannel, sendMessage } from './communications/chat'
 export { updateCommunicationSettings } from './communications/communicationSettings'
 
 // ---- Operations: Work Orders ----
-export { createWorkOrder, updateWorkOrderStatus } from './operations/workOrders'
+export { createWorkOrder, updateWorkOrderStatus, checkWorkOrderEscalations } from './operations/workOrders'
 
 // ---- Operations: Project Management ----
 export { createProject, updateProject, submitProject, moveProjectColumn } from './operations/projects'

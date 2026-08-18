@@ -12,9 +12,9 @@ import {
   AppError,
   handleError,
   successResponse,
-} from '../../lib'
-import { createTaskInternal } from '../../shared/tasks'
-import { notifyUsersByRole } from '../../shared/notifications'
+} from '../lib'
+import { createTaskInternal } from '../shared/tasks'
+import { notifyUsersByRole } from '../shared/notifications'
 import { ONBOARDING_DOCUMENT_ITEMS } from './onboardingItems'
 import { requireRecruitmentPermission } from './helpers'
 

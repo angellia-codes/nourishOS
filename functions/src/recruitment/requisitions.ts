@@ -12,10 +12,10 @@ import {
   handleError,
   successResponse,
   type AuthedUser,
-} from '../../lib'
-import { submitApprovalInternal } from '../../shared/approval'
-import { sendNotificationInternal } from '../../shared/notifications'
-import { positionsFor } from '../../lib/positions'
+} from '../lib'
+import { submitApprovalInternal } from '../shared/approval'
+import { sendNotificationInternal } from '../shared/notifications'
+import { positionsFor } from '../lib/positions'
 import {
   EMPLOYMENT_TYPES,
   REQUISITION_TYPES,
@@ -40,7 +40,7 @@ import {
  *
  * One confirmed, permanent deviation from that spec: the approval chain is
  * fixed — hrManager → generalManager, registered in shared/approval/routes.ts
- * as 'hr/requisition' — regardless of `budgeted`. §5's conditional Director
+ * as 'recruitment/requisition' — regardless of `budgeted`. §5's conditional Director
  * step for unbudgeted requests is a deliberate product decision NOT to build,
  * not an unfinished gap: Director keeps read-only access to requisitions,
  * full stop. `budgeted` is still captured on the record (it's part of the
@@ -247,10 +247,10 @@ export const submitRequisition = onCall({ region: REGION }, async (request) => {
 
     const requisitionNumber = requisition.requisitionNumber ?? (await allocateRequisitionNumber())
 
-    // The route is server-owned (shared/approval/routes.ts, 'hr/requisition');
+    // The route is server-owned (shared/approval/routes.ts, 'recruitment/requisition');
     // notifying the first approver happens inside submitApprovalInternal.
     const approvalRequestId = await submitApprovalInternal({
-      module: 'hr',
+      module: 'recruitment',
       resourceType: 'requisition',
       resourceId: ref.id,
       requestedBy: user.uid,

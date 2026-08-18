@@ -78,7 +78,7 @@ export function InterviewFormPage() {
         overrideReason,
       })
       toast.success('Interview scheduled.')
-      navigate(`/hr/candidates/${candidateId}`)
+      navigate(`/recruitment/candidates/${candidateId}`)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Could not schedule the interview.'
       if (!overrideReason && message.includes('overlapping commitment')) {
@@ -99,7 +99,7 @@ export function InterviewFormPage() {
           title="No access"
           description="Your role can't schedule interviews."
           action={
-            <Button variant="secondary" onClick={() => navigate('/hr/candidates')}>
+            <Button variant="secondary" onClick={() => navigate('/recruitment/candidates')}>
               Back to candidates
             </Button>
           }
@@ -123,7 +123,7 @@ export function InterviewFormPage() {
           title="Not found"
           description="That candidate no longer exists."
           action={
-            <Button variant="secondary" onClick={() => navigate('/hr/candidates')}>
+            <Button variant="secondary" onClick={() => navigate('/recruitment/candidates')}>
               Back to candidates
             </Button>
           }
@@ -216,7 +216,7 @@ export function InterviewFormPage() {
         )}
 
         <div className="flex flex-wrap justify-end gap-2">
-          <Button variant="secondary" onClick={() => navigate(`/hr/candidates/${candidateId}`)} disabled={submitting}>
+          <Button variant="secondary" onClick={() => navigate(`/recruitment/candidates/${candidateId}`)} disabled={submitting}>
             Cancel
           </Button>
           <Button onClick={() => handleSchedule()} disabled={!canSubmit} loading={submitting}>

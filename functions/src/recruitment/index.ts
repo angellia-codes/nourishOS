@@ -1,9 +1,9 @@
 import { logger } from 'firebase-functions/v2'
 import { FieldValue } from 'firebase-admin/firestore'
-import { db, COLLECTIONS } from '../../lib'
-import { registerApprovalResolvedHandler } from '../../shared/approval'
-import { createTaskInternal } from '../../shared/tasks'
-import { sendNotificationInternal, notifyUsersByRole } from '../../shared/notifications'
+import { db, COLLECTIONS } from '../lib'
+import { registerApprovalResolvedHandler } from '../shared/approval'
+import { createTaskInternal } from '../shared/tasks'
+import { sendNotificationInternal, notifyUsersByRole } from '../shared/notifications'
 
 export { createRequisition, updateRequisition, submitRequisition, cancelRequisition } from './requisitions'
 export { updateRequisitionCompensation } from './requisitionCompensation'
@@ -14,7 +14,7 @@ export { updateOnboardingItem, completeOnboarding } from './onboarding'
 
 /**
  * Module-load-time registration (shared/approval/registry.ts): when the
- * 'hr/requisition' route resolves, mirror the outcome onto the requisition.
+ * 'recruitment/requisition' route resolves, mirror the outcome onto the requisition.
  *
  * This is the only place `vacancyStage` is first set — employee-requisition.md
  * §10 criterion 1 says a requisition cannot reach `open` without a completed

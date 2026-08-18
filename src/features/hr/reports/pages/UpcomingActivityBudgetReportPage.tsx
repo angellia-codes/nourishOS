@@ -5,7 +5,7 @@ import { EmptyState, ReportTable, type ReportTableColumn } from '@/components/sh
 import { formatDate, formatDateTime } from '@/utils/date'
 import { POSITION_LABELS } from '@/constants/positions'
 import * as employeeService from '@/features/hr/services/employeeService'
-import * as recruitmentService from '@/features/hr/recruitment/recruitmentService'
+import * as recruitmentService from '@/features/recruitment/recruitmentService'
 import type { Employee, Interview, OnboardingChecklist, Requisition } from '@/types'
 
 interface UpcomingRow {

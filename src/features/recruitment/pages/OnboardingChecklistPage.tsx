@@ -8,7 +8,7 @@ import { usePermissions, useToast } from '@/hooks'
 import * as recruitmentService from '../recruitmentService'
 import type { DocumentChecklistItem, OnboardingChecklist } from '@/types'
 
-const LIST_ROUTE = '/hr/onboarding'
+const LIST_ROUTE = '/recruitment/onboarding'
 
 /**
  * The F01 IN checklist for one hire — employee-onboarding-exit-checklist.md §4.

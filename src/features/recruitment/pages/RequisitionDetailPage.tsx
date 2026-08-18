@@ -19,7 +19,7 @@ import {
 } from '../recruitmentFormat'
 import { CANDIDATE_STAGE_LABELS, type Candidate, type FileMetadata, type Requisition, type RequisitionCompensation } from '@/types'
 
-const LIST_ROUTE = '/hr/requisitions'
+const LIST_ROUTE = '/recruitment/requisitions'
 const OUTLET_NAMES: Record<string, string> = Object.fromEntries(OUTLETS.map((outlet) => [outlet.id, outlet.name]))
 const DEPARTMENT_NAMES: Record<string, string> = Object.fromEntries(
   DEPARTMENTS.map((department) => [department.id, department.name]),
@@ -386,13 +386,13 @@ export function RequisitionDetailPage() {
                   <Button onClick={handleSubmit} loading={busy}>
                     Submit for approval
                   </Button>
-                  <Button variant="secondary" onClick={() => navigate(`/hr/requisitions/${id}/edit`)} disabled={busy}>
+                  <Button variant="secondary" onClick={() => navigate(`/recruitment/requisitions/${id}/edit`)} disabled={busy}>
                     Edit draft
                   </Button>
                 </>
               )}
               {canAddCandidates && (
-                <Button onClick={() => navigate(`/hr/candidates/new?requisitionId=${id}`)} disabled={busy}>
+                <Button onClick={() => navigate(`/recruitment/candidates/new?requisitionId=${id}`)} disabled={busy}>
                   <UserPlus className="mr-1 h-4 w-4" aria-hidden="true" />
                   Add candidate
                 </Button>
@@ -439,7 +439,7 @@ export function RequisitionDetailPage() {
           />
         ) : (
           candidates.map((candidate) => (
-            <Card key={candidate.id} className="cursor-pointer" onClick={() => navigate(`/hr/candidates/${candidate.id}`)}>
+            <Card key={candidate.id} className="cursor-pointer" onClick={() => navigate(`/recruitment/candidates/${candidate.id}`)}>
               <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
                 <div className="min-w-0">
                   <p className="font-mono text-xs text-muted-foreground">{candidate.candidateNumber}</p>

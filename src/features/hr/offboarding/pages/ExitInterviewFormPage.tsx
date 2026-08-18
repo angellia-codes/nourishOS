@@ -13,7 +13,7 @@ import {
   JOIN_REASONS,
   type ExitInterviewRatingItemDef,
 } from '@/constants/exitInterview'
-import { CANDIDATE_SOURCE_LABELS } from '@/features/hr/recruitment/recruitmentFormat'
+import { CANDIDATE_SOURCE_LABELS } from '@/features/recruitment/recruitmentFormat'
 import { CANDIDATE_SOURCES } from '@/types'
 import * as offboardingService from '../offboardingService'
 import type { ExitInterviewRating, OffboardingChecklist } from '@/types'

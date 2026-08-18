@@ -9,6 +9,8 @@ export interface CreateWorkOrderInput {
   description: string
   location: string
   priority: Priority
+  outletId: string
+  departmentId: string
 }
 
 export function createWorkOrder(input: CreateWorkOrderInput): Promise<{ workOrderId: string }> {
@@ -18,7 +20,9 @@ export function createWorkOrder(input: CreateWorkOrderInput): Promise<{ workOrde
 export function updateWorkOrderStatus(input: {
   workOrderId: string
   status: WorkOrderStatus
+  /** Left off an `assigned` move, the caller is accepting the job themselves. */
   assignedTo?: string
+  notes?: string
   resolutionNotes?: string
 }): Promise<{ workOrderId: string }> {
   return callFunction('updateWorkOrderStatus', input)

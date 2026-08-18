@@ -11,7 +11,7 @@ import {
   handleError,
   successResponse,
   PERMISSIONS,
-} from '../../lib'
+} from '../lib'
 
 interface UpdateRequisitionCompensationInput {
   requisitionId: string

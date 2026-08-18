@@ -1,17 +1,16 @@
 import { useNavigate } from 'react-router-dom'
-import { BarChart3, Boxes, ClipboardList, GraduationCap, KanbanSquare, LogOut, PackageCheck, Users } from 'lucide-react'
+import { BarChart3, Boxes, GraduationCap, LogOut, UserPlus, Users } from 'lucide-react'
 import { Button, Card, CardContent } from '@/components/ui'
 
 /**
- * The HR hub. Eight sub-modules ship: the employee register, the three
- * halves of the recruitment pipeline (requisitions → candidates →
- * onboarding; interviews hang off a candidate rather than standing alone),
- * offboarding (exit checklists, clearance and exit interviews — the OUT
+ * The HR hub. Five sub-modules ship: the employee register, offboarding (exit checklists, clearance and exit interviews — the OUT
  * counterpart to onboarding, triggered from Archive on the employee profile),
  * the uniform/asset stock ledger, the training catalog, and the reports
  * register. Employment Contracts is not a card here — like Disciplinary
  * Records, it's reached from the employee profile since it's always
- * employee-scoped, not a register of its own.
+ * employee-scoped, not a register of its own. The hiring pipeline left for
+ * its own /recruitment module (2026-08-19) and is linked from here as a
+ * cross-reference rather than owned.
  *
  * No permission gating on the cards — each page enforces its own read access
  * through firestore.rules, so a card that leads to an empty list is honest
@@ -23,24 +22,6 @@ const SUB_MODULES = [
     icon: Users,
     title: 'Employees',
     description: 'The employee register, profiles and appraisals.',
-  },
-  {
-    to: '/hr/requisitions',
-    icon: ClipboardList,
-    title: 'Requisitions',
-    description: 'Manpower requests and their approval chain.',
-  },
-  {
-    to: '/hr/candidates',
-    icon: KanbanSquare,
-    title: 'Candidates',
-    description: 'The hiring pipeline, applied through to hired.',
-  },
-  {
-    to: '/hr/onboarding',
-    icon: PackageCheck,
-    title: 'Onboarding',
-    description: 'Document checklists for new hires.',
   },
   {
     to: '/hr/offboarding',
@@ -59,6 +40,12 @@ const SUB_MODULES = [
     icon: GraduationCap,
     title: 'Training',
     description: 'Catalog, assignment and completion tracking.',
+  },
+  {
+    to: '/recruitment',
+    icon: UserPlus,
+    title: 'Recruitment',
+    description: 'Requisitions, candidates and onboarding — now its own module.',
   },
   {
     to: '/hr/reports',

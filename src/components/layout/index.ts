@@ -1,7 +1,6 @@
 export { AppLayout } from './AppLayout'
 export { Header } from './Header'
 export { Sidebar } from './Sidebar'
-export { BottomNav } from './BottomNav'
 export { NotificationBell } from './NotificationBell'
 export { NotificationPanel } from './NotificationPanel'
 export { ChatBell } from './ChatBell'

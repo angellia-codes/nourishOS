@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom'
 import { AuthLayout, DashboardLayout } from '@/layouts'
 import { ProtectedRoute } from './ProtectedRoute'
+import { RoleRoute } from './RoleRoute'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { RegisterPage } from '@/features/auth/RegisterPage'
 import { UnauthorizedPage } from '@/features/auth/UnauthorizedPage'
@@ -12,15 +13,16 @@ import { EmployeeFormPage } from '@/features/hr/pages/EmployeeFormPage'
 import { EmployeeImportPage } from '@/features/hr/pages/EmployeeImportPage'
 import { EmployeeProfilePage } from '@/features/hr/pages/EmployeeProfilePage'
 import { HrHomePage } from '@/features/hr/pages/HrHomePage'
-import { RequisitionListPage } from '@/features/hr/recruitment/pages/RequisitionListPage'
-import { RequisitionFormPage } from '@/features/hr/recruitment/pages/RequisitionFormPage'
-import { RequisitionDetailPage } from '@/features/hr/recruitment/pages/RequisitionDetailPage'
-import { CandidatePipelinePage } from '@/features/hr/recruitment/pages/CandidatePipelinePage'
-import { CandidateFormPage } from '@/features/hr/recruitment/pages/CandidateFormPage'
-import { CandidateDetailPage } from '@/features/hr/recruitment/pages/CandidateDetailPage'
-import { InterviewFormPage } from '@/features/hr/recruitment/pages/InterviewFormPage'
-import { OnboardingListPage } from '@/features/hr/recruitment/pages/OnboardingListPage'
-import { OnboardingChecklistPage } from '@/features/hr/recruitment/pages/OnboardingChecklistPage'
+import { RecruitmentHomePage } from '@/features/recruitment/pages/RecruitmentHomePage'
+import { RequisitionListPage } from '@/features/recruitment/pages/RequisitionListPage'
+import { RequisitionFormPage } from '@/features/recruitment/pages/RequisitionFormPage'
+import { RequisitionDetailPage } from '@/features/recruitment/pages/RequisitionDetailPage'
+import { CandidatePipelinePage } from '@/features/recruitment/pages/CandidatePipelinePage'
+import { CandidateFormPage } from '@/features/recruitment/pages/CandidateFormPage'
+import { CandidateDetailPage } from '@/features/recruitment/pages/CandidateDetailPage'
+import { InterviewFormPage } from '@/features/recruitment/pages/InterviewFormPage'
+import { OnboardingListPage } from '@/features/recruitment/pages/OnboardingListPage'
+import { OnboardingChecklistPage } from '@/features/recruitment/pages/OnboardingChecklistPage'
 import { OffboardingListPage } from '@/features/hr/offboarding/pages/OffboardingListPage'
 import { OffboardingChecklistPage } from '@/features/hr/offboarding/pages/OffboardingChecklistPage'
 import { ClearanceStatementPage } from '@/features/hr/offboarding/pages/ClearanceStatementPage'
@@ -95,7 +97,10 @@ import { TrainingCatalogListPage } from '@/features/hr/training/pages/TrainingCa
 import { TrainingFormPage } from '@/features/hr/training/pages/TrainingFormPage'
 import { TrainingDetailPage } from '@/features/hr/training/pages/TrainingDetailPage'
 import { SearchResultsPage } from '@/features/search/SearchResultsPage'
-import { ROUTES } from '@/constants'
+import { ROUTES, ROLES } from '@/constants'
+
+/** HR module allow-list — everyone else does not see /hr at all. */
+const HR_MODULE_ROLES: string[] = [ROLES.GENERAL_MANAGER, ROLES.DIRECTOR, ROLES.HR_MANAGER, ROLES.SUPER_ADMIN]
 
 export const router = createBrowserRouter([
   // ---- Public ----
@@ -118,11 +123,17 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <DashboardPage /> },
           {
-            // Four sub-modules now (employees + the recruitment pipeline), so
-            // the index is a hub. Static segments before the :id route in each
-            // group, or the param route swallows them.
-            path: 'hr',
+            // The employee register and everything hanging off it is HR's own
+            // module — GM/Director/HR/superAdmin only (2026-08-19). Recruitment
+            // moved out to /recruitment precisely because department heads need
+            // that half and not this one.
+            element: <RoleRoute roles={HR_MODULE_ROLES} />,
             children: [
+              {
+                // Static segments before the :id route in each group, or the
+                // param route swallows them.
+                path: 'hr',
+                children: [
               { index: true, element: <HrHomePage /> },
               { path: 'employees', element: <EmployeeListPage /> },
               { path: 'employees/new', element: <EmployeeFormPage /> },
@@ -130,21 +141,10 @@ export const router = createBrowserRouter([
               { path: 'employees/:employeeId', element: <EmployeeProfilePage /> },
               { path: 'employees/:employeeId/edit', element: <EmployeeFormPage /> },
               { path: 'appraisals/:appraisalId', element: <AppraisalReviewPage /> },
-              { path: 'requisitions', element: <RequisitionListPage /> },
-              { path: 'requisitions/new', element: <RequisitionFormPage /> },
-              { path: 'requisitions/:requisitionId', element: <RequisitionDetailPage /> },
-              { path: 'requisitions/:requisitionId/edit', element: <RequisitionFormPage /> },
               { path: 'employees/:employeeId/disciplinary/new', element: <DisciplinaryRecordFormPage /> },
               { path: 'employees/:employeeId/disciplinary/:recordId', element: <DisciplinaryRecordDetailPage /> },
               { path: 'employees/:employeeId/contracts/renew', element: <ContractRenewPage /> },
               { path: 'employees/:employeeId/contracts/terminate', element: <ContractTerminatePage /> },
-              { path: 'candidates', element: <CandidatePipelinePage /> },
-              { path: 'candidates/new', element: <CandidateFormPage /> },
-              { path: 'candidates/:candidateId', element: <CandidateDetailPage /> },
-              { path: 'candidates/:candidateId/edit', element: <CandidateFormPage /> },
-              { path: 'candidates/:candidateId/interviews/new', element: <InterviewFormPage /> },
-              { path: 'onboarding', element: <OnboardingListPage /> },
-              { path: 'onboarding/:checklistId', element: <OnboardingChecklistPage /> },
               { path: 'offboarding', element: <OffboardingListPage /> },
               { path: 'offboarding/:checklistId', element: <OffboardingChecklistPage /> },
               { path: 'offboarding/:checklistId/statement', element: <ClearanceStatementPage /> },
@@ -171,6 +171,28 @@ export const router = createBrowserRouter([
               { path: 'reports/upcoming-activity-budget', element: <UpcomingActivityBudgetReportPage /> },
               { path: 'reports/recruitment-funnel', element: <RecruitmentFunnelReportPage /> },
               { path: 'reports/exit-interview-insights', element: <ExitInterviewInsightsReportPage /> },
+                ],
+              },
+            ],
+          },
+          {
+            // Recruitment is its own module rather than an HR sub-page: every
+            // department head raises requisitions, and the hiring pipeline has
+            // a different audience from the employee register.
+            path: 'recruitment',
+            children: [
+              { index: true, element: <RecruitmentHomePage /> },
+              { path: 'requisitions', element: <RequisitionListPage /> },
+              { path: 'requisitions/new', element: <RequisitionFormPage /> },
+              { path: 'requisitions/:requisitionId', element: <RequisitionDetailPage /> },
+              { path: 'requisitions/:requisitionId/edit', element: <RequisitionFormPage /> },
+              { path: 'candidates', element: <CandidatePipelinePage /> },
+              { path: 'candidates/new', element: <CandidateFormPage /> },
+              { path: 'candidates/:candidateId', element: <CandidateDetailPage /> },
+              { path: 'candidates/:candidateId/edit', element: <CandidateFormPage /> },
+              { path: 'candidates/:candidateId/interviews/new', element: <InterviewFormPage /> },
+              { path: 'onboarding', element: <OnboardingListPage /> },
+              { path: 'onboarding/:checklistId', element: <OnboardingChecklistPage /> },
             ],
           },
           {

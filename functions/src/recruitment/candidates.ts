@@ -14,8 +14,8 @@ import {
   handleError,
   successResponse,
   type AuthedUser,
-} from '../../lib'
-import { sendNotificationInternal } from '../../shared/notifications'
+} from '../lib'
+import { sendNotificationInternal } from '../shared/notifications'
 import {
   ALLOWED_STAGE_TRANSITIONS,
   CANDIDATE_SOURCES,
@@ -30,7 +30,7 @@ import {
 } from './helpers'
 import { createOnboardingChecklistInternal } from './onboarding'
 import { notifyCandidateOfStage } from './whatsappTemplates'
-import { FONNTE_TOKEN } from '../../lib/secrets'
+import { FONNTE_TOKEN } from '../lib/secrets'
 
 /**
  * Candidate pipeline — HR_OPERATIONS.md §9.4 (stages ST-01…ST-08), §12.3

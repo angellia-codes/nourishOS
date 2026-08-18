@@ -1,5 +1,5 @@
-import { AppError, allocateYearlyNumber, requirePermission, type AuthedUser } from '../../lib'
-import { DEPARTMENT_ROLES, OUTLET_DEPARTMENTS } from '../../lib/organization'
+import { AppError, allocateYearlyNumber, requirePermission, type AuthedUser } from '../lib'
+import { DEPARTMENT_ROLES, OUTLET_DEPARTMENTS } from '../lib/organization'
 
 /**
  * requirePermission, but superAdmin always passes. `roles/superAdmin` was

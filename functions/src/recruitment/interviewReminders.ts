@@ -1,9 +1,9 @@
 import { onSchedule } from 'firebase-functions/v2/scheduler'
 import { logger } from 'firebase-functions/v2'
 import { Timestamp } from 'firebase-admin/firestore'
-import { db, COLLECTIONS, REGION, BUSINESS_TIME_ZONE } from '../../lib'
-import { FONNTE_TOKEN } from '../../lib/secrets'
-import { whatsAppTargetForUid } from '../../shared/notifications'
+import { db, COLLECTIONS, REGION, BUSINESS_TIME_ZONE } from '../lib'
+import { FONNTE_TOKEN } from '../lib/secrets'
+import { whatsAppTargetForUid } from '../shared/notifications'
 import { STAGE_LABELS, type CandidateStage } from './helpers'
 import { notifyInterviewReminder } from './whatsappTemplates'
 
