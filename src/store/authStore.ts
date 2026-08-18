@@ -40,7 +40,20 @@ const initialState = {
  */
 export const useAuthStore = create<AuthState>((set) => ({
   ...initialState,
-  setFirebaseUser: (firebaseUser) => set({ firebaseUser }),
+  setFirebaseUser: (firebaseUser) =>
+    set((state) => ({
+      firebaseUser,
+      // A newly signed-in uid has no profile yet: AuthProvider's subscription
+      // effect only runs on the render *after* this update, and on a cold load
+      // it has already flipped profileLoading to false for the null user. Mark
+      // the fetch pending in the same update that flips status to
+      // 'authenticated', or ProtectedRoute sees "authenticated, not loading, no
+      // profile" for one render and bounces a deep link to /register (and from
+      // there to the dashboard). Same uid keeps the current flag so a token
+      // refresh, which re-fires onAuthStateChanged without changing the deps of
+      // that effect, can't strand the app on the spinner.
+      profileLoading: firebaseUser ? state.firebaseUser?.uid !== firebaseUser.uid || state.profileLoading : false,
+    })),
   setProfile: (profile) => set({ profile }),
   setProfileLoading: (profileLoading) => set({ profileLoading }),
   setPermissions: (permissions) => set({ permissions }),
