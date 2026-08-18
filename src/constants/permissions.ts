@@ -41,6 +41,8 @@ export const PERMISSION_MODULES = {
   CHECKLISTS: 'checklists',
   CHAT: 'chat',
   EXIT_INTERVIEWS: 'exitInterviews',
+  PROJECTS: 'projects',
+  CONTRACTS: 'contracts',
 } as const
 
 export type PermissionModule = (typeof PERMISSION_MODULES)[keyof typeof PERMISSION_MODULES]
@@ -183,6 +185,17 @@ export const PERMISSIONS = {
   // One permission covers recording either checklist type — same trust level,
   // outlet leaders run both.
   CHECKLISTS_RECORD: permission(PERMISSION_MODULES.CHECKLISTS, 'record'),
+
+  // Operations — Project Management (HR_OPERATIONS.md §7.3 / §9.8). CREATE
+  // raises a project, which needs GM approval (§9.10) before it opens; MANAGE
+  // is moving it across the board, editing it, and closing it afterwards.
+  PROJECTS_READ: permission(PERMISSION_MODULES.PROJECTS, ACTIONS.READ),
+  PROJECTS_CREATE: permission(PERMISSION_MODULES.PROJECTS, ACTIONS.CREATE),
+  PROJECTS_MANAGE: permission(PERMISSION_MODULES.PROJECTS, ACTIONS.MANAGE),
+
+  // HR — the GM/Director digital-signature step on a new contract (§7.3 /
+  // §9.14). The rest of the contract lifecycle stays on employees.update.
+  CONTRACTS_SIGN: permission(PERMISSION_MODULES.CONTRACTS, 'sign'),
 } as const
 
 export type PermissionString = (typeof PERMISSIONS)[keyof typeof PERMISSIONS]

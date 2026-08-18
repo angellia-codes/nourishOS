@@ -62,6 +62,7 @@ export const COLLECTIONS = {
   PATROL_LOGS: 'patrolLogs',
 
   DAILY_REPORTS: 'dailyReports',
+  PROJECTS: 'projects',
   INCIDENT_REPORTS: 'incidentReports',
   WORK_ORDERS: 'workOrders',
   LOST_FOUND_ITEMS: 'lostFoundItems',
@@ -71,4 +72,5 @@ export const COLLECTIONS = {
   EXPENSE_REQUESTS: 'expenseRequests',
 
   SYSTEM_SETTINGS: 'systemSettings',
+  INTEGRATIONS: 'integrations',
 } as const

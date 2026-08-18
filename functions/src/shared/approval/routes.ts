@@ -35,6 +35,21 @@ const APPROVAL_ROUTES: Record<string, ApprovalRoute> = {
   // HR_OPERATIONS.md §9.2-F10 doesn't specify an exact chain — single-step GM
   // matches company events being a GM-level call, same reasoning 'hr/appraisal' uses.
   'calendar/companyEvent': [{ sequence: 1, approverRole: 'generalManager' }],
+  // HR_OPERATIONS.md §9.10 "Project Request — Dept. Manager → GM". The
+  // requester is already the department manager in practice, so the chain is
+  // the GM step plus HR's operational oversight of company-wide projects.
+  'operations/project': [
+    { sequence: 1, approverRole: 'hrManager' },
+    { sequence: 2, approverRole: 'generalManager' },
+  ],
+  // §9.14 Contract Signing — HR uploads, GM signs, Director signs. Distinct
+  // from 'hr/contract' above (renewal approval), because signing is a
+  // three-step chain ending at Director and carries its own resolved handler.
+  'hr/contractSigning': [
+    { sequence: 1, approverRole: 'hrManager' },
+    { sequence: 2, approverRole: 'generalManager' },
+    { sequence: 3, approverRole: 'director' },
+  ],
   // The first conditional route — expense-request.md §3 / approval_engine.md §6.
   'finance/expenseRequest': buildExpenseApprovalSteps,
   // operations/workOrder, ... — added as modules ship.

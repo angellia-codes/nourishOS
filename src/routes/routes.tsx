@@ -53,6 +53,10 @@ import { DailyUpdatesFeedPage } from '@/features/operations/dailyUpdates/pages/D
 import { DailyUpdateFormPage } from '@/features/operations/dailyUpdates/pages/DailyUpdateFormPage'
 import { OperationsHomePage } from '@/features/operations/pages/OperationsHomePage'
 import { WorkOrderListPage } from '@/features/operations/workOrders/pages/WorkOrderListPage'
+import { ProjectBoardPage } from '@/features/operations/projects/pages/ProjectBoardPage'
+import { ProjectDetailPage } from '@/features/operations/projects/pages/ProjectDetailPage'
+import { ProjectFormPage } from '@/features/operations/projects/pages/ProjectFormPage'
+import { FlashReportPage } from '@/features/reports/pages/FlashReportPage'
 import { WorkOrderFormPage } from '@/features/operations/workOrders/pages/WorkOrderFormPage'
 import { WorkOrderDetailPage } from '@/features/operations/workOrders/pages/WorkOrderDetailPage'
 import { ChecklistPage } from '@/features/operations/checklists/ChecklistPage'
@@ -195,6 +199,10 @@ export const router = createBrowserRouter([
               { path: 'work-orders/new', element: <WorkOrderFormPage /> },
               { path: 'work-orders/:workOrderId', element: <WorkOrderDetailPage /> },
               { path: 'checklists/:type', element: <ChecklistPage /> },
+              { path: 'projects', element: <ProjectBoardPage /> },
+              { path: 'projects/new', element: <ProjectFormPage /> },
+              { path: 'projects/:projectId', element: <ProjectDetailPage /> },
+              { path: 'projects/:projectId/edit', element: <ProjectFormPage /> },
             ],
           },
           {
@@ -257,7 +265,7 @@ export const router = createBrowserRouter([
               { path: 'chat/:channelId', element: <ChatChannelPage /> },
             ],
           },
-          { path: 'reports', element: <ModulePlaceholder title="Reports" /> },
+          { path: 'reports', element: <FlashReportPage /> },
           { path: 'settings', element: <RolePermissionsPage /> },
           { path: 'settings/communications', element: <CommunicationSettingsPage /> },
           { path: 'search', element: <SearchResultsPage /> },

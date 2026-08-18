@@ -390,6 +390,20 @@ service cloud.firestore {
       allow write: if false; // submitDailyReport Cloud Function only
     }
 
+    // ---- Operations: Project Management ----
+    // HR_OPERATIONS.md §7.2 gives outlet leaders "Own Projects" and the
+    // executive roles the full view. Same outlet-or-elevated shape as
+    // dailyReports above, plus the owner, who may sit in another outlet.
+    match /projects/{projectId} {
+      allow read: if isSignedIn() && (
+        resource.data.ownerUid == request.auth.uid ||
+        resource.data.createdBy == request.auth.uid ||
+        resource.data.outletId == request.auth.token.outletId ||
+        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin'])
+      );
+      allow write: if false; // createProject / updateProject / submitProject / moveProjectColumn only
+    }
+
     // ---- Shared: Executive Calendar ----
     match /calendarEvents/{eventId} {
       // HR_OPERATIONS.md §7.2: full access for the executive roles, read-only
@@ -415,6 +429,16 @@ service cloud.firestore {
     match /roles/{roleId} {
       allow read: if isSignedIn();
       allow write: if false; // seeded via Console; a Settings callable is planned (RBAC.md §16)
+    }
+
+    // ---- Integrations ----
+    // HR_OPERATIONS.md §6.2/§13.1: third-party credentials and contact details
+    // (integrations/fonnte, integrations/googleCalendar) live here rather than a
+    // CONFIG collection. Read is superAdmin-only — these documents hold tokens,
+    // and the Cloud Functions that actually use them bypass rules entirely.
+    match /integrations/{integrationId} {
+      allow read: if hasAnyRole(['superAdmin']);
+      allow write: if false; // seeded via Console — no callable writes credentials
     }
 
     // ---- Documents: Job Descriptions ----

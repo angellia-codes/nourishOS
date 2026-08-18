@@ -15,9 +15,11 @@ import {
 } from '../../lib'
 import { createCalendarEventInternal } from '../../shared/calendar'
 import { createTaskInternal } from '../../shared/tasks'
-import { sendNotificationInternal } from '../../shared/notifications'
+import { sendNotificationInternal, whatsAppTargetForUid } from '../../shared/notifications'
 import { STAGE_LABELS, requireRecruitmentPermission, requireText, type CandidateStage } from './helpers'
 import { HR_INTERVIEW_STAGE, USER_INTERVIEW_STAGE } from './candidates'
+import { notifyInterviewScheduled } from './whatsappTemplates'
+import { FONNTE_TOKEN, GOOGLE_CALENDAR_SA_KEY } from '../../lib/secrets'
 
 /**
  * Interview stage — HR_OPERATIONS.md §9.4-F05 (scheduling linked to the
@@ -30,15 +32,18 @@ import { HR_INTERVIEW_STAGE, USER_INTERVIEW_STAGE } from './candidates'
  * calling the callable — same internal-helper split the approval, task and
  * notification engines use.
  *
- * The §9.5 WhatsApp invitation/reminder templates are not wired (no Fonnte
- * adapter); the interviewer gets an in-app notification and a task instead, and
- * the candidate is contacted out of band.
+ * §9.5's template 2 (Interview Invitation) fires here for both the candidate
+ * and the interviewer; template 3 (the 24-hour reminder) is the separate
+ * `sendInterviewReminders` scheduled job in this folder.
  */
 
 const INTERVIEW_STAGES: readonly CandidateStage[] = [HR_INTERVIEW_STAGE, USER_INTERVIEW_STAGE]
 const DEFAULT_DURATION_MINUTES = 45
 
-export const scheduleInterview = onCall({ region: REGION }, async (request) => {
+// Both secrets: the WhatsApp invitation (§9.5) and the calendar event this
+// writes through createCalendarEventInternal, which now pushes to Google.
+const SCHEDULE_SECRETS = [FONNTE_TOKEN, GOOGLE_CALENDAR_SA_KEY]
+export const scheduleInterview = onCall({ region: REGION, secrets: SCHEDULE_SECRETS }, async (request) => {
   try {
     const user = await requireActiveUser(request)
     requireRecruitmentPermission(user, PERMISSIONS.RECRUITMENT_UPDATE)
@@ -127,6 +132,16 @@ export const scheduleInterview = onCall({ region: REGION }, async (request) => {
       priority: 'high',
       dueDate: scheduledAt.toISOString(),
       tags: ['recruitment', 'interview'],
+    })
+
+    // §9.5 template 2 — candidate and interviewer, after both writes land.
+    await notifyInterviewScheduled({
+      candidate,
+      stageLabel: STAGE_LABELS[stage],
+      scheduledAt,
+      location,
+      interviewerName: (interviewerSnap.data()?.displayName as string | undefined) ?? 'our team',
+      interviewerPhone: await whatsAppTargetForUid(interviewerUid),
     })
 
     await recordAuditEvent({

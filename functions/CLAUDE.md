@@ -16,7 +16,9 @@ firebase emulators:start          # auth 9099, functions 5001, firestore 8080, s
 
 Firebase config lives at the **repo root** (`firebase.json`, `firestore.rules`, `firestore.indexes.json`, `storage.rules`) so the CLI resolves `functions.source` correctly — run every `firebase` command from the root. These files used to sit under `src/`, where `"source": "functions"` resolved to the non-existent `src/functions` and broke the emulator.
 
-`functions/test/` holds two emulator smoke scripts (`emulator-callables.mjs`, `emulator-scheduled.mjs`) run by hand against `firebase emulators:start`, plus `timestamps.mjs`, which pins the timezone boundary below and needs no emulator. None of them is a suite.
+`functions/test/` holds two emulator smoke scripts (`emulator-callables.mjs`, `emulator-scheduled.mjs`) run by hand against `firebase emulators:start`, plus three that need no emulator: `timestamps.mjs` (pins the timezone boundary below), `hr-inventory-stock.mjs` (`applyDelta`), and `gap-pass.mjs` (the Fonnte retry/response handling with `fetch` stubbed, the project milestone parser, the flash-report formatter — one case sleeps through a single 5s backoff, which is §13.1's retry policy, not a hang). None of them is a suite; run them with `node functions/test/<name>.mjs` after `npm --prefix functions run build`.
+
+`functions/tools/user-doctor.mjs` is a hand-run Admin SDK script that inspects one account across all three RBAC layers (`users/{uid}.status`/`roleId`, the `{role, departmentId, outletId}` custom claims, `roles/{roleId}`) and counts collections to tell an empty database apart from a rules-denied read. Read-only unless `--fix`. It needs a service account key via `--key` or `GOOGLE_APPLICATION_CREDENTIALS` — this machine has no gcloud/ADC.
 
 ## Callable shape
 
@@ -30,11 +32,17 @@ Inside: `requireActiveUser(request)` (re-reads `users/{uid}` + `roles/{roleId}` 
 
 Every new callable must be exported from [src/index.ts](src/index.ts), and the client reaches it only through `callFunction`.
 
+## Secrets
+
+Three, all provisioned with `firebase functions:secrets:set` and declared per function ([src/lib/secrets.ts](src/lib/secrets.ts)): `ANTHROPIC_API_KEY` (appraisal insights), `FONNTE_TOKEN` (WhatsApp), `GOOGLE_CALENDAR_SA_KEY` (the Google service-account JSON, as one string).
+
+**A function only receives a secret it names in `secrets: [...]` on its `onCall`/`onSchedule` options.** Both the WhatsApp adapter and the calendar sync treat an empty value as "not provisioned" and skip silently rather than throwing — deliberate, so an unprovisioned environment still works — which means a forgotten `secrets:` entry looks like "the message just never sent," not like an error. Anything that sends WhatsApp or touches Google Calendar needs its declaration; grep for `FONNTE_TOKEN` / `GOOGLE_CALENDAR_SA_KEY` to see the current set. The non-secret half of both integrations (Fonnte's HR contact details, the target `calendarId`) lives in `integrations/{fonnte,googleCalendar}` Firestore docs.
+
 ## Time zone: WITA, declared explicitly — never inherited
 
 Cloud Functions run with `TZ` unset, so the runtime clock is UTC. The business runs on `Asia/Makassar` (UTC+8).
 
-`BUSINESS_TIME_ZONE`, `todayIso()`, `addDaysIso()` and `currentBusinessYear()` in [src/lib/timestamps.ts](src/lib/timestamps.ts) are the only sanctioned way to derive a date key or a year. All five wall-clock `onSchedule` jobs pass `timeZone: BUSINESS_TIME_ZONE` (`checkOverdueCheckpoints` is an interval, so it has none).
+`BUSINESS_TIME_ZONE`, `todayIso()`, `addDaysIso()` and `currentBusinessYear()` in [src/lib/timestamps.ts](src/lib/timestamps.ts) are the only sanctioned way to derive a date key or a year. Every wall-clock `onSchedule` job passes `timeZone: BUSINESS_TIME_ZONE` (`checkOverdueCheckpoints` is an interval, so it has none) — including the ones added in the 2026-08-18 pass: `sendInterviewReminders` (hourly), `syncCalendarEvents` (every 15 min) and `sendFlashReport` (Mondays 07:00).
 
 **Never use `new Date().toISOString().slice(0, 10)` for "today."** `toISOString()` is always UTC regardless of `TZ`, so between 00:00 and 08:00 WITA it silently returns yesterday and mis-files the day's records.
 

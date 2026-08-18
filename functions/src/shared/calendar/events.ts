@@ -17,6 +17,8 @@ import {
 } from '../../lib'
 import { sendNotificationInternal } from '../notifications'
 import { submitApprovalInternal } from '../approval'
+import { GOOGLE_CALENDAR_SA_KEY } from '../../lib/secrets'
+import { busyIntervalsFromGoogle, deleteEventFromGoogle, pushEventToGoogle } from './googleSync'
 
 /**
  * Executive calendar writes — HR_OPERATIONS.md §8.2 / §9.2. The read side is
@@ -28,9 +30,11 @@ import { submitApprovalInternal } from '../approval'
  * ordering are both served by the server. The read layer converts them back to
  * ISO strings (src/services/firestore/normalize.ts) to match CalendarEvent.
  *
- * Google Calendar push-sync (§14.4) is not provisioned, so every event is
- * written with syncStatus 'skipped' rather than 'pending' — nothing would ever
- * drain a pending queue, and a permanently-pending row reads as a stuck job.
+ * Google Calendar sync (§9.3/§14.4) is provisioned: events are written
+ * `syncStatus: 'pending'` and pushed inline by googleSync.ts, with
+ * syncCalendarEvents sweeping anything that push missed every 15 minutes.
+ * With no service-account secret or `integrations/googleCalendar` doc the push
+ * is a no-op, so an unprovisioned environment behaves exactly as before.
  */
 
 const EVENT_TYPES = [
@@ -158,7 +162,16 @@ export async function createCalendarEventInternal(
   // §9.2-F07: warn once, then let the caller retry with an overrideReason.
   // The client pulls `conflicts` off the error details (conflictsFromError).
   if (!input.overrideReason) {
-    const conflicts = await findConflicts(startAt, endAt, input.participants)
+    // §9.3-F03 widens the check to the shared Google calendar, so something
+    // booked there but never entered here still surfaces. Google can only add
+    // conflicts, never suppress the in-app ones.
+    const [conflicts, googleBusy] = await Promise.all([
+      findConflicts(startAt, endAt, input.participants),
+      busyIntervalsFromGoogle(startAt, endAt),
+    ])
+    for (const busy of googleBusy) {
+      conflicts.push({ eventId: 'google', title: 'Busy in Google Calendar', startAt: busy.start, endAt: busy.end })
+    }
     if (conflicts.length > 0) {
       throw new AppError(
         'failed-precondition',
@@ -193,7 +206,10 @@ export async function createCalendarEventInternal(
     sourceModule: source?.sourceModule ?? 'calendar',
     referenceId: source?.referenceId ?? null,
     gcalEventId: null,
-    syncStatus: 'skipped',
+    // 'pending' until the push below (or the 15-minute sweep) lands it. A
+    // company event waiting on GM approval stays 'pending' deliberately —
+    // syncCalendarEvents picks it up once approval flips it to confirmed.
+    syncStatus: 'pending',
     syncError: null,
     lastSyncedAt: null,
     ...newDocumentBaseFields(user.uid, eventStatus),
@@ -228,10 +244,16 @@ export async function createCalendarEventInternal(
       ),
   )
 
+  // §9.3-F02: push confirmed events to Google within 30 seconds. Inline rather
+  // than waiting for the sweep, and best-effort — pushEventToGoogle swallows
+  // its own failures onto the doc, so scheduling never fails on Google's
+  // account. A pendingApproval event is skipped inside the push itself.
+  await pushEventToGoogle(eventRef.id)
+
   return { eventId: eventRef.id, startAt, endAt }
 }
 
-export const createCalendarEvent = onCall({ region: REGION }, async (request) => {
+export const createCalendarEvent = onCall({ region: REGION, secrets: [GOOGLE_CALENDAR_SA_KEY] }, async (request) => {
   try {
     const user = await requireActiveUser(request)
     requirePermission(user, PERMISSIONS.CALENDAR_CREATE)
@@ -263,7 +285,7 @@ export const createCalendarEvent = onCall({ region: REGION }, async (request) =>
   }
 })
 
-export const cancelCalendarEvent = onCall({ region: REGION }, async (request) => {
+export const cancelCalendarEvent = onCall({ region: REGION, secrets: [GOOGLE_CALENDAR_SA_KEY] }, async (request) => {
   try {
     const user = await requireActiveUser(request)
     const { eventId, cancellationReason } = (request.data ?? {}) as {
@@ -298,6 +320,9 @@ export const cancelCalendarEvent = onCall({ region: REGION }, async (request) =>
       status: 'cancelled',
       ...updatedFields(user.uid),
     })
+
+    // §9.3-F06 — drop the Google copy too, or it keeps ringing people's phones.
+    await deleteEventFromGoogle(eventId)
 
     await recordAuditEvent({
       eventType: 'CalendarEventCancelled',

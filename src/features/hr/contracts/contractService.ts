@@ -20,6 +20,18 @@ export function terminateContract(input: {
   return callFunction('terminateContract', input)
 }
 
+/**
+ * HR_OPERATIONS.md §9.14 — routes an already-uploaded contract PDF into the
+ * HR → GM → Director signing chain. The upload itself is the profile page's
+ * existing "Contract Document" card (resourceType 'employeeContract').
+ */
+export function submitContractForSigning(input: {
+  contractId: string
+  fileId: string
+}): Promise<{ contractId: string; approvalRequestId: string }> {
+  return callFunction('submitContractForSigning', input)
+}
+
 /** One-shot — the profile page's "Contract History" card doesn't need a live listener. */
 export function listContractsForEmployee(employeeId: string): Promise<Contract[]> {
   return queryDocuments<Contract>(COLLECTIONS.CONTRACTS, [

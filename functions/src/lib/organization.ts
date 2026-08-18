@@ -84,6 +84,10 @@ const LEADER = [
   // communications.md §7: creating/archiving a chat channel, same trust
   // level as assigning a task — Leader and above.
   'chat.manageChannels',
+  // HR_OPERATIONS.md §7.2: outlet leaders get "Own Projects" on Project
+  // Management — they raise and read, GM approval (§9.10) opens the project.
+  'projects.read',
+  'projects.create',
 ]
 
 /**
@@ -114,6 +118,10 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'lostFound.read',
     'dailyUpdates.read',
     'dailyUpdates.readAll',
+    'projects.read',
+    // §7.3: contracts.sign is gated to generalManager and director — the two
+    // signature steps on §9.14's chain.
+    'contracts.sign',
     'tasks.assign',
     'chat.manageChannels',
   ],
@@ -140,6 +148,10 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'dailyUpdates.readAll',
     'calendar.create',
     'calendar.manage',
+    'projects.read',
+    'projects.create',
+    'projects.manage',
+    'contracts.sign',
     'tasks.assign',
     'chat.manageChannels',
   ],
@@ -179,6 +191,9 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'hrInventory.record',
     'checklists.record',
     'chat.manageChannels',
+    'projects.read',
+    'projects.create',
+    'projects.manage',
     // exit-interview.md §4: gates both reading exitInterviews records and
     // conducting/submitting one.
     'exitInterviews.view',

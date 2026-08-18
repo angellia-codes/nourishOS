@@ -62,6 +62,9 @@ export const COLLECTIONS = {
   OPENING_CHECKLISTS: 'openingChecklists',
   CLOSING_CHECKLISTS: 'closingChecklists',
   DAILY_REPORTS: 'dailyReports',
+  // HR_OPERATIONS.md §8.2 — Project Management. Tasks under a project are
+  // ordinary Task Engine tasks referencing projectId, not a sub-collection.
+  PROJECTS: 'projects',
   SHIFT_HANDOVERS: 'shiftHandovers',
   INCIDENT_REPORTS: 'incidentReports',
   WORK_ORDERS: 'workOrders',

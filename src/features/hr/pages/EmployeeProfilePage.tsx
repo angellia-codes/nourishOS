@@ -143,6 +143,7 @@ export function EmployeeProfilePage() {
   const [contracts, setContracts] = useState<Contract[] | null>(null)
   const [trainingAssignments, setTrainingAssignments] = useState<TrainingAssignment[]>([])
   const [trainings, setTrainings] = useState<Training[]>([])
+  const [signingContractId, setSigningContractId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!employeeId) return
@@ -336,6 +337,26 @@ export function EmployeeProfilePage() {
       setArchiveError(error instanceof ApiError ? error.message : 'Something went wrong. Please try again.')
     } finally {
       setArchiving(false)
+    }
+  }
+
+  /**
+   * §9.14 — sends the most recent uploaded contract PDF into the HR → GM →
+   * Director chain. The newest file wins because contractFiles is already
+   * ordered createdAt desc, and re-uploading is how HR replaces a wrong PDF.
+   */
+  async function handleSendForSigning(contractId: string) {
+    const fileId = contractFiles[0]?.id
+    if (!fileId || signingContractId) return
+    setSigningContractId(contractId)
+    try {
+      await contractService.submitContractForSigning({ contractId, fileId })
+      toast.success('Sent to the General Manager for signing.')
+      if (employeeId) setContracts(await contractService.listContractsForEmployee(employeeId))
+    } catch (error) {
+      toast.error(error instanceof ApiError ? error.message : 'Could not send the contract for signing.')
+    } finally {
+      setSigningContractId(null)
     }
   }
 
@@ -634,7 +655,7 @@ export function EmployeeProfilePage() {
             ) : (
               <div className="flex flex-col gap-2">
                 {contracts.map((contract) => (
-                  <div key={contract.id} className="flex items-center justify-between gap-2 rounded-md border border-border p-3">
+                  <div key={contract.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border p-3">
                     <div>
                       <p className="text-sm text-foreground">
                         v{contract.version} · {CONTRACT_TYPE_LABELS[contract.contractType]}
@@ -642,8 +663,32 @@ export function EmployeeProfilePage() {
                       <p className="text-xs text-muted-foreground">
                         {formatIsoDate(contract.contractStartDate)} – {contract.contractEndDate ? formatIsoDate(contract.contractEndDate) : 'No end date'}
                       </p>
+                      {/* §9.14 — the signing chain's state, once it has been started */}
+                      {contract.signingStatus === 'pending' && (
+                        <p className="text-xs text-warning">Out for signing (GM, then Director).</p>
+                      )}
+                      {contract.signingStatus === 'signed' && (
+                        <p className="text-xs text-success">Signed by the GM and Director.</p>
+                      )}
                     </div>
-                    <ContractStatusBadge status={contract.status} />
+                    <div className="flex items-center gap-2">
+                      <ContractStatusBadge status={contract.status} />
+                      {/* Needs a PDF in the Contract Document card below first —
+                          the callable rejects a signing request without one. */}
+                      {contract.status === 'active' &&
+                        contract.signingStatus !== 'pending' &&
+                        contract.signingStatus !== 'signed' &&
+                        contractFiles.length > 0 && (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            disabled={signingContractId === contract.id}
+                            onClick={() => handleSendForSigning(contract.id)}
+                          >
+                            Send for signing
+                          </Button>
+                        )}
+                    </div>
                   </div>
                 ))}
               </div>

@@ -71,6 +71,28 @@ export function subscribeToMyCompletedTasks(
   )
 }
 
+/**
+ * HR_OPERATIONS.md §9.9's "Escalated Issues (5+ days)" GM widget — every open
+ * daily-update task, filtered to the escalated ones client-side. A single
+ * `array-contains` needs no composite index, and the escalationLevel filter
+ * can't be pushed down alongside it without one; the tag set is small enough
+ * that filtering five rows out of it in memory is cheaper than a new index.
+ *
+ * Only elevated roles can read tasks they aren't party to, so the caller must
+ * treat a permission error as "not for this role" rather than an outage.
+ */
+export function subscribeToDailyUpdateTasks(
+  onChange: (tasks: Task[]) => void,
+  onError?: (error: Error) => void,
+): Unsubscribe {
+  return subscribeToCollection<Task>(
+    COLLECTIONS.TASKS,
+    [where('tags', 'array-contains', 'dailyUpdate')],
+    onChange,
+    onError,
+  )
+}
+
 /** The other half of the task list — what this user handed out. Matches the `assignedBy == uid` branch of the tasks read rule. */
 export function subscribeToTasksAssignedByMe(
   uid: string,

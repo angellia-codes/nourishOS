@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { ClipboardCheck, LayoutList, PackageSearch, ShieldAlert, Wrench } from 'lucide-react'
+import { ClipboardCheck, KanbanSquare, LayoutList, PackageSearch, ShieldAlert, Wrench } from 'lucide-react'
 import { Button, Card, CardContent } from '@/components/ui'
 
 /**
@@ -34,6 +34,12 @@ const SUB_MODULES = [
     icon: Wrench,
     title: 'Work Orders',
     description: 'Engineering requests, assigned through to closed.',
+  },
+  {
+    to: '/operations/projects',
+    icon: KanbanSquare,
+    title: 'Projects',
+    description: 'Company-wide projects across the five-column board.',
   },
   {
     to: '/operations/checklists/opening',

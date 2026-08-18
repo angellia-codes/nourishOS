@@ -9,6 +9,7 @@ export { createRequisition, updateRequisition, submitRequisition, cancelRequisit
 export { updateRequisitionCompensation } from './requisitionCompensation'
 export { createCandidate, updateCandidate, moveCandidateStage } from './candidates'
 export { scheduleInterview, recordInterviewOutcome, cancelInterview } from './interviews'
+export { sendInterviewReminders } from './interviewReminders'
 export { updateOnboardingItem, completeOnboarding } from './onboarding'
 
 /**

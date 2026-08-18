@@ -1,3 +1,4 @@
+import type { ComponentType } from 'react'
 import { useAuth } from '@/hooks'
 import { DEPARTMENTS, OUTLETS, ROLE_LABELS } from '@/constants'
 import { formatDate } from '@/utils'
@@ -8,6 +9,10 @@ import { UpcomingCalendarWidget } from './widgets/UpcomingCalendarWidget'
 import { TeamActivityWidget } from './widgets/TeamActivityWidget'
 import { RecentlyCompletedTasksWidget } from './widgets/RecentlyCompletedTasksWidget'
 import { OpenPositionsWidget } from './widgets/OpenPositionsWidget'
+import { ContractRenewalsDueWidget } from './widgets/ContractRenewalsDueWidget'
+import { InterviewsTodayWidget } from './widgets/InterviewsTodayWidget'
+import { EscalationCenterWidget } from './widgets/EscalationCenterWidget'
+import { ActiveProjectsWidget } from './widgets/ActiveProjectsWidget'
 import { KpiCardsRow } from './widgets/KpiCardsRow'
 
 const OUTLET_NAMES: Record<string, string> = Object.fromEntries(OUTLETS.map((o) => [o.id, o.name]))
@@ -19,6 +24,33 @@ function greeting(hour: number): string {
   if (hour < 18) return 'Good afternoon'
   return 'Good evening'
 }
+
+/**
+ * HR_OPERATIONS.md §9.9/§9.13 — the widget set varies by role rather than
+ * every role seeing the same seven cards. The four common widgets (approvals,
+ * own tasks, announcements, calendar) stay for everyone because they are about
+ * the viewer's own work; what changes is the operational set layered on top.
+ *
+ * Deliberately not the doc's full 11-per-role tables: several rows there
+ * (Recruitment Funnel chart, Review Completion Rate) already have their own
+ * report pages, and duplicating them as widgets would mean a second
+ * aggregation of the same data. Roles not listed fall back to DEFAULT_EXTRAS.
+ */
+const ROLE_WIDGETS: Record<string, ComponentType[]> = {
+  hrManager: [ContractRenewalsDueWidget, InterviewsTodayWidget, OpenPositionsWidget, EscalationCenterWidget],
+  generalManager: [EscalationCenterWidget, ActiveProjectsWidget, OpenPositionsWidget, InterviewsTodayWidget],
+  director: [EscalationCenterWidget, ActiveProjectsWidget],
+  superAdmin: [
+    ContractRenewalsDueWidget,
+    InterviewsTodayWidget,
+    OpenPositionsWidget,
+    EscalationCenterWidget,
+    ActiveProjectsWidget,
+  ],
+}
+
+/** Outlet leaders and everyone else: their own team's activity, not company-wide rollups. */
+const DEFAULT_EXTRAS: ComponentType[] = [TeamActivityWidget, RecentlyCompletedTasksWidget]
 
 /**
  * The landing page — dashboard.md §4. Seven widgets: §9 approvals, §10 tasks,
@@ -41,6 +73,7 @@ function greeting(hour: number): string {
 export function DashboardPage() {
   const { profile } = useAuth()
   const firstName = profile?.displayName?.split(' ')[0] ?? 'there'
+  const extras = (profile && ROLE_WIDGETS[profile.roleId]) ?? DEFAULT_EXTRAS
 
   const meta = profile
     ? [
@@ -69,9 +102,9 @@ export function DashboardPage() {
         <AssignedTasksWidget />
         <AnnouncementsWidget />
         <UpcomingCalendarWidget />
-        <TeamActivityWidget />
-        <RecentlyCompletedTasksWidget />
-        <OpenPositionsWidget />
+        {extras.map((Widget, index) => (
+          <Widget key={index} />
+        ))}
       </div>
     </div>
   )

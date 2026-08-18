@@ -19,6 +19,30 @@
       ]
     },
     {
+      "collectionGroup": "employees",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "joinDate", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "employees",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "contractEndDate", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "employees",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "probationEndDate", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "disciplinaryActions",
       "queryScope": "COLLECTION",
       "fields": [
@@ -269,6 +293,14 @@
       "fields": [
         { "fieldPath": "candidateId", "order": "ASCENDING" },
         { "fieldPath": "outcome", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "interviews",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "outcome", "order": "ASCENDING" },
+        { "fieldPath": "scheduledAt", "order": "ASCENDING" }
       ]
     },
     {

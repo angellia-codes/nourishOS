@@ -29,6 +29,8 @@ import {
   type CandidateStage,
 } from './helpers'
 import { createOnboardingChecklistInternal } from './onboarding'
+import { notifyCandidateOfStage } from './whatsappTemplates'
+import { FONNTE_TOKEN } from '../../lib/secrets'
 
 /**
  * Candidate pipeline — HR_OPERATIONS.md §9.4 (stages ST-01…ST-08), §12.3
@@ -38,9 +40,9 @@ import { createOnboardingChecklistInternal } from './onboarding'
  * .md §10 criterion 6) — that is the whole point of requiring a requisition
  * first, so it is enforced server-side rather than by hiding the button.
  *
- * The §9.5 WhatsApp templates that fire on each stage change are not wired:
- * there is no Fonnte adapter in this codebase. Stage changes notify in-app
- * instead, and the stage table below is where those templates would hook in.
+ * §9.5's stage-triggered WhatsApp templates fire from `moveCandidateStage` via
+ * `notifyCandidateOfStage` — hence `secrets: [FONNTE_TOKEN]` on that callable.
+ * Delivery is best-effort: a dead Fonnte device never rolls back a stage move.
  */
 
 const OFFER_STAGE: CandidateStage = 'ST-05'
@@ -211,7 +213,7 @@ export const updateCandidate = onCall({ region: REGION }, async (request) => {
  * (NIK, contract type, probation), so HR confirms those on the employee form,
  * which is pre-filled from the candidate.
  */
-export const moveCandidateStage = onCall({ region: REGION }, async (request) => {
+export const moveCandidateStage = onCall({ region: REGION, secrets: [FONNTE_TOKEN] }, async (request) => {
   try {
     const user = await requireActiveUser(request)
     requireRecruitmentPermission(user, PERMISSIONS.RECRUITMENT_UPDATE)
@@ -270,6 +272,10 @@ export const moveCandidateStage = onCall({ region: REGION }, async (request) => 
     if (target === HIRED_STAGE) {
       onboardingChecklistId = await recordHire(candidate, id, confirmedJoinDate!, user)
     }
+
+    // §9.5 templates 1/4/5/6. After the write, never before — the message
+    // states something that must already be true, and it cannot be unsent.
+    await notifyCandidateOfStage({ ...candidate, joinDate: confirmedJoinDate ?? candidate.joinDate }, target)
 
     // The requisition owner asked for this headcount; they are the one who
     // needs to know it moved — HR is already looking at the board.

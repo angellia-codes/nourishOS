@@ -4,6 +4,8 @@ import { db, COLLECTIONS } from '../../lib'
 import { registerApprovalResolvedHandler } from '../approval'
 
 export { createCalendarEvent, cancelCalendarEvent, createCalendarEventInternal } from './events'
+export { syncCalendarEvents } from './syncSchedule'
+export { pushEventToGoogle, deleteEventFromGoogle } from './googleSync'
 
 /**
  * Module-load-time registration (shared/approval/registry.ts): when the
@@ -18,6 +20,10 @@ registerApprovalResolvedHandler('companyEvent', async (event) => {
     return
   }
 
+  // No inline Google push here: this runs inside the approval Firestore
+  // trigger, which would have to declare the calendar secret to reach Google.
+  // The event is already syncStatus 'pending', so syncCalendarEvents picks it
+  // up within 15 minutes — §9.3-F02's 30s target covers creation, not approval.
   const approved = event.newStatus === 'approved'
   await ref.update({
     eventStatus: approved ? 'confirmed' : 'cancelled',

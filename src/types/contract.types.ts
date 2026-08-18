@@ -18,4 +18,16 @@ export interface Contract extends BaseDocument {
   status: 'active' | 'superseded' | 'terminated'
   terminationReason?: string
   terminatedAt?: string
+
+  /**
+   * HR_OPERATIONS.md §9.14 New Contract Signing. Absent on contracts created
+   * before signing existed and on any contract never sent for signature —
+   * treat missing as 'unsigned'. The "signature" is the approval trail
+   * (approver identity + timestamp in approvalHistory), not a signed PDF.
+   */
+  signingStatus?: 'unsigned' | 'pending' | 'signed'
+  signingApprovalRequestId?: string | null
+  /** files/{id} of the PDF that went out for signing. */
+  signedFileId?: string | null
+  signedAt?: string | null
 }

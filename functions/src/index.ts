@@ -22,7 +22,7 @@ export { markNotificationRead, markAllNotificationsRead } from './shared/notific
 export { createFileMetadata, deleteFile } from './shared/fileStorage'
 
 // ---- Shared: Executive Calendar ----
-export { createCalendarEvent, cancelCalendarEvent } from './shared/calendar'
+export { createCalendarEvent, cancelCalendarEvent, syncCalendarEvents } from './shared/calendar'
 
 // ---- Security ----
 export { createCheckpoint, createPatrolLog, checkOverdueCheckpoints } from './security'
@@ -58,7 +58,7 @@ export {
 export { createInventoryItem, updateInventoryItem, receiveStock, issueStock, transferStock } from './hr/inventory'
 
 // ---- HR: Employment Contracts ----
-export { renewContract, terminateContract } from './hr/contracts'
+export { renewContract, terminateContract, submitContractForSigning } from './hr/contracts'
 
 // ---- HR: Training ----
 export { createTraining, updateTraining, assignTraining, completeTraining } from './hr/training'
@@ -78,6 +78,7 @@ export {
   updateOnboardingItem,
   completeOnboarding,
   updateRequisitionCompensation,
+  sendInterviewReminders,
 } from './hr/recruitment'
 
 // ---- Documents: Job Descriptions ----
@@ -121,6 +122,9 @@ export { updateCommunicationSettings } from './communications/communicationSetti
 // ---- Operations: Work Orders ----
 export { createWorkOrder, updateWorkOrderStatus } from './operations/workOrders'
 
+// ---- Operations: Project Management ----
+export { createProject, updateProject, submitProject, moveProjectColumn } from './operations/projects'
+
 // ---- Operations: Checklists ----
 export { saveChecklistProgress } from './operations/checklists'
 
@@ -143,6 +147,9 @@ export {
   sendComplianceAlerts,
   sendDailyDigest,
 } from './operations/dailyUpdates'
+
+// ---- Reports: GM Flash Report ----
+export { sendFlashReport, generateFlashReport } from './reports'
 
 // ---- Settings: Roles & Permissions ----
 export { updateRolePermissions } from './settings'

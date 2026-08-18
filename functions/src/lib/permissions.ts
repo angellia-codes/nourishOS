@@ -44,4 +44,13 @@ export const PERMISSIONS = {
   CHECKLISTS_RECORD: 'checklists.record',
   CHAT_SEND: 'chat.send',
   CHAT_MANAGE_CHANNELS: 'chat.manageChannels',
+  // HR_OPERATIONS.md §7.3 — Project Management. `create` raises a project for
+  // GM approval; `manage` moves it across the board and edits it after that.
+  PROJECTS_READ: 'projects.read',
+  PROJECTS_CREATE: 'projects.create',
+  PROJECTS_MANAGE: 'projects.manage',
+  // §7.3 contracts.sign — the GM/Director digital-signature step (§9.14).
+  CONTRACTS_SIGN: 'contracts.sign',
+  // Mirrored for the GM Flash Report callable (§9.12-F09 / Epic E12).
+  REPORTS_READ: 'reports.read',
 } as const

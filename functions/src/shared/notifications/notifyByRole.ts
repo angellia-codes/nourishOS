@@ -8,6 +8,8 @@ export interface NotifyUsersByRoleInput {
   message: string
   referenceId?: string
   priority?: 'critical' | 'high' | 'medium' | 'low' | 'informational'
+  /** Pass-through to sendNotificationInternal — see its doc comment. */
+  whatsapp?: boolean
 }
 
 export async function notifyUsersByRole(input: NotifyUsersByRoleInput): Promise<void> {
@@ -28,6 +30,7 @@ export async function notifyUsersByRole(input: NotifyUsersByRoleInput): Promise<
         recipientUid: userDoc.id,
         referenceModule: input.module,
         referenceId: input.referenceId,
+        whatsapp: input.whatsapp,
       }),
     ),
   )
