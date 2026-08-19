@@ -12,10 +12,16 @@ import {
   successResponse,
   PERMISSIONS,
 } from '../../lib'
+import { OUTLET_DEPARTMENTS } from '../../lib/organization'
+import { POSITION_LABELS, positionsFor } from '../../lib/positions'
 import {
   EMPLOYMENT_STATUSES,
   CONTRACT_TYPES,
   GENDERS,
+  DISCIPLINARY_TYPES,
+  RELIGIONS,
+  TAX_STATUSES,
+  PROBATION_STATUSES,
   type EmploymentStatus,
   type ContractType,
   assertContactFieldsUnique,
@@ -31,22 +37,34 @@ import {
  */
 const STRING_FIELDS = [
   'fullName',
-  'preferredName',
   'nationalId',
   'taxNumber',
-  'religion',
   'phone',
   'email',
   'address',
+  'permanentAddress',
+  'domicileAddress',
   'emergencyContactName',
   'emergencyContactPhone',
+  'motherName',
+  'bpjsTk',
+  'bpjsKesehatan',
   'position',
   'departmentId',
   'outletId',
   'managerId',
+  'recognitionType',
 ] as const
 
-const DATE_FIELDS = ['birthDate', 'joinDate', 'contractStartDate', 'contractEndDate'] as const
+const DATE_FIELDS = [
+  'birthDate',
+  'joinDate',
+  'contractStartDate',
+  'contractEndDate',
+  'disciplinaryStartPeriod',
+  'disciplinaryEndPeriod',
+  'recognitionPeriod',
+] as const
 
 interface UpdateEmployeeInput {
   employeeId: string
@@ -104,6 +122,30 @@ export const updateEmployee = onCall({ region: REGION }, async (request) => {
       }
       changes.contractType = updates.contractType
     }
+    if ('disciplinaryType' in updates) {
+      if (updates.disciplinaryType !== null && !DISCIPLINARY_TYPES.includes(updates.disciplinaryType as (typeof DISCIPLINARY_TYPES)[number])) {
+        throw new AppError('invalid-argument', `disciplinaryType must be one of: ${DISCIPLINARY_TYPES.join(', ')}, or null.`)
+      }
+      changes.disciplinaryType = updates.disciplinaryType
+    }
+    if ('religion' in updates) {
+      if (updates.religion !== null && !RELIGIONS.includes(updates.religion as (typeof RELIGIONS)[number])) {
+        throw new AppError('invalid-argument', `religion must be one of: ${RELIGIONS.join(', ')}, or null.`)
+      }
+      changes.religion = updates.religion
+    }
+    if ('personalTaxStatus' in updates) {
+      if (updates.personalTaxStatus !== null && !TAX_STATUSES.includes(updates.personalTaxStatus as (typeof TAX_STATUSES)[number])) {
+        throw new AppError('invalid-argument', `personalTaxStatus must be one of: ${TAX_STATUSES.join(', ')}, or null.`)
+      }
+      changes.personalTaxStatus = updates.personalTaxStatus
+    }
+    if ('probationStatus' in updates) {
+      if (updates.probationStatus !== null && !PROBATION_STATUSES.includes(updates.probationStatus as (typeof PROBATION_STATUSES)[number])) {
+        throw new AppError('invalid-argument', `probationStatus must be one of: ${PROBATION_STATUSES.join(', ')}, or null.`)
+      }
+      changes.probationStatus = updates.probationStatus
+    }
     if ('probationMonths' in updates) {
       if (typeof updates.probationMonths !== 'number' || updates.probationMonths < 0) {
         throw new AppError('invalid-argument', 'probationMonths must be a non-negative number.')
@@ -127,6 +169,24 @@ export const updateEmployee = onCall({ region: REGION }, async (request) => {
     const joinDate = merged.joinDate as string
     if (new Date(`${joinDate}T00:00:00Z`).getTime() > Date.now()) {
       throw new AppError('invalid-argument', 'joinDate cannot be in the future.')
+    }
+    if ('departmentId' in changes || 'outletId' in changes) {
+      const departmentsForOutlet = OUTLET_DEPARTMENTS[merged.outletId as string]
+      if (!departmentsForOutlet) {
+        throw new AppError('invalid-argument', 'Select a valid outlet.')
+      }
+      if (!departmentsForOutlet.includes(merged.departmentId as string)) {
+        throw new AppError('invalid-argument', 'Select a department that exists at this outlet.')
+      }
+    }
+    // Re-checked whenever any of the three fields change — a department
+    // transfer, or an outlet transfer within the same department (e.g. off
+    // the_bakery_kitchen), can each leave a previously-valid position no
+    // longer valid.
+    if ('position' in changes || 'departmentId' in changes || 'outletId' in changes) {
+      if (!positionsFor(merged.outletId as string, merged.departmentId as string).includes(merged.position as string)) {
+        throw new AppError('invalid-argument', 'Select a valid position for this department and outlet.')
+      }
     }
     if ('joinDate' in changes || 'probationMonths' in changes) {
       changes.probationEndDate = calculateProbationEndDate(joinDate, merged.probationMonths as number)
@@ -163,12 +223,22 @@ export const updateEmployee = onCall({ region: REGION }, async (request) => {
     await employeeRef.update({ ...changes, ...updatedFields(user.uid) })
 
     const changedFieldNames = Object.keys(changes).filter((key) => key !== 'probationEndDate')
-    await recordEmployeeActivity(
-      { id: employeeId, departmentId: merged.departmentId as string, outletId: merged.outletId as string },
-      'updated',
-      `Profile updated: ${changedFieldNames.join(', ')}.`,
-      user,
-    )
+    const activityEmployee = { id: employeeId, departmentId: merged.departmentId as string, outletId: merged.outletId as string }
+    // HR.md §13 names Promoted/Department Transfer/Outlet Transfer as distinct
+    // timeline events — a field-diff branch over what's already computed
+    // above, not a new audit system. `position` wins over the other two if
+    // several fields change in the same call, since a promotion is usually
+    // the more newsworthy event.
+    if ('position' in changes) {
+      const positionLabel = POSITION_LABELS[changes.position as string] ?? (changes.position as string)
+      await recordEmployeeActivity(activityEmployee, 'promoted', `Promoted to ${positionLabel}.`, user)
+    } else if ('departmentId' in changes) {
+      await recordEmployeeActivity(activityEmployee, 'departmentTransfer', `Transferred to department ${changes.departmentId as string}.`, user)
+    } else if ('outletId' in changes) {
+      await recordEmployeeActivity(activityEmployee, 'outletTransfer', `Transferred to outlet ${changes.outletId as string}.`, user)
+    } else {
+      await recordEmployeeActivity(activityEmployee, 'updated', `Profile updated: ${changedFieldNames.join(', ')}.`, user)
+    }
 
     const previousValues: Record<string, unknown> = {}
     for (const key of Object.keys(changes)) previousValues[key] = existing[key] ?? null

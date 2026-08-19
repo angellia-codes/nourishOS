@@ -20,6 +20,12 @@ export const COLLECTIONS = {
   EMPLOYEES: 'employees',
   RECRUITMENTS: 'recruitments',
   CANDIDATES: 'candidates',
+  INTERVIEWS: 'interviews',
+  /** candidate_portal.md §10.3 — server-calculated DISC results, one per candidate. */
+  DISC_RESULTS: 'discResults',
+  ONBOARDING_CHECKLISTS: 'onboardingChecklists',
+  OFFBOARDING_CHECKLISTS: 'offboardingChecklists',
+  EXIT_INTERVIEWS: 'exitInterviews',
   CONTRACTS: 'contracts',
   // NOTE: 'performances' (DATABASE.md §13 / FIRESTORE_SCHEMA.md §13) is a loose
   // generic shape (employeeId, reviewerId, score, comments) — superseded by the
@@ -30,25 +36,39 @@ export const COLLECTIONS = {
   APPRAISALS: 'appraisals',
   DISCIPLINARY_ACTIONS: 'disciplinaryActions',
   TRAININGS: 'trainings',
+  TRAINING_ASSIGNMENTS: 'trainingAssignments',
   EMPLOYEE_ASSETS: 'employeeAssets',
   EMPLOYEE_ACTIVITIES: 'employeeActivities',
+  // HR Inventory (uniforms & assets) — the only inventory concept in the
+  // app; the separate top-level F&B warehouse module was cut (2026-08-15),
+  // see CLAUDE.md "Current state of the tree".
+  HR_INVENTORY_ITEMS: 'hrInventoryItems',
+  HR_STOCK_LEVELS: 'hrStockLevels',
+  HR_STOCK_MOVEMENTS: 'hrStockMovements',
 
   // Documents
   SOPS: 'sops',
   DOCUMENTS: 'documents',
+  JOB_DESCRIPTIONS: 'jobDescriptions',
   DOCUMENT_VERSIONS: 'documentVersions',
   DOCUMENT_CATEGORIES: 'documentCategories',
   DOCUMENT_TAGS: 'documentTags',
   DOCUMENT_APPROVALS: 'documentApprovals',
   TEMPLATES: 'templates',
+  COMPANY_FORMS: 'companyForms',
   TRAINING_MODULES: 'trainingModules',
   KNOWLEDGE_BASE: 'knowledgeBase',
   DOCUMENT_ACKNOWLEDGEMENTS: 'documentAcknowledgements',
 
   // Operations
-  OPENING_CHECKLISTS: 'openingChecklists',
-  CLOSING_CHECKLISTS: 'closingChecklists',
   DAILY_REPORTS: 'dailyReports',
+  // HR_OPERATIONS.md §8.2 — Project Management. Tasks under a project are
+  // ordinary Task Engine tasks referencing projectId, not a sub-collection.
+  PROJECTS: 'projects',
+  // Opening/Closing Shift Reports — opening_closing_shift_report_template.md.
+  // Takes over operations.md §9's collection name because the report carries
+  // §9's handover content; the standalone opening/closing checklist
+  // collections were absorbed into it and retired.
   SHIFT_HANDOVERS: 'shiftHandovers',
   INCIDENT_REPORTS: 'incidentReports',
   WORK_ORDERS: 'workOrders',
@@ -68,31 +88,6 @@ export const COLLECTIONS = {
   COST_CENTERS: 'costCenters',
   VENDORS: 'vendors',
 
-  // Purchasing
-  PURCHASE_REQUESTS: 'purchaseRequests',
-  PURCHASE_ORDERS: 'purchaseOrders',
-  RFQS: 'rfqs',
-  SUPPLIERS: 'suppliers',
-  GRNS: 'grns',
-  SUPPLIER_RATINGS: 'supplierRatings',
-
-  // Inventory
-  INVENTORY_ITEMS: 'inventoryItems',
-  STOCK_LEVELS: 'stockLevels',
-  STOCK_MOVEMENTS: 'stockMovements',
-  STOCK_TRANSFERS: 'stockTransfers',
-  STOCK_ADJUSTMENTS: 'stockAdjustments',
-  STOCK_OPNAME: 'stockOpname',
-  WASTE_LOGS: 'wasteLogs',
-  INVENTORY_VALUATION: 'inventoryValuation',
-
-  // CRM
-  CUSTOMERS: 'customers',
-  CUSTOMER_INTERACTIONS: 'customerInteractions',
-  CUSTOMER_FEEDBACK: 'customerFeedback',
-  CUSTOMER_SEGMENTS: 'customerSegments',
-  CUSTOMER_NOTES: 'customerNotes',
-
   // Communications
   ANNOUNCEMENTS: 'announcements',
   ANNOUNCEMENT_READS: 'announcementReads',
@@ -100,6 +95,8 @@ export const COLLECTIONS = {
   CHAT_MESSAGES: 'chatMessages',
   DIRECT_MESSAGES: 'directMessages',
   MENTIONS: 'mentions',
+  ACTIVITY_FEED: 'activityFeed',
+  COMMUNICATION_SETTINGS: 'communicationSettings',
 
   // Reports
   REPORTS: 'reports',

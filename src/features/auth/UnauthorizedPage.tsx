@@ -1,11 +1,19 @@
-import { useLocation } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { Card, CardContent, Button } from '@/components/ui'
 import { useAuth } from '@/hooks'
+import { ROUTES } from '@/constants'
 
 export function UnauthorizedPage() {
   const location = useLocation()
-  const { signOut } = useAuth()
+  const { signOut, status } = useAuth()
   const reason = (location.state as { reason?: string } | null)?.reason
+
+  // This route is public, so unlike the protected pages nothing redirects
+  // once signOut() clears the session — without this the Sign Out button
+  // leaves the visitor sitting on the same screen.
+  if (status === 'unauthenticated') {
+    return <Navigate to={ROUTES.LOGIN} replace />
+  }
 
   return (
     <Card className="w-full max-w-sm">

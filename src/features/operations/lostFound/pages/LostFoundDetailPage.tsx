@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Checkbox, Input, Label, Select, Spinner, StatusPill, Textarea } from '@/components/ui'
-import { FileList, PermissionGuard } from '@/components/shared'
+import { FileList, FileUpload, PermissionGuard } from '@/components/shared'
 import { useFirestoreDoc, useFirestoreQuery, useToast } from '@/hooks'
 import { where, orderBy } from '@/services/firestore'
 import { COLLECTIONS, PERMISSIONS } from '@/constants'
@@ -11,6 +11,8 @@ import * as lostFoundService from '../lostFoundService'
 import {
   formatLostFoundDate,
   LOST_FOUND_CATEGORY_LABELS,
+  LOST_FOUND_PHOTO_CLAIM,
+  LOST_FOUND_PHOTO_ITEM,
   LOST_FOUND_STATUS_ICON,
   LOST_FOUND_STATUS_LABELS,
   LOST_FOUND_STATUS_TONE,
@@ -97,6 +99,19 @@ function ClaimPanel({ item, onDone }: { item: LostFoundItem; onDone: () => void 
             ID verified — required for {VALUE_TIER_LABELS[item.valueTier].toLowerCase()} items *
           </label>
         )}
+        <div className="flex flex-col gap-1.5">
+          <Label>Handover Photo</Label>
+          <p className="text-xs text-muted-foreground">
+            The claimant with the item, or their signed receipt — attached to this item straight away.
+          </p>
+          <FileUpload
+            module="operations"
+            resourceType={LOST_FOUND_PHOTO_CLAIM}
+            resourceId={item.id}
+            accept="image/*"
+            camera
+          />
+        </div>
         <div className="flex justify-end">
           <Button type="button" disabled={!canSubmit || submitting} onClick={handleSubmit}>
             {submitting ? <Spinner className="h-4 w-4" /> : 'Confirm Return'}
@@ -180,7 +195,19 @@ export function LostFoundDetailPage() {
     COLLECTIONS.FILES,
     itemId
       ? [
-          where('resourceType', '==', 'lostFoundItem'),
+          where('resourceType', '==', LOST_FOUND_PHOTO_ITEM),
+          where('resourceId', '==', itemId),
+          where('fileStatus', '==', 'available'),
+          orderBy('createdAt', 'desc'),
+        ]
+      : [],
+    [itemId],
+  )
+  const { data: handoverPhotos } = useFirestoreQuery<FileMetadata>(
+    COLLECTIONS.FILES,
+    itemId
+      ? [
+          where('resourceType', '==', LOST_FOUND_PHOTO_CLAIM),
           where('resourceId', '==', itemId),
           where('fileStatus', '==', 'available'),
           orderBy('createdAt', 'desc'),
@@ -247,6 +274,17 @@ export function LostFoundDetailPage() {
           <FileList files={photos} />
         </CardContent>
       </Card>
+
+      {handoverPhotos.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Handover Photos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <FileList files={handoverPhotos} />
+          </CardContent>
+        </Card>
+      )}
 
       <PermissionGuard permission={PERMISSIONS.LOST_FOUND_MANAGE}>
         {activePanel === 'none' && (canClaim || canDispose) && (

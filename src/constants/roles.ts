@@ -15,6 +15,10 @@ export const ROLES = {
   SECURITY: 'security',
   ENGINEERING: 'engineering',
   OUTLET_MANAGER: 'outletManager',
+  /** POSITIONS.md §3 Level III — F&B Service leadership at a restaurant outlet, replacing outletManager on the registration form. */
+  RESTAURANT_MANAGER: 'restaurantManager',
+  /** POSITIONS.md §3 Level VIII — retail cashier at a Wholefood outlet. */
+  WHOLEFOOD_CASHIER: 'wholefoodCashier',
   MARKETING: 'marketing',
   STAFF: 'staff',
 } as const

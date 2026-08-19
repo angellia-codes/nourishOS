@@ -16,6 +16,7 @@ import {
 } from '../../lib'
 import { notifyUsersByRole } from '../../shared/notifications'
 import { createTaskInternal } from '../../shared/tasks'
+import { OUTLET_DEPARTMENTS } from '../../lib/organization'
 import { CLOSED_TASK_STATUSES, DAILY_UPDATE_TAG, todayIso } from './helpers'
 
 interface AbsenceInput {
@@ -54,6 +55,9 @@ interface SubmitDailyReportInput {
   challenges?: ChallengeInput[]
   newTasks?: NewTaskInput[]
   carriedForwardReviews?: CarriedForwardReviewInput[]
+  /** Both default to the caller's own if omitted. */
+  outletId?: string
+  departmentId?: string
 }
 
 /**
@@ -78,12 +82,20 @@ export const submitDailyReport = onCall({ region: REGION }, async (request) => {
       throw new AppError('invalid-argument', 'absences are required when staffPresent is less than staffScheduled.')
     }
 
+    // Overridable so staff who cover multiple outlets/departments (roving
+    // managers, HR) can file for the one they're actually reporting on.
+    const outletId = input.outletId ?? user.outletId
+    const departmentId = input.departmentId ?? user.departmentId
+    if (!OUTLET_DEPARTMENTS[outletId]?.includes(departmentId)) {
+      throw new AppError('invalid-argument', 'Select a valid outlet/department pair.')
+    }
+
     const today = todayIso()
 
     const existingSnap = await db
       .collection(COLLECTIONS.DAILY_REPORTS)
-      .where('outletId', '==', user.outletId)
-      .where('departmentId', '==', user.departmentId)
+      .where('outletId', '==', outletId)
+      .where('departmentId', '==', departmentId)
       .where('date', '==', today)
       .limit(1)
       .get()
@@ -172,8 +184,8 @@ export const submitDailyReport = onCall({ region: REGION }, async (request) => {
       challenges,
       newTaskIds,
       carriedForwardTaskIds: openTasks.map((doc) => doc.id),
-      outletId: user.outletId,
-      departmentId: user.departmentId,
+      outletId,
+      departmentId,
       ...newDocumentBaseFields(user.uid, 'submitted'),
     })
 
@@ -185,7 +197,7 @@ export const submitDailyReport = onCall({ region: REGION }, async (request) => {
       resourceId: reportRef.id,
       action: 'create',
       user,
-      newValues: { date: today, outletId: user.outletId, departmentId: user.departmentId },
+      newValues: { date: today, outletId, departmentId },
       metadata: { carriedForwardReviews: reviews },
     })
 

@@ -9,6 +9,81 @@ export type ContractType = (typeof CONTRACT_TYPES)[number]
 
 export const GENDERS = ['male', 'female'] as const
 
+/** Mirrors src/constants/hr.ts DISCIPLINARY_TYPE (known frontend/functions duplication — keep in sync). */
+export const DISCIPLINARY_TYPES = ['coaching', 'verbalWarning', 'SP1', 'SP2', 'SP3', 'termination'] as const
+export type DisciplinaryType = (typeof DISCIPLINARY_TYPES)[number]
+
+/**
+ * employee_communication.md §7 — the Employee Communication record lifecycle.
+ * `open` is retained only for records written before the workflow existed; it
+ * behaves like `active` with no validity window (see communicationExpiry.ts).
+ */
+export const COMMUNICATION_STATUSES = [
+  'draft',
+  'pendingApproval',
+  'pendingEmployee',
+  'active',
+  'expired',
+  'closed',
+  'open',
+] as const
+export type CommunicationStatus = (typeof COMMUNICATION_STATUSES)[number]
+
+/** §16 — receipt is not agreement, so `refused` still starts the validity clock. */
+export const ACKNOWLEDGEMENT_STATUSES = ['pending', 'acknowledged', 'refused', 'unableToSign'] as const
+export type AcknowledgementStatus = (typeof ACKNOWLEDGEMENT_STATUSES)[number]
+
+/** §18 — no signature canvas exists in this app, so a drawn signature is not offered. */
+export const SIGNATURE_METHODS = ['typedSignature', 'acknowledgement'] as const
+export type SignatureMethod = (typeof SIGNATURE_METHODS)[number]
+
+/** §11 — the Proposed Solution / Action categories. */
+export const PROPOSED_ACTION_CATEGORIES = [
+  'coaching',
+  'retraining',
+  'counseling',
+  'followUpMeeting',
+  'performanceImprovement',
+  'scheduleAdjustment',
+  'writtenWarning',
+  'other',
+] as const
+export type ProposedActionCategory = (typeof PROPOSED_ACTION_CATEGORIES)[number]
+
+/**
+ * §13 — "Verbal Notification: valid for 3 months. Written Warning: valid for 6
+ * months," counted from the acknowledgement date (§35 Rule 5). Coaching and
+ * termination have no validity window: coaching is not a sanction and a
+ * termination does not expire.
+ *
+ * Mirrors DISCIPLINARY_VALIDITY_DAYS in src/constants/hr.ts.
+ *
+ * ponytail: §13 wants these HR-configurable, and the per-record `validityDays`
+ * override on the form is what delivers that. If the defaults themselves ever
+ * need editing without a deploy, move this map into a
+ * `systemSettings/communicationValidity` doc and read it here.
+ */
+export const DISCIPLINARY_VALIDITY_DAYS: Record<DisciplinaryType, number | null> = {
+  coaching: null,
+  verbalWarning: 90,
+  SP1: 180,
+  SP2: 180,
+  SP3: 180,
+  termination: null,
+}
+
+/** Mirrors src/constants/hr.ts RELIGION (known frontend/functions duplication — keep in sync). */
+export const RELIGIONS = ['hindu', 'christian', 'catholic', 'islam', 'other'] as const
+export type Religion = (typeof RELIGIONS)[number]
+
+/** Mirrors src/constants/hr.ts PROBATION_STATUS (known frontend/functions duplication — keep in sync). */
+export const PROBATION_STATUSES = ['pending', 'passed', 'failed', 'extended'] as const
+export type ProbationStatus = (typeof PROBATION_STATUSES)[number]
+
+/** Mirrors src/constants/hr.ts TAX_STATUS (known frontend/functions duplication — keep in sync). */
+export const TAX_STATUSES = ['TK0', 'TK1', 'TK2', 'TK3', 'K0', 'K1', 'K2', 'K3'] as const
+export type TaxStatus = (typeof TAX_STATUSES)[number]
+
 /** HR_OPERATIONS.md 9.1-F02: N- (PKWT/PKWTT/BOD/Freelance), DW- (Daily Worker), OJT-. */
 const EMPLOYEE_NUMBER_PREFIX: Record<EmploymentStatus, string> = {
   PKWT: 'N',
@@ -80,10 +155,24 @@ export async function assertContactFieldsUnique(
   }
 }
 
+/** Mirrors src/constants/hr.ts EMPLOYEE_ACTIVITY_TYPE (known frontend/functions duplication — keep in sync). */
+export type EmployeeActivityType =
+  | 'hired'
+  | 'updated'
+  | 'archived'
+  | 'promoted'
+  | 'departmentTransfer'
+  | 'outletTransfer'
+  | 'disciplinaryWarning'
+  | 'appraisalCompleted'
+  | 'contractRenewed'
+  | 'contractTerminated'
+  | 'trainingCompleted'
+
 /** Appends one entry to the employee's profile timeline (HR.md §13). */
 export async function recordEmployeeActivity(
   employee: { id: string; departmentId?: string; outletId?: string },
-  activityType: 'hired' | 'updated' | 'archived',
+  activityType: EmployeeActivityType,
   description: string,
   user: AuthedUser,
 ): Promise<void> {

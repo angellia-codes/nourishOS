@@ -143,3 +143,136 @@ export type PositionId = keyof typeof POSITION_CATALOG
 export const POSITION_LABELS = Object.fromEntries(
   Object.entries(POSITION_CATALOG).map(([id, p]) => [id, p.label]),
 ) as Record<PositionId, string>
+
+/**
+ * Scopes the position dropdown per app department (`src/constants/organization.ts`
+ * — `admin_general`/`cashier`/`fb_service`/etc.), which is a different taxonomy
+ * from POSITIONS.md §3's own department grouping above (`PositionDepartment`).
+ * They don't line up 1:1 — e.g. "Wholefoods Cashier" sits under §3's Finance
+ * heading but belongs to the app's `wholefood_retail` department — so this is
+ * a hand-curated map, not a mechanical join on `POSITION_CATALOG[id].department`.
+ *
+ * Revised 2026-08-17 against an explicit per-department policy (12 numbered
+ * corrections), superseding the first pass's "every catalog entry under its
+ * POSITIONS.md heading, trainee/dailyWorker everywhere" default:
+ *  - `trainee`/`dailyWorker` are no longer appended to every department —
+ *    they're listed explicitly, and only, under `fb_service`/`bar`/`kitchen`
+ *    ("The Bakery Kitchen" is an outlet, not a department — it staffs
+ *    `kitchen`, per `organization.ts`'s `OUTLET_DEPARTMENTS`).
+ *  - `central_kitchen`, `security`, `wholefood_retail` were untouched by the
+ *    policy and keep their original lists (minus the no-longer-automatic
+ *    trainee/dailyWorker).
+ *  - `housekeeping` is deliberately **empty** — POSITIONS.md has no
+ *    Housekeeping section and the policy didn't add trainee/dailyWorker back
+ *    for it, so no position is currently selectable for that department
+ *    (confirmed; not an oversight).
+ *  - Several catalog ids (e.g. `ceo`, `groupOperationalManager`, `runner`,
+ *    `groupBarManager`, `barBack`, `assistantBarManager`,
+ *    `directorOfSalesMarketing`, `socialMediaSpecialist`, `engineerCivil`,
+ *    `groupHrManager`, `trainingDevelopmentSupervisor`,
+ *    `groupFinancialController`, `costControl`, `arIncomeAudit`) are no
+ *    longer selectable from *any* department after this revision — left in
+ *    `POSITION_CATALOG`/`POSITION_LABELS` rather than deleted, since a legacy
+ *    employee record may still carry one and needs it to keep resolving to a
+ *    label.
+ *
+ * Revised again the same day: three baking titles are further restricted to
+ * one specific *outlet* within the `kitchen` department, not the whole
+ * department — `kitchen` is staffed by `the_bakery_kitchen` and by every
+ * standard restaurant outlet (`nourish_ungasan`/`nourish_uluwatu`/
+ * `nourish_berawa`, per `OUTLET_DEPARTMENTS`), and Chief Baker/Chef de Partie
+ * Baker/Cook-Baker only make sense at the bakery. `positionsFor` below
+ * intersects the department list with `OUTLET_ONLY_POSITION_IDS` for exactly
+ * these — a department-only lookup can't express "only at this outlet within
+ * the department," so outletId is now a required second input alongside
+ * departmentId wherever positions are offered or validated.
+ */
+export const DEPARTMENT_POSITION_IDS: Record<string, readonly PositionId[]> = {
+  admin_general: ['director', 'groupGeneralManager'],
+  cashier: ['cashierSupervisor', 'cashier'],
+  fb_service: [
+    'restaurantManager',
+    'restaurantSupervisor',
+    'restaurantCaptain',
+    'waiter',
+    'restaurantMaintenanceManager',
+    'trainee',
+    'dailyWorker',
+  ],
+  bar: ['barManager', 'barSupervisor', 'barCaptain', 'barista', 'trainee', 'dailyWorker'],
+  kitchen: [
+    'headChef',
+    'chiefBaker',
+    'sousChef',
+    'chefDePartie',
+    'chefDePartieBaker',
+    'demiChefDePartie',
+    'cook',
+    'cookBaker',
+    'cookHelper',
+    'steward',
+    'trainee',
+    'dailyWorker',
+  ],
+  central_kitchen: [
+    'groupExecutiveChef',
+    'headChef',
+    'chiefBaker',
+    'sousChef',
+    'sousChefBaker',
+    'chefDePartie',
+    'chefDePartieBaker',
+    'demiChefDePartie',
+    'demiChefBaker',
+    'cook',
+    'cookBaker',
+    'cookHelper',
+    'steward',
+  ],
+  sales_marketing: ['creativeMarketingManager', 'juniorGraphicDesigner'],
+  security: ['securitySupervisor', 'securityGuard'],
+  engineering_pomec: ['restaurantMaintenanceManager', 'engineerMep', 'publicAreaAttendant'],
+  human_resources: ['juniorHrManager', 'hrGeneralAdmin'],
+  finance_accounting: [
+    'chiefAccounting',
+    'apGeneralCashier',
+    'receivingStorekeeper',
+    'accountingAdmin',
+    'purchasingManager',
+    'purchasingSupervisor',
+  ],
+  driver: ['driverLeader', 'driver'],
+  // Deliberately empty — see the block comment above.
+  housekeeping: [],
+  wholefood_retail: ['wholefoodsManager', 'wholefoodsSupervisor', 'wholefoodsCashier'],
+}
+
+/** `kitchen`'s three non-bakery restaurant outlets — the mirror image of `the_bakery_kitchen`. */
+const STANDARD_RESTAURANT_OUTLET_IDS = ['nourish_ungasan', 'nourish_uluwatu', 'nourish_berawa']
+
+/**
+ * Positions restricted to specific outlets, on top of their department
+ * scoping — see the block comment above. `kitchen` splits cleanly along the
+ * bakery/restaurant line: the baking titles only at `the_bakery_kitchen`,
+ * the line-cook titles everywhere else in the department. `steward`/
+ * `trainee`/`dailyWorker` are deliberately absent here — common to both.
+ */
+export const OUTLET_ONLY_POSITION_IDS: Partial<Record<PositionId, readonly string[]>> = {
+  chiefBaker: ['the_bakery_kitchen'],
+  chefDePartieBaker: ['the_bakery_kitchen'],
+  cookBaker: ['the_bakery_kitchen'],
+  headChef: STANDARD_RESTAURANT_OUTLET_IDS,
+  sousChef: STANDARD_RESTAURANT_OUTLET_IDS,
+  chefDePartie: STANDARD_RESTAURANT_OUTLET_IDS,
+  demiChefDePartie: STANDARD_RESTAURANT_OUTLET_IDS,
+  cook: STANDARD_RESTAURANT_OUTLET_IDS,
+  cookHelper: STANDARD_RESTAURANT_OUTLET_IDS,
+}
+
+/** The options a department's position dropdown offers at a given outlet. */
+export function positionsFor(outletId: string, departmentId: string): PositionId[] {
+  return (DEPARTMENT_POSITION_IDS[departmentId] ?? []).filter((id) => {
+    const restriction = OUTLET_ONLY_POSITION_IDS[id]
+    return !restriction || restriction.includes(outletId)
+  })
+}

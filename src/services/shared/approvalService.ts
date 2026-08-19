@@ -1,7 +1,14 @@
 import { callFunction } from '@/services/api'
-import { getDocument, queryDocuments, subscribeToDocument, where, orderBy } from '@/services/firestore'
-import { COLLECTIONS } from '@/constants'
-import type { ApprovalRequest, ApprovalHistoryEntry } from '@/types'
+import {
+  getDocument,
+  queryDocuments,
+  subscribeToCollection,
+  subscribeToDocument,
+  where,
+  orderBy,
+} from '@/services/firestore'
+import { COLLECTIONS, ROLES } from '@/constants'
+import type { ApprovalRequest, ApprovalStep, ApprovalHistoryEntry } from '@/types'
 import type { Unsubscribe } from '@/services/firestore'
 
 /**
@@ -57,4 +64,81 @@ export function getApprovalHistory(approvalRequestId: string): Promise<ApprovalH
     where('approvalRequestId', '==', approvalRequestId),
     orderBy('timestamp', 'asc'),
   ])
+}
+
+/** One live step plus the request it belongs to — what a queue row needs. */
+export interface ApprovalQueueRow {
+  step: ApprovalStep
+  request: ApprovalRequest
+}
+
+/**
+ * The personal approval queue — approval_engine.md §10.
+ *
+ * Queried off `approvalSteps` rather than `approvalRequests` because the engine
+ * routes by role: the live step carries `approverRole`, and the equivalent on
+ * the request (`steps[currentStepIndex].approverRole`) is an array-index lookup
+ * Firestore cannot query. `approvalSteps` is readable by any signed-in user, and
+ * every approverRole in routes.ts is on the `approvalRequests` read rule's
+ * elevated list, so the join back is allowed — add a role to that rule if a
+ * future route ever names one outside it.
+ *
+ * superAdmin is an override approver (OVERRIDE_ROLES in the engine) but is never
+ * named as an approverRole, so its queue would always be empty. It gets every
+ * pending step instead — one equality filter, no orderBy, so it needs no
+ * composite index and sorts client-side.
+ *
+ * ponytail: one request read per queued step. A personal queue is a handful of
+ * rows — denormalise a currentApproverRole onto approvalRequests if it ever isn't.
+ */
+export function subscribeToApprovalQueue(
+  roleId: string,
+  onChange: (rows: ApprovalQueueRow[]) => void,
+  onError?: (error: Error) => void,
+): Unsubscribe {
+  const isOverride = roleId === ROLES.SUPER_ADMIN
+  // The join is async, so two snapshots in quick succession can resolve out of
+  // order. Only the newest one is allowed to emit.
+  let latest = 0
+
+  return subscribeToCollection<ApprovalStep>(
+    COLLECTIONS.APPROVAL_STEPS,
+    isOverride
+      ? [where('stepStatus', '==', 'pending')]
+      : [where('approverRole', '==', roleId), where('stepStatus', '==', 'pending'), orderBy('createdAt', 'desc')],
+    (steps) => {
+      const ordered = isOverride ? [...steps].sort((a, b) => b.createdAt.localeCompare(a.createdAt)) : steps
+      const token = ++latest
+
+      void Promise.all(
+        ordered.map(async (step) => {
+          const request = await getApprovalRequest(step.approvalRequestId).catch(() => null)
+          return request ? { step, request } : null
+        }),
+      ).then((rows) => {
+        if (token !== latest) return
+        onChange(rows.filter((row): row is ApprovalQueueRow => row !== null))
+      })
+    },
+    onError,
+  )
+}
+
+/**
+ * What this user submitted. The status filter is applied by the caller rather
+ * than in the query: one equality on requestedBy matches a single branch of the
+ * approvalRequests read rule, which is what keeps the whole subscription from
+ * failing on a row the reader can't see.
+ */
+export function subscribeToMyApprovalRequests(
+  uid: string,
+  onChange: (requests: ApprovalRequest[]) => void,
+  onError?: (error: Error) => void,
+): Unsubscribe {
+  return subscribeToCollection<ApprovalRequest>(
+    COLLECTIONS.APPROVAL_REQUESTS,
+    [where('requestedBy', '==', uid), orderBy('createdAt', 'desc')],
+    onChange,
+    onError,
+  )
 }

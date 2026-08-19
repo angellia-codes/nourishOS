@@ -37,6 +37,12 @@ export const PERMISSION_MODULES = {
   INCIDENTS: 'incidents',
   DAILY_UPDATES: 'dailyUpdates',
   CALENDAR: 'calendar',
+  HR_INVENTORY: 'hrInventory',
+  SHIFT_REPORTS: 'shiftReports',
+  CHAT: 'chat',
+  EXIT_INTERVIEWS: 'exitInterviews',
+  PROJECTS: 'projects',
+  CONTRACTS: 'contracts',
 } as const
 
 export type PermissionModule = (typeof PERMISSION_MODULES)[keyof typeof PERMISSION_MODULES]
@@ -60,11 +66,30 @@ export const PERMISSIONS = {
   EMPLOYEES_DELETE: permission(PERMISSION_MODULES.EMPLOYEES, ACTIONS.DELETE),
   EMPLOYEES_EXPORT: permission(PERMISSION_MODULES.EMPLOYEES, ACTIONS.EXPORT),
   EMPLOYEES_READ_SENSITIVE: permission(PERMISSION_MODULES.EMPLOYEES, 'readSensitive'),
+  // employee_communication.md §5.4 — a department head issues communications for
+  // their own team without being able to edit employee records. Checked with
+  // requireAnyPermission alongside EMPLOYEES_UPDATE, so hrManager and superAdmin
+  // keep working with no change to their existing roles/{roleId} docs.
+  EMPLOYEES_COMMUNICATE: permission(PERMISSION_MODULES.EMPLOYEES, 'communicate'),
+
+  // exit-interview.md §4: same string gates both reading a record and
+  // conducting/submitting one — HR Manager/Super Admin only, a harder wall
+  // than the rest of the offboarding checklist (that stays on employees.update).
+  EXIT_INTERVIEWS_VIEW: permission(PERMISSION_MODULES.EXIT_INTERVIEWS, 'view'),
 
   RECRUITMENT_READ: permission(PERMISSION_MODULES.RECRUITMENT, ACTIONS.READ),
   RECRUITMENT_CREATE: permission(PERMISSION_MODULES.RECRUITMENT, ACTIONS.CREATE),
   RECRUITMENT_UPDATE: permission(PERMISSION_MODULES.RECRUITMENT, ACTIONS.UPDATE),
   RECRUITMENT_APPROVE: permission(PERMISSION_MODULES.RECRUITMENT, ACTIONS.APPROVE),
+  // employee-requisition.md §7's view_compensation, camelCase per this
+  // codebase's convention (same as employees.readSensitive) rather than the
+  // doc's literal spelling.
+  RECRUITMENT_VIEW_COMPENSATION: permission(PERMISSION_MODULES.RECRUITMENT, 'viewCompensation'),
+  // employment-application-form.md §3/§6: the F010 health, criminal-record and
+  // previous-salary answers. The doc names it candidates.view_sensitive; kept
+  // in the recruitment namespace next to viewCompensation rather than opening a
+  // new module namespace for a single string.
+  RECRUITMENT_VIEW_SENSITIVE: permission(PERMISSION_MODULES.RECRUITMENT, 'viewSensitive'),
 
   // Performance Appraisal — extends HR.md §10. All review types route through
   // GM approval (confirmed decision, not a doc default); insight generation
@@ -89,6 +114,7 @@ export const PERMISSIONS = {
   REPORTS_READ: permission(PERMISSION_MODULES.REPORTS, ACTIONS.READ),
   REPORTS_CREATE: permission(PERMISSION_MODULES.REPORTS, ACTIONS.CREATE),
 
+  WORK_ORDERS_CREATE: permission(PERMISSION_MODULES.WORK_ORDERS, ACTIONS.CREATE),
   WORK_ORDERS_ASSIGN: permission(PERMISSION_MODULES.WORK_ORDERS, ACTIONS.ASSIGN),
   WORK_ORDERS_UPDATE: permission(PERMISSION_MODULES.WORK_ORDERS, ACTIONS.UPDATE),
   WORK_ORDERS_COMPLETE: permission(PERMISSION_MODULES.WORK_ORDERS, 'complete'),
@@ -96,11 +122,27 @@ export const PERMISSIONS = {
   EXPENSE_REQUESTS_SUBMIT: permission(PERMISSION_MODULES.EXPENSE_REQUESTS, ACTIONS.SUBMIT),
   EXPENSE_REQUESTS_APPROVE: permission(PERMISSION_MODULES.EXPENSE_REQUESTS, ACTIONS.APPROVE),
   EXPENSE_REQUESTS_REJECT: permission(PERMISSION_MODULES.EXPENSE_REQUESTS, ACTIONS.REJECT),
+  // expense-request.md §7 — authorising the spend and moving the money are
+  // separate actions; Finance only.
+  EXPENSE_REQUESTS_PAY: permission(PERMISSION_MODULES.EXPENSE_REQUESTS, 'pay'),
 
+  // Communications — Announcements (communications.md §19). Reads are gated by
+  // firestore.rules against the resolved audience, not by a permission string,
+  // so there is no announcements.read. BROADCAST covers the emergency category,
+  // which §19 restricts to GM/Director/Super Admin.
+  ANNOUNCEMENTS_CREATE: permission(PERMISSION_MODULES.ANNOUNCEMENTS, ACTIONS.CREATE),
   ANNOUNCEMENTS_PUBLISH: permission(PERMISSION_MODULES.ANNOUNCEMENTS, ACTIONS.PUBLISH),
+  ANNOUNCEMENTS_BROADCAST: permission(PERMISSION_MODULES.ANNOUNCEMENTS, 'broadcast'),
 
   TASKS_ASSIGN: permission(PERMISSION_MODULES.TASKS, ACTIONS.ASSIGN),
   TASKS_COMPLETE: permission(PERMISSION_MODULES.TASKS, 'complete'),
+
+  // Communications — Team Chat (communications.md §7/§19). SEND covers
+  // sending in any channel you're in scope for (everyone, per §19's
+  // Employee ✅ row); MANAGE_CHANNELS gates creating/archiving channels
+  // themselves, restricted to Leader and above like Assign Task is.
+  CHAT_SEND: permission(PERMISSION_MODULES.CHAT, 'send'),
+  CHAT_MANAGE_CHANNELS: permission(PERMISSION_MODULES.CHAT, 'manageChannels'),
 
   SETTINGS_MANAGE: permission(PERMISSION_MODULES.SETTINGS, ACTIONS.MANAGE),
   USERS_MANAGE: permission(PERMISSION_MODULES.USERS, ACTIONS.MANAGE),
@@ -142,6 +184,33 @@ export const PERMISSIONS = {
   CALENDAR_READ: permission(PERMISSION_MODULES.CALENDAR, ACTIONS.READ),
   CALENDAR_CREATE: permission(PERMISSION_MODULES.CALENDAR, ACTIONS.CREATE),
   CALENDAR_MANAGE: permission(PERMISSION_MODULES.CALENDAR, ACTIONS.MANAGE),
+
+  // HR Inventory — uniforms & assets (stock ledger, not per-serial tracking).
+  // MANAGE curates the item catalog; RECORD covers day-to-day movements
+  // (receive/issue/transfer), which outlet leaders also get since they run
+  // their own outlet's uniform stock — item-master edits stay HR's.
+  HR_INVENTORY_MANAGE: permission(PERMISSION_MODULES.HR_INVENTORY, ACTIONS.MANAGE),
+  HR_INVENTORY_RECORD: permission(PERMISSION_MODULES.HR_INVENTORY, 'record'),
+
+  // Operations — Opening/Closing Shift Reports
+  // (opening_closing_shift_report_template.md). Same three-string split as
+  // Daily Updates above: READ covers the caller's own outlet (rules-scoped),
+  // READ_ALL is the elevated cross-outlet view. One SUBMIT covers both report
+  // types — same trust level, outlet leaders run both ends of the day.
+  SHIFT_REPORTS_SUBMIT: permission(PERMISSION_MODULES.SHIFT_REPORTS, ACTIONS.SUBMIT),
+  SHIFT_REPORTS_READ: permission(PERMISSION_MODULES.SHIFT_REPORTS, ACTIONS.READ),
+  SHIFT_REPORTS_READ_ALL: permission(PERMISSION_MODULES.SHIFT_REPORTS, 'readAll'),
+
+  // Operations — Project Management (HR_OPERATIONS.md §7.3 / §9.8). CREATE
+  // raises a project, which needs GM approval (§9.10) before it opens; MANAGE
+  // is moving it across the board, editing it, and closing it afterwards.
+  PROJECTS_READ: permission(PERMISSION_MODULES.PROJECTS, ACTIONS.READ),
+  PROJECTS_CREATE: permission(PERMISSION_MODULES.PROJECTS, ACTIONS.CREATE),
+  PROJECTS_MANAGE: permission(PERMISSION_MODULES.PROJECTS, ACTIONS.MANAGE),
+
+  // HR — the GM/Director digital-signature step on a new contract (§7.3 /
+  // §9.14). The rest of the contract lifecycle stays on employees.update.
+  CONTRACTS_SIGN: permission(PERMISSION_MODULES.CONTRACTS, 'sign'),
 } as const
 
 export type PermissionString = (typeof PERMISSIONS)[keyof typeof PERMISSIONS]

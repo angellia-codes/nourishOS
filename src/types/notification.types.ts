@@ -16,4 +16,15 @@ export interface AppNotification extends BaseDocument {
   isRead: boolean
   readAt?: string
   expiresAt?: string
+
+  /**
+   * WhatsApp delivery status — HR_OPERATIONS.md §13.1's "delivery-status
+   * block". Only present on notifications that opted into the channel
+   * (`whatsapp: true` server-side); absent means in-app only, not failed.
+   * 'skipped' = no token configured, or the recipient has no linked phone.
+   */
+  whatsappStatus?: 'sent' | 'failed' | 'skipped'
+  whatsappMessageId?: string | null
+  whatsappAttempts?: number
+  whatsappError?: string | null
 }

@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
-import { Upload, Loader2 } from 'lucide-react'
+import { Upload, Camera, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { fileService } from '@/services/shared'
 import { useToast } from '@/hooks'
@@ -11,6 +11,12 @@ interface FileUploadProps {
   resourceId: string
   onUploaded?: (file: FileMetadata) => void
   accept?: string
+  /**
+   * Adds a second button wired to a `capture` input, which opens the camera
+   * directly on mobile instead of the file picker. Desktop browsers ignore
+   * `capture` and fall back to the picker, so it is safe to always show.
+   */
+  camera?: boolean
 }
 
 interface InFlightUpload {
@@ -19,10 +25,11 @@ interface InFlightUpload {
   progress: number
 }
 
-export function FileUpload({ module, resourceType, resourceId, onUploaded, accept }: FileUploadProps) {
+export function FileUpload({ module, resourceType, resourceId, onUploaded, accept, camera }: FileUploadProps) {
   const [inFlight, setInFlight] = useState<InFlightUpload[]>([])
   const [isDragging, setIsDragging] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const cameraRef = useRef<HTMLInputElement>(null)
   const toast = useToast()
 
   const handleFiles = useCallback(
@@ -92,6 +99,25 @@ export function FileUpload({ module, resourceType, resourceId, onUploaded, accep
           onChange={(e) => void handleFiles(e.target.files)}
         />
       </div>
+
+      {camera && (
+        <button
+          type="button"
+          onClick={() => cameraRef.current?.click()}
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-border px-4 py-3 text-sm font-medium text-foreground transition-colors duration-150 hover:border-primary/50"
+        >
+          <Camera className="h-4 w-4" aria-hidden="true" />
+          Take a photo
+          <input
+            ref={cameraRef}
+            type="file"
+            accept={accept ?? 'image/*'}
+            capture="environment"
+            className="hidden"
+            onChange={(e) => void handleFiles(e.target.files)}
+          />
+        </button>
+      )}
 
       {inFlight.length > 0 && (
         <div className="mt-3 flex flex-col gap-2">

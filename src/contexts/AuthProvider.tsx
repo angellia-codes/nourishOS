@@ -2,7 +2,7 @@ import { useEffect, type ReactNode } from 'react'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from '@/services/firebase'
 import { subscribeToDocument, getDocument } from '@/services/firestore'
-import { COLLECTIONS } from '@/constants'
+import { COLLECTIONS, PERMISSIONS } from '@/constants'
 import { useAuthStore } from '@/store'
 import { Spinner } from '@/components/ui'
 import type { UserProfile } from '@/types'
@@ -79,6 +79,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         setError(null)
+        // superAdmin always has every permission (functions/src/lib/rbac.ts
+        // requirePermission bypasses the same way server-side) — the client
+        // mirrors that instead of depending on roles/superAdmin's Firestore
+        // doc staying in sync with every permission string ever added.
+        if (profile.roleId === 'superAdmin') {
+          setPermissions(Object.values(PERMISSIONS))
+          return
+        }
         try {
           const roleDoc = await getDocument<RoleDocument>(COLLECTIONS.ROLES, profile.roleId)
           setPermissions(roleDoc?.permissions ?? [])

@@ -1,6 +1,7 @@
 import { onCall } from 'firebase-functions/v2/https'
 import { FieldValue } from 'firebase-admin/firestore'
 import { db, COLLECTIONS, REGION, requireActiveUser, AppError, handleError, successResponse } from '../../lib'
+import { sendWhatsApp, whatsAppTargetForUid } from './whatsapp'
 
 export interface SendNotificationInternalInput {
   type: string
@@ -13,11 +14,22 @@ export interface SendNotificationInternalInput {
   referenceModule?: string
   referenceId?: string
   actionUrl?: string
+  /**
+   * Also deliver over WhatsApp (HR_OPERATIONS.md §9.11). Off by default so
+   * every existing call site keeps its in-app-only behaviour; opt in per
+   * trigger. The calling function must declare `secrets: [FONNTE_TOKEN]`.
+   */
+  whatsapp?: boolean
+  /** Overrides the recipient's own number — used when the audience isn't a system user (a candidate). */
+  whatsappTarget?: string
 }
 
 /** Internal only — not a callable. Every other Cloud Function calls this to notify a user. */
 export async function sendNotificationInternal(input: SendNotificationInternalInput): Promise<void> {
-  await db.collection(COLLECTIONS.NOTIFICATIONS).add({
+  // The in-app doc is written first and never rolled back: it is the durable
+  // record, and WhatsApp is a best-effort second channel layered on top of it
+  // (§13.1's delivery-status block is what records whether that leg landed).
+  const ref = await db.collection(COLLECTIONS.NOTIFICATIONS).add({
     type: input.type,
     title: input.title,
     message: input.message,
@@ -30,6 +42,19 @@ export async function sendNotificationInternal(input: SendNotificationInternalIn
     actionUrl: input.actionUrl ?? null,
     isRead: false,
     createdAt: FieldValue.serverTimestamp(),
+  })
+
+  if (!input.whatsapp) return
+
+  const target = input.whatsappTarget ?? (await whatsAppTargetForUid(input.recipientUid))
+  if (!target) return
+
+  const result = await sendWhatsApp(target, `*${input.title}*\n\n${input.message}`)
+  await ref.update({
+    whatsappStatus: result.status,
+    whatsappMessageId: result.messageId,
+    whatsappAttempts: result.attempts,
+    whatsappError: result.error,
   })
 }
 

@@ -2,7 +2,7 @@ import { callFunction } from '@/services/api'
 import { subscribeToCollection, where, orderBy } from '@/services/firestore'
 import { COLLECTIONS } from '@/constants'
 import type { Priority } from '@/constants/statuses'
-import type { CalendarConflict, CalendarEvent, CalendarEventType, UserProfile } from '@/types'
+import type { CalendarConflict, CalendarEvent, CalendarEventType } from '@/types'
 import type { Unsubscribe } from '@/services/firestore'
 
 export interface CreateCalendarEventInput {
@@ -48,24 +48,20 @@ export function subscribeToUpcomingEvents(onChange: (events: CalendarEvent[]) =>
   )
 }
 
-export interface ParticipantOption {
-  uid: string
-  displayName: string
-}
-
-/** Participant picker source. Readable by exactly the roles that can create events (firestore.rules). */
-export function subscribeToParticipantOptions(onChange: (options: ParticipantOption[]) => void): Unsubscribe {
-  return subscribeToCollection<UserProfile & { id: string }>(
-    COLLECTIONS.USERS,
-    [where('status', '==', 'active')],
-    (users) =>
-      onChange(
-        users
-          // The doc id IS the uid (users/{uid}); falling back to it keeps the
-          // picker working for older docs written without the field.
-          .map((user) => ({ uid: user.uid ?? user.id, displayName: user.displayName || user.email }))
-          .sort((a, b) => a.displayName.localeCompare(b.displayName)),
-      ),
+/**
+ * Confirmed and cancelled events starting within [start, end) — the month
+ * view's query (HR_OPERATIONS.md §9.2-F01). Same single-range-field shape as
+ * subscribeToUpcomingEvents, so no new composite index is needed.
+ */
+export function subscribeToEventsInRange(
+  start: Date,
+  end: Date,
+  onChange: (events: CalendarEvent[]) => void,
+): Unsubscribe {
+  return subscribeToCollection<CalendarEvent>(
+    COLLECTIONS.CALENDAR_EVENTS,
+    [where('startAt', '>=', start), where('startAt', '<', end), orderBy('startAt', 'asc')],
+    onChange,
   )
 }
 

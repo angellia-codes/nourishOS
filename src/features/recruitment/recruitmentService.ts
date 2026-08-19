@@ -1,0 +1,292 @@
+import { callFunction } from '@/services/api'
+import { getDocument, queryDocuments, subscribeToCollection, where, orderBy } from '@/services/firestore'
+import { COLLECTIONS } from '@/constants'
+import type { Unsubscribe } from '@/services/firestore'
+import type {
+  ApplicationFormSensitive,
+  Candidate,
+  CandidateStage,
+  DiscResult,
+  Employee,
+  FileMetadata,
+  Interview,
+  InterviewRecommendation,
+  OnboardingChecklist,
+  ScorecardCriterion,
+  Requisition,
+  RequisitionCompensation,
+} from '@/types'
+
+/**
+ * Every read and write for the recruitment pipeline — requisitions, candidates,
+ * interviews, onboarding. One file rather than four: they are queried together
+ * on nearly every page, and four near-identical modules would be four places to
+ * keep the same conventions in.
+ */
+
+// ---- Requisitions ----
+
+export interface RequisitionInput {
+  outletId: string
+  departmentId: string
+  position: string
+  openings: number
+  employmentType: string
+  contractMonths?: number | null
+  requisitionType: string
+  replacingEmployeeId?: string | null
+  targetJoinDate: string
+  urgency: string
+  justification: string
+  responsibilities: string
+  requirements: string
+  workSchedule: string
+  budgeted: boolean
+}
+
+export function createRequisition(input: RequisitionInput): Promise<{ requisitionId: string }> {
+  return callFunction('createRequisition', input)
+}
+
+export function updateRequisition(input: RequisitionInput & { requisitionId: string }): Promise<{ requisitionId: string }> {
+  return callFunction('updateRequisition', input)
+}
+
+export function submitRequisition(requisitionId: string): Promise<{ requisitionId: string; requisitionNumber: string }> {
+  return callFunction('submitRequisition', { requisitionId })
+}
+
+export function cancelRequisition(
+  requisitionId: string,
+  reason: string,
+  confirm = false,
+): Promise<{ requisitionId: string }> {
+  return callFunction('cancelRequisition', { requisitionId, reason, confirm })
+}
+
+export function getRequisition(requisitionId: string): Promise<Requisition | null> {
+  return getDocument<Requisition>(COLLECTIONS.RECRUITMENTS, requisitionId)
+}
+
+export function subscribeToRequisitions(
+  onChange: (rows: Requisition[]) => void,
+  onError: (error: Error) => void,
+): Unsubscribe {
+  return subscribeToCollection<Requisition>(
+    COLLECTIONS.RECRUITMENTS,
+    [where('isArchived', '==', false), orderBy('createdAt', 'desc')],
+    onChange,
+    onError,
+  )
+}
+
+/** Approved, still-open requisitions — the only ones a candidate can be raised against. */
+export function listOpenRequisitions(): Promise<Requisition[]> {
+  return queryDocuments<Requisition>(COLLECTIONS.RECRUITMENTS, [
+    where('isArchived', '==', false),
+    orderBy('createdAt', 'desc'),
+  ]).then((rows) => rows.filter((row) => row.status === 'approved'))
+}
+
+export interface UpdateRequisitionCompensationInput {
+  salaryMin: number
+  salaryMax: number
+  positionAllowance?: number
+  phoneAllowance?: number
+  transportationAllowance?: number
+}
+
+/** employee-requisition.md §3-C — hrManager/generalManager/director/superAdmin only; firestore.rules gates the read half. */
+export function updateRequisitionCompensation(
+  requisitionId: string,
+  input: UpdateRequisitionCompensationInput,
+): Promise<void> {
+  return callFunction('updateRequisitionCompensation', { requisitionId, ...input })
+}
+
+export function getRequisitionCompensation(requisitionId: string): Promise<RequisitionCompensation | null> {
+  return getDocument<RequisitionCompensation>(`${COLLECTIONS.RECRUITMENTS}/${requisitionId}/confidential`, 'compensation')
+}
+
+/**
+ * One-shot — the Replacing Employee picker doesn't need a live listener.
+ * Scoped to the requisition's own department: firestore.rules only lets a
+ * department leader read employees in their own department (HR/GM/Director/
+ * superAdmin read everyone regardless), and a "replacement" only makes sense
+ * within the same team anyway.
+ */
+export function listActiveEmployeesInDepartment(departmentId: string): Promise<Employee[]> {
+  return queryDocuments<Employee>(COLLECTIONS.EMPLOYEES, [
+    where('status', '==', 'active'),
+    where('departmentId', '==', departmentId),
+    orderBy('fullName'),
+  ])
+}
+
+// ---- Candidates ----
+
+export interface CandidateInput {
+  requisitionId: string
+  fullName: string
+  phone: string
+  email?: string | null
+  positionApplied: string
+  source: string
+  applicationDate?: string
+  notes?: string | null
+  allowDuplicate?: boolean
+}
+
+export function createCandidate(input: CandidateInput): Promise<{ candidateId: string; candidateNumber: string }> {
+  return callFunction('createCandidate', input)
+}
+
+export function updateCandidate(
+  input: Omit<CandidateInput, 'requisitionId' | 'allowDuplicate'> & { candidateId: string },
+): Promise<{ candidateId: string }> {
+  return callFunction('updateCandidate', input)
+}
+
+export function moveCandidateStage(input: {
+  candidateId: string
+  toStage: CandidateStage
+  joinDate?: string
+  reason?: string
+}): Promise<{ candidateId: string; currentStage: CandidateStage; onboardingChecklistId: string | null }> {
+  return callFunction('moveCandidateStage', input)
+}
+
+export function getCandidate(candidateId: string): Promise<Candidate | null> {
+  return getDocument<Candidate>(COLLECTIONS.CANDIDATES, candidateId)
+}
+
+export function subscribeToCandidates(
+  onChange: (rows: Candidate[]) => void,
+  onError: (error: Error) => void,
+): Unsubscribe {
+  return subscribeToCollection<Candidate>(
+    COLLECTIONS.CANDIDATES,
+    [where('isArchived', '==', false), orderBy('createdAt', 'desc')],
+    onChange,
+    onError,
+  )
+}
+
+/**
+ * The F010 health/criminal/salary answers — employment-application-form.md §3.
+ * Resolves to null when the caller lacks `recruitment.viewSensitive`: the rules
+ * deny the read, and an interviewer seeing "no data" is the intended outcome.
+ */
+export function getCandidateSensitive(candidateId: string): Promise<ApplicationFormSensitive | null> {
+  return getDocument<ApplicationFormSensitive>(
+    `${COLLECTIONS.CANDIDATES}/${candidateId}/confidential`,
+    'application',
+  ).catch(() => null)
+}
+
+/** candidate_portal.md §10.3 — hrManager/GM/director/superAdmin only, per firestore.rules. */
+export function getDiscResult(candidateId: string): Promise<DiscResult | null> {
+  return getDocument<DiscResult>(COLLECTIONS.DISC_RESULTS, candidateId).catch(() => null)
+}
+
+/** Documents the candidate uploaded through the portal (files/{id}, resourceId = candidateId). */
+export function listCandidateDocuments(candidateId: string): Promise<FileMetadata[]> {
+  return queryDocuments<FileMetadata>(COLLECTIONS.FILES, [where('resourceId', '==', candidateId)]).then((rows) =>
+    rows.filter((row) => row.resourceType?.startsWith('candidateDocument:') && row.fileStatus === 'available'),
+  )
+}
+
+export function listCandidatesForRequisition(requisitionId: string): Promise<Candidate[]> {
+  return queryDocuments<Candidate>(COLLECTIONS.CANDIDATES, [
+    where('requisitionId', '==', requisitionId),
+    orderBy('createdAt', 'desc'),
+  ])
+}
+
+// ---- Interviews ----
+
+export interface ScheduleInterviewInput {
+  candidateId: string
+  stage: CandidateStage
+  interviewerUid: string
+  scheduledAt: string
+  durationMinutes: number
+  location: string
+  overrideReason?: string
+}
+
+export function scheduleInterview(
+  input: ScheduleInterviewInput,
+): Promise<{ interviewId: string; calendarEventId: string }> {
+  return callFunction('scheduleInterview', input)
+}
+
+export function recordInterviewOutcome(input: {
+  interviewId: string
+  outcome: 'pass' | 'fail' | 'noShow'
+  score?: number
+  /** All six or none — a partial scorecard is refused server-side. */
+  criteria?: Record<ScorecardCriterion, number>
+  strengths?: string
+  concerns?: string
+  recommendation?: InterviewRecommendation
+  notes?: string
+}): Promise<{ interviewId: string; score: number | null }> {
+  return callFunction('recordInterviewOutcome', input)
+}
+
+export function cancelInterview(interviewId: string, reason: string): Promise<{ interviewId: string }> {
+  return callFunction('cancelInterview', { interviewId, reason })
+}
+
+export function listInterviewsForCandidate(candidateId: string): Promise<Interview[]> {
+  return queryDocuments<Interview>(COLLECTIONS.INTERVIEWS, [
+    where('candidateId', '==', candidateId),
+    orderBy('scheduledAt', 'asc'),
+  ])
+}
+
+/** Full interview schedule, unfiltered by candidate — for the Upcoming Activity and Budget report. */
+export function subscribeToAllInterviews(
+  onChange: (rows: Interview[]) => void,
+  onError: (error: Error) => void,
+): Unsubscribe {
+  return subscribeToCollection<Interview>(
+    COLLECTIONS.INTERVIEWS,
+    [where('isArchived', '==', false), orderBy('scheduledAt', 'asc')],
+    onChange,
+    onError,
+  )
+}
+
+// ---- Onboarding ----
+
+export function updateOnboardingItem(input: {
+  checklistId: string
+  itemNumber: number
+  itemStatus: 'pending' | 'received' | 'notApplicable'
+  fileId?: string
+  linkedRecordId?: string
+}): Promise<{ checklistId: string; outstandingMandatory: number }> {
+  return callFunction('updateOnboardingItem', input)
+}
+
+export function completeOnboarding(checklistId: string): Promise<{ checklistId: string }> {
+  return callFunction('completeOnboarding', { checklistId })
+}
+
+export function getOnboardingChecklist(checklistId: string): Promise<OnboardingChecklist | null> {
+  return getDocument<OnboardingChecklist>(COLLECTIONS.ONBOARDING_CHECKLISTS, checklistId)
+}
+
+export function subscribeToOnboardingChecklists(
+  onChange: (rows: OnboardingChecklist[]) => void,
+  onError: (error: Error) => void,
+): Unsubscribe {
+  return subscribeToCollection<OnboardingChecklist>(
+    COLLECTIONS.ONBOARDING_CHECKLISTS,
+    [where('isArchived', '==', false), orderBy('createdAt', 'desc')],
+    onChange,
+    onError,
+  )
+}

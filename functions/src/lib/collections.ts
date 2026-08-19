@@ -14,6 +14,21 @@ export const COLLECTIONS = {
 
   EMPLOYEES: 'employees',
   EMPLOYEE_ACTIVITIES: 'employeeActivities',
+  DISCIPLINARY_ACTIONS: 'disciplinaryActions',
+  CONTRACTS: 'contracts',
+  TRAININGS: 'trainings',
+  TRAINING_ASSIGNMENTS: 'trainingAssignments',
+  HR_INVENTORY_ITEMS: 'hrInventoryItems',
+  HR_STOCK_LEVELS: 'hrStockLevels',
+  HR_STOCK_MOVEMENTS: 'hrStockMovements',
+
+  RECRUITMENTS: 'recruitments',
+  CANDIDATES: 'candidates',
+  INTERVIEWS: 'interviews',
+  DISC_RESULTS: 'discResults',
+  ONBOARDING_CHECKLISTS: 'onboardingChecklists',
+  OFFBOARDING_CHECKLISTS: 'offboardingChecklists',
+  EXIT_INTERVIEWS: 'exitInterviews',
 
   APPROVAL_WORKFLOWS: 'approvalWorkflows',
   APPROVAL_REQUESTS: 'approvalRequests',
@@ -21,8 +36,17 @@ export const COLLECTIONS = {
   APPROVAL_HISTORY: 'approvalHistory',
 
   TASKS: 'tasks',
+  TASK_COMMENTS: 'taskComments',
 
   NOTIFICATIONS: 'notifications',
+
+  ANNOUNCEMENTS: 'announcements',
+  ANNOUNCEMENT_READS: 'announcementReads',
+  CHAT_CHANNELS: 'chatChannels',
+  CHAT_MESSAGES: 'chatMessages',
+  MENTIONS: 'mentions',
+  ACTIVITY_FEED: 'activityFeed',
+  COMMUNICATION_SETTINGS: 'communicationSettings',
 
   AUDIT_LOGS: 'auditLogs',
 
@@ -30,13 +54,23 @@ export const COLLECTIONS = {
 
   CALENDAR_EVENTS: 'calendarEvents',
 
+  JOB_DESCRIPTIONS: 'jobDescriptions',
+  SOPS: 'sops',
+  TEMPLATES: 'templates',
+  COMPANY_FORMS: 'companyForms',
+
   CHECKPOINTS: 'checkpoints',
   PATROL_LOGS: 'patrolLogs',
 
   DAILY_REPORTS: 'dailyReports',
+  PROJECTS: 'projects',
   INCIDENT_REPORTS: 'incidentReports',
   WORK_ORDERS: 'workOrders',
   LOST_FOUND_ITEMS: 'lostFoundItems',
+  SHIFT_HANDOVERS: 'shiftHandovers',
+
+  EXPENSE_REQUESTS: 'expenseRequests',
 
   SYSTEM_SETTINGS: 'systemSettings',
+  INTEGRATIONS: 'integrations',
 } as const

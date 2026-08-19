@@ -14,7 +14,11 @@ import {
 } from '../../lib'
 import { notifyUsersByRole } from '../../shared/notifications'
 import { createTaskInternal } from '../../shared/tasks'
+import { createWorkOrderInternal } from '../workOrders'
+import { OUTLET_DEPARTMENTS } from '../../lib/organization'
 import { INCIDENT_ROUTING, allocateIncidentNumber, getUidsForRole, type IncidentType } from './helpers'
+
+const OUTLET_IDS = Object.keys(OUTLET_DEPARTMENTS)
 
 const INCIDENT_TYPES = Object.keys(INCIDENT_ROUTING) as IncidentType[]
 const SEVERITIES = ['critical', 'high', 'medium', 'low'] as const
@@ -37,6 +41,7 @@ interface CreateIncidentReportInput {
   witnesses?: { name: string; contact?: string }[]
   immediateActionTaken: string
   emergencyServicesCalled?: boolean
+  outletId?: string
 }
 
 /** incident-report.md §8. Severity is required (AC-1); routing + investigation task + critical-severity GM/HR notify all happen in this one call (AC-2, AC-3). */
@@ -66,6 +71,9 @@ export const createIncidentReport = onCall({ region: REGION }, async (request) =
     if (input.incidentType === 'workplaceInjury' && typeof input.emergencyServicesCalled !== 'boolean') {
       throw new AppError('invalid-argument', 'emergencyServicesCalled is required for workplace injury reports.')
     }
+    if (input.outletId && !OUTLET_IDS.includes(input.outletId)) {
+      throw new AppError('invalid-argument', 'Select a valid outlet.')
+    }
 
     const incidentNumber = await allocateIncidentNumber()
     const assignedToRole = INCIDENT_ROUTING[input.incidentType]
@@ -74,18 +82,14 @@ export const createIncidentReport = onCall({ region: REGION }, async (request) =
 
     let linkedWorkOrderId: string | null = null
     if (input.incidentType === 'equipmentFailure') {
-      // No Work Orders backend exists yet — writing the linked doc inline
-      // rather than standing up a full module for one field. See plan §Phase 2.
-      const workOrderRef = db.collection(COLLECTIONS.WORK_ORDERS).doc()
-      await workOrderRef.set({
+      linkedWorkOrderId = await createWorkOrderInternal(user, {
         title: input.title,
         description: input.description,
         location: input.location,
         priority: input.severity,
+        assignedToRole: INCIDENT_ROUTING[input.incidentType],
         sourceIncidentId: incidentRef.id,
-        ...newDocumentBaseFields(user.uid, 'open'),
       })
-      linkedWorkOrderId = workOrderRef.id
     }
 
     const assigneeUids = await getUidsForRole(assignedToRole)
@@ -120,7 +124,9 @@ export const createIncidentReport = onCall({ region: REGION }, async (request) =
       assignedToRole,
       investigationTaskId,
       linkedWorkOrderId,
-      outletId: user.outletId,
+      // Overridable so staff who work across outlets can file for the outlet
+      // it actually happened at, not their home outlet — validated above.
+      outletId: input.outletId ?? user.outletId,
       departmentId: user.departmentId,
       ...newDocumentBaseFields(user.uid, 'reported'),
     })

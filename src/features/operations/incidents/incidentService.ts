@@ -16,6 +16,8 @@ export interface CreateIncidentReportInput {
   witnesses?: IncidentWitness[]
   immediateActionTaken: string
   emergencyServicesCalled?: boolean
+  /** Defaults to the caller's own outlet server-side if omitted. */
+  outletId?: string
 }
 
 export interface CreateIncidentReportResult {

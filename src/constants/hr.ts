@@ -68,14 +68,159 @@ export const GENDERS = {
 export type Gender = (typeof GENDERS)[keyof typeof GENDERS]
 
 /**
+ * Revised per hand-off (2026-08-15) to the 5 values actually used: Hindu,
+ * Christian, Catholic, Islam, Other. Was a free `<Input>` before this
+ * revision — the stricter `Religion` union in employee.types.ts's PLANNED
+ * section was a different, incomplete list, so this is a new enum rather
+ * than promoting that one.
+ */
+export const RELIGION = {
+  HINDU: 'hindu',
+  CHRISTIAN: 'christian',
+  CATHOLIC: 'catholic',
+  ISLAM: 'islam',
+  OTHER: 'other',
+} as const
+
+export type Religion = (typeof RELIGION)[keyof typeof RELIGION]
+
+export const RELIGION_LABELS: Record<Religion, string> = {
+  hindu: 'Hindu',
+  christian: 'Christian',
+  catholic: 'Catholic',
+  islam: 'Islam',
+  other: 'Other',
+}
+
+/** Source: HR_OPERATIONS.md §12.1 disciplinaryType — escalation ladder. */
+export const DISCIPLINARY_TYPE = {
+  COACHING: 'coaching',
+  VERBAL_WARNING: 'verbalWarning',
+  SP1: 'SP1',
+  SP2: 'SP2',
+  SP3: 'SP3',
+  TERMINATION: 'termination',
+} as const
+
+export type DisciplinaryType = (typeof DISCIPLINARY_TYPE)[keyof typeof DISCIPLINARY_TYPE]
+
+export const DISCIPLINARY_TYPE_LABELS: Record<DisciplinaryType, string> = {
+  coaching: 'Coaching',
+  verbalWarning: 'Verbal Warning',
+  SP1: 'SP1 (First Warning Letter)',
+  SP2: 'SP2 (Second Warning Letter)',
+  SP3: 'SP3 (Final Warning Letter)',
+  termination: 'Termination',
+}
+
+/** Severity rank for sorting by disciplinary action (9.1-F06) — lower is less severe. */
+export const DISCIPLINARY_TYPE_RANK: Record<DisciplinaryType, number> = {
+  coaching: 1,
+  verbalWarning: 2,
+  SP1: 3,
+  SP2: 4,
+  SP3: 5,
+  termination: 6,
+}
+
+/**
+ * employee_communication.md §13 — "Verbal Notification: valid for 3 months.
+ * Written Warning: valid for 6 months," counted from the acknowledgement date
+ * (§35 Rule 5). Coaching and termination have no validity window: coaching is
+ * not a sanction, and a termination does not expire.
+ *
+ * Mirrors DISCIPLINARY_VALIDITY_DAYS in functions/src/hr/employees/helpers.ts —
+ * used here only to prefill the form's per-record override, since the server
+ * recomputes the window at acknowledgement from what is stored.
+ */
+export const DISCIPLINARY_VALIDITY_DAYS: Record<DisciplinaryType, number | null> = {
+  coaching: null,
+  verbalWarning: 90,
+  SP1: 180,
+  SP2: 180,
+  SP3: 180,
+  termination: null,
+}
+
+/**
  * Employee lifecycle events shown on the profile timeline — HR.md §13.
- * Written server-side alongside the mutation that caused them; more values
- * (promoted, transferred, trainingCompleted, …) arrive with their modules.
+ * Written server-side alongside the mutation that caused them.
  */
 export const EMPLOYEE_ACTIVITY_TYPE = {
   HIRED: 'hired',
   UPDATED: 'updated',
   ARCHIVED: 'archived',
+  PROMOTED: 'promoted',
+  DEPARTMENT_TRANSFER: 'departmentTransfer',
+  OUTLET_TRANSFER: 'outletTransfer',
+  DISCIPLINARY_WARNING: 'disciplinaryWarning',
+  APPRAISAL_COMPLETED: 'appraisalCompleted',
+  CONTRACT_RENEWED: 'contractRenewed',
+  CONTRACT_TERMINATED: 'contractTerminated',
+  TRAINING_COMPLETED: 'trainingCompleted',
 } as const
 
 export type EmployeeActivityType = (typeof EMPLOYEE_ACTIVITY_TYPE)[keyof typeof EMPLOYEE_ACTIVITY_TYPE]
+
+/** Source: HR_OPERATIONS.md §12.1 probationStatus. Promoted out of employee.types.ts's PLANNED section — the shape was already correct, just unused. */
+export const PROBATION_STATUS = {
+  PENDING: 'pending',
+  PASSED: 'passed',
+  FAILED: 'failed',
+  EXTENDED: 'extended',
+} as const
+
+export type ProbationStatus = (typeof PROBATION_STATUS)[keyof typeof PROBATION_STATUS]
+
+export const PROBATION_STATUS_LABELS: Record<ProbationStatus, string> = {
+  pending: 'Pending',
+  passed: 'Passed',
+  failed: 'Failed',
+  extended: 'Extended',
+}
+
+/** Indonesian PPh21 personal income tax status — HR_OPERATIONS.md §12.1 personalTaxStatus. Promoted out of employee.types.ts's PLANNED section, same as ProbationStatus above. */
+export const TAX_STATUS = {
+  TK0: 'TK0',
+  TK1: 'TK1',
+  TK2: 'TK2',
+  TK3: 'TK3',
+  K0: 'K0',
+  K1: 'K1',
+  K2: 'K2',
+  K3: 'K3',
+} as const
+
+export type TaxStatus = (typeof TAX_STATUS)[keyof typeof TAX_STATUS]
+
+export const TAX_STATUS_LABELS: Record<TaxStatus, string> = {
+  TK0: 'TK0 — Single, 0 dependents',
+  TK1: 'TK1 — Single, 1 dependent',
+  TK2: 'TK2 — Single, 2 dependents',
+  TK3: 'TK3 — Single, 3 dependents',
+  K0: 'K0 — Married, 0 dependents',
+  K1: 'K1 — Married, 1 dependent',
+  K2: 'K2 — Married, 2 dependents',
+  K3: 'K3 — Married, 3 dependents',
+}
+
+/** Source: HR_OPERATIONS.md §11 Training Types. */
+export const TRAINING_TYPE = {
+  SOP: 'sop',
+  SAFETY: 'safety',
+  FOOD_SAFETY: 'foodSafety',
+  CUSTOMER_SERVICE: 'customerService',
+  LEADERSHIP: 'leadership',
+  TECHNICAL: 'technical',
+} as const
+
+export type TrainingType = (typeof TRAINING_TYPE)[keyof typeof TRAINING_TYPE]
+
+export const TRAINING_TYPE_LABELS: Record<TrainingType, string> = {
+  sop: 'SOP',
+  safety: 'Safety',
+  foodSafety: 'Food Safety',
+  customerService: 'Customer Service',
+  leadership: 'Leadership',
+  technical: 'Technical Skills',
+}

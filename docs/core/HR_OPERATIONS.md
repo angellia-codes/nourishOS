@@ -599,12 +599,12 @@ Uses: contracts (existing, extended with per-threshold sent-flags).
 
 | Days Before Expiry | Alert Type | Recipients |
 | :---- | :---- | :---- |
-| 90 days | First Alert | HR Admin, HR Manager |
-| 60 days | Second Alert | HR Admin, HR Manager |
-| 30 days | Urgent Alert | HR Admin, HR Manager, Department Manager |
-| 14 days | Critical Alert | HR Admin, HR Manager, Department Manager, GM |
+| 90 days | First Alert | HR & General Admin, Junior HR Manager |
+| 60 days | Second Alert | HR & General Admin, Junior HR Manager |
+| 30 days | Urgent Alert | HR & General Admin, Junior HR Manager, Department Manager |
+| 14 days | Critical Alert | HR & General Admin, Junior HR Manager, Department Manager, GM |
 | 7 days | Final Alert | HR Admin, HR Manager, Department Manager, GM |
-| Day 0 (Expired) | Expired Alert | HR Admin, HR Manager, GM |
+| Day 0 (Expired) | Expired Alert | HR & General Admin, Junior HR Manager, GM |
 
 ### **Key Rules**
 

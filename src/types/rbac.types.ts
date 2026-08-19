@@ -1,4 +1,12 @@
 import type { Role } from '@/constants/roles'
+import type { BaseDocument } from './firestore.types'
+
+/** roles/{roleId} — RBAC.md §16. Written once at first claim by registerUser, editable via Settings > Roles & Permissions. */
+export interface RoleDocument extends BaseDocument {
+  name: string
+  description: string
+  permissions: string[]
+}
 
 export interface UserProfile {
   uid: string

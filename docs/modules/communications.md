@@ -430,9 +430,9 @@ Examples
 Delivery Channels
 
 - In-app (MVP)
-- Push Notification (Future)
-- Email (Future)
-- WhatsApp (Future)
+- Push Notification
+- Email (Google Email API)
+- WhatsApp (Fonnte API)
 
 ---
 
@@ -443,12 +443,12 @@ Delivery Channels
 | View Announcements   |    ✅    |   ✅    |   ✅    | ✅  |    ✅    |     ✅      |
 | Create Announcement  |    ❌    | Limited |   ✅    | ✅  |    ✅    |     ✅      |
 | Publish Announcement |    ❌    |   ❌    | Limited | ✅  |    ✅    |     ✅      |
-| Create Task          |    ✅    |   ✅    |   ✅    | ✅  |    ✅    |     ✅      |
+| Create Task          |    ❌   |    ✅    |   ✅    | ✅  |    ✅    |     ✅      |
 | Assign Task          |    ❌    |   ✅    |   ✅    | ✅  |    ✅    |     ✅      |
 | Complete Task        |    ✅    |   ✅    |   ✅    | ✅  |    ✅    |     ✅      |
 | Team Chat            |    ✅    |   ✅    |   ✅    | ✅  |    ✅    |     ✅      |
 | Direct Messages      |    ✅    |   ✅    |   ✅    | ✅  |    ✅    |     ✅      |
-| Broadcast Messages   |    ❌    |   ❌    |   ❌    | ✅  |    ✅    |     ✅      |
+| Broadcast Messages   |    ❌    |   ❌    | Limited    | ✅  |    ✅    |     ✅      |
 
 Permissions are further scoped by outlet and department through RBAC.
 

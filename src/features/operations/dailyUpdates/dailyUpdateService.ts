@@ -33,6 +33,9 @@ export interface SubmitDailyReportInput {
   challenges?: ChallengeInput[]
   newTasks?: NewTaskInput[]
   carriedForwardReviews?: CarriedForwardReviewInput[]
+  /** Both default to the caller's own if omitted. */
+  outletId?: string
+  departmentId?: string
 }
 
 export function submitDailyReport(input: SubmitDailyReportInput): Promise<{ reportId: string }> {

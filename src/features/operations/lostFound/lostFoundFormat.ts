@@ -17,6 +17,14 @@ export const RETENTION_DAYS: Record<LostFoundCategory, number> = {
   other: 14,
 }
 
+/**
+ * Photos are plain `files` documents; the resourceType is what separates the
+ * shot taken when the item was logged from the handover shot taken when it was
+ * returned. Same convention Work Orders uses for before/after.
+ */
+export const LOST_FOUND_PHOTO_ITEM = 'lostFoundItem'
+export const LOST_FOUND_PHOTO_CLAIM = 'lostFoundClaim'
+
 export const LOST_FOUND_CATEGORY_LABELS: Record<LostFoundCategory, string> = {
   electronics: 'Electronics',
   wallet: 'Wallet',

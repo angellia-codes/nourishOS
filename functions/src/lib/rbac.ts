@@ -62,16 +62,40 @@ export async function requireActiveUser(request: CallableRequest): Promise<Authe
   }
 }
 
-/** Throws permission-denied unless the caller's role grants `permission`. */
+/**
+ * Throws permission-denied unless the caller's role grants `permission`.
+ * superAdmin always passes: it's deliberately absent from ROLE_PERMISSIONS
+ * (organization.ts) and its roles/superAdmin doc was seeded by hand once, so
+ * every permission string added since has needed a manual Firestore edit to
+ * reach it — the exact bypass requireSuperAdmin already relies on, extended
+ * to every permission-string check instead of just the handful of callables
+ * that call requireSuperAdmin directly.
+ */
 export function requirePermission(user: AuthedUser, permission: string): void {
+  if (user.roleId === 'superAdmin') return
   if (!user.permissions.includes(permission)) {
     throw new AppError('permission-denied', 'You do not have permission to perform this action.')
   }
 }
 
-/** Throws permission-denied unless the caller holds at least one of `permissions`. */
+/** Throws permission-denied unless the caller holds at least one of `permissions`. superAdmin always passes — see requirePermission. */
 export function requireAnyPermission(user: AuthedUser, permissions: string[]): void {
+  if (user.roleId === 'superAdmin') return
   if (!permissions.some((permission) => user.permissions.includes(permission))) {
     throw new AppError('permission-denied', 'You do not have permission to perform this action.')
+  }
+}
+
+/**
+ * The one role-based gate in this codebase; everything else checks permission
+ * strings. superAdmin is deliberately absent from ROLE_PERMISSIONS
+ * (organization.ts) and its roles/superAdmin doc was seeded by hand, so a new
+ * permission string would not be in that document and every call would fail
+ * permission-denied until somebody edited Firestore. Comparing the role is the
+ * only check that is true on a fresh install.
+ */
+export function requireSuperAdmin(user: AuthedUser, action = 'perform this action'): void {
+  if (user.roleId !== 'superAdmin') {
+    throw new AppError('permission-denied', `Only a super admin can ${action}.`)
   }
 }

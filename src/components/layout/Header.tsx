@@ -1,12 +1,14 @@
-import { Moon, Sun, LogOut } from 'lucide-react'
+import { Moon, Sun, LogOut, Menu } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { SearchBar } from './SearchBar'
 import { NotificationBell } from './NotificationBell'
+import { ChatBell } from './ChatBell'
 import { useAuth } from '@/hooks'
-import { useThemeStore } from '@/store'
+import { useThemeStore, useUIStore } from '@/store'
 
 export function Header() {
   const { profile, signOut } = useAuth()
+  const toggleMobileNav = useUIStore((s) => s.toggleMobileNav)
   const theme = useThemeStore((s) => s.theme)
   const setTheme = useThemeStore((s) => s.setTheme)
 
@@ -14,8 +16,21 @@ export function Header() {
     theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
 
   return (
-    <header className="flex h-[72px] shrink-0 items-center justify-between gap-4 border-b border-border bg-surface px-6">
-      <span className="shrink-0 font-display text-lg font-semibold text-primary">NourishOS</span>
+    <header className="flex h-[72px] shrink-0 items-center justify-between gap-4 border-b border-border bg-surface px-4 md:px-6">
+      <div className="flex shrink-0 items-center gap-2">
+        {/* The sidebar is the only nav on mobile now, so it needs a way in. */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="md:hidden"
+          onClick={toggleMobileNav}
+          aria-label="Open navigation"
+        >
+          <Menu className="h-5 w-5" aria-hidden="true" />
+        </Button>
+        <span className="font-display text-lg font-semibold text-primary">NourishOS</span>
+      </div>
 
       <SearchBar />
 
@@ -30,6 +45,7 @@ export function Header() {
           {isDark ? <Sun className="h-4 w-4" aria-hidden="true" /> : <Moon className="h-4 w-4" aria-hidden="true" />}
         </Button>
 
+        <ChatBell />
         <NotificationBell />
 
         <div className="mx-1 hidden text-right sm:block">

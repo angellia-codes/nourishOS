@@ -138,6 +138,7 @@ approvalFlows
 - Search
 - Filters
 - Export
+- Import
 
 ### Roles
 
@@ -445,26 +446,6 @@ Director
 
 ---
 
-## Petty Cash
-
-### Features
-
-- Record Transaction
-- Category
-- Balance Tracking
-
----
-
-## Budget
-
-### Features
-
-- Budget Allocation
-- Approval
-- Tracking
-
----
-
 # Module 7 — Communication
 
 ## Announcements
@@ -636,12 +617,6 @@ Every feature must satisfy the following before release:
 - QR Checklists
 - Equipment Inspections
 - Preventive Maintenance
-
-## Finance
-
-- Purchase Orders
-- Vendor Management
-- Accounting Integration
 
 ## Communication
 

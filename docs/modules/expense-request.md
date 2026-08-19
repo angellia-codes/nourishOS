@@ -32,7 +32,9 @@ HR has no obvious role in expense approval — this reads like a copy-paste arti
 | ≤ IDR 5,000,000 | Requester → Department Manager → Finance |
 | > IDR 5,000,000 | Requester → Department Manager → Finance → General Manager → Director |
 
-`submitExpenseRequest` builds the `steps` array from this threshold and calls `submitApprovalInternal({ module: 'finance', resourceType: 'expenseRequest', resourceId, requestedBy, steps })` — the same call shape the Appraisal module already uses. No new approval logic to write, only the step-building and a resolved-handler registration.
+**Corrected 2026-08-15 (shipped):** callers cannot supply `steps` — the engine rejects a client-chosen route by design (`submitApproval.ts`, "the vulnerability the rewrite fixed"). Routes are server-owned in `shared/approval/routes.ts`, whose values may now be a `(context) => steps` function; `finance/expenseRequest` is the first such route (`functions/src/finance/expenseSteps.ts`). `submitExpenseRequest` calls `submitApprovalInternal({ module: 'finance', resourceType: 'expenseRequest', resourceId, requestedBy, context })`, where `context` is `{ totalAmount, departmentId, outletId, requesterRoleId }` assembled from the **stored** document — a client that could name its own total could shorten its own chain.
+
+"Department Manager" is not a role that exists: a step names one role id, and a kitchen is managed by `kitchenLeader` while a bar is managed by `barLeader`. Step 1 resolves from the requester's department via `DEPARTMENT_ROLES`. The chain then drops any step naming the requester's own role (self-approval is blocked by uid, so a lone department leader would otherwise stall their own request), dedupes, and floors at `generalManager` if that empties it.
 
 ---
 
@@ -127,7 +129,7 @@ interface ExpenseRequest extends BaseDocument {
 Note: `approveExpenseRequest`/`rejectExpenseRequest` from the documented Cloud Functions list (`finance.md` §17) aren't needed as separate functions — the generic Approval Engine's own `approveDocument`/`rejectDocument` calls already handle step resolution, same as Appraisal. Writing module-specific approve/reject functions would duplicate what the shared engine does.
 
 ### Permissions
-`EXPENSE_REQUESTS_SUBMIT`, `EXPENSE_REQUESTS_APPROVE`, `EXPENSE_REQUESTS_REJECT` already exist in `permissions.ts` — reuse, don't recreate. One gap: **no payment-execution permission exists.** Approving an expense and disbursing the money are different actions with different risk profiles (approval is authorization, payment is money actually moving) and arguably should not share a permission. Recommend adding `EXPENSE_REQUESTS_PAY` (`expenseRequests.pay`), scoped to Finance role only — flagging this as a new addition, not assuming `APPROVE` covers it.
+`EXPENSE_REQUESTS_SUBMIT`, `EXPENSE_REQUESTS_APPROVE`, `EXPENSE_REQUESTS_REJECT` already exist in `src/constants/permissions.ts` — reuse, don't recreate. **Corrected 2026-08-15:** they existed only client-side and as granted strings in `functions/src/lib/organization.ts`; the `functions/src/lib/permissions.ts` mirror had no Finance entries at all, so `SUBMIT` and the new `PAY` were both added there. One gap: **no payment-execution permission exists.** Approving an expense and disbursing the money are different actions with different risk profiles (approval is authorization, payment is money actually moving) and arguably should not share a permission. Recommend adding `EXPENSE_REQUESTS_PAY` (`expenseRequests.pay`), scoped to Finance role only — flagging this as a new addition, not assuming `APPROVE` covers it.
 
 | Role | Create (own) | Submit | Approve (Approval Engine step) | Pay | View |
 | --- | --- | --- | --- | --- | --- |
@@ -168,7 +170,7 @@ Note: `approveExpenseRequest`/`rejectExpenseRequest` from the documented Cloud F
 1. Cannot submit without at least one item, at least one receipt attachment, and `expenseDate` ≤ today — matches `finance.md` §19 exactly
 2. `totalAmount` is always the sum of `items[].amount` — enforced by computing it server-side, not trusting client input
 3. Requests ≤ IDR 5,000,000 route through 2 approval steps; requests above route through 4 — verified against `approval_engine.md` §6's documented example
-4. `onExpenseRequestApprovalResolved` correctly updates `status` and notifies the requester within the same transaction as the Approval Engine's resolution
+4. `onExpenseRequestApprovalResolved` correctly updates `status` and notifies the requester. **Corrected 2026-08-15:** not "within the same transaction" — `onApprovalRequestResolved` is a Firestore `onDocumentUpdated` trigger that fires after the engine commits, so the writeback is eventually consistent by design
 5. `markExpensePaid` requires the new `EXPENSE_REQUESTS_PAY` permission — a GM or Director who approved the request cannot also mark it paid unless they separately hold that permission
 6. Every status transition produces an audit log entry
 7. Dashboard "Pending Approvals" widget reflects a new submission within one refresh cycle, sourced from `approvalRequests`, not a duplicated status field on `expenseRequests`

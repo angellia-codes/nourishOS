@@ -12,6 +12,8 @@ export interface CreateLostFoundItemInput {
   foundAt: string
   storageLocation: string
   linkedIncidentId?: string
+  /** Defaults to the caller's own outlet server-side if omitted. */
+  outletId?: string
 }
 
 export interface CreateLostFoundItemResult {

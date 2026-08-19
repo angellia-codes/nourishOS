@@ -31,7 +31,13 @@ service cloud.firestore {
 
     // ---- Core ----
     match /users/{userId} {
-      allow read: if isSignedIn() && (request.auth.uid == userId || hasAnyRole(['superAdmin', 'director', 'generalManager', 'hrManager']));
+      // Internal staff directory: the doc holds work email, display name, role,
+      // department, outlet and status — nothing sensitive lives here (salary and
+      // NIK are deliberately off the employee doc too). Any signed-in user can
+      // read it because the task assignee picker and every other "who is this
+      // uid" lookup needs it, and restricting it to HR-and-above meant a leader
+      // could not assign the tasks communications.md §19 says they may assign.
+      allow read: if isSignedIn();
       allow write: if false; // server-side only — user docs are maintained via superAdmin tooling; admin callables are planned (AUTHENTICATION.md §18)
     }
 
@@ -41,14 +47,190 @@ service cloud.firestore {
       // their own department. Salary is deliberately NOT stored on this doc
       // (see employee.types.ts) since rules can't hide individual fields.
       allow read: if hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
-        (hasAnyRole(['kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader', 'wholefoodLeader', 'outletManager']) &&
+        // restaurantManager replaced outletManager on the registration form but
+        // was never added here, so its dashboard headcount tile read denied.
+        // The /hr module is hidden from these roles (routes.tsx) — this read
+        // backs the "Active Employees (Dept)" KPI tile, not a page.
+        // Every department head, scoped to their own department: the list
+        // matches DEPARTMENT_ROLES[dept][0], which is what KpiCardsRow uses to
+        // decide someone is a department manager. Without the back-office roles
+        // here their headcount tile read denies.
+        (hasAnyRole(['kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader', 'wholefoodLeader',
+          'outletManager', 'restaurantManager', 'finance', 'purchasing', 'security', 'engineering', 'marketing']) &&
           resource.data.departmentId == request.auth.token.departmentId);
       allow write: if false; // createEmployee / updateEmployee / archiveEmployee Cloud Functions only
+
+      // §12.1: salary/allowance/bank data — split out since the rule above
+      // can't hide individual fields from GM/Director/department leaders.
+      match /compensation/{document=**} {
+        allow read: if hasAnyRole(['hrManager', 'superAdmin']);
+        allow write: if false; // updateEmployeeCompensation Cloud Function only
+      }
     }
 
     match /employeeActivities/{activityId} {
       allow read: if hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']);
       allow write: if false; // written server-side alongside employee mutations
+    }
+
+    // ---- HR: Employee Communication / Disciplinary Records ----
+    // employee_communication.md §5/§30 — the Employee Communication Form record
+    // (Coaching/Verbal/SP1/SP2/SP3/Termination), which is also the detail layer
+    // behind Employee's own 3 disciplinary status fields
+    // (FEATURE_SPECIFICATIONS.md Module 3).
+    //
+    // Three read branches, one per audience the spec names. The two that were
+    // added when the workflow landed both key off fields denormalized at create
+    // time, because a list query fails wholesale if a single returned document
+    // fails its own read rule — so every branch has to be self-contained:
+    //   §5.4 a department head reads their own department's records. This used
+    //     to be impossible without a get() to the employee doc; departmentId is
+    //     now on the record itself. Same role list /employees uses.
+    //   §5.5 the employee reads their OWN record, and only once released (i.e.
+    //     the GM has signed). Rules cannot see employeeId, so the employee's
+    //     login is resolved to a uid server-side into employeeUid — the same
+    //     trick publishAnnouncement uses for audienceUids. Most floor staff
+    //     have no account, in which case employeeUid is null and nothing here
+    //     matches, which is correct.
+    match /disciplinaryActions/{recordId} {
+      allow read: if hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
+        (hasAnyRole(['kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader', 'wholefoodLeader',
+          'outletManager', 'restaurantManager', 'finance', 'purchasing', 'security', 'engineering', 'marketing']) &&
+          resource.data.departmentId == request.auth.token.departmentId) ||
+        (resource.data.employeeUid == request.auth.uid && resource.data.releasedToEmployee == true);
+      allow write: if false; // createDisciplinaryRecord / updateDisciplinaryRecord / submitCommunicationRecord / submitEmployeeStatement / acknowledgeCommunicationRecord / addInvestigationNote / closeDisciplinaryRecord Cloud Functions only (plus the expireCommunicationRecords scheduled job)
+    }
+
+    // ---- HR: Employment Contracts ----
+    // HR.md §9. One row per contract version, append-only history behind
+    // Employee's flat contractType/contractStartDate/contractEndDate cache.
+    // HR/elevated read only — same sensitivity level as disciplinaryActions,
+    // no department-leader branch.
+    match /contracts/{contractId} {
+      allow read: if hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']);
+      allow write: if false; // renewContract / terminateContract Cloud Functions only (createContractInternal on hire)
+    }
+
+    // ---- HR: Recruitment ----
+    // employee-requisition.md §7: HR and above read every requisition; a
+    // department leader or outlet manager reads only their own outlet's. The
+    // outlet comes off the token claim, so a leader who transfers outlets
+    // loses the old outlet's rows as soon as the claim syncs.
+    function isHrOrAbove() {
+      return hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']);
+    }
+
+    function isLeader() {
+      return hasAnyRole(['kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader',
+        'wholefoodLeader', 'outletManager', 'restaurantManager']);
+    }
+
+    // Requisitions are raised by every department head, not only the
+    // outlet-facing leader roles — mirrors recruitment.create in
+    // ROLE_PERMISSIONS, so a head can read back what they submitted.
+    function isDepartmentHead() {
+      return isLeader() || hasAnyRole(['finance', 'purchasing', 'security', 'engineering', 'marketing']);
+    }
+
+    match /recruitments/{requisitionId} {
+      allow read: if isHrOrAbove() ||
+        (isDepartmentHead() && resource.data.outletId == request.auth.token.outletId);
+      allow write: if false; // createRequisition / updateRequisition / submitRequisition / cancelRequisition only
+
+      // employee-requisition.md §3-C/§7: salary range — narrower than the
+      // parent doc's read rule above (no leader branch).
+      match /confidential/{document=**} {
+        allow read: if hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']);
+        allow write: if false; // updateRequisitionCompensation Cloud Function only
+      }
+    }
+
+    // Candidate records carry personal contact details, so they stay with HR
+    // and above — a leader sees the vacancy they raised, not the applicants.
+    match /candidates/{candidateId} {
+      allow read: if isHrOrAbove();
+      allow write: if false; // createCandidate / updateCandidate / moveCandidateStage only
+
+      // employment-application-form.md §3/§6: F010's health history, criminal
+      // record and previous-salary answers. Same sub-document split the
+      // requisition's confidential compensation block uses, because rules gate
+      // documents and not fields — an interviewer reads the candidate, never this.
+      match /confidential/{document=**} {
+        allow read: if hasAnyRole(['hrManager', 'superAdmin']);
+        allow write: if false; // saveApplicationForm (candidate portal) only
+      }
+    }
+
+    // candidate_portal.md §25: DISC is more restricted than the candidate record
+    // itself, and the client never writes it — submitDiscAssessment scores it
+    // server-side so a candidate cannot post their own result.
+    match /discResults/{candidateId} {
+      allow read: if hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']);
+      allow write: if false; // submitDiscAssessment only
+    }
+
+    match /interviews/{interviewId} {
+      allow read: if isHrOrAbove() || (isSignedIn() && resource.data.interviewerUid == request.auth.uid);
+      allow write: if false; // scheduleInterview / recordInterviewOutcome / cancelInterview only
+    }
+
+    match /onboardingChecklists/{checklistId} {
+      allow read: if isHrOrAbove();
+      allow write: if false; // written by moveCandidateStage; edited via updateOnboardingItem / completeOnboarding
+    }
+
+    // ---- HR: Offboarding & Exit ----
+    // employee-onboarding-exit-checklist.md §5.
+    match /offboardingChecklists/{checklistId} {
+      allow read: if isHrOrAbove();
+      allow write: if false; // written by archiveEmployee; edited via updateOffboardingItem / completeOffboarding
+    }
+
+    // exit-interview.md §4: individual records are hrManager/superAdmin only —
+    // deliberately NOT generalManager/director like the rest of HR's sensitive
+    // collections. GM/Director get rollups through getExitInterviewInsights
+    // instead of a direct collection read (the §6 minimum-N safeguard has to
+    // be enforced server-side, which a firestore.rules read rule can't do).
+    match /exitInterviews/{interviewId} {
+      allow read: if hasAnyRole(['hrManager', 'superAdmin']);
+      allow write: if false; // submitExitInterview Cloud Function only
+    }
+
+    // ---- HR: Inventory (uniforms & assets) ----
+    // Catalog and stock levels aren't sensitive — same openness as checkpoints,
+    // so staff can see what's on hand before asking HR to source it. The
+    // movement ledger carries unit cost, so it's scoped like expenseRequests:
+    // HR and above see everything, a leader sees their own outlet's activity.
+    match /hrInventoryItems/{itemId} {
+      allow read: if isSignedIn();
+      allow write: if false; // createInventoryItem / updateInventoryItem only
+    }
+
+    match /hrStockLevels/{stockLevelId} {
+      allow read: if isSignedIn();
+      allow write: if false; // written only inside receiveStock/issueStock/transferStock transactions
+    }
+
+    match /hrStockMovements/{movementId} {
+      allow read: if isHrOrAbove() ||
+        (isDepartmentHead() && resource.data.outletId == request.auth.token.outletId);
+      allow write: if false; // receiveStock / issueStock / transferStock only
+    }
+
+    // ---- HR: Training ----
+    // HR.md §11. Catalog isn't sensitive — same openness as hrInventoryItems.
+    // Assignments denormalize departmentId at write time (assignTraining) so
+    // a department leader can see their own team's assigned/overdue training
+    // (HR.md §22: Assign Training is "Limited" for Department Leader).
+    match /trainings/{trainingId} {
+      allow read: if isSignedIn();
+      allow write: if false; // createTraining / updateTraining Cloud Functions only
+    }
+
+    match /trainingAssignments/{assignmentId} {
+      allow read: if isHrOrAbove() ||
+        (isLeader() && resource.data.departmentId == request.auth.token.departmentId);
+      allow write: if false; // assignTraining / completeTraining Cloud Functions only
     }
 
     // ---- HR: Appraisal ----
@@ -95,6 +277,18 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Participants are denormalised onto each comment (addTaskComment) so this
+    // rule matches a plain `where taskId == …` query without a get() on the
+    // parent task — a get() per comment would cost a read each and could not be
+    // satisfied by any client query at all.
+    match /taskComments/{commentId} {
+      allow read: if isSignedIn() && (
+        request.auth.uid in resource.data.taskParticipants ||
+        isElevated()
+      );
+      allow write: if false; // addTaskComment Cloud Function only
+    }
+
     // ---- Shared: Notifications ----
     match /notifications/{notificationId} {
       allow read: if isSignedIn() && resource.data.recipientUid == request.auth.uid;
@@ -109,6 +303,49 @@ service cloud.firestore {
     // RBAC-scoped searchAuditLogs() Cloud Function (AUDIT_LOG.md §17).
     match /auditLogs/{logId} {
       allow read, write: if false;
+    }
+
+    // ---- Communications: Team Chat / Activity Feed / Mentions / Settings ----
+    match /chatChannels/{channelId} {
+      allow read: if isSignedIn() && (
+        resource.data.scopeType == 'company' ||
+        (resource.data.scopeType == 'department' && resource.data.departmentId == request.auth.token.departmentId) ||
+        (resource.data.scopeType == 'outlet' && resource.data.outletId == request.auth.token.outletId) ||
+        isElevated()
+      );
+      allow write: if false; // createChannel Cloud Function only
+    }
+
+    // scopeType/departmentId/outletId are denormalised from the parent
+    // channel onto every message at send time — same reason taskComments
+    // denormalises taskParticipants: a list query fails wholesale if any
+    // returned doc fails its own read rule, so every message in a
+    // channelId query must evaluate the identical, self-contained branch.
+    match /chatMessages/{messageId} {
+      allow read: if isSignedIn() && (
+        resource.data.scopeType == 'company' ||
+        (resource.data.scopeType == 'department' && resource.data.departmentId == request.auth.token.departmentId) ||
+        (resource.data.scopeType == 'outlet' && resource.data.outletId == request.auth.token.outletId) ||
+        isElevated()
+      );
+      allow write: if false; // sendMessage Cloud Function only
+    }
+
+    // Company-wide, informational — communications.md §10's generic
+    // "company activities" framing, no audience scoping.
+    match /activityFeed/{activityId} {
+      allow read: if isSignedIn();
+      allow write: if false; // recordActivityInternal only, called from other callables
+    }
+
+    match /mentions/{mentionId} {
+      allow read: if isSignedIn() && (resource.data.mentionedUid == request.auth.uid || isElevated());
+      allow write: if false; // written internally alongside sendMessage / addTaskComment
+    }
+
+    match /communicationSettings/{uid} {
+      allow read: if isSignedIn() && uid == request.auth.uid;
+      allow write: if false; // updateCommunicationSettings Cloud Function only
     }
 
     // ---- Shared: File Storage metadata ----
@@ -159,6 +396,41 @@ service cloud.firestore {
       allow write: if false; // createIncidentReport / updateIncidentStatus / reopenIncident Cloud Functions only
     }
 
+    // ---- Operations: Work Orders ----
+    // FEATURE_SPECIFICATIONS.md Module 5 — same shape as incidentReports above:
+    // creator, the routed role, elevated roles, or an outlet-leader match.
+    match /workOrders/{workOrderId} {
+      allow read: if isSignedIn() && (
+        resource.data.createdBy == request.auth.uid ||
+        resource.data.assignedTo == request.auth.uid ||
+        resource.data.assignedToRole == role() ||
+        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
+        hasAnyRole([
+          'kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader', 'wholefoodLeader',
+          'outletManager', 'restaurantManager', 'engineering',
+          // Every role that can raise a work order can read the queue it
+          // raised into — mirrors workOrders.create in ROLE_PERMISSIONS.
+          'finance', 'purchasing',
+        ])
+      );
+      allow write: if false; // createWorkOrder / updateWorkOrderStatus Cloud Functions only
+    }
+
+    // ---- Operations: Opening/Closing Shift Reports ----
+    // opening_closing_shift_report_template.md. Same outlet-or-elevated shape as
+    // dailyReports below, keyed on the filing manager instead of submittedBy.
+    // Absorbed the openingChecklists/closingChecklists collections, whose blocks
+    // were removed with them — any documents left behind are unreadable by
+    // design (nothing reads them and the deny-all at the bottom catches them).
+    match /shiftHandovers/{reportId} {
+      allow read: if isSignedIn() && (
+        resource.data.picUid == request.auth.uid ||
+        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
+        resource.data.outletId == request.auth.token.outletId
+      );
+      allow write: if false; // submitShiftReport Cloud Function only
+    }
+
     // ---- Operations: Daily Updates ----
     match /dailyReports/{reportId} {
       allow read: if isSignedIn() && (
@@ -167,6 +439,20 @@ service cloud.firestore {
         resource.data.outletId == request.auth.token.outletId
       );
       allow write: if false; // submitDailyReport Cloud Function only
+    }
+
+    // ---- Operations: Project Management ----
+    // HR_OPERATIONS.md §7.2 gives outlet leaders "Own Projects" and the
+    // executive roles the full view. Same outlet-or-elevated shape as
+    // dailyReports above, plus the owner, who may sit in another outlet.
+    match /projects/{projectId} {
+      allow read: if isSignedIn() && (
+        resource.data.ownerUid == request.auth.uid ||
+        resource.data.createdBy == request.auth.uid ||
+        resource.data.outletId == request.auth.token.outletId ||
+        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin'])
+      );
+      allow write: if false; // createProject / updateProject / submitProject / moveProjectColumn only
     }
 
     // ---- Shared: Executive Calendar ----
@@ -194,6 +480,106 @@ service cloud.firestore {
     match /roles/{roleId} {
       allow read: if isSignedIn();
       allow write: if false; // seeded via Console; a Settings callable is planned (RBAC.md §16)
+    }
+
+    // ---- Integrations ----
+    // HR_OPERATIONS.md §6.2/§13.1: third-party credentials and contact details
+    // (integrations/fonnte, integrations/googleCalendar) live here rather than a
+    // CONFIG collection. Read is superAdmin-only — these documents hold tokens,
+    // and the Cloud Functions that actually use them bypass rules entirely.
+    match /integrations/{integrationId} {
+      allow read: if hasAnyRole(['superAdmin']);
+      allow write: if false; // seeded via Console — no callable writes credentials
+    }
+
+    // ---- Documents: Job Descriptions ----
+    // Which roles may read the register is runtime-editable, so it cannot ride
+    // on a custom claim the way every other rule here does. The allowlist doc
+    // is matched by literal id so the sibling *NumberSequences counters stay in
+    // the deny-all below, and the get() is one of only two cross-document
+    // lookups in this file (the SOP library below is the other) — one read per
+    // query evaluation, cached for the request.
+    //
+    // Before a super admin saves an allowlist the doc does not exist, the get()
+    // yields null and this denies: closed by default, on purpose.
+    match /systemSettings/jobDescriptionAccess {
+      allow read: if isSignedIn(); // the Module Access page reads it back to prefill
+      allow write: if false; // setJobDescriptionAccess Cloud Function only
+    }
+
+    match /jobDescriptions/{jobDescriptionId} {
+      allow read: if isElevated() ||
+        (isSignedIn() &&
+          role() in get(/databases/$(database)/documents/systemSettings/jobDescriptionAccess).data.roleIds);
+      allow write: if false; // createJobDescription / updateJobDescription / deleteJobDescription only
+    }
+
+    // ---- Documents: SOP Library ----
+    // Same pattern as Job Descriptions above, against its own allowlist doc, so
+    // granting a role the SOPs doesn't also grant it the job descriptions.
+    match /systemSettings/sopAccess {
+      allow read: if isSignedIn(); // the Module Access page reads it back to prefill
+      allow write: if false; // setSopAccess Cloud Function only
+    }
+
+    match /sops/{sopId} {
+      allow read: if isElevated() ||
+        (isSignedIn() &&
+          role() in get(/databases/$(database)/documents/systemSettings/sopAccess).data.roleIds);
+      allow write: if false; // createSop / updateSop / deleteSop only
+    }
+
+    // ---- Documents: Company Forms + Templates ----
+    // FEATURE_SPECIFICATIONS.md Module 4. Unlike Job Descriptions/SOPs there is
+    // no runtime access-list doc — every signed-in user can read, matching the
+    // app's default unless a doc says otherwise.
+    match /companyForms/{formId} {
+      allow read: if isSignedIn();
+      allow write: if false; // createDocumentResource / updateDocumentResource / deleteDocumentResource only
+    }
+
+    match /templates/{templateId} {
+      allow read: if isSignedIn();
+      allow write: if false; // createDocumentResource / updateDocumentResource / deleteDocumentResource only
+    }
+
+    // ---- Finance: Expense Requests ----
+    // expense-request.md §7's view column: own always, Finance and above see
+    // everything, and a department leader sees their own department's — that
+    // last branch exists so the leader approving step 1 can open the record the
+    // dashboard queue links them to. The list pages deliberately query only the
+    // first two branches (own, or unfiltered for Finance/elevated), because a
+    // list query that returns one unreadable row fails in its entirety.
+    match /expenseRequests/{requestId} {
+      allow read: if isSignedIn() && (
+        resource.data.requestedBy == request.auth.uid ||
+        hasAnyRole(['finance', 'generalManager', 'director', 'superAdmin']) ||
+        (isLeader() &&
+          resource.data.departmentId == request.auth.token.departmentId &&
+          resource.data.outletId == request.auth.token.outletId)
+      );
+      allow write: if false; // createExpenseRequest / updateExpenseRequest / submitExpenseRequest / markExpensePaid / closeExpenseRequest only
+    }
+
+    // ---- Communications: Announcements ----
+    // audienceUids is the author's outlet/department/role targeting resolved to
+    // concrete uids at publish time (functions/src/communications/announcements.ts).
+    // Rules and the feed query have to speak the same language — a list query
+    // fails outright if any returned document fails its read rule, and
+    // "outletIds is empty OR contains mine" is not expressible as a query. So
+    // both key off this one array. Drafts have it empty, archiving clears it.
+    match /announcements/{announcementId} {
+      allow read: if isSignedIn() && (
+        request.auth.uid in resource.data.audienceUids ||
+        resource.data.createdBy == request.auth.uid ||
+        isElevated()
+      );
+      allow write: if false; // createAnnouncement / updateAnnouncement / publishAnnouncement / archiveAnnouncement only
+    }
+
+    match /announcementReads/{readId} {
+      allow read: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow write: if false; // recordAnnouncementRead Cloud Function only
     }
 
     // ---- Default deny ----
