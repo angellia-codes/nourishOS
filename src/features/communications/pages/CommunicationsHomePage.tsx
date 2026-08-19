@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Megaphone, ListChecks } from 'lucide-react'
+import { Megaphone, ListChecks, MessageSquareWarning } from 'lucide-react'
 import { Button, Card, CardContent } from '@/components/ui'
 
 /**
@@ -31,6 +31,12 @@ const SUB_MODULES = [
     icon: ListChecks,
     title: 'Tasks',
     description: 'Work assigned to you, and what you have handed out.',
+  },
+  {
+    to: '/communications/employee',
+    icon: MessageSquareWarning,
+    title: 'Employee Communication',
+    description: 'Coaching, warnings and terminations — issued, signed and tracked.',
   },
 ]
 

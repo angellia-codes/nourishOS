@@ -3,11 +3,16 @@ import { getDocument, queryDocuments, subscribeToCollection, where, orderBy } fr
 import { COLLECTIONS } from '@/constants'
 import type { Unsubscribe } from '@/services/firestore'
 import type {
+  ApplicationFormSensitive,
   Candidate,
   CandidateStage,
+  DiscResult,
   Employee,
+  FileMetadata,
   Interview,
+  InterviewRecommendation,
   OnboardingChecklist,
+  ScorecardCriterion,
   Requisition,
   RequisitionCompensation,
 } from '@/types'
@@ -167,6 +172,30 @@ export function subscribeToCandidates(
   )
 }
 
+/**
+ * The F010 health/criminal/salary answers — employment-application-form.md §3.
+ * Resolves to null when the caller lacks `recruitment.viewSensitive`: the rules
+ * deny the read, and an interviewer seeing "no data" is the intended outcome.
+ */
+export function getCandidateSensitive(candidateId: string): Promise<ApplicationFormSensitive | null> {
+  return getDocument<ApplicationFormSensitive>(
+    `${COLLECTIONS.CANDIDATES}/${candidateId}/confidential`,
+    'application',
+  ).catch(() => null)
+}
+
+/** candidate_portal.md §10.3 — hrManager/GM/director/superAdmin only, per firestore.rules. */
+export function getDiscResult(candidateId: string): Promise<DiscResult | null> {
+  return getDocument<DiscResult>(COLLECTIONS.DISC_RESULTS, candidateId).catch(() => null)
+}
+
+/** Documents the candidate uploaded through the portal (files/{id}, resourceId = candidateId). */
+export function listCandidateDocuments(candidateId: string): Promise<FileMetadata[]> {
+  return queryDocuments<FileMetadata>(COLLECTIONS.FILES, [where('resourceId', '==', candidateId)]).then((rows) =>
+    rows.filter((row) => row.resourceType?.startsWith('candidateDocument:') && row.fileStatus === 'available'),
+  )
+}
+
 export function listCandidatesForRequisition(requisitionId: string): Promise<Candidate[]> {
   return queryDocuments<Candidate>(COLLECTIONS.CANDIDATES, [
     where('requisitionId', '==', requisitionId),
@@ -196,6 +225,11 @@ export function recordInterviewOutcome(input: {
   interviewId: string
   outcome: 'pass' | 'fail' | 'noShow'
   score?: number
+  /** All six or none — a partial scorecard is refused server-side. */
+  criteria?: Record<ScorecardCriterion, number>
+  strengths?: string
+  concerns?: string
+  recommendation?: InterviewRecommendation
   notes?: string
 }): Promise<{ interviewId: string; score: number | null }> {
   return callFunction('recordInterviewOutcome', input)

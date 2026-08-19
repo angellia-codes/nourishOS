@@ -73,15 +73,32 @@ service cloud.firestore {
       allow write: if false; // written server-side alongside employee mutations
     }
 
-    // ---- HR: Disciplinary Records ----
-    // FEATURE_SPECIFICATIONS.md Module 3 — Warning/Suspension records +
-    // Investigation Notes, the detail layer behind Employee's own 3
-    // disciplinary status fields. HR/elevated read only (no department-leader
-    // branch like /employees — that would need a get() to the employee doc
-    // for departmentId, and this is more sensitive than the base record).
+    // ---- HR: Employee Communication / Disciplinary Records ----
+    // employee_communication.md §5/§30 — the Employee Communication Form record
+    // (Coaching/Verbal/SP1/SP2/SP3/Termination), which is also the detail layer
+    // behind Employee's own 3 disciplinary status fields
+    // (FEATURE_SPECIFICATIONS.md Module 3).
+    //
+    // Three read branches, one per audience the spec names. The two that were
+    // added when the workflow landed both key off fields denormalized at create
+    // time, because a list query fails wholesale if a single returned document
+    // fails its own read rule — so every branch has to be self-contained:
+    //   §5.4 a department head reads their own department's records. This used
+    //     to be impossible without a get() to the employee doc; departmentId is
+    //     now on the record itself. Same role list /employees uses.
+    //   §5.5 the employee reads their OWN record, and only once released (i.e.
+    //     the GM has signed). Rules cannot see employeeId, so the employee's
+    //     login is resolved to a uid server-side into employeeUid — the same
+    //     trick publishAnnouncement uses for audienceUids. Most floor staff
+    //     have no account, in which case employeeUid is null and nothing here
+    //     matches, which is correct.
     match /disciplinaryActions/{recordId} {
-      allow read: if hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']);
-      allow write: if false; // createDisciplinaryRecord / addInvestigationNote / closeDisciplinaryRecord Cloud Functions only
+      allow read: if hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
+        (hasAnyRole(['kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader', 'wholefoodLeader',
+          'outletManager', 'restaurantManager', 'finance', 'purchasing', 'security', 'engineering', 'marketing']) &&
+          resource.data.departmentId == request.auth.token.departmentId) ||
+        (resource.data.employeeUid == request.auth.uid && resource.data.releasedToEmployee == true);
+      allow write: if false; // createDisciplinaryRecord / updateDisciplinaryRecord / submitCommunicationRecord / submitEmployeeStatement / acknowledgeCommunicationRecord / addInvestigationNote / closeDisciplinaryRecord Cloud Functions only (plus the expireCommunicationRecords scheduled job)
     }
 
     // ---- HR: Employment Contracts ----
@@ -133,6 +150,23 @@ service cloud.firestore {
     match /candidates/{candidateId} {
       allow read: if isHrOrAbove();
       allow write: if false; // createCandidate / updateCandidate / moveCandidateStage only
+
+      // employment-application-form.md §3/§6: F010's health history, criminal
+      // record and previous-salary answers. Same sub-document split the
+      // requisition's confidential compensation block uses, because rules gate
+      // documents and not fields — an interviewer reads the candidate, never this.
+      match /confidential/{document=**} {
+        allow read: if hasAnyRole(['hrManager', 'superAdmin']);
+        allow write: if false; // saveApplicationForm (candidate portal) only
+      }
+    }
+
+    // candidate_portal.md §25: DISC is more restricted than the candidate record
+    // itself, and the client never writes it — submitDiscAssessment scores it
+    // server-side so a candidate cannot post their own result.
+    match /discResults/{candidateId} {
+      allow read: if hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']);
+      allow write: if false; // submitDiscAssessment only
     }
 
     match /interviews/{interviewId} {
@@ -382,24 +416,19 @@ service cloud.firestore {
       allow write: if false; // createWorkOrder / updateWorkOrderStatus Cloud Functions only
     }
 
-    // ---- Operations: Opening/Closing Checklists ----
-    // FEATURE_SPECIFICATIONS.md Module 5. Equality-only reads (no query from the
-    // client — the doc id is deterministic, outletId__date), so no composite
-    // index is needed either way.
-    match /openingChecklists/{checklistId} {
+    // ---- Operations: Opening/Closing Shift Reports ----
+    // opening_closing_shift_report_template.md. Same outlet-or-elevated shape as
+    // dailyReports below, keyed on the filing manager instead of submittedBy.
+    // Absorbed the openingChecklists/closingChecklists collections, whose blocks
+    // were removed with them — any documents left behind are unreadable by
+    // design (nothing reads them and the deny-all at the bottom catches them).
+    match /shiftHandovers/{reportId} {
       allow read: if isSignedIn() && (
-        resource.data.outletId == request.auth.token.outletId ||
-        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin'])
+        resource.data.picUid == request.auth.uid ||
+        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
+        resource.data.outletId == request.auth.token.outletId
       );
-      allow write: if false; // saveChecklistProgress Cloud Function only
-    }
-
-    match /closingChecklists/{checklistId} {
-      allow read: if isSignedIn() && (
-        resource.data.outletId == request.auth.token.outletId ||
-        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin'])
-      );
-      allow write: if false; // saveChecklistProgress Cloud Function only
+      allow write: if false; // submitShiftReport Cloud Function only
     }
 
     // ---- Operations: Daily Updates ----

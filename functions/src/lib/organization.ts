@@ -56,6 +56,10 @@ const BASE = ['dashboard.read', 'tasks.complete', 'documents.read', 'sops.read',
 /** Outlet leaders share one operational core; §5 then adds each one's ✅ columns on top. */
 const LEADER = [
   ...BASE,
+  // employee_communication.md §5.4: a department head raises communications for
+  // their own team — the Dept Head → HR → GM chain is what gates them, and they
+  // never get employees.update, so they cannot edit the employee record itself.
+  'employees.communicate',
   // employee-requisition.md §7: department leaders and outlet managers raise
   // requisitions for their own outlet; the approval chain (hrManager → GM) is
   // what gates them, so they get create/read but never approve.
@@ -79,8 +83,11 @@ const LEADER = [
   // Leaders run their own outlet's uniform/asset stock day to day; item-master
   // curation (hrInventory.manage) stays HR's.
   'hrInventory.record',
-  // Opening/closing checklists are recorded by whoever runs the outlet's shift.
-  'checklists.record',
+  // Opening/closing shift reports are filed by whoever runs the outlet's shift
+  // (opening_closing_shift_report_template.md); the old standalone checklist
+  // permission was absorbed with the feature.
+  'shiftReports.submit',
+  'shiftReports.read',
   // communications.md §7: creating/archiving a chat channel, same trust
   // level as assigning a task — Leader and above.
   'chat.manageChannels',
@@ -122,6 +129,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'lostFound.read',
     'dailyUpdates.read',
     'dailyUpdates.readAll',
+    'shiftReports.readAll',
     'projects.read',
     // §7.3: contracts.sign is gated to generalManager and director — the two
     // signature steps on §9.14's chain.
@@ -151,6 +159,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'dailyUpdates.submit',
     'dailyUpdates.read',
     'dailyUpdates.readAll',
+    'shiftReports.readAll',
     'calendar.create',
     'calendar.manage',
     'projects.read',
@@ -174,6 +183,9 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'recruitment.update',
     'recruitment.approve',
     'recruitment.viewCompensation',
+    // employment-application-form.md §6: F010's health, criminal-record and
+    // previous-salary answers — HR Manager and superAdmin only.
+    'recruitment.viewSensitive',
     'appraisals.read',
     'appraisals.create',
     'appraisals.submit',
@@ -195,7 +207,9 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'tasks.assign',
     'hrInventory.manage',
     'hrInventory.record',
-    'checklists.record',
+    'shiftReports.submit',
+    'shiftReports.read',
+    'shiftReports.readAll',
     'chat.manageChannels',
     'projects.read',
     'projects.create',
@@ -269,6 +283,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'incidents.manage',
     'lostFound.manage',
     'dailyUpdates.readAll',
+    'shiftReports.readAll',
     'reports.read',
     'calendar.create',
     // §19 gives Manager "Limited" on Publish — scoped in practice by the
@@ -282,6 +297,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'incidents.manage',
     'lostFound.manage',
     'dailyUpdates.readAll',
+    'shiftReports.readAll',
     'reports.read',
     'calendar.create',
     // §19 gives Manager "Limited" on Publish — scoped in practice by the

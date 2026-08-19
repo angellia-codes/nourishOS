@@ -13,7 +13,14 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import type { StatusTone } from '@/components/ui'
-import type { Candidate, CandidateStage, Requisition, RequisitionStatus, RequisitionUrgency } from '@/types'
+import type {
+  Candidate,
+  CandidateStage,
+  DiscDimension,
+  Requisition,
+  RequisitionStatus,
+  RequisitionUrgency,
+} from '@/types'
 
 /**
  * Status → {tone, icon} maps for the recruitment module. Each module owns its
@@ -156,4 +163,43 @@ export function timeToFillDays(requisition: Requisition): number | null {
   const completed = new Date(requisition.completedAt).getTime()
   if (Number.isNaN(approved) || Number.isNaN(completed)) return null
   return Math.max(0, Math.round((completed - approved) / 86_400_000))
+}
+
+/**
+ * candidate_portal.md §20 — interview focus areas derived from the DISC
+ * profile. A pure lookup, deliberately not stored: it is an opinion about how
+ * to spend interview time, and it changes when the wording changes, not when
+ * the candidate does.
+ */
+const DISC_FOCUS: Record<DiscDimension, { strengths: string[]; probes: string[] }> = {
+  D: {
+    strengths: ['Decisiveness under pressure', 'Ownership of a result', 'Comfort leading a shift'],
+    probes: ['Patience with slower colleagues', 'Following an existing procedure', 'Handling being overruled'],
+  },
+  I: {
+    strengths: ['Guest interaction', 'Communication', 'Lifting team morale'],
+    probes: ['Attention to detail', 'Consistency across a long shift', 'Follow-through on admin'],
+  },
+  S: {
+    strengths: ['Reliability', 'Team collaboration', 'Steadiness in a busy service'],
+    probes: ['Adapting to sudden change', 'Raising a problem early', 'Taking the lead when needed'],
+  },
+  C: {
+    strengths: ['Accuracy and standards', 'Process discipline', 'Quality checks'],
+    probes: ['Working at pace', 'Deciding without complete information', 'Flexibility when the rule does not fit'],
+  },
+}
+
+export function discInterviewFocus(
+  primary: DiscDimension,
+  secondary: DiscDimension,
+): { strengths: string[]; probes: string[] } {
+  const first = DISC_FOCUS[primary]
+  const second = DISC_FOCUS[secondary]
+  // Two from the primary style, one from the secondary — enough to shape an
+  // interview without handing the interviewer a script.
+  return {
+    strengths: [...first.strengths.slice(0, 2), second.strengths[0]],
+    probes: [...first.probes.slice(0, 2), second.probes[0]],
+  }
 }

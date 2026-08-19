@@ -153,3 +153,34 @@ export async function notifyInterviewReminder(input: {
     'interview reminder (interviewer)',
   )
 }
+
+/**
+ * Candidate Portal — the resume link. Not one of §9.5's six templates: the
+ * portal did not exist when they were written, and this is the only way a
+ * candidate gets back into a half-finished application from another device
+ * (there is no candidate login — see portal/token.ts).
+ *
+ * PORTAL_BASE_URL is a plain env var rather than a secret: it is a public URL,
+ * and it differs per environment (emulator, staging, careers.nourishgroup.id).
+ */
+export function portalApplicationUrl(token: string): string {
+  const base = (process.env.PORTAL_BASE_URL ?? 'https://careers.nourishgroup.id').replace(/\/+$/, '')
+  return `${base}/apply?t=${token}`
+}
+
+export async function notifyApplicationStarted(input: {
+  fullName: string
+  phone: string
+  position: string
+  token: string
+}): Promise<void> {
+  const hr = await hrContactDetails()
+  await dispatch(
+    input.phone,
+    `Halo ${input.fullName}, thank you for starting your application for the ${input.position} role at ` +
+      `Nourish Group Indonesia. Continue or come back to it any time with this link:\n` +
+      `${portalApplicationUrl(input.token)}\n\n` +
+      `Keep it private — anyone with the link can see your application.${signature(hr)}`,
+    'application link',
+  )
+}

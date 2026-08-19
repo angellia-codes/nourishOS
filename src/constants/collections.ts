@@ -21,6 +21,8 @@ export const COLLECTIONS = {
   RECRUITMENTS: 'recruitments',
   CANDIDATES: 'candidates',
   INTERVIEWS: 'interviews',
+  /** candidate_portal.md §10.3 — server-calculated DISC results, one per candidate. */
+  DISC_RESULTS: 'discResults',
   ONBOARDING_CHECKLISTS: 'onboardingChecklists',
   OFFBOARDING_CHECKLISTS: 'offboardingChecklists',
   EXIT_INTERVIEWS: 'exitInterviews',
@@ -59,12 +61,14 @@ export const COLLECTIONS = {
   DOCUMENT_ACKNOWLEDGEMENTS: 'documentAcknowledgements',
 
   // Operations
-  OPENING_CHECKLISTS: 'openingChecklists',
-  CLOSING_CHECKLISTS: 'closingChecklists',
   DAILY_REPORTS: 'dailyReports',
   // HR_OPERATIONS.md §8.2 — Project Management. Tasks under a project are
   // ordinary Task Engine tasks referencing projectId, not a sub-collection.
   PROJECTS: 'projects',
+  // Opening/Closing Shift Reports — opening_closing_shift_report_template.md.
+  // Takes over operations.md §9's collection name because the report carries
+  // §9's handover content; the standalone opening/closing checklist
+  // collections were absorbed into it and retired.
   SHIFT_HANDOVERS: 'shiftHandovers',
   INCIDENT_REPORTS: 'incidentReports',
   WORK_ORDERS: 'workOrders',

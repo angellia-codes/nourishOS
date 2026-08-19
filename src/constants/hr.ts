@@ -124,6 +124,25 @@ export const DISCIPLINARY_TYPE_RANK: Record<DisciplinaryType, number> = {
 }
 
 /**
+ * employee_communication.md §13 — "Verbal Notification: valid for 3 months.
+ * Written Warning: valid for 6 months," counted from the acknowledgement date
+ * (§35 Rule 5). Coaching and termination have no validity window: coaching is
+ * not a sanction, and a termination does not expire.
+ *
+ * Mirrors DISCIPLINARY_VALIDITY_DAYS in functions/src/hr/employees/helpers.ts —
+ * used here only to prefill the form's per-record override, since the server
+ * recomputes the window at acknowledgement from what is stored.
+ */
+export const DISCIPLINARY_VALIDITY_DAYS: Record<DisciplinaryType, number | null> = {
+  coaching: null,
+  verbalWarning: 90,
+  SP1: 180,
+  SP2: 180,
+  SP3: 180,
+  termination: null,
+}
+
+/**
  * Employee lifecycle events shown on the profile timeline — HR.md §13.
  * Written server-side alongside the mutation that caused them.
  */

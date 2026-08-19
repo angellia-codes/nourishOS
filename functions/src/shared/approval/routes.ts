@@ -1,5 +1,6 @@
 import { AppError } from '../../lib'
 import { buildExpenseApprovalSteps } from '../../finance/expenseSteps'
+import { buildCommunicationApprovalSteps } from '../../hr/employees/communicationSteps'
 import type { ApprovalRouteContext, ApprovalStepDefinition } from './types'
 
 /**
@@ -50,6 +51,11 @@ const APPROVAL_ROUTES: Record<string, ApprovalRoute> = {
     { sequence: 2, approverRole: 'generalManager' },
     { sequence: 3, approverRole: 'director' },
   ],
+  // employee_communication.md §17 Department Head → HR → GM. Conditional
+  // because "Department Head" resolves from the subject employee's department;
+  // the employee acknowledgement stage is not an approval step (see
+  // hr/employees/communicationSteps.ts for why).
+  'hr/employeeCommunication': buildCommunicationApprovalSteps,
   // The first conditional route — expense-request.md §3 / approval_engine.md §6.
   'finance/expenseRequest': buildExpenseApprovalSteps,
   // operations/workOrder, ... — added as modules ship.

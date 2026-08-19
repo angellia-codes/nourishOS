@@ -138,6 +138,18 @@ export function CandidatePipelinePage() {
                           <p className="font-mono text-[11px] text-muted-foreground">{candidate.candidateNumber}</p>
                           <p className="truncate text-sm font-medium text-foreground">{candidate.fullName}</p>
                           <p className="truncate text-xs text-muted-foreground">{candidate.positionApplied}</p>
+                          {(candidate.discSummary || candidate.appliedVia === 'portal') && (
+                            <p className="flex gap-1 text-[11px] text-muted-foreground">
+                              {candidate.appliedVia === 'portal' && (
+                                <span className="rounded bg-sunken px-1.5 py-0.5">Portal</span>
+                              )}
+                              {candidate.discSummary && (
+                                <span className="rounded bg-sunken px-1.5 py-0.5 font-mono">
+                                  DISC {candidate.discSummary}
+                                </span>
+                              )}
+                            </p>
+                          )}
                           <p className="text-xs text-muted-foreground">
                             {daysInStage(candidate.stageChangedAt)} day
                             {daysInStage(candidate.stageChangedAt) === 1 ? '' : 's'} in stage

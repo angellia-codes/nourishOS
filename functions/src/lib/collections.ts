@@ -25,6 +25,7 @@ export const COLLECTIONS = {
   RECRUITMENTS: 'recruitments',
   CANDIDATES: 'candidates',
   INTERVIEWS: 'interviews',
+  DISC_RESULTS: 'discResults',
   ONBOARDING_CHECKLISTS: 'onboardingChecklists',
   OFFBOARDING_CHECKLISTS: 'offboardingChecklists',
   EXIT_INTERVIEWS: 'exitInterviews',
@@ -66,8 +67,7 @@ export const COLLECTIONS = {
   INCIDENT_REPORTS: 'incidentReports',
   WORK_ORDERS: 'workOrders',
   LOST_FOUND_ITEMS: 'lostFoundItems',
-  OPENING_CHECKLISTS: 'openingChecklists',
-  CLOSING_CHECKLISTS: 'closingChecklists',
+  SHIFT_HANDOVERS: 'shiftHandovers',
 
   EXPENSE_REQUESTS: 'expenseRequests',
 

@@ -46,8 +46,13 @@ export {
   getEmployeeAuditLog,
   contractAlerts,
   createDisciplinaryRecord,
+  updateDisciplinaryRecord,
+  submitCommunicationRecord,
+  submitEmployeeStatement,
+  acknowledgeCommunicationRecord,
   addInvestigationNote,
   closeDisciplinaryRecord,
+  expireCommunicationRecords,
   updateOffboardingItem,
   completeOffboarding,
   submitExitInterview,
@@ -79,6 +84,15 @@ export {
   completeOnboarding,
   updateRequisitionCompensation,
   sendInterviewReminders,
+  // Candidate Portal — unauthenticated, token-authenticated (candidate_portal.md).
+  listOpenPositions,
+  startApplication,
+  saveApplicationForm,
+  uploadCandidateDocument,
+  getDiscQuestions,
+  submitDiscAssessment,
+  completeApplication,
+  getApplicationStatus,
 } from './recruitment'
 
 // ---- Documents: Job Descriptions ----
@@ -125,8 +139,8 @@ export { createWorkOrder, updateWorkOrderStatus, checkWorkOrderEscalations } fro
 // ---- Operations: Project Management ----
 export { createProject, updateProject, submitProject, moveProjectColumn } from './operations/projects'
 
-// ---- Operations: Checklists ----
-export { saveChecklistProgress } from './operations/checklists'
+// ---- Operations: Shift Reports ----
+export { submitShiftReport } from './operations/shiftReports'
 
 // ---- Operations: Lost & Found ----
 export {

@@ -6,6 +6,7 @@ import { Button, Card, CardContent } from '@/components/ui'
  * The Operations hub — same "index becomes a hub once a module has 2+
  * sub-modules" precedent as HR and Documents. Daily Updates moves off the
  * bare /operations index (previously its own feed) to /operations/daily-updates.
+ * The two Checklist cards were absorbed into Shift Reports (2026-08-19).
  *
  * No permission gating on the cards — each page enforces its own read access
  * through firestore.rules, same reasoning as the other hubs.
@@ -42,16 +43,10 @@ const SUB_MODULES = [
     description: 'Company-wide projects across the five-column board.',
   },
   {
-    to: '/operations/checklists/opening',
+    to: '/operations/shift-reports',
     icon: ClipboardCheck,
-    title: 'Opening Checklist',
-    description: "Today's opening checklist for your outlet.",
-  },
-  {
-    to: '/operations/checklists/closing',
-    icon: ClipboardCheck,
-    title: 'Closing Checklist',
-    description: "Today's closing checklist for your outlet.",
+    title: 'Shift Reports',
+    description: 'Opening and closing reports, including the shift checklist.',
   },
 ]
 

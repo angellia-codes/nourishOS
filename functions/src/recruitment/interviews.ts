@@ -161,6 +161,44 @@ export const scheduleInterview = onCall({ region: REGION, secrets: SCHEDULE_SECR
   }
 })
 
+/** candidate_portal.md §13 — the six scorecard criteria, each 1–5. */
+export const SCORECARD_CRITERIA = [
+  'communication',
+  'attitude',
+  'technicalKnowledge',
+  'teamwork',
+  'problemSolving',
+  'cultureFit',
+] as const
+
+export const INTERVIEW_RECOMMENDATIONS = ['proceed', 'hold', 'reject'] as const
+export type InterviewRecommendation = (typeof INTERVIEW_RECOMMENDATIONS)[number]
+
+/**
+ * Returns the validated scorecard, or null when the caller sent none —
+ * partially-filled scorecards are refused rather than averaged over the
+ * criteria that happen to be present, which would flatter or punish a
+ * candidate depending on which boxes the interviewer skipped.
+ */
+function parseScorecard(criteria: Record<string, unknown> | undefined): Record<string, number> | null {
+  if (!criteria || typeof criteria !== 'object') return null
+  const provided = SCORECARD_CRITERIA.filter((key) => criteria[key] !== undefined && criteria[key] !== null)
+  if (provided.length === 0) return null
+  if (provided.length !== SCORECARD_CRITERIA.length) {
+    throw new AppError('invalid-argument', 'Score every criterion, or leave the whole scorecard blank.')
+  }
+
+  const parsed: Record<string, number> = {}
+  for (const key of SCORECARD_CRITERIA) {
+    const value = Number(criteria[key])
+    if (!Number.isInteger(value) || value < 1 || value > 5) {
+      throw new AppError('invalid-argument', `${key} must be a whole number from 1 to 5.`)
+    }
+    parsed[key] = value
+  }
+  return parsed
+}
+
 /**
  * 9.4-F07: score 1–5 plus notes, recorded once the interview has happened. The
  * score is mirrored onto the candidate (hrInterviewScore / userInterviewScore
@@ -170,11 +208,16 @@ export const recordInterviewOutcome = onCall({ region: REGION }, async (request)
   try {
     const user = await requireActiveUser(request)
 
-    const { interviewId, outcome, score, notes } = (request.data ?? {}) as {
+    const { interviewId, outcome, score, notes, criteria, strengths, concerns, recommendation } = (request.data ??
+      {}) as {
       interviewId?: string
       outcome?: string
       score?: number
       notes?: string
+      criteria?: Record<string, unknown>
+      strengths?: string
+      concerns?: string
+      recommendation?: string
     }
 
     const id = requireText(interviewId, 'interviewId', 200)
@@ -199,17 +242,37 @@ export const recordInterviewOutcome = onCall({ region: REGION }, async (request)
     }
 
     // A no-show has nothing to score; a completed interview must be scored.
+    // candidate_portal.md §13 adds the six-criterion scorecard on top of the
+    // single §9.4-F07 score: when the criteria are filled in they *are* the
+    // score (their mean), so the board keeps ranking on one number and the
+    // older single-score clients keep working untouched.
     let recordedScore: number | null = null
+    let recordedCriteria: Record<string, number> | null = null
+
     if (outcome !== 'noShow') {
-      recordedScore = Number(score)
-      if (!Number.isInteger(recordedScore) || recordedScore < 1 || recordedScore > 5) {
-        throw new AppError('invalid-argument', 'Score must be a whole number from 1 to 5.')
+      recordedCriteria = parseScorecard(criteria)
+      if (recordedCriteria) {
+        const values = Object.values(recordedCriteria)
+        recordedScore = Math.round((values.reduce((sum, value) => sum + value, 0) / values.length) * 10) / 10
+      } else {
+        recordedScore = Number(score)
+        if (!Number.isInteger(recordedScore) || recordedScore < 1 || recordedScore > 5) {
+          throw new AppError('invalid-argument', 'Score must be a whole number from 1 to 5.')
+        }
       }
+    }
+
+    if (recommendation !== undefined && !INTERVIEW_RECOMMENDATIONS.includes(recommendation as InterviewRecommendation)) {
+      throw new AppError('invalid-argument', `Recommendation must be one of: ${INTERVIEW_RECOMMENDATIONS.join(', ')}.`)
     }
 
     await ref.update({
       outcome,
       score: recordedScore,
+      criteria: recordedCriteria,
+      strengths: strengths?.trim() || null,
+      concerns: concerns?.trim() || null,
+      recommendation: (recommendation as InterviewRecommendation | undefined) ?? null,
       notes: notes?.trim() || null,
       status: 'completed',
       ...updatedFields(user.uid),
@@ -231,7 +294,7 @@ export const recordInterviewOutcome = onCall({ region: REGION }, async (request)
       resourceId: id,
       action: 'update',
       user,
-      newValues: { outcome, score: recordedScore },
+      newValues: { outcome, score: recordedScore, recommendation: recommendation ?? null },
     })
 
     return successResponse({ interviewId: id, score: recordedScore }, 'Interview outcome recorded.')

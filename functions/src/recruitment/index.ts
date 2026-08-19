@@ -11,6 +11,17 @@ export { createCandidate, updateCandidate, moveCandidateStage } from './candidat
 export { scheduleInterview, recordInterviewOutcome, cancelInterview } from './interviews'
 export { sendInterviewReminders } from './interviewReminders'
 export { updateOnboardingItem, completeOnboarding } from './onboarding'
+// Candidate Portal (candidate_portal.md) — public, token-authenticated callables.
+export {
+  listOpenPositions,
+  startApplication,
+  saveApplicationForm,
+  uploadCandidateDocument,
+  getDiscQuestions,
+  submitDiscAssessment,
+  completeApplication,
+  getApplicationStatus,
+} from './portal'
 
 /**
  * Module-load-time registration (shared/approval/registry.ts): when the

@@ -1,2 +1,2 @@
-export { createFileMetadata } from './createFileMetadata'
+export { createFileMetadata, createFileMetadataInternal } from './createFileMetadata'
 export { deleteFile } from './deleteFile'

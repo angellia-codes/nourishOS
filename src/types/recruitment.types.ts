@@ -143,6 +143,117 @@ export interface Candidate extends BaseDocument {
   joinDate?: string | null
   employeeId?: string | null
   notes?: string | null
+  /** 'portal' for candidate_portal.md self-service applications; absent for records HR typed in. */
+  appliedVia?: 'portal' | null
+  /** F010, filled in by the candidate — employment-application-form.md §4. Health/criminal/salary answers live in the `confidential` sub-collection instead. */
+  applicationForm?: ApplicationForm | null
+  discCompletedAt?: string | null
+  /** "D/C" — primary/secondary, denormalised for the pipeline board. */
+  discSummary?: string | null
+  submittedAt?: string | null
+}
+
+/** employment-application-form.md §4 — the readable half of F010. */
+export interface ApplicationForm {
+  personalData: {
+    fullName: string
+    gender: 'male' | 'female' | null
+    placeOfBirth: string
+    dateOfBirth: string | null
+    nationality: string
+    maritalStatus: string
+    religion: string
+    email: string
+    phone: string
+  }
+  address: { permanentAddress: string; domicileAddress: string }
+  formalEducation: EducationEntry[]
+  informalEducation: EducationEntry[]
+  training: { name: string; organizerLocation: string; monthYear: string }[]
+  languages: {
+    language: string
+    speaking: LanguageProficiency | null
+    reading: LanguageProficiency | null
+    writing: LanguageProficiency | null
+  }[]
+  workExperience: {
+    companyName: string
+    companyType: string
+    periodStart: string
+    periodEnd: string
+    position: string
+    superiorName: string
+    reasonForResignation: string
+  }[]
+  additionalQuestions: {
+    knowsAboutCompany: string
+    expectationsIfHired: string
+    willingToRelocate: boolean
+    willingToTravel: boolean
+    preferredEnvironment: 'office' | 'field' | null
+    strengths: string[]
+    weaknesses: string[]
+    willingToAttachReferenceLetter: boolean
+    referenceLetterDeclineReason: string
+    expectedRemuneration: string
+  }
+  references: {
+    name: string
+    phone: string
+    company: string
+    department: string
+    position: string
+    relationship: string
+  }[]
+  declarationAccepted: boolean
+  declarationAcceptedAt: string | null
+}
+
+export type LanguageProficiency = 'excellent' | 'good' | 'basic'
+
+export interface EducationEntry {
+  schoolType: string
+  institutionName: string
+  city: string
+  major: string
+  graduationYear: string
+}
+
+/**
+ * candidates/{id}/confidential/application — employment-application-form.md §3.
+ * A separate document because `firestore.rules` gates documents, not fields;
+ * reading it needs `recruitment.viewSensitive`.
+ */
+export interface ApplicationFormSensitive {
+  seriousIllnessHistory: boolean
+  seriousIllnessDetail: string
+  criminalHistory: boolean
+  criminalHistoryDetail: string
+  workExperienceSalaries: { index: number; companyName: string; salary: number | null }[]
+}
+
+export const DISC_DIMENSIONS = ['D', 'I', 'S', 'C'] as const
+export type DiscDimension = (typeof DISC_DIMENSIONS)[number]
+
+export const DISC_STYLE_LABELS: Record<DiscDimension, string> = {
+  D: 'Dominance',
+  I: 'Influence',
+  S: 'Steadiness',
+  C: 'Conscientiousness',
+}
+
+/** discResults/{candidateId} — candidate_portal.md §10.3, scored server-side only. */
+export interface DiscResult {
+  candidateId: string
+  candidateNumber: string | null
+  outletId: string | null
+  departmentId: string | null
+  scores: Record<DiscDimension, number>
+  primaryStyle: DiscDimension
+  secondaryStyle: DiscDimension
+  responses: { questionId: string; answer: string }[]
+  completedAt: string
+  calculatedBy: string
 }
 
 export const INTERVIEW_OUTCOMES = ['pending', 'pass', 'fail', 'noShow'] as const
@@ -163,9 +274,36 @@ export interface Interview extends BaseDocument {
   location: string
   calendarEventId?: string | null
   outcome: InterviewOutcome
-  score?: number | null // 1–5
+  score?: number | null // 1–5; the mean of `criteria` when a scorecard was filled in
+  /** candidate_portal.md §13 — all six or none. */
+  criteria?: Record<ScorecardCriterion, number> | null
+  strengths?: string | null
+  concerns?: string | null
+  recommendation?: InterviewRecommendation | null
   notes?: string | null
 }
+
+export const SCORECARD_CRITERIA = [
+  'communication',
+  'attitude',
+  'technicalKnowledge',
+  'teamwork',
+  'problemSolving',
+  'cultureFit',
+] as const
+export type ScorecardCriterion = (typeof SCORECARD_CRITERIA)[number]
+
+export const SCORECARD_CRITERION_LABELS: Record<ScorecardCriterion, string> = {
+  communication: 'Communication',
+  attitude: 'Attitude',
+  technicalKnowledge: 'Technical knowledge',
+  teamwork: 'Teamwork',
+  problemSolving: 'Problem solving',
+  cultureFit: 'Culture fit',
+}
+
+export const INTERVIEW_RECOMMENDATIONS = ['proceed', 'hold', 'reject'] as const
+export type InterviewRecommendation = (typeof INTERVIEW_RECOMMENDATIONS)[number]
 
 /**
  * One row of the F01 IN checklist — employee-onboarding-exit-checklist.md §6.

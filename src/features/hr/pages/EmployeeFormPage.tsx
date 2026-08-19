@@ -186,15 +186,26 @@ export function EmployeeFormPage() {
     let cancelled = false
     getCandidate(candidateId).then((candidate) => {
       if (cancelled || !candidate) return
+      // A candidate who applied through the portal already answered most of
+      // this in F010 (employment-application-form.md §4) — prefill from the
+      // application form so the hire is a review, not a retype. What stays
+      // empty is what only HR decides: contract type, probation, manager.
+      const personal = candidate.applicationForm?.personalData
+      const address = candidate.applicationForm?.address
       setForm((prev) => ({
         ...prev,
-        fullName: candidate.fullName,
-        phone: candidate.phone,
-        email: candidate.email ?? '',
+        fullName: personal?.fullName || candidate.fullName,
+        phone: personal?.phone || candidate.phone,
+        email: personal?.email || candidate.email || '',
         position: candidate.positionApplied,
         departmentId: candidate.departmentId ?? prev.departmentId,
         outletId: candidate.outletId ?? prev.outletId,
         joinDate: candidate.joinDate ?? prev.joinDate,
+        gender: personal?.gender ?? prev.gender,
+        birthDate: personal?.dateOfBirth ?? prev.birthDate,
+        permanentAddress: address?.permanentAddress || prev.permanentAddress,
+        domicileAddress: address?.domicileAddress || prev.domicileAddress,
+        address: address?.domicileAddress || address?.permanentAddress || prev.address,
       }))
     })
     return () => {

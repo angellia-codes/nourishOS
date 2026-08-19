@@ -12,6 +12,7 @@ import {
   Input,
   Label,
   Spinner,
+  StatusPill,
   Textarea,
   Timeline,
   TimelineItem,
@@ -22,7 +23,12 @@ import { COLLECTIONS, PERMISSIONS } from '@/constants'
 import { CONTRACT_TYPE_LABELS, DISCIPLINARY_TYPE_LABELS, EMPLOYMENT_STATUS_LABELS } from '@/constants/hr'
 import { POSITION_LABELS } from '@/constants/positions'
 import * as employeeService from '@/features/hr/services/employeeService'
-import * as disciplinaryService from '@/features/hr/disciplinary/disciplinaryService'
+import * as communicationService from '@/features/communications/employeeCommunication/employeeCommunicationService'
+import {
+  COMMUNICATION_STATUS_ICON,
+  COMMUNICATION_STATUS_LABELS,
+  COMMUNICATION_STATUS_TONE,
+} from '@/features/communications/employeeCommunication/employeeCommunicationFormat'
 import * as contractService from '@/features/hr/contracts/contractService'
 import * as trainingService from '@/features/hr/training/trainingService'
 import * as offboardingService from '@/features/hr/offboarding/offboardingService'
@@ -148,7 +154,7 @@ export function EmployeeProfilePage() {
   useEffect(() => {
     if (!employeeId) return
     let cancelled = false
-    disciplinaryService.listDisciplinaryRecords(employeeId).then((rows) => {
+    communicationService.listCommunicationRecords(employeeId).then((rows) => {
       if (!cancelled) setDisciplinaryRecords(rows)
     })
     return () => {
@@ -588,15 +594,18 @@ export function EmployeeProfilePage() {
         </Card>
       )}
 
-      {/* Disciplinary Records — FEATURE_SPECIFICATIONS.md Module 3, the detail layer (investigation notes)
-          behind the summary card above. No auto-sync between the two; HR keeps both independently. */}
+      {/* Employee Communication — employee_communication.md, the record behind the
+          summary card above. No auto-sync between the two; HR keeps both
+          independently. The register and every page for it live in the
+          Communications module, because the employee themselves is an audience
+          for these records and /hr is HR/GM/Director-only. */}
       <PermissionGuard permission={PERMISSIONS.EMPLOYEES_UPDATE}>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2">
-            <CardTitle>Disciplinary Records</CardTitle>
+            <CardTitle>Employee Communication</CardTitle>
             <Button
               variant="secondary"
-              onClick={() => navigate(`/hr/employees/${employeeId}/disciplinary/new`)}
+              onClick={() => navigate(`/communications/employee/new?employeeId=${employeeId}`)}
             >
               New Record
             </Button>
@@ -607,20 +616,22 @@ export function EmployeeProfilePage() {
                 <Spinner />
               </div>
             ) : disciplinaryRecords.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No disciplinary records.</p>
+              <p className="text-sm text-muted-foreground">No communication records.</p>
             ) : (
               <div className="flex flex-col gap-2">
                 {disciplinaryRecords.map((record) => (
                   <button
                     key={record.id}
                     type="button"
-                    onClick={() => navigate(`/hr/employees/${employeeId}/disciplinary/${record.id}`)}
+                    onClick={() => navigate(`/communications/employee/${record.id}`)}
                     className="flex items-center justify-between gap-2 rounded-md border border-border p-3 text-left hover:bg-border/30"
                   >
                     <span className="text-sm text-foreground">{DISCIPLINARY_TYPE_LABELS[record.type]}</span>
-                    <Badge variant={record.status === 'open' ? 'warning' : 'neutral'}>
-                      {record.status === 'open' ? 'Open' : 'Closed'}
-                    </Badge>
+                    <StatusPill
+                      tone={COMMUNICATION_STATUS_TONE[record.status]}
+                      icon={COMMUNICATION_STATUS_ICON[record.status]}
+                      label={COMMUNICATION_STATUS_LABELS[record.status]}
+                    />
                   </button>
                 ))}
               </div>

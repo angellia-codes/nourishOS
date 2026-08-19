@@ -13,6 +13,65 @@ export const GENDERS = ['male', 'female'] as const
 export const DISCIPLINARY_TYPES = ['coaching', 'verbalWarning', 'SP1', 'SP2', 'SP3', 'termination'] as const
 export type DisciplinaryType = (typeof DISCIPLINARY_TYPES)[number]
 
+/**
+ * employee_communication.md §7 — the Employee Communication record lifecycle.
+ * `open` is retained only for records written before the workflow existed; it
+ * behaves like `active` with no validity window (see communicationExpiry.ts).
+ */
+export const COMMUNICATION_STATUSES = [
+  'draft',
+  'pendingApproval',
+  'pendingEmployee',
+  'active',
+  'expired',
+  'closed',
+  'open',
+] as const
+export type CommunicationStatus = (typeof COMMUNICATION_STATUSES)[number]
+
+/** §16 — receipt is not agreement, so `refused` still starts the validity clock. */
+export const ACKNOWLEDGEMENT_STATUSES = ['pending', 'acknowledged', 'refused', 'unableToSign'] as const
+export type AcknowledgementStatus = (typeof ACKNOWLEDGEMENT_STATUSES)[number]
+
+/** §18 — no signature canvas exists in this app, so a drawn signature is not offered. */
+export const SIGNATURE_METHODS = ['typedSignature', 'acknowledgement'] as const
+export type SignatureMethod = (typeof SIGNATURE_METHODS)[number]
+
+/** §11 — the Proposed Solution / Action categories. */
+export const PROPOSED_ACTION_CATEGORIES = [
+  'coaching',
+  'retraining',
+  'counseling',
+  'followUpMeeting',
+  'performanceImprovement',
+  'scheduleAdjustment',
+  'writtenWarning',
+  'other',
+] as const
+export type ProposedActionCategory = (typeof PROPOSED_ACTION_CATEGORIES)[number]
+
+/**
+ * §13 — "Verbal Notification: valid for 3 months. Written Warning: valid for 6
+ * months," counted from the acknowledgement date (§35 Rule 5). Coaching and
+ * termination have no validity window: coaching is not a sanction and a
+ * termination does not expire.
+ *
+ * Mirrors DISCIPLINARY_VALIDITY_DAYS in src/constants/hr.ts.
+ *
+ * ponytail: §13 wants these HR-configurable, and the per-record `validityDays`
+ * override on the form is what delivers that. If the defaults themselves ever
+ * need editing without a deploy, move this map into a
+ * `systemSettings/communicationValidity` doc and read it here.
+ */
+export const DISCIPLINARY_VALIDITY_DAYS: Record<DisciplinaryType, number | null> = {
+  coaching: null,
+  verbalWarning: 90,
+  SP1: 180,
+  SP2: 180,
+  SP3: 180,
+  termination: null,
+}
+
 /** Mirrors src/constants/hr.ts RELIGION (known frontend/functions duplication — keep in sync). */
 export const RELIGIONS = ['hindu', 'christian', 'catholic', 'islam', 'other'] as const
 export type Religion = (typeof RELIGIONS)[number]

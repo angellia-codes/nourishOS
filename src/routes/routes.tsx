@@ -61,7 +61,9 @@ import { ProjectFormPage } from '@/features/operations/projects/pages/ProjectFor
 import { FlashReportPage } from '@/features/reports/pages/FlashReportPage'
 import { WorkOrderFormPage } from '@/features/operations/workOrders/pages/WorkOrderFormPage'
 import { WorkOrderDetailPage } from '@/features/operations/workOrders/pages/WorkOrderDetailPage'
-import { ChecklistPage } from '@/features/operations/checklists/ChecklistPage'
+import { ShiftReportsFeedPage } from '@/features/operations/shiftReports/pages/ShiftReportsFeedPage'
+import { ShiftReportFormPage } from '@/features/operations/shiftReports/pages/ShiftReportFormPage'
+import { ShiftReportDetailPage } from '@/features/operations/shiftReports/pages/ShiftReportDetailPage'
 import { JobDescriptionListPage } from '@/features/documents/jobDescriptions/pages/JobDescriptionListPage'
 import { JobDescriptionFormPage } from '@/features/documents/jobDescriptions/pages/JobDescriptionFormPage'
 import { JobDescriptionAccessPage } from '@/features/documents/jobDescriptions/pages/JobDescriptionAccessPage'
@@ -83,14 +85,15 @@ import { AnnouncementDetailPage } from '@/features/communications/announcements/
 import { TaskListPage } from '@/features/communications/tasks/pages/TaskListPage'
 import { TaskFormPage } from '@/features/communications/tasks/pages/TaskFormPage'
 import { TaskDetailPage } from '@/features/communications/tasks/pages/TaskDetailPage'
+import { CommunicationRecordListPage } from '@/features/communications/employeeCommunication/pages/CommunicationRecordListPage'
+import { CommunicationRecordFormPage } from '@/features/communications/employeeCommunication/pages/CommunicationRecordFormPage'
+import { CommunicationRecordDetailPage } from '@/features/communications/employeeCommunication/pages/CommunicationRecordDetailPage'
 import { ChatChannelFormPage } from '@/features/communications/chat/pages/ChatChannelFormPage'
 import { ChatChannelPage } from '@/features/communications/chat/pages/ChatChannelPage'
 import { CommunicationSettingsPage } from '@/features/settings/pages/CommunicationSettingsPage'
 import { CalendarAgendaPage } from '@/features/calendar/pages/CalendarAgendaPage'
 import { CalendarEventFormPage } from '@/features/calendar/pages/CalendarEventFormPage'
 import { RolePermissionsPage } from '@/features/settings/pages/RolePermissionsPage'
-import { DisciplinaryRecordFormPage } from '@/features/hr/disciplinary/pages/DisciplinaryRecordFormPage'
-import { DisciplinaryRecordDetailPage } from '@/features/hr/disciplinary/pages/DisciplinaryRecordDetailPage'
 import { ContractRenewPage } from '@/features/hr/contracts/pages/ContractRenewPage'
 import { ContractTerminatePage } from '@/features/hr/contracts/pages/ContractTerminatePage'
 import { TrainingCatalogListPage } from '@/features/hr/training/pages/TrainingCatalogListPage'
@@ -141,8 +144,6 @@ export const router = createBrowserRouter([
               { path: 'employees/:employeeId', element: <EmployeeProfilePage /> },
               { path: 'employees/:employeeId/edit', element: <EmployeeFormPage /> },
               { path: 'appraisals/:appraisalId', element: <AppraisalReviewPage /> },
-              { path: 'employees/:employeeId/disciplinary/new', element: <DisciplinaryRecordFormPage /> },
-              { path: 'employees/:employeeId/disciplinary/:recordId', element: <DisciplinaryRecordDetailPage /> },
               { path: 'employees/:employeeId/contracts/renew', element: <ContractRenewPage /> },
               { path: 'employees/:employeeId/contracts/terminate', element: <ContractTerminatePage /> },
               { path: 'offboarding', element: <OffboardingListPage /> },
@@ -203,7 +204,7 @@ export const router = createBrowserRouter([
             ],
           },
           {
-            // Operations became a hub once Work Orders and Checklists landed
+            // Operations became a hub once Work Orders and Shift Reports landed
             // alongside the existing three — same "index becomes a hub" precedent
             // as HR and Documents. Daily Updates moved off the bare index.
             path: 'operations',
@@ -220,7 +221,10 @@ export const router = createBrowserRouter([
               { path: 'work-orders', element: <WorkOrderListPage /> },
               { path: 'work-orders/new', element: <WorkOrderFormPage /> },
               { path: 'work-orders/:workOrderId', element: <WorkOrderDetailPage /> },
-              { path: 'checklists/:type', element: <ChecklistPage /> },
+              { path: 'shift-reports', element: <ShiftReportsFeedPage /> },
+              // Static segment before the :reportId param route, or the param swallows it.
+              { path: 'shift-reports/new/:type', element: <ShiftReportFormPage /> },
+              { path: 'shift-reports/:reportId', element: <ShiftReportDetailPage /> },
               { path: 'projects', element: <ProjectBoardPage /> },
               { path: 'projects/new', element: <ProjectFormPage /> },
               { path: 'projects/:projectId', element: <ProjectDetailPage /> },
@@ -283,6 +287,10 @@ export const router = createBrowserRouter([
               { path: 'tasks', element: <TaskListPage /> },
               { path: 'tasks/new', element: <TaskFormPage /> },
               { path: 'tasks/:taskId', element: <TaskDetailPage /> },
+              { path: 'employee', element: <CommunicationRecordListPage /> },
+              { path: 'employee/new', element: <CommunicationRecordFormPage /> },
+              { path: 'employee/:recordId', element: <CommunicationRecordDetailPage /> },
+              { path: 'employee/:recordId/edit', element: <CommunicationRecordFormPage /> },
               { path: 'chat/new', element: <ChatChannelFormPage /> },
               { path: 'chat/:channelId', element: <ChatChannelPage /> },
             ],

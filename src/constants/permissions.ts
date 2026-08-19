@@ -38,7 +38,7 @@ export const PERMISSION_MODULES = {
   DAILY_UPDATES: 'dailyUpdates',
   CALENDAR: 'calendar',
   HR_INVENTORY: 'hrInventory',
-  CHECKLISTS: 'checklists',
+  SHIFT_REPORTS: 'shiftReports',
   CHAT: 'chat',
   EXIT_INTERVIEWS: 'exitInterviews',
   PROJECTS: 'projects',
@@ -66,6 +66,11 @@ export const PERMISSIONS = {
   EMPLOYEES_DELETE: permission(PERMISSION_MODULES.EMPLOYEES, ACTIONS.DELETE),
   EMPLOYEES_EXPORT: permission(PERMISSION_MODULES.EMPLOYEES, ACTIONS.EXPORT),
   EMPLOYEES_READ_SENSITIVE: permission(PERMISSION_MODULES.EMPLOYEES, 'readSensitive'),
+  // employee_communication.md §5.4 — a department head issues communications for
+  // their own team without being able to edit employee records. Checked with
+  // requireAnyPermission alongside EMPLOYEES_UPDATE, so hrManager and superAdmin
+  // keep working with no change to their existing roles/{roleId} docs.
+  EMPLOYEES_COMMUNICATE: permission(PERMISSION_MODULES.EMPLOYEES, 'communicate'),
 
   // exit-interview.md §4: same string gates both reading a record and
   // conducting/submitting one — HR Manager/Super Admin only, a harder wall
@@ -80,6 +85,11 @@ export const PERMISSIONS = {
   // codebase's convention (same as employees.readSensitive) rather than the
   // doc's literal spelling.
   RECRUITMENT_VIEW_COMPENSATION: permission(PERMISSION_MODULES.RECRUITMENT, 'viewCompensation'),
+  // employment-application-form.md §3/§6: the F010 health, criminal-record and
+  // previous-salary answers. The doc names it candidates.view_sensitive; kept
+  // in the recruitment namespace next to viewCompensation rather than opening a
+  // new module namespace for a single string.
+  RECRUITMENT_VIEW_SENSITIVE: permission(PERMISSION_MODULES.RECRUITMENT, 'viewSensitive'),
 
   // Performance Appraisal — extends HR.md §10. All review types route through
   // GM approval (confirmed decision, not a doc default); insight generation
@@ -182,10 +192,14 @@ export const PERMISSIONS = {
   HR_INVENTORY_MANAGE: permission(PERMISSION_MODULES.HR_INVENTORY, ACTIONS.MANAGE),
   HR_INVENTORY_RECORD: permission(PERMISSION_MODULES.HR_INVENTORY, 'record'),
 
-  // Operations — Opening/Closing Checklists (FEATURE_SPECIFICATIONS.md Module 5).
-  // One permission covers recording either checklist type — same trust level,
-  // outlet leaders run both.
-  CHECKLISTS_RECORD: permission(PERMISSION_MODULES.CHECKLISTS, 'record'),
+  // Operations — Opening/Closing Shift Reports
+  // (opening_closing_shift_report_template.md). Same three-string split as
+  // Daily Updates above: READ covers the caller's own outlet (rules-scoped),
+  // READ_ALL is the elevated cross-outlet view. One SUBMIT covers both report
+  // types — same trust level, outlet leaders run both ends of the day.
+  SHIFT_REPORTS_SUBMIT: permission(PERMISSION_MODULES.SHIFT_REPORTS, ACTIONS.SUBMIT),
+  SHIFT_REPORTS_READ: permission(PERMISSION_MODULES.SHIFT_REPORTS, ACTIONS.READ),
+  SHIFT_REPORTS_READ_ALL: permission(PERMISSION_MODULES.SHIFT_REPORTS, 'readAll'),
 
   // Operations — Project Management (HR_OPERATIONS.md §7.3 / §9.8). CREATE
   // raises a project, which needs GM approval (§9.10) before it opens; MANAGE

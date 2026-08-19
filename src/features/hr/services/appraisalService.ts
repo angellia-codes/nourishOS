@@ -71,7 +71,7 @@ export function getMyAppraisalsAsReviewer(reviewerId: string): Promise<Appraisal
 /**
  * All appraisals, newest first — Departments > People > Performance Review
  * lists across every employee and filters by reviewType/status client-side
- * (small roster, same convention as listDisciplinaryRecords / the HR Reports
+ * (small roster, same convention as listCommunicationRecords / the HR Reports
  * pages).
  */
 export function listAllAppraisals(): Promise<Appraisal[]> {

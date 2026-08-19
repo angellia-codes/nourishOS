@@ -1,6 +1,6 @@
 # communications
 
-Communications domain UI: announcements, tasks, chat.
+Communications domain UI: announcements, tasks, chat, employee communication.
 
 ## Built
 
@@ -22,6 +22,15 @@ Communications domain UI: announcements, tasks, chat.
   messaging. Channels are scoped company-wide / one department / one outlet, with membership implicit from the
   caller's own claims rather than a members array. `components/MentionAutocomplete.tsx` is shared with the
   Task comment composer.
+- **`employeeCommunication/`** — the Employee Communication register (`/communications/employee`, plus `new`,
+  `:recordId` and `:recordId/edit`), digitizing the bilingual Employee Communication Form
+  (`docs/modules/employee_communication.md`). Coaching / Verbal / SP1 / SP2 / SP3 / Termination, with incident
+  details, the employee's own statement, proposed and follow-up actions, repeat-incident consequences, a
+  Department Head → HR → GM approval chain, employee acknowledgement, and a validity window that starts on the
+  acknowledgement date. It stores into the **existing `disciplinaryActions` collection** rather than the spec's
+  separate `communicationRecords` (§19), so HR files an SP1 once; the employee profile's card links here. Lives
+  in Communications rather than HR because the employee is one of the audiences and `/hr/*` is
+  HR/GM/Director-only. §32's PDF is a print stylesheet on the detail page, not a PDF pipeline.
 - **`activity/activityService.ts`** — reads the new `activityFeed` collection (not `auditLogs`), fed by
   `recordActivityInternal` calls sprinkled across other modules. **No page** — a dedicated
   `/communications/activity` page was built and removed by request; the only consumer is the dashboard's

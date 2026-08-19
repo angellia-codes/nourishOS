@@ -26,7 +26,22 @@ import {
   timeToHireDays,
   formatDateTime,
 } from '../recruitmentFormat'
-import { CANDIDATE_STAGE_LABELS, type Candidate, type CandidateStage, type Interview } from '@/types'
+import {
+  CANDIDATE_STAGE_LABELS,
+  SCORECARD_CRITERIA,
+  SCORECARD_CRITERION_LABELS,
+  type ApplicationFormSensitive,
+  type Candidate,
+  type CandidateStage,
+  type DiscResult,
+  type FileMetadata,
+  type Interview,
+  type InterviewRecommendation,
+  type ScorecardCriterion,
+} from '@/types'
+import { ApplicationFormPanel } from '../components/ApplicationFormPanel'
+import { CandidateDocumentsPanel } from '../components/CandidateDocumentsPanel'
+import { DiscPanel } from '../components/DiscPanel'
 
 const LIST_ROUTE = '/recruitment/candidates'
 
@@ -47,6 +62,18 @@ const NEXT_STAGES: Record<CandidateStage, CandidateStage[]> = {
   'ST-08': [],
 }
 
+const RECOMMENDATION_LABELS: Record<InterviewRecommendation, string> = {
+  proceed: 'Proceed',
+  hold: 'Hold',
+  reject: 'Reject',
+}
+
+/** All six default to 3 so "no opinion" is the middle of the scale, not a blank. */
+const BLANK_SCORECARD = Object.fromEntries(SCORECARD_CRITERIA.map((key) => [key, 3])) as Record<
+  ScorecardCriterion,
+  number
+>
+
 const OUTCOME_LABELS: Record<string, string> = {
   pending: 'Awaiting outcome',
   pass: 'Pass',
@@ -62,6 +89,9 @@ export function CandidateDetailPage() {
 
   const [candidate, setCandidate] = useState<Candidate | null>(null)
   const [interviews, setInterviews] = useState<Interview[]>([])
+  const [disc, setDisc] = useState<DiscResult | null>(null)
+  const [sensitive, setSensitive] = useState<ApplicationFormSensitive | null>(null)
+  const [documents, setDocuments] = useState<FileMetadata[]>([])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
 
@@ -71,14 +101,30 @@ export function CandidateDetailPage() {
 
   const [scoringId, setScoringId] = useState<string | null>(null)
   const [outcome, setOutcome] = useState<'pass' | 'fail' | 'noShow'>('pass')
-  const [score, setScore] = useState('4')
+  const [scorecard, setScorecard] = useState<Record<ScorecardCriterion, number>>(BLANK_SCORECARD)
+  const [recommendation, setRecommendation] = useState<InterviewRecommendation>('proceed')
+  const [strengths, setStrengths] = useState('')
+  const [concerns, setConcerns] = useState('')
   const [interviewNotes, setInterviewNotes] = useState('')
 
   const load = useCallback(async () => {
     if (!candidateId) return
     const row = await recruitmentService.getCandidate(candidateId)
     setCandidate(row)
-    if (row) setInterviews(await recruitmentService.listInterviewsForCandidate(candidateId))
+    if (row) {
+      // Four independent reads; the DISC and confidential ones resolve to null
+      // rather than throwing when the caller's role cannot see them.
+      const [rows, discResult, confidential, files] = await Promise.all([
+        recruitmentService.listInterviewsForCandidate(candidateId),
+        recruitmentService.getDiscResult(candidateId),
+        recruitmentService.getCandidateSensitive(candidateId),
+        recruitmentService.listCandidateDocuments(candidateId),
+      ])
+      setInterviews(rows)
+      setDisc(discResult)
+      setSensitive(confidential)
+      setDocuments(files)
+    }
     setLoading(false)
   }, [candidateId])
 
@@ -147,11 +193,19 @@ export function CandidateDetailPage() {
       await recruitmentService.recordInterviewOutcome({
         interviewId,
         outcome,
-        score: outcome === 'noShow' ? undefined : Number(score),
+        // The scorecard replaces the single score when the interview happened —
+        // the server averages it (candidate_portal.md §13).
+        criteria: outcome === 'noShow' ? undefined : scorecard,
+        recommendation: outcome === 'noShow' ? undefined : recommendation,
+        strengths: strengths.trim() || undefined,
+        concerns: concerns.trim() || undefined,
         notes: interviewNotes.trim() || undefined,
       })
       toast.success('Interview outcome recorded.')
       setScoringId(null)
+      setScorecard(BLANK_SCORECARD)
+      setStrengths('')
+      setConcerns('')
       setInterviewNotes('')
       await load()
     } catch (error) {
@@ -222,6 +276,16 @@ export function CandidateDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      {candidate.applicationForm && (
+        <ApplicationFormPanel form={candidate.applicationForm} sensitive={sensitive} />
+      )}
+
+      {disc && <DiscPanel result={disc} />}
+
+      {(documents.length > 0 || candidate.appliedVia === 'portal') && (
+        <CandidateDocumentsPanel documents={documents} />
+      )}
 
       {canManage && nextStages.length > 0 && (
         <Card>
@@ -304,6 +368,35 @@ export function CandidateDetailPage() {
                 </p>
               </div>
 
+              {interview.criteria && (
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-md bg-sunken p-2 text-xs sm:grid-cols-3">
+                  {SCORECARD_CRITERIA.map((criterion) => (
+                    <p key={criterion} className="flex justify-between gap-2">
+                      <span className="text-muted-foreground">{SCORECARD_CRITERION_LABELS[criterion]}</span>
+                      <span className="tabular-nums text-foreground">{interview.criteria?.[criterion]}</span>
+                    </p>
+                  ))}
+                </div>
+              )}
+
+              {interview.recommendation && (
+                <p className="text-sm text-muted-foreground">
+                  Recommendation: <span className="text-foreground">{RECOMMENDATION_LABELS[interview.recommendation]}</span>
+                </p>
+              )}
+
+              {interview.strengths && (
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-medium text-foreground">Strengths:</span> {interview.strengths}
+                </p>
+              )}
+
+              {interview.concerns && (
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-medium text-foreground">Concerns:</span> {interview.concerns}
+                </p>
+              )}
+
               {interview.notes && <p className="whitespace-pre-wrap text-sm text-muted-foreground">{interview.notes}</p>}
 
               {canManage && interview.outcome === 'pending' && interview.status !== 'cancelled' && (
@@ -324,17 +417,65 @@ export function CandidateDetailPage() {
                       </div>
                       {outcome !== 'noShow' && (
                         <div className="flex flex-col gap-1.5">
-                          <Label htmlFor={`score-${interview.id}`}>Score (1–5)</Label>
-                          <Select id={`score-${interview.id}`} value={score} onChange={(e) => setScore(e.target.value)}>
-                            {[1, 2, 3, 4, 5].map((value) => (
+                          <Label htmlFor={`recommendation-${interview.id}`}>Recommendation</Label>
+                          <Select
+                            id={`recommendation-${interview.id}`}
+                            value={recommendation}
+                            onChange={(e) => setRecommendation(e.target.value as InterviewRecommendation)}
+                          >
+                            {Object.entries(RECOMMENDATION_LABELS).map(([value, label]) => (
                               <option key={value} value={value}>
-                                {value}
+                                {label}
                               </option>
                             ))}
                           </Select>
                         </div>
                       )}
                     </div>
+
+                    {outcome !== 'noShow' && (
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {SCORECARD_CRITERIA.map((criterion) => (
+                          <div key={criterion} className="flex flex-col gap-1.5">
+                            <Label htmlFor={`${criterion}-${interview.id}`}>
+                              {SCORECARD_CRITERION_LABELS[criterion]}
+                            </Label>
+                            <Select
+                              id={`${criterion}-${interview.id}`}
+                              value={String(scorecard[criterion])}
+                              onChange={(e) =>
+                                setScorecard((current) => ({ ...current, [criterion]: Number(e.target.value) }))
+                              }
+                            >
+                              {[1, 2, 3, 4, 5].map((value) => (
+                                <option key={value} value={value}>
+                                  {value}
+                                </option>
+                              ))}
+                            </Select>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {outcome !== 'noShow' && (
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <Textarea
+                          aria-label="Strengths"
+                          rows={2}
+                          placeholder="Strengths"
+                          value={strengths}
+                          onChange={(e) => setStrengths(e.target.value)}
+                        />
+                        <Textarea
+                          aria-label="Concerns"
+                          rows={2}
+                          placeholder="Concerns"
+                          value={concerns}
+                          onChange={(e) => setConcerns(e.target.value)}
+                        />
+                      </div>
+                    )}
                     <Textarea
                       aria-label="Interview notes"
                       rows={3}

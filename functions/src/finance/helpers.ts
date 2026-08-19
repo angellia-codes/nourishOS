@@ -82,7 +82,10 @@ export function normaliseItems(raw: unknown): { items: ExpenseItemInput[]; total
     if (typeof item.amount !== 'number' || !Number.isFinite(item.amount) || item.amount <= 0) {
       throw new AppError('invalid-argument', `Item ${index + 1} needs an amount greater than zero.`)
     }
-    if (item.category !== undefined && !EXPENSE_CATEGORIES.includes(item.category)) {
+    // `!= null`, not `!== undefined`: an uncategorised item is stored as `category: null`
+    // below, and submitExpenseRequest re-runs this over the stored items — a strict
+    // undefined check made every such request permanently unsubmittable.
+    if (item.category != null && !EXPENSE_CATEGORIES.includes(item.category)) {
       throw new AppError('invalid-argument', `Item ${index + 1} has an unknown category.`)
     }
     // Rupiah has no minor unit in practice, and a fractional total would never

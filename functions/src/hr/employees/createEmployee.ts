@@ -214,16 +214,36 @@ export async function createEmployeeInternal(
   // not undo an employee record that is already written.
   if (input.candidateId) {
     const candidateRef = db.collection(COLLECTIONS.CANDIDATES).doc(input.candidateId)
-    if ((await candidateRef.get()).exists) {
+    const candidateSnap = await candidateRef.get()
+    if (candidateSnap.exists) {
       await candidateRef.update({ employeeId: employeeRef.id, ...updatedFields(user.uid) })
 
+      const candidate = candidateSnap.data()!
       const checklists = await db
         .collection(COLLECTIONS.ONBOARDING_CHECKLISTS)
         .where('candidateId', '==', input.candidateId)
         .limit(1)
         .get()
       if (!checklists.empty) {
-        await checklists.docs[0].ref.update({ employeeId: employeeRef.id, ...updatedFields(user.uid) })
+        const checklist = checklists.docs[0]
+        // employment-application-form.md §7 AC-5: once the candidate filled in
+        // F010 through the portal, checklist item 19 (Application Form) is
+        // verified against that record rather than collected again on paper.
+        const items = (checklist.data().documentChecklist ?? []) as Record<string, unknown>[]
+        const documentChecklist = candidate.applicationForm
+          ? items.map((item) =>
+              item.itemNumber === 19
+                ? {
+                    ...item,
+                    status: 'received',
+                    linkedRecordType: 'candidate',
+                    linkedRecordId: input.candidateId,
+                    receivedDate: (candidate.submittedAt as string | null)?.slice(0, 10) ?? item.receivedDate ?? null,
+                  }
+                : item,
+            )
+          : items
+        await checklist.ref.update({ employeeId: employeeRef.id, documentChecklist, ...updatedFields(user.uid) })
       }
     }
   }
