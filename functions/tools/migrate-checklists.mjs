@@ -27,12 +27,19 @@
  *   - Dry run by default. Nothing is written without --apply.
  *   - A checklist whose target id already holds a shift report is SKIPPED, never
  *     overwritten — a real report always wins over a migrated one.
- *   - The old checklist documents are left in place. Deleting them is
- *     irreversible and buys nothing; nothing reads them any more.
+ *   - The old checklist documents are left in place unless --delete-migrated is
+ *     passed, and even then only the ones whose migrated copy can be verified
+ *     are removed — a checklist whose id collided with a real report, or one
+ *     too malformed to migrate, is never deleted.
  *
  * Usage (from the repo root, PowerShell):
  *   node functions/tools/migrate-checklists.mjs --key C:\path\to\sa.json
  *   node functions/tools/migrate-checklists.mjs --key C:\path\to\sa.json --apply
+ *
+ * Then, once you have checked the result and resolved anything the run listed
+ * as skipped, clean up the sources that demonstrably made it across:
+ *   node functions/tools/migrate-checklists.mjs --key C:\path\to\sa.json --delete-migrated
+ *   node functions/tools/migrate-checklists.mjs --key C:\path\to\sa.json --delete-migrated --apply
  *
  * Against the emulator (no credentials needed):
  *   $env:FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080"
@@ -93,11 +100,21 @@ const SOURCE_COLLECTIONS = [
 
 const TARGET_COLLECTION = 'shiftHandovers'
 
+/**
+ * Opening line of every migrated report's `otherNotes`. It is written by
+ * buildNote and read back by --delete-migrated, which is the whole reason it is
+ * a constant: a source is only ever deleted when its target both exists AND
+ * carries this marker, so a checklist whose id collided with a real report can
+ * never be deleted by mistake.
+ */
+const MIGRATION_MARKER = 'Migrated from the standalone'
+
 function parseArgs(argv) {
-  const args = { apply: false }
+  const args = { apply: false, deleteMigrated: false }
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i]
     if (arg === '--apply') args.apply = true
+    else if (arg === '--delete-migrated') args.deleteMigrated = true
     else if (arg === '--key') args.key = argv[++i]
     else if (arg === '--project') args.project = argv[++i]
     else {
@@ -175,7 +192,7 @@ function convertChecklist(reportType, itemStatuses) {
 
 function buildNote(reportType, unmappedCompleted, unknownIds) {
   const lines = [
-    `Migrated from the standalone ${reportType} checklist. Only the checklist ` +
+    `${MIGRATION_MARKER} ${reportType} checklist. Only the checklist ` +
       'section is real — this report predates the Shift Report form, so no ' +
       'shift name, staffing, promo, issue or handover detail was ever captured.',
   ]
@@ -257,6 +274,9 @@ async function main() {
   const planned = []
   const skipped = []
   const malformed = []
+  // Every source with a resolvable target, whether this run migrates it or a
+  // previous one did — --delete-migrated has to consider both.
+  const resolvable = []
 
   for (const { name, reportType } of SOURCE_COLLECTIONS) {
     const snap = await db.collection(name).get()
@@ -271,6 +291,8 @@ async function main() {
       }
 
       const targetId = `${source.outletId}__${source.date}__${reportType}`
+      resolvable.push({ sourceRef: doc.ref, sourcePath: `${name}/${doc.id}`, targetId })
+
       const existing = await db.collection(TARGET_COLLECTION).doc(targetId).get()
       if (existing.exists) {
         skipped.push(`${name}/${doc.id} -> ${targetId} (a shift report already exists there)`)
@@ -314,11 +336,13 @@ async function main() {
 
   if (!args.apply) {
     console.log(`\n${planned.length} document(s) would be migrated. Re-run with --apply to write them.`)
+    if (args.deleteMigrated) await deleteMigratedSources(resolvable)
     return
   }
 
   if (planned.length === 0) {
     console.log('\nNothing to migrate.')
+    if (args.deleteMigrated) await deleteMigratedSources(resolvable)
     return
   }
 
@@ -350,10 +374,68 @@ async function main() {
     console.log(`Linked ${linked} closing report(s) to their opening report.`)
   }
 
+  if (args.deleteMigrated) {
+    await deleteMigratedSources(resolvable)
+    return
+  }
+
   console.log(
     `\nThe original ${SOURCE_COLLECTIONS.map((c) => c.name).join(' / ')} documents were left in place ` +
-      '— nothing reads them, and deleting them is irreversible. Remove them by hand once you are satisfied.',
+      '— nothing reads them, and deleting them is irreversible. Pass --delete-migrated to remove the ones ' +
+      'whose migrated copy this run can verify, or remove them by hand.',
   )
+}
+
+/**
+ * Delete source checklists that demonstrably made it across, and only those.
+ *
+ * A source is deleted only when its target document exists AND its otherNotes
+ * carries MIGRATION_MARKER. That second condition is the one that matters: a
+ * checklist whose target id was already occupied by a REAL shift report was
+ * never migrated at all, so deleting it would destroy the only copy. A
+ * malformed source never reaches this list, because it has no resolvable
+ * target id to check.
+ *
+ * Still gated behind --apply, like every other write in this script.
+ */
+async function deleteMigratedSources(resolvable) {
+  const deletable = []
+  const kept = []
+
+  for (const entry of resolvable) {
+    const target = await db.collection(TARGET_COLLECTION).doc(entry.targetId).get()
+    if (!target.exists) {
+      kept.push(`${entry.sourcePath} — no migrated copy exists`)
+      continue
+    }
+    if (!String(target.data().otherNotes ?? '').startsWith(MIGRATION_MARKER)) {
+      kept.push(`${entry.sourcePath} — ${entry.targetId} is a real report, not a migrated copy`)
+      continue
+    }
+    deletable.push(entry)
+  }
+
+  console.log(`\n--delete-migrated: ${deletable.length} source(s) verified as migrated`)
+  deletable.forEach((entry) => console.log(`  ${args.apply ? 'delete' : 'would delete'} ${entry.sourcePath}`))
+
+  if (kept.length > 0) {
+    console.log('\nKept — NOT safe to delete:')
+    kept.forEach((line) => console.log(`  ${line}`))
+    console.log('  Resolve these by hand; nothing else carries their data.')
+  }
+
+  if (!args.apply) {
+    console.log('\nAdd --apply to actually delete.')
+    return
+  }
+  if (deletable.length === 0) return
+
+  for (let i = 0; i < deletable.length; i += 500) {
+    const batch = db.batch()
+    deletable.slice(i, i + 500).forEach((entry) => batch.delete(entry.sourceRef))
+    await batch.commit()
+  }
+  console.log(`\nDeleted ${deletable.length} source checklist(s).`)
 }
 
 main().catch((error) => {
