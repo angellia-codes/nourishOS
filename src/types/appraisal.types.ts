@@ -1,18 +1,136 @@
 import type { BaseDocument } from './firestore.types'
 import type { ApprovalStatus } from '@/constants/statuses'
 import type { PositionId } from '@/constants/positions'
+import type { Bilingual, ScorerModel } from './position.types'
 
 /**
- * Performance Appraisal — structured extension of HR.md §10 Performance
- * Management. Confirmed design decisions (not doc defaults):
- *   - Different subject sets per review type (no inheritance between them)
- *   - AI training suggestions + development comment generated on-demand,
- *     never automatically
- *   - Every review type (including probation) routes through GM approval
- *     via the Approval Engine before being marked Completed
+ * Appraisal v2 — appraisal-v2-design.md. Supersedes the shipped 1-5
+ * single-reviewer module below (kept, renamed *V1, so historical records
+ * render distinguishably rather than being silently rescaled — §2.8/§13).
+ * Per-position criteria derived from Positions Master's keyResponsibilities,
+ * dual-scorer (Dept Head 60% + HR 40%) for levels IV-VIII, solo GM-scored
+ * for levels I-III.
  */
 
+export type { ScorerModel }
+export type ApprovalModel = 'gm' | 'none'
+export type RatingBand = 'outstanding' | 'excellent' | 'good' | 'needsImprovement' | 'unsatisfactory'
+
+export const RATING_BAND_LABELS: Record<RatingBand, string> = {
+  outstanding: 'Outstanding',
+  excellent: 'Excellent',
+  good: 'Good',
+  needsImprovement: 'Needs Improvement',
+  unsatisfactory: 'Unsatisfactory',
+}
+
+export interface AppraisalCriterion {
+  criterionId: string
+  label: Bilingual
+  description: Bilingual
+  sourceResponsibilityIds: string[]
+  isLeadershipCriterion: boolean
+  order: number
+}
+
+export interface AppraisalTemplate extends BaseDocument {
+  positionId: PositionId
+  sourcePositionRevision: number
+  criteria: AppraisalCriterion[]
+  scoringModelVersion: 2
+  generationMethod: 'ai' | 'manual'
+  generatedAt: string | null
+  templateStatus: 'draft' | 'approved' | 'stale' | 'archived'
+  approvedByUid: string | null
+  approvedAt: string | null
+  version: number
+}
+
+export interface CriterionScore {
+  criterionId: string
+  primaryScore: number | null
+  secondaryScore: number | null
+  weightedScore: number | null
+  primaryNote: string | null
+  secondaryNote: string | null
+}
+
+export interface Acknowledgement {
+  acknowledgedAt: string
+  signatureFileId: string | null
+  deviceOperatorUid: string | null
+  witnessedByUid: string | null
+  method: 'onDeviceSignature' | 'authenticated'
+}
+
 export type AppraisalReviewType = 'probation' | 'quarterly' | 'annual'
+
+export interface Appraisal extends BaseDocument {
+  employeeId: string
+  positionId: PositionId
+  employeeDepartmentId: string | null
+  templateId: string
+  templateVersion: number
+  scoringModelVersion: 2
+
+  reviewType: AppraisalReviewType
+  periodLabel: string
+  periodStart: string
+  periodEnd: string
+
+  scorerModel: ScorerModel
+  approvalModel: ApprovalModel
+  primaryScorerUid: string
+  primaryScorerRole: 'departmentHead' | 'generalManager'
+  secondaryScorerUid: string | null
+  secondaryScorerRole: 'hrManager' | null
+
+  criterionScores: CriterionScore[]
+  primarySubmittedAt: string | null
+  primarySubmittedBy: string | null
+  secondarySubmittedAt: string | null
+  secondarySubmittedBy: string | null
+
+  primaryAverage: number | null
+  secondaryAverage: number | null
+  finalScore: number | null
+  ratingBand: RatingBand | null
+
+  overallComment: string | null
+  employeeSelfComment: string | null
+  acknowledgement: Acknowledgement | null
+
+  approvalRequestId: string | null
+  consequenceTaskId: string | null
+  aiInsights: AppraisalAIInsights | null
+  status: ApprovalStatus
+}
+
+export interface AppraisalAIInsights {
+  trainingSuggestions: string[]
+  developmentComment: string
+  generatedAt: string
+  generatedBy: string
+}
+
+/**
+ * hrRecommendation lives at appraisals/{id}/confidential/recommendation —
+ * never on the Appraisal doc itself. Only populated when finalScore < 60
+ * (§2.6), read only through getAppraisalRecommendation (never a raw
+ * subscription — see appraisalService.ts).
+ */
+export interface AppraisalRecommendation {
+  employeeId: string
+  finalScore: number
+  ratingBand: RatingBand
+  recommendation: string
+  createdAt: string
+}
+
+// ---------------------------------------------------------------------------
+// v1 — shipped 1-5 single-reviewer module. Frozen, never rescaled (§2.8).
+// Historical records only; no new v1 appraisal is ever created.
+// ---------------------------------------------------------------------------
 
 export type AppraisalScore = 1 | 2 | 3 | 4 | 5
 
@@ -24,21 +142,13 @@ export const APPRAISAL_SCORE_LABELS: Record<AppraisalScore, string> = {
   5: 'Outstanding',
 }
 
-/** A single review criterion within a template, e.g. "Upselling Skill". */
 export interface AppraisalSubject {
   subjectId: string
   label: string
   description?: string
 }
 
-/**
- * Defines which subjects apply to a given position + review type.
- * Firestore-backed rather than hardcoded (shared-service.md §17 — avoid
- * hardcoded dropdowns) so HR can edit criteria later without a code deploy.
- * See src/constants/appraisalTemplateSeeds.ts for the default seed content
- * used to populate this collection on first deploy.
- */
-export interface AppraisalTemplate extends BaseDocument {
+export interface AppraisalTemplateV1 extends BaseDocument {
   positionId: PositionId
   positionLabel: string
   reviewType: AppraisalReviewType
@@ -52,30 +162,20 @@ export interface AppraisalSubjectScore {
   reviewerNote?: string
 }
 
-export interface AppraisalAIInsights {
-  trainingSuggestions: string[]
-  developmentComment: string
-  generatedAt: string
-  generatedBy: string // uid of whoever triggered generation
-}
-
-/**
- * One review instance. Workflow reuses the global standard:
- *   Draft -> Submitted -> PendingApproval -> Approved / Rejected -> Completed
- * PendingApproval is always routed to GM/Director regardless of reviewType.
- */
-export interface Appraisal extends BaseDocument {
+export interface AppraisalV1 extends BaseDocument {
   employeeId: string
   reviewerId: string
   positionId: PositionId
   reviewType: AppraisalReviewType
   templateId: string
   templateVersion: number
-  periodLabel: string // e.g. "Q3 2026", "Probation - Month 3", "FY2026"
+  periodLabel: string
   subjectScores: AppraisalSubjectScore[]
-  overallScore: number // average of subjectScores — computed server-side on submit, never client-set
-  overallComment: string | null // reviewer's summary feedback, set on submit
+  overallScore: number
+  overallComment: string | null
   status: ApprovalStatus
-  approvalRequestId?: string // links into the normalized Approval Engine once submitted
-  aiInsights: AppraisalAIInsights | null // null until generateAppraisalInsights() is explicitly triggered
+  approvalRequestId?: string
+  aiInsights: AppraisalAIInsights | null
+  /** Absent on every real v1 doc (stamped by the migration tool) — use `scoringModelVersion !== 2` to detect v1 when rendering a list that mixes both. */
+  scoringModelVersion?: 1
 }

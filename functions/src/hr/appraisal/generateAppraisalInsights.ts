@@ -62,27 +62,49 @@ export const generateAppraisalInsights = onCall(
         throw new AppError('not-found', 'Appraisal not found.')
       }
       const appraisal = appraisalSnap.data()!
-
-      const subjectScores = appraisal.subjectScores as
-        | { subjectId: string; score: number; reviewerNote?: string }[]
-        | undefined
-      if (!subjectScores || subjectScores.length === 0) {
-        throw new AppError('failed-precondition', 'This appraisal has no submitted scores yet.')
-      }
-
-      // Resolve subject labels from the template so the model sees human
-      // criteria names, not internal subjectIds.
       const templateSnap = await db.collection(COLLECTIONS.APPRAISAL_TEMPLATES).doc(appraisal.templateId).get()
-      const subjects = (templateSnap.data()?.subjects ?? []) as { subjectId: string; label: string }[]
-      const labelById = new Map(subjects.map((s) => [s.subjectId, s.label]))
 
-      const scoreLines = subjectScores
-        .map((s) => {
-          const label = labelById.get(s.subjectId) ?? s.subjectId
-          const note = s.reviewerNote ? ` — reviewer note: ${s.reviewerNote}` : ''
-          return `- ${label}: ${s.score}/5${note}`
-        })
-        .join('\n')
+      // v2 (criterionScores/criteria, 1-10) vs v1 (subjectScores/subjects,
+      // 1-5, frozen/historical-only per §2.8 but still readable, so still
+      // eligible for on-demand insight generation).
+      let scoreLines: string
+      let overallLine: string
+      if (appraisal.scoringModelVersion === 2) {
+        const criterionScores = (appraisal.criterionScores ?? []) as {
+          criterionId: string
+          weightedScore: number | null
+          primaryNote: string | null
+          secondaryNote: string | null
+        }[]
+        if (criterionScores.every((c) => c.weightedScore === null)) {
+          throw new AppError('failed-precondition', 'This appraisal has no submitted scores yet.')
+        }
+        const criteria = (templateSnap.data()?.criteria ?? []) as { criterionId: string; label: { en: string } }[]
+        const labelById = new Map(criteria.map((c) => [c.criterionId, c.label.en]))
+        scoreLines = criterionScores
+          .map((c) => {
+            const label = labelById.get(c.criterionId) ?? c.criterionId
+            const note = [c.primaryNote, c.secondaryNote].filter(Boolean).join(' / ')
+            return `- ${label}: ${c.weightedScore?.toFixed(1) ?? '—'}/10${note ? ` — ${note}` : ''}`
+          })
+          .join('\n')
+        overallLine = `Final score: ${appraisal.finalScore ?? '—'}/100 (${appraisal.ratingBand ?? 'not yet rated'})`
+      } else {
+        const subjectScores = (appraisal.subjectScores ?? []) as { subjectId: string; score: number; reviewerNote?: string }[]
+        if (subjectScores.length === 0) {
+          throw new AppError('failed-precondition', 'This appraisal has no submitted scores yet.')
+        }
+        const subjects = (templateSnap.data()?.subjects ?? []) as { subjectId: string; label: string }[]
+        const labelById = new Map(subjects.map((s) => [s.subjectId, s.label]))
+        scoreLines = subjectScores
+          .map((s) => {
+            const label = labelById.get(s.subjectId) ?? s.subjectId
+            const note = s.reviewerNote ? ` — reviewer note: ${s.reviewerNote}` : ''
+            return `- ${label}: ${s.score}/5${note}`
+          })
+          .join('\n')
+        overallLine = `Overall score: ${appraisal.overallScore}/5`
+      }
 
       // Imported here, not at module scope: firebase-functions loads this file
       // on every cold start and during deploy-time function discovery, and the
@@ -95,8 +117,8 @@ export const generateAppraisalInsights = onCall(
         max_tokens: 2048,
         system:
           'You are an HR development advisor for an Indonesian multi-outlet F&B company. ' +
-          'You receive one employee performance appraisal (scores 1-5 per criterion, 5 is best). ' +
-          'Respond with practical, respectful, specific development guidance. Do not mention names or invent facts.',
+          'You receive one employee performance appraisal. Respond with practical, respectful, specific ' +
+          'development guidance. Do not mention names or invent facts.',
         output_config: { format: { type: 'json_schema', schema: INSIGHTS_SCHEMA } },
         messages: [
           {
@@ -104,7 +126,7 @@ export const generateAppraisalInsights = onCall(
             content:
               `Position: ${appraisal.positionId}\n` +
               `Review type: ${appraisal.reviewType} (${appraisal.periodLabel})\n` +
-              `Overall score: ${appraisal.overallScore}/5\n` +
+              `${overallLine}\n` +
               `Reviewer's overall comment: ${appraisal.overallComment ?? '(none)'}\n\n` +
               `Scores:\n${scoreLines}\n\n` +
               'Generate training suggestions and a development comment for this employee.',

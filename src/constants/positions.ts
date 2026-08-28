@@ -28,14 +28,16 @@ export const POSITION_RANK_LABELS: Record<number, string> = {
 export const POSITION_DEPARTMENT_LABELS = {
   executive: 'Executive Board',
   fbService: 'F&B Service',
-  finance: 'Finance, Accounting & Cost Control',
+  finance: 'Finance & Accounting',
   hr: 'Human Resources',
-  marketing: 'Sales, Marketing & Creative',
-  purchasing: 'Purchasing & Logistics',
-  culinary: 'Culinary & Bakery',
-  bar: 'Bar & Beverage',
-  engineering: 'Engineering & Maintenance',
+  marketing: 'Sales & Marketing',
+  purchasing: 'Purchasing & Driver',
+  kitchen: 'Kitchen',
+  theBakeryKitchen: 'The Bakery Kitchen',
+  bar: 'Bar',
+  engineering: 'Engineering',
   security: 'Security',
+  wholefood: 'Wholefood',
   general: 'Cross-Department',
 } as const
 
@@ -58,9 +60,7 @@ export const POSITION_CATALOG = {
   groupOperationalManager: { label: 'Group Operational Manager', rank: 1, department: 'fbService' },
   operationalManager: { label: 'Operational Manager', rank: 2, department: 'fbService' },
   restaurantManager: { label: 'Restaurant Manager', rank: 3, department: 'fbService' },
-  wholefoodsManager: { label: 'Wholefoods Manager', rank: 3, department: 'fbService' },
   restaurantSupervisor: { label: 'Restaurant Supervisor', rank: 5, department: 'fbService' },
-  wholefoodsSupervisor: { label: 'Wholefoods Supervisor', rank: 5, department: 'fbService' },
   restaurantCaptain: { label: 'Restaurant Captain', rank: 6, department: 'fbService' },
   waiter: { label: 'Waiter / Waitress', rank: 7, department: 'fbService' },
   runner: { label: 'Runner', rank: 8, department: 'fbService' },
@@ -75,7 +75,6 @@ export const POSITION_CATALOG = {
   receivingStorekeeper: { label: 'Receiving & Storekeeper', rank: 7, department: 'finance' },
   accountingAdmin: { label: 'Accounting Admin', rank: 7, department: 'finance' },
   cashier: { label: 'Cashier', rank: 7, department: 'finance' },
-  wholefoodsCashier: { label: 'Wholefoods Cashier', rank: 8, department: 'finance' },
 
   // ------------------------------------------------------- Human Resources
   groupHrManager: { label: 'Group HR Manager', rank: 1, department: 'hr' },
@@ -83,7 +82,7 @@ export const POSITION_CATALOG = {
   trainingDevelopmentSupervisor: { label: 'Training & Development Supervisor', rank: 5, department: 'hr' },
   hrGeneralAdmin: { label: 'HR & General Admin', rank: 6, department: 'hr' },
 
-  // --------------------------------------------- Sales, Marketing & Creative
+  // --------------------------------------------- Sales & Marketing
   directorOfSalesMarketing: { label: 'Director of Sales & Marketing', rank: 1, department: 'marketing' },
   creativeMarketingManager: { label: 'Creative & Marketing Manager', rank: 2, department: 'marketing' },
   socialMediaSpecialist: { label: 'Social Media Specialist', rank: 6, department: 'marketing' },
@@ -96,21 +95,21 @@ export const POSITION_CATALOG = {
   driver: { label: 'Driver', rank: 7, department: 'purchasing' },
 
   // ------------------------------------------------------ Culinary & Bakery
-  groupExecutiveChef: { label: 'Group Executive Chef', rank: 2, department: 'culinary' },
-  headChef: { label: 'Head Chef', rank: 3, department: 'culinary' },
-  chiefBaker: { label: 'Chief Baker', rank: 3, department: 'culinary' },
-  sousChef: { label: 'Sous Chef', rank: 4, department: 'culinary' },
-  sousChefBaker: { label: 'Sous Chef Baker', rank: 4, department: 'culinary' },
-  chefDePartie: { label: 'Chef de Partie', rank: 5, department: 'culinary' },
-  chefDePartieBaker: { label: 'Chef de Partie Baker / Pastry', rank: 5, department: 'culinary' },
-  demiChefDePartie: { label: 'Demi Chef de Partie', rank: 6, department: 'culinary' },
-  demiChefBaker: { label: 'Demi Chef Baker', rank: 6, department: 'culinary' },
-  cook: { label: 'Cook', rank: 7, department: 'culinary' },
-  cookBaker: { label: 'Cook / Baker', rank: 7, department: 'culinary' },
-  cookHelper: { label: 'Cook Helper', rank: 8, department: 'culinary' },
-  steward: { label: 'Steward', rank: 8, department: 'culinary' },
+  groupExecutiveChef: { label: 'Group Executive Chef', rank: 2, department: 'kitchen' },
+  headChef: { label: 'Head Chef', rank: 3, department: 'kitchen' },
+  chiefBaker: { label: 'Chief Baker', rank: 3, department: 'theBakeryKitchen' },
+  sousChef: { label: 'Sous Chef', rank: 4, department: 'kitchen' },
+  sousChefBaker: { label: 'Sous Chef Baker', rank: 4, department: 'theBakeryKitchen' },
+  chefDePartie: { label: 'Chef de Partie', rank: 5, department: 'kitchen' },
+  chefDePartieBaker: { label: 'Chef de Partie Baker / Pastry', rank: 5, department: 'theBakeryKitchen' },
+  demiChefDePartie: { label: 'Demi Chef de Partie', rank: 6, department: 'kitchen' },
+  demiChefBaker: { label: 'Demi Chef Baker', rank: 6, department: 'theBakeryKitchen' },
+  cook: { label: 'Cook', rank: 7, department: 'kitchen' },
+  cookBaker: { label: 'Cook / Baker', rank: 7, department: 'theBakeryKitchen' },
+  cookHelper: { label: 'Cook Helper', rank: 8, department: 'kitchen' },
+  steward: { label: 'Steward', rank: 8, department: 'kitchen' },
 
-  // --------------------------------------------------------- Bar & Beverage
+  // --------------------------------------------------------- Bar
   groupBarManager: { label: 'Group Bar Manager', rank: 2, department: 'bar' },
   barManager: { label: 'Bar Manager', rank: 3, department: 'bar' },
   assistantBarManager: { label: 'Assistant Bar Manager', rank: 4, department: 'bar' },
@@ -132,6 +131,11 @@ export const POSITION_CATALOG = {
   // -------------------------------------------------------------- Security
   securitySupervisor: { label: 'Security Supervisor', rank: 5, department: 'security' },
   securityGuard: { label: 'Security Guard', rank: 8, department: 'security' },
+
+  // -------------------------------------------------------------- Wholefood
+  wholefoodManager: { label: 'Wholefood Manager', rank: 3, department: 'wholefood' },
+  wholefoodSupervisor: { label: 'Wholefood Supervisor', rank: 5, department: 'wholefood' },
+  wholefoodCashier: { label: 'Wholefood Cashier', rank: 8, department: 'wholefood' },
 
   // ------------------------------------------------------- Cross-Department
   trainee: { label: 'Trainee', rank: 8, department: 'general' },
@@ -202,33 +206,25 @@ export const DEPARTMENT_POSITION_IDS: Record<string, readonly PositionId[]> = {
   bar: ['barManager', 'barSupervisor', 'barCaptain', 'barista', 'trainee', 'dailyWorker'],
   kitchen: [
     'headChef',
-    'chiefBaker',
     'sousChef',
     'chefDePartie',
-    'chefDePartieBaker',
     'demiChefDePartie',
     'cook',
-    'cookBaker',
     'cookHelper',
     'steward',
     'trainee',
     'dailyWorker',
   ],
   central_kitchen: [
-    'groupExecutiveChef',
     'headChef',
-    'chiefBaker',
     'sousChef',
-    'sousChefBaker',
-    'chefDePartie',
-    'chefDePartieBaker',
     'demiChefDePartie',
-    'demiChefBaker',
-    'cook',
-    'cookBaker',
     'cookHelper',
     'steward',
+    'trainee',
+    'dailyWorker',
   ],
+  wholefood: ['wholefoodManager', 'wholefoodSupervisor', 'wholefoodCashier'],
   sales_marketing: ['creativeMarketingManager', 'juniorGraphicDesigner'],
   security: ['securitySupervisor', 'securityGuard'],
   engineering_pomec: ['restaurantMaintenanceManager', 'engineerMep', 'publicAreaAttendant'],
@@ -244,7 +240,16 @@ export const DEPARTMENT_POSITION_IDS: Record<string, readonly PositionId[]> = {
   driver: ['driverLeader', 'driver'],
   // Deliberately empty — see the block comment above.
   housekeeping: [],
-  wholefood_retail: ['wholefoodsManager', 'wholefoodsSupervisor', 'wholefoodsCashier'],
+  wholefood_retail: ['wholefoodManager', 'wholefoodSupervisor', 'wholefoodCashier'],
+theBakery: [
+    'chiefBaker',
+    'chefDePartieBaker',
+    'demiChefDePartie',
+    'cookBaker',
+    'steward',
+    'trainee',
+    'dailyWorker',
+  ],
 }
 
 /** `kitchen`'s three non-bakery restaurant outlets — the mirror image of `the_bakery_kitchen`. */

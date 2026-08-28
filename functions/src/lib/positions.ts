@@ -6,6 +6,79 @@
  * copies in step.
  */
 
+/**
+ * Rank (0-8, POSITIONS.md §2) per PositionId — mirrors the `rank` field on
+ * each src/constants/positions.ts POSITION_CATALOG entry. Added for
+ * Positions Master's seedPositions (functions/src/hr/positions/), which
+ * needs a numeric-to-roman tier mapping server-side and previously had none
+ * of the catalog's rank data available to it. Keep in step with the client
+ * copy same as everything else in this file.
+ */
+export const POSITION_RANKS: Record<string, number> = {
+  ceo: 0,
+  director: 0,
+  groupGeneralManager: 0,
+  groupOperationalManager: 1,
+  operationalManager: 2,
+  restaurantManager: 3,
+  wholefoodsManager: 3,
+  restaurantSupervisor: 5,
+  wholefoodsSupervisor: 5,
+  restaurantCaptain: 6,
+  waiter: 7,
+  runner: 8,
+  groupFinancialController: 1,
+  chiefAccounting: 2,
+  costControl: 5,
+  cashierSupervisor: 5,
+  apGeneralCashier: 6,
+  arIncomeAudit: 6,
+  receivingStorekeeper: 7,
+  accountingAdmin: 7,
+  cashier: 7,
+  wholefoodsCashier: 8,
+  groupHrManager: 1,
+  juniorHrManager: 3,
+  trainingDevelopmentSupervisor: 5,
+  hrGeneralAdmin: 6,
+  directorOfSalesMarketing: 1,
+  creativeMarketingManager: 2,
+  socialMediaSpecialist: 6,
+  juniorGraphicDesigner: 6,
+  purchasingManager: 2,
+  purchasingSupervisor: 5,
+  driverLeader: 6,
+  driver: 7,
+  groupExecutiveChef: 2,
+  headChef: 3,
+  chiefBaker: 3,
+  sousChef: 4,
+  sousChefBaker: 4,
+  chefDePartie: 5,
+  chefDePartieBaker: 5,
+  demiChefDePartie: 6,
+  demiChefBaker: 6,
+  cook: 7,
+  cookBaker: 7,
+  cookHelper: 8,
+  steward: 8,
+  groupBarManager: 2,
+  barManager: 3,
+  assistantBarManager: 4,
+  barSupervisor: 5,
+  barCaptain: 6,
+  barista: 7,
+  barBack: 8,
+  restaurantMaintenanceManager: 3,
+  engineerCivil: 7,
+  engineerMep: 7,
+  publicAreaAttendant: 8,
+  securitySupervisor: 5,
+  securityGuard: 8,
+  trainee: 8,
+  dailyWorker: 8,
+}
+
 export const POSITION_LABELS: Record<string, string> = {
   ceo: 'Chief Executive Officer (CEO)',
   director: 'Director',

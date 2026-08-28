@@ -28,6 +28,14 @@ import type {
 export interface Employee extends BaseDocument {
   /** Auto-generated server-side: N-0001 / DW-0001 / OJT-0001 (HR_OPERATIONS.md 9.1-F02). */
   employeeNumber: string
+  /**
+   * Pre-NourishOS payroll numbering, e.g. '273'. Populated once at migration,
+   * null for anyone hired since. payroll-components-payslip-design.md §4.6 —
+   * it bridges the old numbering to employeeNumber and is the CSV import
+   * cross-check (decision 8). The importer only enforces the cross-check when
+   * this is non-null, so a partial backfill does not block the first import.
+   */
+  legacyEmployeeId?: string | null
 
   // Personal
   fullName: string

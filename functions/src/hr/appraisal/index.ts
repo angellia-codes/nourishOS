@@ -1,17 +1,22 @@
 import { logger } from 'firebase-functions/v2'
-import { FieldValue } from 'firebase-admin/firestore'
-import { db, COLLECTIONS, type AuthedUser } from '../../lib'
+import { db, COLLECTIONS, updatedFields, type AuthedUser } from '../../lib'
 import { registerApprovalResolvedHandler } from '../../shared/approval'
-import { sendNotificationInternal } from '../../shared/notifications'
+import { registerEventHandler } from '../../shared/events'
+import { sendNotificationInternal, notifyUsersByRole } from '../../shared/notifications'
 import { recordEmployeeActivity } from '../employees/helpers'
+import { fireAppraisalConsequences } from './consequences'
 
+export { generateAppraisalTemplate } from './generateAppraisalTemplate'
+export { approveAppraisalTemplate } from './approveAppraisalTemplate'
 export { createAppraisal } from './createAppraisal'
-export { submitAppraisal } from './submitAppraisal'
-export { seedAppraisalTemplates } from './seedAppraisalTemplates'
+export { submitPrimaryScores } from './submitPrimaryScores'
+export { submitSecondaryScores } from './submitSecondaryScores'
+export { acknowledgeAppraisal } from './acknowledgeAppraisal'
+export { reopenAppraisal } from './reopenAppraisal'
+export { getAppraisalRecommendation } from './getAppraisalRecommendation'
 export { generateAppraisalInsights } from './generateAppraisalInsights'
-export { triggerProbationReviews } from './probationReviewTrigger'
+export { scheduleAppraisalCycles } from './scheduleAppraisalCycles'
 
-/** Approval resolution has no human caller — same synthetic-user shape as probationReviewTrigger.ts's SYSTEM_USER. */
 const SYSTEM_USER: AuthedUser = {
   uid: 'system:approvalEngine',
   email: null,
@@ -20,28 +25,25 @@ const SYSTEM_USER: AuthedUser = {
   departmentId: null,
   outletId: null,
   permissions: [],
+  employeeId: null,
 }
 
 /**
- * Module-load-time registration (see shared/approval/registry.ts): when the
- * 'hr/appraisal' approval route resolves, mirror the outcome onto the
- * appraisal doc and tell the reviewer. Keeps the Approval Engine generic —
- * it never imports HR code; it dispatches here by resourceType string.
+ * §7 — resolution of 'hr/appraisalV2' (only reached for dualScorer, via
+ * submitSecondaryScores). soloScorer never engages the Approval Engine at
+ * all (§5), so its §9 consequence fires inline in submitPrimaryScores
+ * instead of here — this handler is the dualScorer half of §9.
  */
-registerApprovalResolvedHandler('appraisal', async (event) => {
-  const appraisalRef = db.collection(COLLECTIONS.APPRAISALS).doc(event.resourceId)
-  const appraisalSnap = await appraisalRef.get()
-  if (!appraisalSnap.exists) {
+registerApprovalResolvedHandler('appraisalV2', async (event) => {
+  const ref = db.collection(COLLECTIONS.APPRAISALS).doc(event.resourceId)
+  const snap = await ref.get()
+  if (!snap.exists) {
     logger.warn(`Approval ${event.approvalRequestId} resolved for missing appraisal ${event.resourceId}`)
     return
   }
-  const appraisal = appraisalSnap.data()!
+  const appraisal = snap.data()!
 
-  await appraisalRef.update({
-    status: event.newStatus, // 'approved' | 'rejected'
-    updatedAt: FieldValue.serverTimestamp(),
-    updatedBy: 'system:approvalEngine',
-  })
+  await ref.update({ status: event.newStatus, ...updatedFields('system:approvalEngine') })
 
   if (event.newStatus === 'approved') {
     const employeeSnap = await db.collection(COLLECTIONS.EMPLOYEES).doc(appraisal.employeeId as string).get()
@@ -54,6 +56,14 @@ registerApprovalResolvedHandler('appraisal', async (event) => {
         SYSTEM_USER,
       )
     }
+
+    await fireAppraisalConsequences({
+      appraisalId: event.resourceId,
+      employeeId: appraisal.employeeId as string,
+      finalScore: appraisal.finalScore as number,
+      ratingBand: appraisal.ratingBand,
+      scorerModel: 'dualScorer',
+    })
   }
 
   await sendNotificationInternal({
@@ -61,12 +71,40 @@ registerApprovalResolvedHandler('appraisal', async (event) => {
     title: event.newStatus === 'approved' ? 'Appraisal Approved' : 'Appraisal Rejected',
     message:
       event.newStatus === 'approved'
-        ? `The appraisal you submitted (${appraisal.periodLabel}) has been fully approved.`
-        : `The appraisal you submitted (${appraisal.periodLabel}) was rejected. See the approval history for the reason.`,
+        ? `The appraisal for ${appraisal.periodLabel as string} has been approved.`
+        : `The appraisal for ${appraisal.periodLabel as string} was rejected. See the approval history for the reason.`,
     module: 'hr',
     priority: 'medium',
-    recipientUid: appraisal.reviewerId,
+    recipientUid: appraisal.primaryScorerUid as string,
     referenceModule: 'hr',
     referenceId: event.resourceId,
+  })
+})
+
+/**
+ * §8.2/§6.3 — Positions' one-way event: mark every approved template for a
+ * revised position as stale, notify HR. Imports only shared/events — never
+ * anything under hr/positions/, keeping the dependency arrow one-way.
+ */
+registerEventHandler('PositionRevised', async (payload) => {
+  const positionId = payload.positionId as string
+  const staleSnap = await db
+    .collection(COLLECTIONS.APPRAISAL_TEMPLATES)
+    .where('positionId', '==', positionId)
+    .where('templateStatus', '==', 'approved')
+    .get()
+  if (staleSnap.empty) return
+
+  const batch = db.batch()
+  staleSnap.docs.forEach((doc) => batch.update(doc.ref, { templateStatus: 'stale', ...updatedFields('system:events') }))
+  await batch.commit()
+
+  await notifyUsersByRole({
+    role: 'hrManager',
+    module: 'hr',
+    priority: 'medium',
+    title: 'Appraisal Template Stale',
+    message: `Position "${positionId}" was revised — ${staleSnap.size} appraisal template(s) are now stale. Existing in-flight appraisals are unaffected.`,
+    referenceId: positionId,
   })
 })

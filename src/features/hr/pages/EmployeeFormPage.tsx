@@ -423,6 +423,16 @@ export function EmployeeFormPage() {
             <Label htmlFor="address">Address</Label>
             <Textarea id="address" value={form.address} onChange={set('address')} />
           </div>
+          {/* HR_OPERATIONS.md §12.1 — the KTP address vs. the current residence.
+              `address` above predates this split and is kept as the summary line. */}
+          <div className="flex flex-col gap-1.5 sm:col-span-2">
+            <Label htmlFor="permanentAddress">Permanent address (KTP)</Label>
+            <Textarea id="permanentAddress" value={form.permanentAddress} onChange={set('permanentAddress')} />
+          </div>
+          <div className="flex flex-col gap-1.5 sm:col-span-2">
+            <Label htmlFor="domicileAddress">Domicile address</Label>
+            <Textarea id="domicileAddress" value={form.domicileAddress} onChange={set('domicileAddress')} />
+          </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="emergencyContactName">Emergency contact name</Label>
             <Input id="emergencyContactName" value={form.emergencyContactName} onChange={set('emergencyContactName')} />

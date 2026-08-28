@@ -1,4 +1,5 @@
 import { onCall } from 'firebase-functions/v2/https'
+import { logger } from 'firebase-functions/v2'
 import {
   db,
   COLLECTIONS,
@@ -36,6 +37,7 @@ import {
   requireIsoDate,
 } from './helpers'
 import { createContractInternal } from '../contracts/helpers'
+import { generateAssignmentsForEmployeeInternal } from '../training'
 
 export interface CreateEmployeeInput {
   fullName: string
@@ -54,6 +56,8 @@ export interface CreateEmployeeInput {
   motherName?: string
   bpjsTk?: string
   bpjsKesehatan?: string
+  /** payroll-components-payslip-design.md §4.6 — pre-NourishOS payroll number. */
+  legacyEmployeeId?: string
   personalTaxStatus?: TaxStatus
   position: string
   departmentId: string
@@ -185,6 +189,8 @@ export async function createEmployeeInternal(
     motherName: input.motherName?.trim() || null,
     bpjsTk: input.bpjsTk?.trim() || null,
     bpjsKesehatan: input.bpjsKesehatan?.trim() || null,
+    // §4.6 — null for anyone hired since NourishOS; HR backfills legacy staff.
+    legacyEmployeeId: input.legacyEmployeeId?.trim() || null,
     personalTaxStatus: input.personalTaxStatus ?? null,
     position: input.position.trim(),
     departmentId: input.departmentId,
@@ -273,6 +279,24 @@ export async function createEmployeeInternal(
     user,
     newValues: { employeeNumber, fullName: input.fullName.trim(), position: input.position.trim() },
   })
+
+  // training-module-spec-v1.0.md §6.1 — the department's onboarding sequence
+  // is issued at hire: gate-open topics as `assigned`, the rest `locked`.
+  // Never fatal to the hire itself; HR can re-run generateTrainingAssignments.
+  try {
+    await generateAssignmentsForEmployeeInternal(
+      {
+        id: employeeRef.id,
+        fullName: input.fullName.trim(),
+        departmentId: input.departmentId,
+        outletId: input.outletId,
+        joinDate,
+      },
+      user,
+    )
+  } catch (error) {
+    logger.error(`Failed to issue training for new employee ${employeeRef.id}`, error)
+  }
 
   await recordActivityInternal({
     eventType: 'EmployeeJoined',

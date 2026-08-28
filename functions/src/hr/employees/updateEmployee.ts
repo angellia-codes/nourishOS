@@ -1,4 +1,5 @@
 import { onCall } from 'firebase-functions/v2/https'
+import { logger } from 'firebase-functions/v2'
 import {
   db,
   COLLECTIONS,
@@ -29,6 +30,7 @@ import {
   recordEmployeeActivity,
   requireIsoDate,
 } from './helpers'
+import { generateAssignmentsForEmployeeInternal } from '../training'
 
 /**
  * Whitelisted updatable fields. employeeNumber, status, isArchived, and the
@@ -49,6 +51,9 @@ const STRING_FIELDS = [
   'motherName',
   'bpjsTk',
   'bpjsKesehatan',
+  // payroll-components-payslip-design.md §4.6 — backfillable from the profile
+  // and the bulk importer. employeeNumber stays immutable; this is the old one.
+  'legacyEmployeeId',
   'position',
   'departmentId',
   'outletId',
@@ -238,6 +243,27 @@ export const updateEmployee = onCall({ region: REGION }, async (request) => {
       await recordEmployeeActivity(activityEmployee, 'outletTransfer', `Transferred to outlet ${changes.outletId as string}.`, user)
     } else {
       await recordEmployeeActivity(activityEmployee, 'updated', `Profile updated: ${changedFieldNames.join(', ')}.`, user)
+    }
+
+    // training-module-spec-v1.0.md §6.1 — a transfer issues the new
+    // department's sequence. Topics already completed are skipped on the
+    // canonical topicId, so the move is additive, never a re-issue. Failure
+    // here must not fail the transfer itself.
+    if ('departmentId' in changes || 'outletId' in changes) {
+      try {
+        await generateAssignmentsForEmployeeInternal(
+          {
+            id: employeeId,
+            fullName: merged.fullName as string,
+            departmentId: merged.departmentId as string,
+            outletId: merged.outletId as string,
+            joinDate: merged.joinDate as string | undefined,
+          },
+          user,
+        )
+      } catch (error) {
+        logger.error(`Failed to issue training for transferred employee ${employeeId}`, error)
+      }
     }
 
     const previousValues: Record<string, unknown> = {}
