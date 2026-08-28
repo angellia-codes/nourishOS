@@ -19,12 +19,15 @@ Frontend (repo root):
 Standard Vite scripts (`dev`/`build`/`preview` — see `package.json`), plus:
 
 ```
+npm run check    # static invariant checks — mirrors, rules blocks, indexes, region. No emulator, no build.
 npm run lint     # ASPIRATIONAL — eslint is not installed and has no config; this fails today
 ```
 
 Cloud Functions live in `functions/`, a separate npm package with its own build and emulator commands — see [functions/CLAUDE.md](functions/CLAUDE.md).
 
-There is **no test runner configured** for the frontend — do not assume `npm test` exists or invent test commands. Verification means: `npm run build` passes at the root, and you exercised the affected flow in `npm run dev`.
+There is **no test runner configured** for the frontend — do not assume `npm test` exists or invent test commands. Verification means: `npm run build` passes at the root, `npm run check` passes, and you exercised the affected flow in `npm run dev`.
+
+`npm run check` (`functions/test/invariants.mjs`, added 2026-08-28) is the cheap half of that. It reads the `.ts` sources as text — no emulator, no JVM, no build step — and asserts the invariants tsc structurally cannot see: that the hand-mirrored `src/constants/*` and `functions/src/lib/*` pairs agree, that every collection a query actually references has a `firestore.rules` block, that every backend-enforced permission string reaches a role in `ROLE_PERMISSIONS`, that every equality+`orderBy` query has a `firestore.indexes.json` entry (definition of done #6), and that `REGION` matches on both sides. Its parsers self-check, so a refactor that breaks them fails the run rather than silently passing. Two query call sites are not statically resolvable and it says so on every run — coverage is partial by construction, not a clean sweep.
 
 Copy `.env.example` → `.env.local` and fill in the `VITE_FIREBASE_*` values from your Firebase project. [src/services/firebase/config.ts](src/services/firebase/config.ts) validates them at module load and throws listing exactly which are missing, so a misconfigured deployment fails loudly rather than deep inside the auth flow. Set `VITE_USE_FIREBASE_EMULATOR=true` to point the app at the local Emulator Suite instead of the live project.
 
@@ -135,5 +138,5 @@ A change is finished only when all of these hold:
 - **Custom claims lag the user doc.** `syncUserClaims` updates the token claims `firestore.rules` reads, but an already-issued ID token keeps its old claims until it refreshes (~1h, or on a forced refresh). Cloud Functions are unaffected — `requireActiveUser` re-reads Firestore every call — so a role change takes effect for writes immediately but for reads only after the token turns over.
 - Missing `VITE_FIREBASE_*` vars throw at module load from [src/services/firebase/config.ts](src/services/firebase/config.ts), listing exactly which are absent. If a deployed build fails on sign-in, check the deployment's env vars (e.g. Vercel project settings), not just `.env.local`.
 - `strict` TypeScript is on for both the frontend and `functions/`; both builds fail on any type error.
-- `npm run lint` fails with "eslint is not recognized" — eslint is not in `devDependencies` and there is no config file, even though the `lint` script itself references real eslint flags. `npm run build` (tsc + vite) is the quality gate until lint is actually scaffolded.
+- `npm run lint` fails with "eslint is not recognized" — eslint is not in `devDependencies` and there is no config file, even though the `lint` script itself references real eslint flags. `npm run build` (tsc + vite) plus `npm run check` are the quality gate until lint is actually scaffolded.
 - `generateAppraisalInsights` needs an `ANTHROPIC_API_KEY` secret (`functions/src/lib/secrets.ts`, set via `firebase functions:secrets:set`). Without it the callable deploys but fails at call time.

@@ -32,7 +32,11 @@ export const OUTLET_NAMES: Record<string, string> = {
 }
 
 export const OUTLET_DEPARTMENTS: Record<string, readonly string[]> = {
-  nourish_ungasan: ['cashier', 'fb_service', 'bar', 'kitchen', 'security'],
+  // OUTLETS_DEPARTMENTS.md §2-06 — Ungasan staffs the Production Hub, so it is
+  // the one outlet carrying central_kitchen. The frontend copy has always had
+  // it; this mirror had not, so registerUser rejected every candidate who
+  // picked the department its own dropdown offered them.
+  nourish_ungasan: ['cashier', 'fb_service', 'bar', 'kitchen', 'central_kitchen', 'security'],
   nourish_uluwatu: ['cashier', 'fb_service', 'bar', 'kitchen', 'security'],
   nourish_berawa: ['cashier', 'fb_service', 'bar', 'kitchen', 'security'],
   the_bakery_uluwatu: ['cashier', 'bar'],
