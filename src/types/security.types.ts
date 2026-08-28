@@ -15,6 +15,8 @@ export interface GeoCoordinates {
 export interface Checkpoint extends BaseDocument {
   name: string
   description?: string
+  /** Required on every checkpoint created after 2026-08-20; older documents may lack it — guard on read. */
+  outletId: string
   latitude: number
   longitude: number
   /** How close a submitted patrol must be to count as "at" this checkpoint. */
@@ -23,6 +25,10 @@ export interface Checkpoint extends BaseDocument {
   scheduleIntervalMinutes: number
   lastVisitedAt?: Date | null
   lastVisitedBy?: string | null
+  /** Denormalized from the guard's displayName at patrol time — same reason PatrolLog.checkpointName exists. Absent on patrols logged before 2026-08-20. */
+  lastVisitedByName?: string | null
+  /** Cooldown stamp so checkOverdueCheckpoints alerts once per missed interval, not every 15-minute tick. */
+  lastAlertedAt?: Date | null
 }
 
 /**
