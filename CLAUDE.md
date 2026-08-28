@@ -20,6 +20,7 @@ Standard Vite scripts (`dev`/`build`/`preview` — see `package.json`), plus:
 
 ```
 npm test         # pure unit tests (node:test) — builds functions/, then runs functions/test/*.test.mjs
+npm run test:rules  # firestore.rules tests — starts the Firestore emulator (needs JAVA_HOME), runs, tears down
 npm run check    # static invariant checks — mirrors, rules blocks, indexes, region. No emulator, no build.
 npm run lint     # ASPIRATIONAL — eslint is not installed and has no config; this fails today
 ```
@@ -98,7 +99,7 @@ The single most important rule: **clients never write to Firestore directly.** E
 Three layers, and they are not interchangeable:
 
 1. **Cloud Functions are the enforcement layer.** `requireActiveUser` re-reads `users/{uid}` and `roles/{roleId}` on every call, so permissions come from live Firestore, never from the caller's token. `requirePermission`/`requireAnyPermission` gate the rest.
-2. **`firestore.rules` gates reads only** (every collection is write-denied). Rules read `request.auth.token.role/departmentId/outletId` — custom claims kept in sync with the user doc by `functions/src/auth/syncUserClaims.ts`. Reading claims off the token rather than a `get()` keeps rule evaluation cheap, but it means a role change only reaches the rules after the claim syncs and the client refreshes its token.
+2. **`firestore.rules` gates reads only** (every collection is write-denied). Rules read `request.auth.token.role/departmentId/outletId` — custom claims kept in sync with the user doc by `functions/src/auth/syncUserClaims.ts`. Reading claims off the token rather than a `get()` keeps rule evaluation cheap, but it means a role change only reaches the rules after the claim syncs and the client refreshes its token. **Covered by `npm run test:rules`** (`functions/test/rules.mjs`, added 2026-08-29): 57 tests over the sensitive branches — write-denial on every collection including for superAdmin, the `isIssued`/`isApproved` approval gates, the appraisal-recommendation self-exclusion, `disciplinaryActions`' three branches, and outlet/department scoping. It mints unsigned JWTs against the Firestore emulator's REST API rather than adding `@firebase/rules-unit-testing`, so it needs no dependency and no Auth emulator. **`list` (query) rules are not covered** — only `get`. If you change a read rule, run it.
 3. **The client is UX only.** `AuthProvider` ([src/contexts/AuthProvider.tsx](src/contexts/AuthProvider.tsx)) listens via `onAuthStateChanged`, then holds a live `subscribeToDocument` on `users/{uid}` and loads `roles/{roleId}.permissions` into the Zustand auth store. `ProtectedRoute`/`RoleRoute` ([src/routes/](src/routes/)) and `PermissionGuard` read from that store — they hide UI, they don't secure anything.
 
 ### Shared "engines"

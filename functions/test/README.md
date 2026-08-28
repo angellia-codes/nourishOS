@@ -6,6 +6,7 @@ Two tiers, distinguished by filename:
 | --- | --- | --- | --- |
 | `*.test.mjs` | Pure unit tests | a `functions/` build | `npm test` |
 | `invariants.mjs` | Static invariant checks | nothing | `npm run check` |
+| `rules.mjs` | `firestore.rules` read/write enforcement | the Firestore emulator only | `npm run test:rules` |
 | `*.mjs` (everything else) | Emulator flows and seed scripts | the Emulator Suite (JVM) | run by hand, one at a time |
 
 There is still no test *framework* here — the pure tier is Node's own
@@ -53,6 +54,54 @@ npm run check
 
 `invariants.mjs`, described in the root `CLAUDE.md`. Reads the `.ts` sources as
 text, so unlike everything else here it needs no build at all.
+
+## `npm run test:rules` — security rules
+
+```
+npm run test:rules
+```
+
+Wraps `firebase emulators:exec --only firestore`, so it starts the emulator,
+runs `rules.mjs`, and tears down. 57 tests, ~11s once the JVM is warm. Needs
+`JAVA_HOME` on the path (the emulator is JVM-based) but **not** the rest of the
+suite — no Auth, Functions or Storage emulator, which keeps it runnable on a
+low-RAM machine.
+
+`firestore.rules` is 771 lines and is the only thing gating reads; every
+collection is `allow write: if false`, so the Admin SDK is the sole writer.
+What is pinned:
+
+- **Write denial** on every collection, including for `superAdmin` — the
+  architectural invariant the whole "clients read, actions write" design rests
+  on. Also that an unruled collection falls through to deny-all rather than
+  falling open.
+- **Money gates** — `payslips.isIssued` and `attendanceRecords.isApproved`,
+  the two "not until the approval resolves" flags, plus their outlet scoping.
+- **Confidentiality** — the appraisal recommendation self-exclusion (§2.6),
+  `candidates/{id}/confidential` being narrower than the candidate record,
+  `employees/{id}/compensation` excluding even the GM, and `exitInterviews`
+  deliberately excluding GM/Director.
+- **Scoping** — `disciplinaryActions`' three branches (HR, department head,
+  and the employee's own record once released), `equipment` by outlet,
+  `appraisals` by department, and the own-record collections.
+
+Two things it does not do. It does not evaluate `list` (query) rules — rules
+validate a query rather than filtering it, which is why several rules are
+written to be provable against a client query (`isIssued` as a boolean,
+`audienceUids` as an array); those are pinned at the `get` level only, and
+query-level coverage is the obvious next layer. And it asserts what the rules
+do, not what the callables do — `getAppraisalRecommendation.ts` is the primary
+control for the recommendation, with the rule as defence in depth.
+
+No dependency, and deliberately not `@firebase/rules-unit-testing`: the
+Firestore emulator accepts an unsigned JWT as a bearer token, so the custom
+claims `syncUserClaims.ts` maintains can be minted in-process. `Bearer owner`
+bypasses rules for seeding; anything else is enforced, so a denied read is a
+403 and an allowed-but-missing one is a 404 (which the helpers treat as a
+broken fixture, not a pass).
+
+To confirm the suite still has teeth, weaken a rule and check exactly one test
+goes red — the emulator hot-reloads `firestore.rules` without a restart.
 
 ## The emulator tier
 
