@@ -8,6 +8,7 @@
     "dev:emulator": "vite --mode emulator",
     "build": "tsc && vite build",
     "check": "node functions/test/invariants.mjs",
+    "test": "npm --prefix functions run build && node --test \"functions/test/*.test.mjs\"",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "dev:portal": "vite --config vite.portal.config.ts",

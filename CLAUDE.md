@@ -19,13 +19,16 @@ Frontend (repo root):
 Standard Vite scripts (`dev`/`build`/`preview` — see `package.json`), plus:
 
 ```
+npm test         # pure unit tests (node:test) — builds functions/, then runs functions/test/*.test.mjs
 npm run check    # static invariant checks — mirrors, rules blocks, indexes, region. No emulator, no build.
 npm run lint     # ASPIRATIONAL — eslint is not installed and has no config; this fails today
 ```
 
 Cloud Functions live in `functions/`, a separate npm package with its own build and emulator commands — see [functions/CLAUDE.md](functions/CLAUDE.md).
 
-There is **no test runner configured** for the frontend — do not assume `npm test` exists or invent test commands. Verification means: `npm run build` passes at the root, `npm run check` passes, and you exercised the affected flow in `npm run dev`.
+There is **no frontend test runner** — nothing renders a component or drives a page in this repo. `npm test` exists but covers the backend's pure logic only (see below). Verification means: `npm run build` passes at the root, `npm test` and `npm run check` pass, and you exercised the affected flow in `npm run dev`.
+
+`npm test` (added 2026-08-29) builds `functions/` and runs `node --test "functions/test/*.test.mjs"` — 152 tests, ~26s, no emulator and no JVM. The runner is Node's built-in `node:test`; **no test framework was added and none should be**. The `*.test.mjs` suffix is what `npm test` picks up; the bare `*.mjs` scripts in `functions/test/` are the emulator/seed tier and are still run by hand, one at a time. Keep the glob rather than the directory form, or those get loaded as tests. Everything in the pure tier takes its lookups as arguments, so the same code that backs the callable runs unchanged — when a module mixes pure validation with `db` access, split the pure half out the way `hr/attendance/validate.ts` does. `functions/test/README.md` has the per-file table for both tiers.
 
 `npm run check` (`functions/test/invariants.mjs`, added 2026-08-28) is the cheap half of that. It reads the `.ts` sources as text — no emulator, no JVM, no build step — and asserts the invariants tsc structurally cannot see: that the hand-mirrored `src/constants/*` and `functions/src/lib/*` pairs agree, that every collection a query actually references has a `firestore.rules` block, that every backend-enforced permission string reaches a role in `ROLE_PERMISSIONS`, that every equality+`orderBy` query has a `firestore.indexes.json` entry (definition of done #6), and that `REGION` matches on both sides. Its parsers self-check, so a refactor that breaks them fails the run rather than silently passing. Two query call sites are not statically resolvable and it says so on every run — coverage is partial by construction, not a clean sweep.
 
