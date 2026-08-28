@@ -22,6 +22,10 @@ export const EXPENSE_CATEGORIES = [
 ] as const
 export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number]
 
+/** Independent of ExpenseCategory: what the spend is for vs. how the money moves. */
+export const PAYMENT_CATEGORIES = ['reimbursement', 'cashAdvance'] as const
+export type ExpensePaymentCategory = (typeof PAYMENT_CATEGORIES)[number]
+
 /**
  * expense-request.md §6. The approval-phase values mirror the Approval Engine's
  * own outcome strings so the resolved handler can write `event.newStatus`
@@ -127,6 +131,13 @@ export function validateCategory(category: unknown): ExpenseCategory {
     throw new AppError('invalid-argument', `category must be one of: ${EXPENSE_CATEGORIES.join(', ')}.`)
   }
   return category as ExpenseCategory
+}
+
+export function validatePaymentCategory(paymentCategory: unknown): ExpensePaymentCategory {
+  if (!PAYMENT_CATEGORIES.includes(paymentCategory as ExpensePaymentCategory)) {
+    throw new AppError('invalid-argument', `paymentCategory must be one of: ${PAYMENT_CATEGORIES.join(', ')}.`)
+  }
+  return paymentCategory as ExpensePaymentCategory
 }
 
 export function validatePurpose(purpose: unknown): string {

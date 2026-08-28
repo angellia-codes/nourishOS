@@ -12,6 +12,7 @@ import {
   EXPENSE_STATUS_ICON,
   EXPENSE_STATUS_LABELS,
   EXPENSE_STATUS_TONE,
+  PAYMENT_CATEGORY_LABELS,
   formatIdr,
 } from '../expenseFormat'
 import type { ExpenseRequest } from '@/types'
@@ -132,7 +133,8 @@ export function ExpenseListPage() {
                   <p className="font-mono text-xs text-muted-foreground">{row.requestNumber ?? 'Unsubmitted draft'}</p>
                   <p className="truncate font-medium text-foreground">{row.purpose}</p>
                   <p className="text-xs text-muted-foreground">
-                    {EXPENSE_CATEGORY_LABELS[row.category]} · {formatDate(row.expenseDate)}
+                    {EXPENSE_CATEGORY_LABELS[row.category]} · {PAYMENT_CATEGORY_LABELS[row.paymentCategory]} ·{' '}
+                    {formatDate(row.expenseDate)}
                   </p>
                 </button>
                 <div className="flex shrink-0 flex-col items-end gap-1.5">

@@ -1,6 +1,6 @@
 import { FileEdit, Clock, Check, X, Ban, Banknote, Archive, type LucideIcon } from 'lucide-react'
 import type { StatusTone } from '@/components/ui'
-import type { ExpenseCategory, ExpenseStatus } from '@/types'
+import type { ExpenseCategory, ExpensePaymentCategory, ExpenseStatus } from '@/types'
 
 /** expense-request.md §4 Section A. */
 export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
@@ -13,6 +13,12 @@ export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   staffWelfare: 'Staff Welfare',
   foodBeverage: 'Food & Beverage',
   other: 'Other',
+}
+
+/** Independent of category: how the money moves, not what it's for. */
+export const PAYMENT_CATEGORY_LABELS: Record<ExpensePaymentCategory, string> = {
+  reimbursement: 'Reimbursement',
+  cashAdvance: 'Cash Advance',
 }
 
 export const EXPENSE_STATUS_LABELS: Record<ExpenseStatus, string> = {

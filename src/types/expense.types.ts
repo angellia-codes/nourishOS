@@ -12,6 +12,9 @@ export type ExpenseCategory =
   | 'foodBeverage'
   | 'other'
 
+/** Independent of ExpenseCategory: what the spend is for vs. how the money moves. */
+export type ExpensePaymentCategory = 'reimbursement' | 'cashAdvance'
+
 /**
  * expense-request.md §6. `draft`…`rejected` mirror the Approval Engine's own
  * outcome strings so the resolved handler writes them straight through; `paid`
@@ -51,6 +54,7 @@ export interface ExpenseRequest extends BaseDocument {
   requestedBy: string
   purpose: string
   category: ExpenseCategory
+  paymentCategory: ExpensePaymentCategory
   costCenterId?: string | null
   // outletId/departmentId are BaseDocument fields — written server-side from
   // the requester's own outlet/department, or an override the form now offers.

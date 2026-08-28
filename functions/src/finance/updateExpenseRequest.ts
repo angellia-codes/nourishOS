@@ -7,6 +7,7 @@ import {
   validateCategory,
   validateExpenseDate,
   validateNotes,
+  validatePaymentCategory,
   validatePurpose,
 } from './helpers'
 
@@ -32,6 +33,7 @@ export const updateExpenseRequest = onCall({ region: REGION }, async (request) =
 
     const purpose = validatePurpose(input.purpose)
     const category = validateCategory(input.category)
+    const paymentCategory = validatePaymentCategory(input.paymentCategory)
     const expenseDate = validateExpenseDate(input.expenseDate)
     const notes = validateNotes(input.notes)
     const { items, totalAmount } = normaliseItems(input.items ?? [])
@@ -50,6 +52,7 @@ export const updateExpenseRequest = onCall({ region: REGION }, async (request) =
     await ref.update({
       purpose,
       category,
+      paymentCategory,
       costCenterId,
       expenseDate,
       notes,
@@ -71,10 +74,11 @@ export const updateExpenseRequest = onCall({ region: REGION }, async (request) =
       previousValues: {
         purpose: previous.purpose,
         category: previous.category,
+        paymentCategory: previous.paymentCategory,
         expenseDate: previous.expenseDate,
         totalAmount: previous.totalAmount,
       },
-      newValues: { purpose, category, expenseDate, totalAmount, itemCount: items.length },
+      newValues: { purpose, category, paymentCategory, expenseDate, totalAmount, itemCount: items.length },
     })
 
     return successResponse({ expenseRequestId: ref.id, totalAmount }, 'Draft updated.')

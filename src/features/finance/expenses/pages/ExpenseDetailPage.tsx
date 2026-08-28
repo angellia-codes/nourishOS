@@ -26,6 +26,7 @@ import {
   EXPENSE_STATUS_ICON,
   EXPENSE_STATUS_LABELS,
   EXPENSE_STATUS_TONE,
+  PAYMENT_CATEGORY_LABELS,
   formatIdr,
   isEditable,
 } from '../expenseFormat'
@@ -126,6 +127,11 @@ export function ExpenseDetailPage() {
   const missingReceipt = receipts.length === 0
   const missingItems = expense.items.length === 0
   const canSubmit = editable && !missingReceipt && !missingItems
+  const isCashAdvance = expense.paymentCategory === 'cashAdvance'
+  const receiptCardTitle = isCashAdvance ? 'Quotation / Item Photo' : 'Invoice'
+  const receiptHint = isCashAdvance
+    ? 'Attach a quotation or a photo of the item before submitting.'
+    : 'Attach an invoice before submitting.'
 
   async function run(action: () => Promise<unknown>, success: string) {
     setBusy(true)
@@ -155,6 +161,7 @@ export function ExpenseDetailPage() {
               label={EXPENSE_STATUS_LABELS[expense.status]}
             />
             <Badge variant="neutral">{EXPENSE_CATEGORY_LABELS[expense.category]}</Badge>
+            <Badge variant="neutral">{PAYMENT_CATEGORY_LABELS[expense.paymentCategory]}</Badge>
           </div>
           <CardTitle>{expense.requestNumber ?? 'Unsubmitted draft'}</CardTitle>
           <p className="text-xs text-muted-foreground">
@@ -197,11 +204,11 @@ export function ExpenseDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Receipts</CardTitle>
+          <CardTitle>{receiptCardTitle}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           {receipts.length === 0 && !editable ? (
-            <p className="text-sm text-muted-foreground">No receipts attached.</p>
+            <p className="text-sm text-muted-foreground">Nothing attached.</p>
           ) : (
             <FileList files={receipts} />
           )}
@@ -215,7 +222,7 @@ export function ExpenseDetailPage() {
         <div className="flex flex-col items-end gap-2">
           {(missingReceipt || missingItems) && (
             <p className="text-xs text-muted-foreground">
-              {missingItems ? 'Add at least one item' : 'Attach at least one receipt'} before submitting.
+              {missingItems ? 'Add at least one item before submitting.' : receiptHint}
             </p>
           )}
           <div className="flex flex-wrap justify-end gap-2">

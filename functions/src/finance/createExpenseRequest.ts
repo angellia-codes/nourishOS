@@ -11,7 +11,14 @@ import {
   successResponse,
 } from '../lib'
 import { OUTLET_DEPARTMENTS } from '../lib/organization'
-import { normaliseItems, validateCategory, validateExpenseDate, validateNotes, validatePurpose } from './helpers'
+import {
+  normaliseItems,
+  validateCategory,
+  validateExpenseDate,
+  validateNotes,
+  validatePaymentCategory,
+  validatePurpose,
+} from './helpers'
 
 /**
  * expense-request.md §7 — draft only, and deliberately not behind a permission
@@ -30,6 +37,7 @@ export const createExpenseRequest = onCall({ region: REGION }, async (request) =
     const input = (request.data ?? {}) as Record<string, unknown>
     const purpose = validatePurpose(input.purpose)
     const category = validateCategory(input.category)
+    const paymentCategory = validatePaymentCategory(input.paymentCategory)
     const expenseDate = validateExpenseDate(input.expenseDate)
     const notes = validateNotes(input.notes)
     const { items, totalAmount } = normaliseItems(input.items ?? [])
@@ -51,6 +59,7 @@ export const createExpenseRequest = onCall({ region: REGION }, async (request) =
       requestedBy: user.uid,
       purpose,
       category,
+      paymentCategory,
       costCenterId,
       expenseDate,
       notes,
@@ -74,7 +83,7 @@ export const createExpenseRequest = onCall({ region: REGION }, async (request) =
       resourceId: ref.id,
       action: 'create',
       user,
-      newValues: { purpose, category, expenseDate, totalAmount, itemCount: items.length },
+      newValues: { purpose, category, paymentCategory, expenseDate, totalAmount, itemCount: items.length },
     })
 
     return successResponse({ expenseRequestId: ref.id, totalAmount }, 'Draft saved. Attach a receipt, then submit.')

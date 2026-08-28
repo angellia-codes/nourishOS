@@ -2,11 +2,12 @@ import { callFunction } from '@/services/api'
 import { getDocument, subscribeToCollection, where, orderBy } from '@/services/firestore'
 import { COLLECTIONS } from '@/constants'
 import type { Unsubscribe } from '@/services/firestore'
-import type { ExpenseCategory, ExpenseItem, ExpenseRequest } from '@/types'
+import type { ExpenseCategory, ExpenseItem, ExpensePaymentCategory, ExpenseRequest } from '@/types'
 
 export interface ExpenseRequestInput {
   purpose: string
   category: ExpenseCategory
+  paymentCategory: ExpensePaymentCategory
   expenseDate: string
   items: ExpenseItem[]
   notes?: string

@@ -19,9 +19,10 @@ import * as expenseService from '../expenseService'
 import {
   EXPENSE_APPROVAL_THRESHOLD_IDR,
   EXPENSE_CATEGORY_LABELS,
+  PAYMENT_CATEGORY_LABELS,
   formatIdr,
 } from '../expenseFormat'
-import type { ExpenseCategory, ExpenseItem } from '@/types'
+import type { ExpenseCategory, ExpenseItem, ExpensePaymentCategory } from '@/types'
 
 /** The date input's ceiling — an expense cannot be dated in the future (§4). */
 const TODAY = new Date().toISOString().slice(0, 10)
@@ -56,6 +57,7 @@ export function ExpenseFormPage() {
   const [departmentId, setDepartmentId] = useState('')
   const [purpose, setPurpose] = useState('')
   const [category, setCategory] = useState<ExpenseCategory>('other')
+  const [paymentCategory, setPaymentCategory] = useState<ExpensePaymentCategory | ''>('')
   const [expenseDate, setExpenseDate] = useState(TODAY)
   const [notes, setNotes] = useState('')
   const [items, setItems] = useState<DraftItem[]>([{ ...EMPTY_ITEM }])
@@ -90,6 +92,7 @@ export function ExpenseFormPage() {
         setDepartmentId(row.departmentId ?? '')
         setPurpose(row.purpose)
         setCategory(row.category)
+        setPaymentCategory(row.paymentCategory)
         setExpenseDate(row.expenseDate)
         setNotes(row.notes ?? '')
         setItems(
@@ -123,6 +126,7 @@ export function ExpenseFormPage() {
     outletId !== '' &&
     departmentId !== '' &&
     purpose.trim() !== '' &&
+    paymentCategory !== '' &&
     parsedItems.length > 0 &&
     expenseDate !== '' &&
     !submitting
@@ -132,6 +136,7 @@ export function ExpenseFormPage() {
   }
 
   async function handleSave() {
+    if (paymentCategory === '') return
     setSubmitting(true)
     try {
       const input = {
@@ -139,6 +144,7 @@ export function ExpenseFormPage() {
         departmentId,
         purpose: purpose.trim(),
         category,
+        paymentCategory,
         expenseDate,
         notes: notes.trim() || undefined,
         items: parsedItems,
@@ -219,6 +225,21 @@ export function ExpenseFormPage() {
               <Label htmlFor="category">Category</Label>
               <Select id="category" value={category} onChange={(e) => setCategory(e.target.value as ExpenseCategory)}>
                 {Object.entries(EXPENSE_CATEGORY_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="paymentCategory">Payment Category</Label>
+              <Select
+                id="paymentCategory"
+                value={paymentCategory}
+                onChange={(e) => setPaymentCategory(e.target.value as ExpensePaymentCategory)}
+              >
+                <option value="">Select…</option>
+                {Object.entries(PAYMENT_CATEGORY_LABELS).map(([value, label]) => (
                   <option key={value} value={value}>
                     {label}
                   </option>

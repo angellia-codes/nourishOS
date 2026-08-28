@@ -53,7 +53,11 @@ export const submitExpenseRequest = onCall({ region: REGION }, async (request) =
 
     const receiptCount = await countReceipts(ref.id)
     if (receiptCount === 0) {
-      throw new AppError('failed-precondition', 'Attach at least one receipt before submitting.')
+      const message =
+        expense.paymentCategory === 'cashAdvance'
+          ? 'Attach a quotation or a photo of the item before submitting.'
+          : 'Attach an invoice before submitting.'
+      throw new AppError('failed-precondition', message)
     }
 
     const requestNumber = (expense.requestNumber as string | null) ?? (await allocateExpenseNumber())
