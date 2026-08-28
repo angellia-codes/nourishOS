@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ChevronRight, Download, Plus, Upload } from 'lucide-react'
 import { Button, Card, CardContent, Input, Select, Spinner, StatusPill } from '@/components/ui'
 import { EmptyState, PermissionGuard } from '@/components/shared'
-import { EQUIPMENT_CATEGORY_LABELS, EQUIPMENT_CRITICALITY_LABELS, EQUIPMENT_CSV_COLUMNS, EQUIPMENT_STATUS_LABELS, OUTLETS, OUTLET_AREAS, PERMISSIONS } from '@/constants'
+import { EQUIPMENT_ALL_OUTLET_ROLES, EQUIPMENT_CATEGORY_LABELS, EQUIPMENT_CRITICALITY_LABELS, EQUIPMENT_CSV_COLUMNS, EQUIPMENT_STATUS_LABELS, OUTLETS, OUTLET_AREAS, PERMISSIONS } from '@/constants'
 import { useAuth } from '@/hooks'
 import { downloadCsv, toCsv, type CsvColumn } from '@/utils/csv'
 import * as equipmentService from '../equipmentService'
@@ -40,7 +40,16 @@ export function EquipmentListPage() {
   const navigate = useNavigate()
   const { profile } = useAuth()
   const [equipment, setEquipment] = useState<Equipment[] | null>(null)
-  const [outletFilter, setOutletFilter] = useState(profile?.outletId ?? '')
+  // An elevated reader sees every outlet, and the executives sit at
+  // boh_nourish_group, which holds no equipment — defaulting them to their own
+  // outlet opened the register on "0 assets", which reads exactly like the
+  // rules denial this page used to have. Everyone else is outlet-scoped by the
+  // query itself (see subscribeToRegister), so their own outlet is the only
+  // default that means anything. ProtectedRoute guarantees `profile` here, so
+  // this initialiser never runs against a null.
+  const [outletFilter, setOutletFilter] = useState(
+    profile && EQUIPMENT_ALL_OUTLET_ROLES.includes(profile.roleId) ? '' : (profile?.outletId ?? ''),
+  )
   const [areaFilter, setAreaFilter] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [criticalityFilter, setCriticalityFilter] = useState('')
