@@ -9,7 +9,7 @@ import * as workOrderService from '../workOrderService'
 import { WORK_ORDER_PRIORITY_LABELS, WORK_ORDER_PHOTO_BEFORE } from '../workOrderFormat'
 import type { Priority } from '@/constants/statuses'
 
-const LIST_ROUTE = '/operations/work-orders'
+const LIST_ROUTE = '/engineering/work-orders'
 
 /** Manual creation — incident-triggered work orders are created server-side by createWorkOrderInternal instead. */
 export function WorkOrderFormPage() {

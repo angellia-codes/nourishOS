@@ -88,7 +88,7 @@ export function WorkOrderDetailPage() {
       <EmptyState
         title="Work order not found"
         action={
-          <Button type="button" variant="secondary" onClick={() => navigate('/operations/work-orders')}>
+          <Button type="button" variant="secondary" onClick={() => navigate('/engineering/work-orders')}>
             Back to work orders
           </Button>
         }
@@ -131,7 +131,7 @@ export function WorkOrderDetailPage() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4">
       <div className="flex items-center gap-3">
-        <Button type="button" variant="ghost" size="sm" onClick={() => navigate('/operations/work-orders')} aria-label="Back">
+        <Button type="button" variant="ghost" size="sm" onClick={() => navigate('/engineering/work-orders')} aria-label="Back">
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
         </Button>
         <div className="flex-1">

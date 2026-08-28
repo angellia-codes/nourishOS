@@ -50,7 +50,7 @@ export function DailyUpdatesFeedPage() {
       ) : (
         <div className="flex flex-col gap-2">
           {reports.map((report) => (
-            <Card key={report.id}>
+            <Card key={report.id} className="cursor-pointer transition-colors hover:bg-muted/40" onClick={() => navigate(`/operations/daily-updates/${report.id}`)}>
               <CardContent className="flex flex-col gap-3 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>

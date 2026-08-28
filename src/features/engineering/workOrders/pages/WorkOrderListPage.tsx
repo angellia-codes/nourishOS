@@ -46,7 +46,7 @@ export function WorkOrderListPage() {
           <p className="text-sm text-muted-foreground">{openCount} open</p>
         </div>
         <PermissionGuard permission={PERMISSIONS.WORK_ORDERS_ASSIGN}>
-          <Button type="button" onClick={() => navigate('/operations/work-orders/new')}>
+          <Button type="button" onClick={() => navigate('/engineering/work-orders/new')}>
             <Plus className="mr-1 h-4 w-4" aria-hidden="true" />
             New Work Order
           </Button>
@@ -78,7 +78,7 @@ export function WorkOrderListPage() {
           <Card
             key={wo.id}
             className="cursor-pointer transition-colors duration-150 hover:border-primary/40"
-            onClick={() => navigate(`/operations/work-orders/${wo.id}`)}
+            onClick={() => navigate(`/engineering/work-orders/${wo.id}`)}
           >
             <CardContent className="flex flex-col gap-2 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">

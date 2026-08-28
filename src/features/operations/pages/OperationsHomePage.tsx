@@ -1,12 +1,13 @@
 import { useNavigate } from 'react-router-dom'
-import { ClipboardCheck, KanbanSquare, LayoutList, PackageSearch, ShieldAlert, Wrench } from 'lucide-react'
+import { ClipboardCheck, KanbanSquare, LayoutList, PackageSearch, ShieldAlert } from 'lucide-react'
 import { Button, Card, CardContent } from '@/components/ui'
 
 /**
  * The Operations hub — same "index becomes a hub once a module has 2+
  * sub-modules" precedent as HR and Documents. Daily Updates moves off the
  * bare /operations index (previously its own feed) to /operations/daily-updates.
- * The two Checklist cards were absorbed into Shift Reports (2026-08-19).
+ * The two Checklist cards were absorbed into Shift Reports (2026-08-19), and
+ * Work Orders left for the new Engineering module (2026-08-25).
  *
  * No permission gating on the cards — each page enforces its own read access
  * through firestore.rules, same reasoning as the other hubs.
@@ -29,12 +30,6 @@ const SUB_MODULES = [
     icon: ShieldAlert,
     title: 'Incident Reports',
     description: 'Logging, investigation and resolution.',
-  },
-  {
-    to: '/operations/work-orders',
-    icon: Wrench,
-    title: 'Work Orders',
-    description: 'Engineering requests, assigned through to closed.',
   },
   {
     to: '/operations/projects',
