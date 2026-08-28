@@ -31,3 +31,26 @@ export const CROSS_OUTLET_ROLES: readonly Role[] = [
   ROLES.DIRECTOR,
   ROLES.GENERAL_MANAGER,
 ]
+
+/** HR module allow-list — mirrors routes.tsx's RoleRoute gate on /hr. Single source of truth so links into /hr can check access without drifting from the gate itself. */
+export const HR_REPORT_ROLES: readonly Role[] = [
+  ROLES.GENERAL_MANAGER,
+  ROLES.DIRECTOR,
+  ROLES.HR_MANAGER,
+  ROLES.SUPER_ADMIN,
+]
+
+/** Who may be picked as a recruitment interviewer (leader/manager roles) — mirrored in functions/src/recruitment/helpers.ts. */
+export const INTERVIEWER_ROLES: readonly Role[] = [
+  ROLES.KITCHEN_LEADER,
+  ROLES.BAR_LEADER,
+  ROLES.FLOOR_LEADER,
+  ROLES.BAKERY_LEADER,
+  ROLES.WHOLEFOOD_LEADER,
+  ROLES.OUTLET_MANAGER,
+  ROLES.RESTAURANT_MANAGER,
+  ROLES.HR_MANAGER,
+  ROLES.GENERAL_MANAGER,
+  ROLES.DIRECTOR,
+  ROLES.SUPER_ADMIN,
+]

@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Download } from 'lucide-react'
+import { Download, GraduationCap, ScrollText, UserCheck, Users } from 'lucide-react'
 import { Button, Select, Spinner } from '@/components/ui'
-import { EmptyState, ReportTable, type ReportTableColumn } from '@/components/shared'
+import { EmptyState, MetricTile, ReportTable, type ReportTableColumn } from '@/components/shared'
 import { DEPARTMENTS, OUTLETS } from '@/constants'
 import { EMPLOYMENT_STATUS_LABELS } from '@/constants/hr'
 import { POSITION_LABELS } from '@/constants/positions'
 import * as employeeService from '@/features/hr/services/employeeService'
 import { exportEmployeesToCsv } from '@/features/hr/utils/employeeExport'
 import { formatTenure } from '@/features/hr/utils/employeeIndicators'
+import { buildEmploymentStatusBreakdown } from '@/features/hr/reports/utils/employmentStatusBreakdown'
 import type { Employee } from '@/types'
 
 const OUTLET_NAMES: Record<string, string> = Object.fromEntries(OUTLETS.map((o) => [o.id, o.name]))
@@ -48,6 +49,8 @@ export function ActiveEmployeeReportPage() {
 
   const outletIds = useMemo(() => Array.from(new Set(active.map((e) => e.outletId))).sort(), [active])
   const departmentIds = useMemo(() => Array.from(new Set(active.map((e) => e.departmentId))).sort(), [active])
+
+  const breakdown = useMemo(() => buildEmploymentStatusBreakdown(filtered), [filtered])
 
   if (employees === null) {
     return (
@@ -93,6 +96,13 @@ export function ActiveEmployeeReportPage() {
             </option>
           ))}
         </Select>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <MetricTile label="PKWT + PKWTT" value={breakdown.pkwtCombined} icon={Users} />
+        <MetricTile label="Daily Worker" value={breakdown.dailyWorker} icon={UserCheck} />
+        {breakdown.ojt > 0 && <MetricTile label="On-the-Job Training" value={breakdown.ojt} icon={GraduationCap} />}
+        {breakdown.other > 0 && <MetricTile label="Other" value={breakdown.other} icon={ScrollText} />}
       </div>
 
       {filtered.length === 0 ? (

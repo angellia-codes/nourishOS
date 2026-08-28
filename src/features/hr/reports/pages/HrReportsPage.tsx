@@ -4,12 +4,13 @@ import {
   UserMinus,
   TrendingDown,
   Users,
-  Wallet,
   Activity,
-  PieChart,
   CalendarClock,
   Filter,
   MessageCircleQuestion,
+  GraduationCap,
+  Package,
+  CalendarCheck,
 } from 'lucide-react'
 import { Button, Card, CardContent } from '@/components/ui'
 
@@ -38,19 +39,13 @@ const REPORTS = [
     to: '/hr/reports/turnover',
     icon: TrendingDown,
     title: 'Employee Turnover',
-    description: 'Monthly headcount and turnover rate, trailing 12 months.',
+    description: 'Total active/resigned plus MTD and YTD turnover, by outlet and department.',
   },
   {
     to: '/hr/reports/manning-budget',
     icon: Users,
-    title: 'Manning Budget',
-    description: 'Budgeted headcount vs. filled and active, by outlet and department.',
-  },
-  {
-    to: '/hr/reports/manning-cost',
-    icon: Wallet,
-    title: 'Manning Cost',
-    description: 'Uniform and asset procurement spend, by outlet.',
+    title: 'Manning Budget & Cost',
+    description: 'Budgeted vs actual headcount by season; manning cost vs monthly revenue.',
   },
   {
     to: '/hr/reports/employee-activity',
@@ -59,10 +54,16 @@ const REPORTS = [
     description: 'Hire, update and archive events across the roster.',
   },
   {
-    to: '/hr/reports/budget-and-cost',
-    icon: PieChart,
-    title: 'Budget and Cost',
-    description: 'Manning budget and manning cost side by side.',
+    to: '/hr/reports/training-hours',
+    icon: GraduationCap,
+    title: 'Training Hours',
+    description: 'Completed training hours, per employee.',
+  },
+  {
+    to: '/hr/reports/inventory-cost',
+    icon: Package,
+    title: 'Inventory Cost',
+    description: 'Uniform and asset cost by outlet, department, item and month.',
   },
   {
     to: '/hr/reports/upcoming-activity-budget',
@@ -81,6 +82,12 @@ const REPORTS = [
     icon: MessageCircleQuestion,
     title: 'Exit Interview Insights',
     description: 'Turnover reasons, satisfaction trend and manager ratings (aggregate only).',
+  },
+  {
+    to: '/hr/reports/attendance',
+    icon: CalendarCheck,
+    title: 'Attendance',
+    description: 'Total attendance, leave utilisation and punctuality, by period.',
   },
 ]
 

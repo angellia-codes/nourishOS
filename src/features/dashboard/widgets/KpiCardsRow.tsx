@@ -4,7 +4,7 @@ import { Users, Stamp, ListChecks, Megaphone } from 'lucide-react'
 import { db } from '@/services/firebase'
 import { MetricTile } from '@/components/shared'
 import { useAuth } from '@/hooks'
-import { COLLECTIONS, DEPARTMENT_ROLES } from '@/constants'
+import { COLLECTIONS, DEPARTMENT_ROLES, HR_REPORT_ROLES } from '@/constants'
 import { approvalService, taskService } from '@/services/shared'
 import * as announcementService from '@/features/communications/announcements/announcementService'
 import { isTerminal } from '@/features/communications/tasks/taskFormat'
@@ -25,6 +25,7 @@ export function KpiCardsRow() {
   const roleId = profile?.roleId ?? null
   const departmentId = profile?.departmentId ?? null
   const isDepartmentManager = Boolean(departmentId && DEPARTMENT_ROLES[departmentId]?.[0] === roleId)
+  const canViewHrReports = roleId ? (HR_REPORT_ROLES as readonly string[]).includes(roleId) : false
 
   const [activeEmployees, setActiveEmployees] = useState<number | null>(null)
   const [pendingApprovals, setPendingApprovals] = useState<number | null>(null)
@@ -72,6 +73,7 @@ export function KpiCardsRow() {
         label={isDepartmentManager ? 'Active Employees (Dept)' : 'Active Employees'}
         value={activeEmployees}
         icon={Users}
+        to={canViewHrReports ? '/hr/reports/active-employees' : undefined}
       />
       <MetricTile label="Pending Approvals" value={pendingApprovals} icon={Stamp} />
       <MetricTile label="Open Tasks" value={openTasks} icon={ListChecks} />

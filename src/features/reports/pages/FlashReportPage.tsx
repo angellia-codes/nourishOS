@@ -13,6 +13,8 @@ import {
 import { Button, Spinner } from '@/components/ui'
 import { EmptyState, MetricTile } from '@/components/shared'
 import { ApiError } from '@/services/api'
+import { HR_REPORT_ROLES } from '@/constants'
+import { useAuth } from '@/hooks'
 import * as reportService from '../reportService'
 import type { FlashReport } from '../reportService'
 
@@ -27,6 +29,9 @@ import type { FlashReport } from '../reportService'
  * reports already set — there is still no PDF library in this app.
  */
 export function FlashReportPage() {
+  const { profile } = useAuth()
+  const canViewHrReports = profile ? (HR_REPORT_ROLES as readonly string[]).includes(profile.roleId) : false
+
   const [report, setReport] = useState<FlashReport | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -88,7 +93,12 @@ export function FlashReportPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <MetricTile label="Active headcount" value={report.activeHeadcount} icon={Users} />
+        <MetricTile
+          label="Active headcount"
+          value={report.activeHeadcount}
+          icon={Users}
+          to={canViewHrReports ? '/hr/reports/active-employees' : undefined}
+        />
         <MetricTile label="New hires (7 days)" value={report.newHiresLast7Days} icon={UserPlus} />
         <MetricTile label="Open requisitions" value={report.openRequisitions} icon={Briefcase} />
         <MetricTile label="Active projects" value={report.activeProjects} icon={KanbanSquare} />

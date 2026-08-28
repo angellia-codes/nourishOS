@@ -1,78 +1,34 @@
 import { useEffect, useMemo, useState } from 'react'
+import { UserCheck, UserMinus } from 'lucide-react'
 import { Select, Spinner } from '@/components/ui'
-import { EmptyState, ReportTable, type ReportTableColumn } from '@/components/shared'
+import { EmptyState, ReportTable, MetricTile, type ReportTableColumn } from '@/components/shared'
 import { OUTLETS } from '@/constants'
 import * as employeeService from '@/features/hr/services/employeeService'
+import { buildTurnoverRows, type TurnoverRow } from '../utils/turnover'
 import type { Employee } from '@/types'
 
 const OUTLET_NAMES: Record<string, string> = Object.fromEntries(OUTLETS.map((o) => [o.id, o.name]))
 
-interface TurnoverRow {
-  label: string
-  headcountStart: number
-  resignations: number
-  headcountEnd: number
-  turnoverRate: number
-}
-
-/** Civil-date formatter from local calendar fields — never through toISOString/UTC (CLAUDE.md WITA gotcha). */
-function toIsoDate(d: Date): string {
+/** Civil-date, local calendar — never toISOString/UTC (CLAUDE.md WITA gotcha). */
+function todayIsoLocal(): string {
+  const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-function monthBuckets(count: number): { label: string; start: string; end: string }[] {
-  const now = new Date()
-  const buckets = []
-  for (let i = count - 1; i >= 0; i--) {
-    const first = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    const last = new Date(now.getFullYear(), now.getMonth() - i + 1, 0)
-    buckets.push({
-      label: new Intl.DateTimeFormat('en-GB', { month: 'short', year: 'numeric' }).format(first),
-      start: toIsoDate(first),
-      end: toIsoDate(last),
-    })
-  }
-  return buckets
-}
-
-/** Employed as of the given civil date: joined on or before it, and not resigned before it. */
-function employedAsOf(employee: Employee, isoDate: string): boolean {
-  if (employee.joinDate > isoDate) return false
-  if (employee.resignationDate && employee.resignationDate < isoDate) return false
-  return true
-}
-
-function buildTurnoverRows(employees: Employee[], months: number): TurnoverRow[] {
-  return monthBuckets(months).map(({ label, start, end }) => {
-    const headcountStart = employees.filter((e) => employedAsOf(e, start)).length
-    const headcountEnd = employees.filter((e) => employedAsOf(e, end)).length
-    const resignations = employees.filter(
-      (e) => e.resignationDate && e.resignationDate >= start && e.resignationDate <= end,
-    ).length
-    const avgHeadcount = (headcountStart + headcountEnd) / 2
-    return {
-      label,
-      headcountStart,
-      resignations,
-      headcountEnd,
-      turnoverRate: avgHeadcount > 0 ? resignations / avgHeadcount : 0,
-    }
-  })
-}
-
 const COLUMNS: ReportTableColumn<TurnoverRow>[] = [
-  { header: 'Month', value: (r) => r.label },
-  { header: 'Headcount (start)', value: (r) => String(r.headcountStart), align: 'right' },
-  { header: 'Resignations', value: (r) => String(r.resignations), align: 'right' },
-  { header: 'Headcount (end)', value: (r) => String(r.headcountEnd), align: 'right' },
-  { header: 'Turnover Rate', value: (r) => `${(r.turnoverRate * 100).toFixed(1)}%`, align: 'right' },
+  { header: 'Outlet', value: (r) => r.outletName },
+  { header: 'Department', value: (r) => r.departmentName },
+  { header: 'Active', value: (r) => String(r.activeCount), align: 'right' },
+  { header: 'Resigned (MTD)', value: (r) => String(r.resignedMtd), align: 'right' },
+  { header: 'Rate (MTD)', value: (r) => `${(r.turnoverRateMtd * 100).toFixed(1)}%`, align: 'right' },
+  { header: 'Resigned (YTD)', value: (r) => String(r.resignedYtd), align: 'right' },
+  { header: 'Rate (YTD)', value: (r) => `${(r.turnoverRateYtd * 100).toFixed(1)}%`, align: 'right' },
 ]
 
-/** hr.md §16 "Employee Turn Over" — monthly resignations against average headcount. */
+/** hr.md §16 "Employee Turn Over" — active/resigned totals plus MTD/YTD turnover, by outlet and department. */
 export function EmployeeTurnoverReportPage() {
   const [employees, setEmployees] = useState<Employee[] | null>(null)
   const [outletFilter, setOutletFilter] = useState('')
-  const [months, setMonths] = useState(12)
 
   useEffect(() => {
     return employeeService.subscribeToEmployees(setEmployees)
@@ -85,7 +41,14 @@ export function EmployeeTurnoverReportPage() {
 
   const outletIds = useMemo(() => Array.from(new Set((employees ?? []).map((e) => e.outletId))).sort(), [employees])
 
-  const rows = useMemo(() => buildTurnoverRows(scoped, months), [scoped, months])
+  const asOfIso = useMemo(() => todayIsoLocal(), [])
+  const rows = useMemo(() => buildTurnoverRows(scoped, asOfIso), [scoped, asOfIso])
+
+  const totalActive = useMemo(() => scoped.filter((e) => e.status === 'active').length, [scoped])
+  const totalResigned = useMemo(
+    () => scoped.filter((e) => e.status === 'inactive' && e.resignationDate).length,
+    [scoped],
+  )
 
   if (employees === null) {
     return (
@@ -96,32 +59,32 @@ export function EmployeeTurnoverReportPage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-4">
+    <div className="mx-auto flex max-w-4xl flex-col gap-4">
       <div>
         <h1 className="text-xl font-semibold text-foreground">Employee Turnover Report</h1>
-        <p className="text-sm text-muted-foreground">Turnover rate = resignations ÷ average headcount, per month.</p>
+        <p className="text-sm text-muted-foreground">
+          Total active and resigned, plus month-to-date and year-to-date turnover, by outlet and department.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <Select value={outletFilter} onChange={(e) => setOutletFilter(e.target.value)} aria-label="Filter by outlet">
-          <option value="">All outlets</option>
-          {outletIds.map((id) => (
-            <option key={id} value={id}>
-              {OUTLET_NAMES[id] ?? id}
-            </option>
-          ))}
-        </Select>
-        <Select value={months} onChange={(e) => setMonths(Number(e.target.value))} aria-label="Period length">
-          <option value={6}>Trailing 6 months</option>
-          <option value={12}>Trailing 12 months</option>
-          <option value={24}>Trailing 24 months</option>
-        </Select>
+      <Select value={outletFilter} onChange={(e) => setOutletFilter(e.target.value)} aria-label="Filter by outlet">
+        <option value="">All outlets</option>
+        {outletIds.map((id) => (
+          <option key={id} value={id}>
+            {OUTLET_NAMES[id] ?? id}
+          </option>
+        ))}
+      </Select>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <MetricTile label="Total Active" value={totalActive} icon={UserCheck} />
+        <MetricTile label="Total Resigned" value={totalResigned} icon={UserMinus} />
       </div>
 
       {employees.length === 0 ? (
         <EmptyState title="No employees yet" />
       ) : (
-        <ReportTable columns={COLUMNS} rows={rows} rowKey={(r) => r.label} />
+        <ReportTable columns={COLUMNS} rows={rows} rowKey={(r) => `${r.outletId}::${r.departmentId}`} />
       )}
     </div>
   )
