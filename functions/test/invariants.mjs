@@ -487,6 +487,31 @@ function hasIndex(collection, { equality, range, order }) {
 const queryCallSites = []
 const skippedSites = []
 
+/** Split a call's argument list at top-level commas. */
+function splitArgs(body) {
+  const args = []
+  let depth = 0
+  let start = 0
+  let inString = null
+  for (let i = 0; i < body.length; i += 1) {
+    const c = body[i]
+    if (inString) {
+      if (c === '\\') i += 1
+      else if (c === inString) inString = null
+      continue
+    }
+    if (c === "'" || c === '"' || c === '`') inString = c
+    else if ('([{'.includes(c)) depth += 1
+    else if (')]}'.includes(c)) depth -= 1
+    else if (c === ',' && depth === 0) {
+      args.push(body.slice(start, i).trim())
+      start = i + 1
+    }
+  }
+  args.push(body.slice(start).trim())
+  return args
+}
+
 // Frontend: queryDocuments(COLLECTIONS.X, [ ...constraints ]) / subscribeToCollection(…)
 for (const file of FRONTEND_FILES) {
   const src = read(file)
@@ -513,8 +538,17 @@ for (const file of FRONTEND_FILES) {
       found += 1
       queryCallSites.push({ file, line, collection, constraints: readConstraints(region.body) })
     }
-    if (!found && /where\(|orderBy\(/.test(call.body)) {
-      skippedSites.push(`${file}:${line} (constraints are not an array literal)`)
+    if (!found) {
+      // The constraints argument is the second one. If it is a bare
+      // identifier the array was built elsewhere (a ternary assigned to a
+      // const, typically) and this scanner cannot see it — say so rather than
+      // counting the call as checked. `[]` and inline literals are fine.
+      const constraintsArg = splitArgs(call.body)[1] ?? ''
+      if (/where\(|orderBy\(/.test(call.body)) {
+        skippedSites.push(`${file}:${line} (constraints are not an array literal)`)
+      } else if (constraintsArg && !constraintsArg.startsWith('[')) {
+        skippedSites.push(`${file}:${line} (constraints passed as \`${constraintsArg}\`, built outside the call)`)
+      }
     }
   }
 }

@@ -1,7 +1,7 @@
 import { callFunction } from '@/services/api'
-import { getDocument, subscribeToCollection, orderBy } from '@/services/firestore'
-import { COLLECTIONS } from '@/constants'
-import type { Equipment, EquipmentCategory, EquipmentCriticality, EquipmentImportPreview, EquipmentStatus } from '@/types'
+import { getDocument, subscribeToCollection, orderBy, where } from '@/services/firestore'
+import { COLLECTIONS, EQUIPMENT_ALL_OUTLET_ROLES } from '@/constants'
+import type { Equipment, EquipmentCategory, EquipmentCriticality, EquipmentImportPreview, EquipmentStatus, UserProfile } from '@/types'
 import type { Unsubscribe } from '@/services/firestore'
 
 export interface EquipmentFormInput {
@@ -72,12 +72,31 @@ export function getEquipment(equipmentId: string): Promise<Equipment | null> {
 }
 
 /**
- * The whole register this viewer's outlet-scoped rules allow (§6 — elevated
- * roles see every outlet, everyone else only their own; firestore.rules
- * enforces this per document, so the query itself needs no outlet filter).
- * Client-side filtering for outlet/area/category/criticality/status on top,
- * same "dozens, not thousands" assumption fireExtinguisherService makes.
+ * The register, scoped to what this viewer's rules allow (§6 — elevated roles
+ * see every outlet, everyone else only their own).
+ *
+ * The outlet filter is on the QUERY, not applied client-side afterwards. On a
+ * `list` firestore.rules is evaluated against the query rather than each
+ * document, so `resource.data.outletId == request.auth.token.outletId` has to
+ * be provable from the constraints — an unfiltered query is denied outright
+ * for a non-elevated caller rather than returning their outlet's subset. This
+ * previously sent `orderBy('assetCode')` alone and left the outlet to a
+ * client-side filter, which meant the register rendered permanently empty for
+ * every leader and staff member (AC #12 unmet). Pinned by
+ * `npm run test:rules`.
+ *
+ * Area/category/criticality/status filtering stays client-side, same "dozens,
+ * not thousands" assumption fireExtinguisherService makes — those fields carry
+ * no rule condition, so they cost nothing to leave off the query.
  */
-export function subscribeToRegister(onChange: (equipment: Equipment[]) => void): Unsubscribe {
-  return subscribeToCollection<Equipment>(COLLECTIONS.EQUIPMENT, [orderBy('assetCode', 'asc')], onChange)
+export function subscribeToRegister(
+  viewer: Pick<UserProfile, 'roleId' | 'outletId'>,
+  onChange: (equipment: Equipment[]) => void,
+  onError?: (error: Error) => void,
+): Unsubscribe {
+  const constraints = EQUIPMENT_ALL_OUTLET_ROLES.includes(viewer.roleId)
+    ? [orderBy('assetCode', 'asc')]
+    : [where('outletId', '==', viewer.outletId), orderBy('assetCode', 'asc')]
+
+  return subscribeToCollection<Equipment>(COLLECTIONS.EQUIPMENT, constraints, onChange, onError)
 }

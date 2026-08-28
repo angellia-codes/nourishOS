@@ -62,7 +62,7 @@ npm run test:rules
 ```
 
 Wraps `firebase emulators:exec --only firestore`, so it starts the emulator,
-runs `rules.mjs`, and tears down. 84 tests, ~13s once the JVM is warm. Needs
+runs `rules.mjs`, and tears down. 86 tests, ~13s once the JVM is warm. Needs
 `JAVA_HOME` on the path (the emulator is JVM-based) but **not** the rest of the
 suite — no Auth, Functions or Storage emulator, which keeps it runnable on a
 low-RAM machine.
@@ -89,12 +89,13 @@ What is pinned:
   rule is checked against the *query*, so `resource.data.x == y` must be
   provable from the query's own constraints — an unconstrained query is denied
   outright rather than returning the subset that would have passed. Each list
-  test issues the query a service function in `src/` actually sends, cited by
-  `file:line`, so it fails when a service drifts rather than when a rule does.
-  **Two of those currently fail as designed and are pinned as `BUG:`** — see
-  `equipmentService.ts:82` and `employeeCommunicationService.ts:122`. Fixing
-  either means flipping its test from `assertListDenied` to
-  `assertListAllowed`.
+  test issues the query a service function in `src/` actually sends, so it
+  fails when a service drifts rather than when a rule does. Each is paired
+  with an assertion that the *unconstrained* form is still denied, which is
+  what stops a filter from being quietly dropped later. This layer found two
+  real denials when it was added (the equipment register and the employee's
+  own communication records); both are fixed, and the pairs above are what
+  keep them fixed.
 
 It asserts what the rules do, not what the callables do — for example
 `getAppraisalRecommendation.ts` is the primary control for the recommendation,

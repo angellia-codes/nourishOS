@@ -30,9 +30,10 @@
  *            returning the subset that would have passed.
  *
  * Every list test below issues the query a service function in src/ actually
- * sends, cited by file:line, because the thing worth knowing is not whether a
- * rule CAN be satisfied but whether this app's own query satisfies it. Two of
- * them currently do not — see the tests marked BUG.
+ * sends, because the thing worth knowing is not whether a rule CAN be
+ * satisfied but whether this app's own query satisfies it. Each also asserts
+ * the unconstrained form is still denied — that pairing is what stops a
+ * service from quietly dropping a filter later.
  */
 import { describe, test, before } from 'node:test'
 import assert from 'node:assert/strict'
@@ -696,51 +697,61 @@ describe('list: disciplinaryActions — one query per readable branch', () => {
     await assertListDenied(KITCHEN_ULU, 'disciplinaryActions', { filters: [eq('departmentId', 'bar')] })
   })
 
-  test('scope "employee": employeeUid alone is DENIED — releasedToEmployee is unproven', async () => {
-    // employeeCommunicationService.ts:122 filters on employeeUid only, but the
-    // rule's own-record branch is `employeeUid == uid && releasedToEmployee ==
-    // true`. Both halves have to be provable, so this query is refused
-    // wholesale. CommunicationRecordListPage does surface the denial (it sets
-    // `denied` from onError) rather than silently showing an empty register,
-    // but the employee never sees their own released records through it.
+  test('scope "employee": employeeUid AND releasedToEmployee, both provable', async () => {
+    // employeeCommunicationService.ts — the rule's own-record branch reads
+    // `employeeUid == uid && releasedToEmployee == true`, and both halves have
+    // to be provable from the query. Filtering on employeeUid alone was denied
+    // wholesale, so the employee never saw their own released records; the
+    // service now sends both filters.
+    await assertListAllowed(SUBJECT, 'disciplinaryActions', {
+      filters: [eq('employeeUid', 'uid-subject'), eq('releasedToEmployee', true)],
+      orderBy: [['createdAt', 'DESCENDING']],
+    })
+  })
+
+  test('...and employeeUid alone is still denied, which is why both are sent', async () => {
     await assertListDenied(SUBJECT, 'disciplinaryActions', {
       filters: [eq('employeeUid', 'uid-subject')],
       orderBy: [['createdAt', 'DESCENDING']],
     })
   })
 
-  test('...and allowed once the query also constrains releasedToEmployee', async () => {
-    await assertListAllowed(SUBJECT, 'disciplinaryActions', {
+  test('an employee cannot list someone else’s released records', async () => {
+    await assertListDenied(STAFF, 'disciplinaryActions', {
       filters: [eq('employeeUid', 'uid-subject'), eq('releasedToEmployee', true)],
-      orderBy: [['createdAt', 'DESCENDING']],
     })
   })
 })
 
-describe('list: equipment — the register query is not outlet-constrained', () => {
+describe('list: equipment — the outlet filter has to be on the query', () => {
   test('Engineering and the executives list the whole register', async () => {
     await assertListAllowed(ENGINEERING, 'equipment', { orderBy: [['assetCode', 'ASCENDING']] })
     await assertListAllowed(GM, 'equipment', { orderBy: [['assetCode', 'ASCENDING']] })
   })
 
-  test('BUG: equipmentService.ts:82 is denied for every non-elevated user', async () => {
-    // subscribeToRegister sends orderBy('assetCode') and nothing else, and
-    // EquipmentListPage filters outlet client-side. But rules do not filter,
-    // so for a leader or staff member the query is refused in its entirety and
-    // the register renders empty — the design doc's AC #12 ("a leader sees
-    // their own outlet") is unmet through the list page. Worse, that call
-    // passes no onError, so the denial is silent.
-    //
-    // The fix is one constraint: a non-elevated caller must send
-    // where('outletId','==',profile.outletId), the way every other
-    // outlet-scoped service in this codebase already does.
-    await assertListDenied(KITCHEN_ULU, 'equipment', { orderBy: [['assetCode', 'ASCENDING']] })
-    await assertListDenied(STAFF, 'equipment', { orderBy: [['assetCode', 'ASCENDING']] })
-  })
-
-  test('...and allowed the moment the query constrains the outlet', async () => {
+  test('a non-elevated caller sends where(outletId) and is allowed', async () => {
+    // equipmentService.subscribeToRegister adds this constraint for anyone
+    // outside EQUIPMENT_ALL_OUTLET_ROLES. It used to send orderBy('assetCode')
+    // alone and filter outlet client-side, which rules refused in its entirety
+    // — the register rendered permanently empty for every leader and staff
+    // member (AC #12 unmet), and silently, because the call passed no onError.
     await assertListAllowed(KITCHEN_ULU, 'equipment', {
       filters: [eq('outletId', 'nourish_uluwatu')],
+      orderBy: [['assetCode', 'ASCENDING']],
+    })
+    await assertListAllowed(STAFF, 'equipment', {
+      filters: [eq('outletId', 'nourish_uluwatu')],
+      orderBy: [['assetCode', 'ASCENDING']],
+    })
+  })
+
+  test('...and is still denied without it, which is why the constraint is added', async () => {
+    await assertListDenied(KITCHEN_ULU, 'equipment', { orderBy: [['assetCode', 'ASCENDING']] })
+  })
+
+  test('nor can they claim another outlet', async () => {
+    await assertListDenied(KITCHEN_ULU, 'equipment', {
+      filters: [eq('outletId', 'nourish_ungasan')],
       orderBy: [['assetCode', 'ASCENDING']],
     })
   })

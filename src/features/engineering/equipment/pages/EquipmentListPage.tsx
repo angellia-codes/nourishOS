@@ -47,7 +47,24 @@ export function EquipmentListPage() {
   const [showDecommissioned, setShowDecommissioned] = useState(false)
   const [search, setSearch] = useState('')
 
-  useEffect(() => equipmentService.subscribeToRegister(setEquipment), [])
+  const [loadFailed, setLoadFailed] = useState(false)
+
+  useEffect(() => {
+    if (!profile) return
+    return equipmentService.subscribeToRegister(
+      profile,
+      (rows) => {
+        setLoadFailed(false)
+        setEquipment(rows)
+      },
+      // Without this the page spun forever on a rules denial rather than
+      // saying anything — the failure mode that hid the unscoped query.
+      () => {
+        setLoadFailed(true)
+        setEquipment([])
+      },
+    )
+  }, [profile])
 
   const visible = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -78,6 +95,15 @@ export function EquipmentListPage() {
       <div className="flex justify-center p-12">
         <Spinner />
       </div>
+    )
+  }
+
+  if (loadFailed) {
+    return (
+      <EmptyState
+        title="Could not load the register"
+        description="You may not have access to this outlet's equipment. If this looks wrong, contact Engineering."
+      />
     )
   }
 

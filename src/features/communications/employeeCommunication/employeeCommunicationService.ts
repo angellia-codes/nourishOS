@@ -119,7 +119,17 @@ export function subscribeToCommunicationRecords(
       ? [orderBy('createdAt', 'desc')]
       : scope.kind === 'department'
         ? [where('departmentId', '==', scope.departmentId), orderBy('createdAt', 'desc')]
-        : [where('employeeUid', '==', scope.uid), orderBy('createdAt', 'desc')]
+        : // BOTH halves of the rule's own-record branch have to be provable
+          // from the query — it reads `employeeUid == request.auth.uid &&
+          // releasedToEmployee == true`, and a list is evaluated against the
+          // query rather than each document. Filtering on employeeUid alone
+          // was denied outright, so the employee never saw their own released
+          // records here. Pinned by `npm run test:rules`.
+          [
+            where('employeeUid', '==', scope.uid),
+            where('releasedToEmployee', '==', true),
+            orderBy('createdAt', 'desc'),
+          ]
 
   return subscribeToCollection<DisciplinaryRecord>(
     COLLECTIONS.DISCIPLINARY_ACTIONS,

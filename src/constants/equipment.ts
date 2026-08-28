@@ -1,4 +1,22 @@
 import type { EquipmentCategory, EquipmentCriticality, EquipmentStatus } from '@/types'
+import { ROLES, type Role } from './roles'
+
+/**
+ * Roles firestore.rules lets read every outlet's equipment — it mirrors the
+ * `match /equipment/{equipmentId}` block, and nothing else.
+ *
+ * Deliberately NOT CROSS_OUTLET_ROLES, which omits `engineering`: on a `list`
+ * the rule is evaluated against the query, so scoping Engineering to its own
+ * outlet here would silently deny them the cross-outlet register §6.2 D9
+ * grants them. If the rules block changes, change this in the same commit —
+ * `npm run test:rules` pins both halves.
+ */
+export const EQUIPMENT_ALL_OUTLET_ROLES: readonly Role[] = [
+  ROLES.SUPER_ADMIN,
+  ROLES.DIRECTOR,
+  ROLES.GENERAL_MANAGER,
+  ROLES.ENGINEERING,
+]
 
 /**
  * equipment-master-design.md §3.6 — mirrors
