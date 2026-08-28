@@ -1,66 +1,93 @@
 import { callFunction } from '@/services/api'
-import { getDocument, subscribeToCollection, where, orderBy } from '@/services/firestore'
+import { getDocument, queryDocuments, subscribeToCollection, where, orderBy } from '@/services/firestore'
 import { COLLECTIONS } from '@/constants'
 import type { Unsubscribe } from '@/services/firestore'
-import type { Training, TrainingAssignment } from '@/types'
-import type { TrainingType } from '@/constants/hr'
+import type {
+  Department,
+  Training,
+  TrainingAssessmentResult,
+  TrainingAssignment,
+  TrainingBinding,
+  TrainingTopic,
+} from '@/types'
 
-export interface TrainingInput {
-  title: string
-  type: TrainingType
-  description?: string
-  mandatory: boolean
+export interface SeedTrainingCatalogResult {
+  departments: { created: number; skipped: number }
+  topics: { created: number; skipped: number }
+  bindings: { created: number; skipped: number }
 }
 
-export function createTraining(input: TrainingInput): Promise<{ trainingId: string }> {
-  return callFunction('createTraining', input)
+/** Idempotent — re-running only fills in rows added to the seed since the last run. */
+export function seedTrainingCatalog(): Promise<SeedTrainingCatalogResult> {
+  return callFunction('seedTrainingCatalog', {})
 }
 
-export interface UpdateTrainingInput {
-  trainingId: string
-  title?: string
-  type?: TrainingType
-  description?: string
-  mandatory?: boolean
-  isArchived?: boolean
+export interface GenerateTrainingAssignmentsResult {
+  results: { employeeId: string; trainingDepartmentId: string | null; assigned: number; locked: number; skipped: number }[]
+  assigned: number
+  locked: number
 }
 
-export function updateTraining(input: UpdateTrainingInput): Promise<{ trainingId: string }> {
-  return callFunction('updateTraining', input)
+/** Backfill route — hire and transfer issue assignments server-side without this. */
+export function generateTrainingAssignments(input: {
+  employeeId?: string
+  departmentId?: string
+}): Promise<GenerateTrainingAssignmentsResult> {
+  return callFunction('generateTrainingAssignments', input)
 }
 
-export function assignTraining(input: {
-  trainingId: string
-  employeeIds: string[]
-  dueDate?: string
-}): Promise<{ assignmentIds: string[] }> {
-  return callFunction('assignTraining', input)
+export function verifyTrainingCompletion(input: {
+  assignmentId: string
+  assessment: Pick<TrainingAssessmentResult, 'passed'> & { score?: number | null; notes?: string | null }
+}): Promise<{ assignmentId: string; unlocked: number }> {
+  return callFunction('verifyTrainingCompletion', input)
 }
 
-export function completeTraining(assignmentId: string): Promise<{ assignmentId: string }> {
-  return callFunction('completeTraining', { assignmentId })
+export function overrideTrainingGate(assignmentId: string, reason: string): Promise<{ assignmentId: string }> {
+  return callFunction('overrideTrainingGate', { assignmentId, reason })
 }
 
-export function getTraining(trainingId: string): Promise<Training | null> {
-  return getDocument<Training>(COLLECTIONS.TRAININGS, trainingId)
-}
-
-/** Full catalog, unfiltered — same "small org, one subscription" convention as subscribeToInventoryItems. */
-export function subscribeToTrainings(
-  onChange: (trainings: Training[]) => void,
+/** The 11 seeded departments, in sheet order. */
+export function subscribeToTrainingDepartments(
+  onChange: (departments: Department[]) => void,
   onError?: (error: Error) => void,
 ): Unsubscribe {
-  return subscribeToCollection<Training>(COLLECTIONS.TRAININGS, [orderBy('title', 'asc')], onChange, onError)
+  return subscribeToCollection<Department>(COLLECTIONS.DEPARTMENTS, [orderBy('sortOrder', 'asc')], onChange, onError)
 }
 
-export function subscribeToAssignmentsForTraining(
-  trainingId: string,
+/** All 197 topics in one read — the same "small catalogue, one subscription" call the inventory item master makes. */
+export function subscribeToTrainingTopics(
+  onChange: (topics: TrainingTopic[]) => void,
+  onError?: (error: Error) => void,
+): Unsubscribe {
+  return subscribeToCollection<TrainingTopic>(COLLECTIONS.TRAINING_TOPICS, [], onChange, onError)
+}
+
+export function getTrainingTopics(): Promise<TrainingTopic[]> {
+  return queryDocuments<TrainingTopic>(COLLECTIONS.TRAINING_TOPICS, [])
+}
+
+/** One department's delivery sequence (composite index: departmentId + sequence). */
+export function getBindingsForDepartment(trainingDepartmentId: string): Promise<TrainingBinding[]> {
+  return queryDocuments<TrainingBinding>(COLLECTIONS.TRAINING_BINDINGS, [
+    where('departmentId', '==', trainingDepartmentId),
+    orderBy('sequence', 'asc'),
+  ])
+}
+
+export function getAllBindings(): Promise<TrainingBinding[]> {
+  return queryDocuments<TrainingBinding>(COLLECTIONS.TRAINING_BINDINGS, [])
+}
+
+/** A trainee's own queue. Sorted client-side so no index is needed beyond the automatic single-field one. */
+export function subscribeToMyAssignments(
+  employeeUid: string,
   onChange: (assignments: TrainingAssignment[]) => void,
   onError?: (error: Error) => void,
 ): Unsubscribe {
   return subscribeToCollection<TrainingAssignment>(
     COLLECTIONS.TRAINING_ASSIGNMENTS,
-    [where('trainingId', '==', trainingId), orderBy('createdAt', 'desc')],
+    [where('employeeUid', '==', employeeUid)],
     onChange,
     onError,
   )
@@ -73,8 +100,42 @@ export function subscribeToAssignmentsForEmployee(
 ): Unsubscribe {
   return subscribeToCollection<TrainingAssignment>(
     COLLECTIONS.TRAINING_ASSIGNMENTS,
-    [where('employeeId', '==', employeeId), orderBy('createdAt', 'desc')],
+    [where('employeeId', '==', employeeId)],
     onChange,
     onError,
   )
+}
+
+/** The manager's verification queue — their own department, filtered to open rows client-side. */
+export function subscribeToAssignmentsForDepartment(
+  departmentId: string,
+  onChange: (assignments: TrainingAssignment[]) => void,
+  onError?: (error: Error) => void,
+): Unsubscribe {
+  return subscribeToCollection<TrainingAssignment>(
+    COLLECTIONS.TRAINING_ASSIGNMENTS,
+    [where('departmentId', '==', departmentId)],
+    onChange,
+    onError,
+  )
+}
+
+/** Full ledger, for the Training Hours report. Same scale reasoning as subscribeToAllStockMovements. */
+export function subscribeToAllTrainingAssignments(
+  onChange: (assignments: TrainingAssignment[]) => void,
+  onError?: (error: Error) => void,
+): Unsubscribe {
+  return subscribeToCollection<TrainingAssignment>(COLLECTIONS.TRAINING_ASSIGNMENTS, [], onChange, onError)
+}
+
+/** Legacy catalogue — read-only, so the Training Hours report can still price pre-2026-08-26 assignments. */
+export function subscribeToLegacyTrainings(
+  onChange: (trainings: Training[]) => void,
+  onError?: (error: Error) => void,
+): Unsubscribe {
+  return subscribeToCollection<Training>(COLLECTIONS.TRAININGS, [], onChange, onError)
+}
+
+export function getTrainingTopic(topicId: string): Promise<TrainingTopic | null> {
+  return getDocument<TrainingTopic>(COLLECTIONS.TRAINING_TOPICS, topicId)
 }
