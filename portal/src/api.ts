@@ -72,11 +72,12 @@ export interface ApplicationStatus {
   candidateNumber: string
   fullName: string
   position: string
-  stage: string
-  stageLabel: string
-  stageIndex: number
-  stages: { stage: string; label: string }[]
-  closed: boolean
+  /** Omitted once the application is submitted — a candidate cannot see pipeline stage after that point. */
+  stage?: string
+  stageLabel?: string
+  stageIndex?: number
+  stages?: { stage: string; label: string }[]
+  closed?: boolean
   submittedAt: string | null
   steps: { form: boolean; disc: boolean; cv: boolean }
   missing: string[]

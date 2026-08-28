@@ -125,5 +125,6 @@ export function portalActor(candidateId: string, candidate: FirebaseFirestore.Do
     departmentId: (candidate.departmentId as string | null) ?? null,
     outletId: (candidate.outletId as string | null) ?? null,
     permissions: [],
+    employeeId: null,
   }
 }

@@ -60,6 +60,7 @@ export const CANDIDATE_STAGE_TONE: Record<CandidateStage, StatusTone> = {
   'ST-02': 'info',
   'ST-03': 'info',
   'ST-04': 'info',
+  'ST-04B': 'info',
   'ST-05': 'warning',
   'ST-06': 'success',
   'ST-07': 'error',
@@ -71,6 +72,7 @@ export const CANDIDATE_STAGE_ICON: Record<CandidateStage, LucideIcon> = {
   'ST-02': Search,
   'ST-03': MessageSquare,
   'ST-04': MessageSquare,
+  'ST-04B': MessageSquare,
   'ST-05': Handshake,
   'ST-06': UserCheck,
   'ST-07': XCircle,
@@ -78,7 +80,7 @@ export const CANDIDATE_STAGE_ICON: Record<CandidateStage, LucideIcon> = {
 }
 
 /** Rejected and Withdrawn are outcomes, not columns — the board hides them behind a filter. */
-export const ACTIVE_STAGES: CandidateStage[] = ['ST-01', 'ST-02', 'ST-03', 'ST-04', 'ST-05', 'ST-06']
+export const ACTIVE_STAGES: CandidateStage[] = ['ST-01', 'ST-02', 'ST-03', 'ST-04', 'ST-04B', 'ST-05', 'ST-06']
 export const CLOSED_STAGES: CandidateStage[] = ['ST-07', 'ST-08']
 
 export const URGENCY_TONE: Record<RequisitionUrgency, StatusTone> = {
@@ -98,7 +100,6 @@ export const EMPLOYMENT_TYPE_LABELS: Record<string, string> = {
   fl: 'Freelance',
   dw: 'Daily worker',
   ojt: 'OJT',
-  fixed_term: 'Fixed-term',
 }
 
 export const REQUISITION_TYPE_LABELS: Record<string, string> = {

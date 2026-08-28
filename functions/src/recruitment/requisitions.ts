@@ -17,6 +17,7 @@ import { submitApprovalInternal } from '../shared/approval'
 import { sendNotificationInternal } from '../shared/notifications'
 import { positionsFor } from '../lib/positions'
 import {
+  CONTRACT_TYPES,
   EMPLOYMENT_TYPES,
   REQUISITION_TYPES,
   URGENCIES,
@@ -54,6 +55,7 @@ type RequisitionFields = {
   position: string
   openings: number
   employmentType: string
+  contractType: string | null
   contractMonths: number | null
   requisitionType: string
   replacingEmployeeId: string | null
@@ -77,11 +79,16 @@ async function validateFields(input: Record<string, unknown>): Promise<Requisiti
   const employmentType = requireOneOf(input.employmentType, EMPLOYMENT_TYPES, 'Employment type')
   const requisitionType = requireOneOf(input.requisitionType, REQUISITION_TYPES, 'Requisition type')
 
-  // §3 Section A: contract duration is required for fixed-term hires, and a
+  // Fixed-term is a contract-duration modifier on a full-time hire, not a
+  // peer employment type — only 'ft' carries a contractType at all (same
+  // split src/constants/hr.ts already applies to Employee).
+  const contractType = employmentType === 'ft' ? requireOneOf(input.contractType, CONTRACT_TYPES, 'Contract type') : null
+
+  // §3 Section A: contract duration is required for a fixed-term hire, and a
   // replacement has to name who is being replaced — otherwise "replacement"
   // carries no more information than "new position".
   let contractMonths: number | null = null
-  if (employmentType === 'fixed_term') {
+  if (contractType === 'fixedTerm') {
     contractMonths = Number(input.contractMonths)
     if (!Number.isInteger(contractMonths) || contractMonths < 1 || contractMonths > 60) {
       throw new AppError('invalid-argument', 'Contract duration must be between 1 and 60 months.')
@@ -113,6 +120,7 @@ async function validateFields(input: Record<string, unknown>): Promise<Requisiti
     position,
     openings,
     employmentType,
+    contractType,
     contractMonths,
     requisitionType,
     replacingEmployeeId,

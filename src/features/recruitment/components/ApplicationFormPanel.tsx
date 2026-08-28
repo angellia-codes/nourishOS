@@ -185,13 +185,14 @@ function Rows({ title, rows }: { title: string; rows: string[] }) {
 }
 
 /**
- * Rough total from the period strings the form collects (free text like
- * "2022-01"), so it degrades to null rather than lying when they aren't dates.
+ * Rough total from the work-experience date fields (full ISO 'YYYY-MM-DD'
+ * since the portal's calendar picker), so it degrades to null rather than
+ * lying when they aren't dates.
  */
 function totalExperienceYears(form: ApplicationForm): number | null {
   const months = form.workExperience.reduce((sum, row) => {
-    const start = Date.parse(`${row.periodStart}-01`)
-    const end = row.periodEnd ? Date.parse(`${row.periodEnd}-01`) : Date.now()
+    const start = Date.parse(row.periodStart)
+    const end = row.periodEnd ? Date.parse(row.periodEnd) : Date.now()
     if (Number.isNaN(start) || Number.isNaN(end) || end < start) return sum
     return sum + (end - start) / 2_629_800_000
   }, 0)

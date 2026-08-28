@@ -16,8 +16,8 @@ import {
 import { createCalendarEventInternal } from '../shared/calendar'
 import { createTaskInternal } from '../shared/tasks'
 import { sendNotificationInternal, whatsAppTargetForUid } from '../shared/notifications'
-import { STAGE_LABELS, requireRecruitmentPermission, requireText, type CandidateStage } from './helpers'
-import { HR_INTERVIEW_STAGE, USER_INTERVIEW_STAGE } from './candidates'
+import { INTERVIEWER_ROLES, STAGE_LABELS, requireRecruitmentPermission, requireText, type CandidateStage } from './helpers'
+import { GM_INTERVIEW_STAGE, HR_INTERVIEW_STAGE, USER_INTERVIEW_STAGE } from './candidates'
 import { notifyInterviewScheduled } from './whatsappTemplates'
 import { FONNTE_TOKEN, GOOGLE_CALENDAR_SA_KEY } from '../lib/secrets'
 
@@ -37,7 +37,7 @@ import { FONNTE_TOKEN, GOOGLE_CALENDAR_SA_KEY } from '../lib/secrets'
  * `sendInterviewReminders` scheduled job in this folder.
  */
 
-const INTERVIEW_STAGES: readonly CandidateStage[] = [HR_INTERVIEW_STAGE, USER_INTERVIEW_STAGE]
+const INTERVIEW_STAGES: readonly CandidateStage[] = [HR_INTERVIEW_STAGE, USER_INTERVIEW_STAGE, GM_INTERVIEW_STAGE]
 const DEFAULT_DURATION_MINUTES = 45
 
 // Both secrets: the WhatsApp invitation (§9.5) and the calendar event this
@@ -55,7 +55,7 @@ export const scheduleInterview = onCall({ region: REGION, secrets: SCHEDULE_SECR
 
     const stage = data.stage as CandidateStage
     if (!INTERVIEW_STAGES.includes(stage)) {
-      throw new AppError('invalid-argument', 'An interview belongs to the HR Interview or User Interview stage.')
+      throw new AppError('invalid-argument', 'An interview belongs to the HR Interview, User Interview, or GM Interview stage.')
     }
 
     const durationMinutes = Number(data.durationMinutes ?? DEFAULT_DURATION_MINUTES)
@@ -77,6 +77,9 @@ export const scheduleInterview = onCall({ region: REGION, secrets: SCHEDULE_SECR
     const interviewerSnap = await db.collection(COLLECTIONS.USERS).doc(interviewerUid).get()
     if (!interviewerSnap.exists || interviewerSnap.data()?.status !== 'active') {
       throw new AppError('invalid-argument', 'Pick an active user as the interviewer.')
+    }
+    if (!INTERVIEWER_ROLES.includes(interviewerSnap.data()?.roleId)) {
+      throw new AppError('invalid-argument', 'Pick a leader or manager as the interviewer.')
     }
 
     const endAt = new Date(scheduledAt.getTime() + durationMinutes * 60_000)
@@ -279,7 +282,12 @@ export const recordInterviewOutcome = onCall({ region: REGION }, async (request)
     })
 
     if (recordedScore !== null) {
-      const field = interview.stage === HR_INTERVIEW_STAGE ? 'hrInterviewScore' : 'userInterviewScore'
+      const field =
+        interview.stage === HR_INTERVIEW_STAGE
+          ? 'hrInterviewScore'
+          : interview.stage === USER_INTERVIEW_STAGE
+            ? 'userInterviewScore'
+            : 'gmInterviewScore'
       await db
         .collection(COLLECTIONS.CANDIDATES)
         .doc(interview.candidateId)

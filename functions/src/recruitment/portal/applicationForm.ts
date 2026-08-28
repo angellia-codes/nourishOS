@@ -22,6 +22,9 @@ const MAX_ROWS = 12
 const PROFICIENCIES = ['excellent', 'good', 'basic'] as const
 const GENDERS = ['male', 'female'] as const
 const ENVIRONMENTS = ['office', 'field'] as const
+const MARITAL_STATUSES = ['single', 'married', 'widowed'] as const
+const RELIGIONS = ['hindu', 'christian', 'catholic', 'islam'] as const
+const BUSINESS_TYPES = ['foodAndBeverage', 'hospitality', 'retail'] as const
 
 type Row = Record<string, unknown>
 
@@ -46,6 +49,11 @@ function bool(value: unknown): boolean {
   return value === true
 }
 
+/** portalIsoDate has no "blank is OK" mode (unlike portalText's `required` flag) — work-experience dates are optional. */
+function optionalIsoDate(value: unknown, label: string): string {
+  return typeof value === 'string' && value.trim() ? portalIsoDate(value, label, true) : ''
+}
+
 export interface ParsedApplicationForm {
   form: Record<string, unknown>
   sensitive: Record<string, unknown>
@@ -59,11 +67,10 @@ export function parseApplicationForm(input: Record<string, unknown>): ParsedAppl
 
   const workExperience = rows(input.workExperience, 'Work experience').map((row) => ({
     companyName: portalText(row.companyName, 'Company name', 160, false),
-    companyType: portalText(row.companyType, 'Company type', 120, false),
-    periodStart: portalText(row.periodStart, 'Period start', 20, false),
-    periodEnd: portalText(row.periodEnd, 'Period end', 20, false),
+    companyType: optionalOneOf(row.companyType, BUSINESS_TYPES, 'Type of business'),
+    periodStart: optionalIsoDate(row.periodStart, 'Period start'),
+    periodEnd: optionalIsoDate(row.periodEnd, 'Period end'),
     position: portalText(row.position, 'Position', 120, false),
-    superiorName: portalText(row.superiorName, 'Superior name', 120, false),
     reasonForResignation: portalText(row.reasonForResignation, 'Reason for leaving', 500, false),
   }))
 
@@ -81,8 +88,8 @@ export function parseApplicationForm(input: Record<string, unknown>): ParsedAppl
       placeOfBirth: portalText(personal.placeOfBirth, 'Place of birth', 120, false),
       dateOfBirth: personal.dateOfBirth ? portalIsoDate(personal.dateOfBirth, 'Date of birth', true) : null,
       nationality: portalText(personal.nationality, 'Nationality', 60, false),
-      maritalStatus: portalText(personal.maritalStatus, 'Marital status', 40, false),
-      religion: portalText(personal.religion, 'Religion', 40, false),
+      maritalStatus: optionalOneOf(personal.maritalStatus, MARITAL_STATUSES, 'Marital status'),
+      religion: optionalOneOf(personal.religion, RELIGIONS, 'Religion'),
       email: portalText(personal.email, 'Email', 200, false),
       phone: portalText(personal.phone, 'Phone', 40, false),
     },
@@ -173,9 +180,10 @@ export function missingRequiredSections(form: Record<string, unknown>): string[]
     missing.push('Personal information')
   }
   if (!address.permanentAddress) missing.push('Address')
-  if (!Array.isArray(form.formalEducation) || form.formalEducation.length === 0) {
-    missing.push('Formal education')
-  }
+  // A row exists as soon as the page renders, so presence of a row proves
+  // nothing — an institution name is the smallest thing that means "filled in".
+  const education = Array.isArray(form.formalEducation) ? (form.formalEducation as Row[]) : []
+  if (!education.some((row) => row.institutionName)) missing.push('Formal education')
   if (form.declarationAccepted !== true) missing.push('Declaration')
 
   return missing

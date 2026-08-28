@@ -28,12 +28,19 @@ export const REQUISITION_STATUSES = [
 ] as const
 export type RequisitionStatus = (typeof REQUISITION_STATUSES)[number]
 
-export const EMPLOYMENT_TYPES = ['ft', 'fl', 'dw', 'ojt', 'fixed_term'] as const
+export const EMPLOYMENT_TYPES = ['ft', 'fl', 'dw', 'ojt'] as const
+/** Mirrors src/constants/hr.ts's ContractType, trimmed to what a requisition needs — 'daily' is already its own 'dw' employment type above. */
+export const CONTRACT_TYPES = ['permanent', 'fixedTerm'] as const
 export const REQUISITION_TYPES = ['new_position', 'replacement', 'seasonal'] as const
 export const URGENCIES = ['normal', 'urgent', 'critical'] as const
 
-/** HR_OPERATIONS.md §9.4 — ST-01 … ST-08. */
-export const CANDIDATE_STAGES = ['ST-01', 'ST-02', 'ST-03', 'ST-04', 'ST-05', 'ST-06', 'ST-07', 'ST-08'] as const
+/**
+ * HR_OPERATIONS.md §9.4 — ST-01 … ST-08. `ST-04B` (GM Interview) was added later,
+ * optional, between User Interview and Offering — kept as 'ST-04B' rather than
+ * renumbering ST-05..ST-08, so candidates already stored at those stages keep
+ * their exact values.
+ */
+export const CANDIDATE_STAGES = ['ST-01', 'ST-02', 'ST-03', 'ST-04', 'ST-04B', 'ST-05', 'ST-06', 'ST-07', 'ST-08'] as const
 export type CandidateStage = (typeof CANDIDATE_STAGES)[number]
 
 export const STAGE_LABELS: Record<CandidateStage, string> = {
@@ -41,6 +48,7 @@ export const STAGE_LABELS: Record<CandidateStage, string> = {
   'ST-02': 'Screening',
   'ST-03': 'HR Interview',
   'ST-04': 'User Interview',
+  'ST-04B': 'GM Interview',
   'ST-05': 'Offering',
   'ST-06': 'Hired',
   'ST-07': 'Rejected',
@@ -52,18 +60,35 @@ export const STAGE_LABELS: Record<CandidateStage, string> = {
  * happy path, or out to Rejected/Withdrawn from anywhere still live — the
  * pipeline is a funnel, so skipping an interview stage or resurrecting a
  * rejected candidate has to be a deliberate new record, not a board drag.
- * Hired/Rejected/Withdrawn are terminal.
+ * Hired/Rejected/Withdrawn are terminal. GM Interview (ST-04B) is the one
+ * optional stage — ST-04 can go straight to ST-05 (skip it) or via ST-04B.
  */
 export const ALLOWED_STAGE_TRANSITIONS: Record<CandidateStage, readonly CandidateStage[]> = {
   'ST-01': ['ST-02', 'ST-07', 'ST-08'],
   'ST-02': ['ST-03', 'ST-07', 'ST-08'],
   'ST-03': ['ST-04', 'ST-05', 'ST-07', 'ST-08'],
-  'ST-04': ['ST-05', 'ST-07', 'ST-08'],
+  'ST-04': ['ST-04B', 'ST-05', 'ST-07', 'ST-08'],
+  'ST-04B': ['ST-05', 'ST-07', 'ST-08'],
   'ST-05': ['ST-06', 'ST-07', 'ST-08'],
   'ST-06': [],
   'ST-07': [],
   'ST-08': [],
 }
+
+/** Who may be picked as an interviewer — mirrors src/constants/roles.ts's INTERVIEWER_ROLES. */
+export const INTERVIEWER_ROLES = [
+  'kitchenLeader',
+  'barLeader',
+  'floorLeader',
+  'bakeryLeader',
+  'wholefoodLeader',
+  'outletManager',
+  'restaurantManager',
+  'hrManager',
+  'generalManager',
+  'director',
+  'superAdmin',
+] as const
 
 export const CANDIDATE_SOURCES = [
   'jobPortal',

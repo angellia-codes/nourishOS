@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button, Card, Checkbox, Field, Input, Notice, RowList, Select, Textarea } from '../ui'
 import { getApplicationStatus, saveApplicationForm } from '../api'
-import { DECLARATION_EN, DECLARATION_ID } from '../labels'
+import { BUSINESS_TYPES, DECLARATION_EN, DECLARATION_ID, MARITAL_STATUSES, RELIGIONS } from '../labels'
 import { readToken } from '../token'
 
 /**
@@ -29,7 +29,6 @@ interface WorkRow {
   periodStart: string
   periodEnd: string
   position: string
-  superiorName: string
   reasonForResignation: string
   salary: string
 }
@@ -57,11 +56,10 @@ const BLANK_WORK: WorkRow = {
   periodStart: '',
   periodEnd: '',
   position: '',
-  superiorName: '',
   reasonForResignation: '',
   salary: '',
 }
-const BLANK_LANGUAGE: LanguageRow = { language: '', speaking: 'Good', reading: 'Good', writing: 'Good' }
+const BLANK_LANGUAGE: LanguageRow = { language: '', speaking: 'good', reading: 'good', writing: 'good' }
 const BLANK_REFERENCE: ReferenceRow = {
   name: '',
   phone: '',
@@ -182,12 +180,17 @@ export function FormPage() {
         declarationAccepted,
       })
       if (result.missing.length > 0) {
-        setError(`Saved. Still to complete: ${result.missing.join(', ')}.`)
+        setError(`Saved. Still to complete: ${result.missing.join(', ')}. Required fields are marked *.`)
+        // The Notice renders above the whole form and this button is at the very
+        // bottom of it, so without this the page just sits there and the
+        // candidate has no way to see why they cannot continue.
+        window.scrollTo({ top: 0, behavior: 'smooth' })
         return
       }
       navigate('/apply/documents')
     } catch (problem) {
       setError(problem instanceof Error ? problem.message : 'Could not save your form.')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     } finally {
       setBusy(false)
     }
@@ -200,25 +203,25 @@ export function FormPage() {
 
       <Card className="flex flex-col gap-3">
         <h2 className="text-base font-semibold">Personal Information</h2>
-        <Field label="Full name">
+        <Field label="Full name" required>
           <Input value={personal.fullName} onChange={(e) => setPersonal({ ...personal, fullName: e.target.value })} />
         </Field>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Gender">
+          <Field label="Gender" required>
             <Select value={personal.gender} onChange={(e) => setPersonal({ ...personal, gender: e.target.value })}>
               <option value="">Select…</option>
               <option value="male">Male</option>
               <option value="female">Female</option>
             </Select>
           </Field>
-          <Field label="Date of birth">
+          <Field label="Date of birth" required>
             <Input
               type="date"
               value={personal.dateOfBirth}
               onChange={(e) => setPersonal({ ...personal, dateOfBirth: e.target.value })}
             />
           </Field>
-          <Field label="Place of birth">
+          <Field label="Place of birth" required>
             <Input
               value={personal.placeOfBirth}
               onChange={(e) => setPersonal({ ...personal, placeOfBirth: e.target.value })}
@@ -231,15 +234,29 @@ export function FormPage() {
             />
           </Field>
           <Field label="Marital status">
-            <Input
+            <Select
               value={personal.maritalStatus}
               onChange={(e) => setPersonal({ ...personal, maritalStatus: e.target.value })}
-            />
+            >
+              <option value="">Select…</option>
+              {MARITAL_STATUSES.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </Select>
           </Field>
           <Field label="Religion">
-            <Input value={personal.religion} onChange={(e) => setPersonal({ ...personal, religion: e.target.value })} />
+            <Select value={personal.religion} onChange={(e) => setPersonal({ ...personal, religion: e.target.value })}>
+              <option value="">Select…</option>
+              {RELIGIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </Select>
           </Field>
-          <Field label="Phone">
+          <Field label="Phone" required>
             <Input value={personal.phone} onChange={(e) => setPersonal({ ...personal, phone: e.target.value })} />
           </Field>
           <Field label="Email">
@@ -250,7 +267,7 @@ export function FormPage() {
             />
           </Field>
         </div>
-        <Field label="Permanent address">
+        <Field label="Permanent address" required>
           <Textarea
             rows={2}
             value={address.permanentAddress}
@@ -281,7 +298,7 @@ export function FormPage() {
                   onChange={(e) => setFormalEducation(patch(formalEducation, index, { schoolType: e.target.value }))}
                 />
               </Field>
-              <Field label="Institution">
+              <Field label="Institution" required>
                 <Input
                   value={formalEducation[index].institutionName}
                   onChange={(e) =>
@@ -362,10 +379,17 @@ export function FormPage() {
                 />
               </Field>
               <Field label="Type of Business">
-                <Input
+                <Select
                   value={workExperience[index].companyType}
                   onChange={(e) => setWorkExperience(patch(workExperience, index, { companyType: e.target.value }))}
-                />
+                >
+                  <option value="">Select…</option>
+                  {BUSINESS_TYPES.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
               </Field>
               <Field label="Position">
                 <Input
@@ -373,20 +397,16 @@ export function FormPage() {
                   onChange={(e) => setWorkExperience(patch(workExperience, index, { position: e.target.value }))}
                 />
               </Field>
-              <Field label="Supervisor's Name">
+              <Field label="From">
                 <Input
-                  value={workExperience[index].superiorName}
-                  onChange={(e) => setWorkExperience(patch(workExperience, index, { superiorName: e.target.value }))}
-                />
-              </Field>
-              <Field label="From" hint="YYYY-MM">
-                <Input
+                  type="date"
                   value={workExperience[index].periodStart}
                   onChange={(e) => setWorkExperience(patch(workExperience, index, { periodStart: e.target.value }))}
                 />
               </Field>
-              <Field label="To" hint="YYYY-MM, blank if current">
+              <Field label="To" hint="Blank if current">
                 <Input
+                  type="date"
                   value={workExperience[index].periodEnd}
                   onChange={(e) => setWorkExperience(patch(workExperience, index, { periodEnd: e.target.value }))}
                 />
@@ -597,6 +617,3 @@ function patch<T>(rows: T[], index: number, changes: Partial<T>): T[] {
   return rows.map((row, i) => (i === index ? { ...row, ...changes } : row))
 }
 
-function replaceAt(values: string[], index: number, value: string): string[] {
-  return values.map((current, i) => (i === index ? value : current))
-}

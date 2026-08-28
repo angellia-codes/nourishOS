@@ -1,4 +1,5 @@
 import type { BaseDocument } from './firestore.types'
+import type { ContractType } from '@/constants/hr'
 
 /**
  * The recruitment pipeline — employee-requisition.md and HR_OPERATIONS.md
@@ -30,7 +31,7 @@ export type RequisitionStatus = (typeof REQUISITION_STATUSES)[number]
 export const VACANCY_STAGES = ['open', 'sourcing', 'interviewing', 'offering', 'filled', 'closed'] as const
 export type VacancyStage = (typeof VACANCY_STAGES)[number]
 
-export const EMPLOYMENT_TYPES = ['ft', 'fl', 'dw', 'ojt', 'fixed_term'] as const
+export const EMPLOYMENT_TYPES = ['ft', 'fl', 'dw', 'ojt'] as const
 export type RequisitionEmploymentType = (typeof EMPLOYMENT_TYPES)[number]
 
 export const REQUISITION_TYPES = ['new_position', 'replacement', 'seasonal'] as const
@@ -47,6 +48,8 @@ export interface Requisition extends BaseDocument {
   position: string
   openings: number
   employmentType: RequisitionEmploymentType
+  /** Only meaningful when employmentType is 'ft' — a fixed-term (PKWT) contract is a modifier on a full-time hire, not a peer employment type. */
+  contractType?: ContractType | null
   contractMonths?: number | null
   requisitionType: RequisitionType
   replacingEmployeeId?: string | null
@@ -85,8 +88,13 @@ export interface RequisitionCompensation {
   updatedBy: string
 }
 
-/** HR_OPERATIONS.md §9.4 pipeline stages. */
-export const CANDIDATE_STAGES = ['ST-01', 'ST-02', 'ST-03', 'ST-04', 'ST-05', 'ST-06', 'ST-07', 'ST-08'] as const
+/**
+ * HR_OPERATIONS.md §9.4 pipeline stages. `ST-04B` (GM Interview) is optional,
+ * between User Interview and Offering — kept as 'ST-04B' rather than
+ * renumbering ST-05..ST-08, so candidates already stored at those stages keep
+ * their exact values.
+ */
+export const CANDIDATE_STAGES = ['ST-01', 'ST-02', 'ST-03', 'ST-04', 'ST-04B', 'ST-05', 'ST-06', 'ST-07', 'ST-08'] as const
 export type CandidateStage = (typeof CANDIDATE_STAGES)[number]
 
 export const CANDIDATE_STAGE_LABELS: Record<CandidateStage, string> = {
@@ -94,6 +102,7 @@ export const CANDIDATE_STAGE_LABELS: Record<CandidateStage, string> = {
   'ST-02': 'Screening',
   'ST-03': 'HR Interview',
   'ST-04': 'User Interview',
+  'ST-04B': 'GM Interview',
   'ST-05': 'Offering',
   'ST-06': 'Hired',
   'ST-07': 'Rejected',
@@ -140,6 +149,7 @@ export interface Candidate extends BaseDocument {
   stageHistory: StageHistoryEntry[]
   hrInterviewScore?: number | null
   userInterviewScore?: number | null
+  gmInterviewScore?: number | null
   joinDate?: string | null
   employeeId?: string | null
   notes?: string | null
@@ -182,7 +192,6 @@ export interface ApplicationForm {
     periodStart: string
     periodEnd: string
     position: string
-    superiorName: string
     reasonForResignation: string
   }[]
   additionalQuestions: {
@@ -267,7 +276,7 @@ export type InterviewOutcome = (typeof INTERVIEW_OUTCOMES)[number]
 export interface Interview extends BaseDocument {
   candidateId: string
   candidateName: string
-  stage: Extract<CandidateStage, 'ST-03' | 'ST-04'>
+  stage: Extract<CandidateStage, 'ST-03' | 'ST-04' | 'ST-04B'>
   interviewerUid: string
   scheduledAt: string // ISO datetime
   durationMinutes: number

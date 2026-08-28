@@ -16,6 +16,7 @@ import {
 } from '@/components/ui'
 import { EmptyState } from '@/components/shared'
 import { DEPARTMENTS, OUTLETS, OUTLET_DEPARTMENTS, PERMISSIONS } from '@/constants'
+import { CONTRACT_TYPE_LABELS } from '@/constants/hr'
 import { POSITION_LABELS, positionsFor, type PositionId } from '@/constants/positions'
 import { useAuth, usePermissions, useToast } from '@/hooks'
 import * as recruitmentService from '../recruitmentService'
@@ -26,6 +27,8 @@ const LIST_ROUTE = '/recruitment/requisitions'
 const DEPARTMENT_NAMES: Record<string, string> = Object.fromEntries(
   DEPARTMENTS.map((department) => [department.id, department.name]),
 )
+/** A requisition's Contract type is Permanent/Fixed-term only — 'daily' is already its own Employment type option ('dw'). */
+const CONTRACT_TYPE_OPTIONS = ['permanent', 'fixedTerm'] as const
 
 /**
  * Raise or edit a manpower request — employee-requisition.md §3 sections A and
@@ -49,6 +52,7 @@ export function RequisitionFormPage() {
   const [position, setPosition] = useState('')
   const [openings, setOpenings] = useState('1')
   const [employmentType, setEmploymentType] = useState('ft')
+  const [contractType, setContractType] = useState('permanent')
   const [contractMonths, setContractMonths] = useState('')
   const [requisitionType, setRequisitionType] = useState('new_position')
   const [replacingEmployeeId, setReplacingEmployeeId] = useState('')
@@ -84,6 +88,7 @@ export function RequisitionFormPage() {
           setPosition(row.position)
           setOpenings(String(row.openings))
           setEmploymentType(row.employmentType)
+          setContractType(row.contractType ?? 'permanent')
           setContractMonths(row.contractMonths ? String(row.contractMonths) : '')
           setRequisitionType(row.requisitionType)
           setReplacingEmployeeId(row.replacingEmployeeId ?? '')
@@ -145,7 +150,7 @@ export function RequisitionFormPage() {
     responsibilities.trim() !== '' &&
     requirements.trim() !== '' &&
     workSchedule.trim() !== '' &&
-    (employmentType !== 'fixed_term' || Number(contractMonths) >= 1) &&
+    (employmentType !== 'ft' || contractType !== 'fixedTerm' || Number(contractMonths) >= 1) &&
     (requisitionType !== 'replacement' || replacingEmployeeId.trim() !== '')
 
   async function handleSave() {
@@ -158,7 +163,8 @@ export function RequisitionFormPage() {
         position: position.trim(),
         openings: Number(openings),
         employmentType,
-        contractMonths: employmentType === 'fixed_term' ? Number(contractMonths) : null,
+        contractType: employmentType === 'ft' ? contractType : null,
+        contractMonths: employmentType === 'ft' && contractType === 'fixedTerm' ? Number(contractMonths) : null,
         requisitionType,
         replacingEmployeeId: requisitionType === 'replacement' ? replacingEmployeeId.trim() : null,
         targetJoinDate,
@@ -320,7 +326,20 @@ export function RequisitionFormPage() {
             </Select>
           </div>
 
-          {employmentType === 'fixed_term' && (
+          {employmentType === 'ft' && (
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="reqContractType">Contract type *</Label>
+              <Select id="reqContractType" value={contractType} onChange={(e) => setContractType(e.target.value)}>
+                {CONTRACT_TYPE_OPTIONS.map((value) => (
+                  <option key={value} value={value}>
+                    {CONTRACT_TYPE_LABELS[value]}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          )}
+
+          {employmentType === 'ft' && contractType === 'fixedTerm' && (
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="reqContractMonths">Contract duration (months) *</Label>
               <Input

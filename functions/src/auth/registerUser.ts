@@ -108,6 +108,7 @@ export const registerUser = onCall({ region: REGION }, async (request) => {
       departmentId,
       outletId,
       permissions: [],
+      employeeId: null,
     }
     await recordAuditEvent({
       eventType: 'user.registered',

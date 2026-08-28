@@ -11,6 +11,31 @@ export function titleCase(id: string): string {
     .join(' ')
 }
 
+/** Mirrored server-side in functions/src/recruitment/portal/applicationForm.ts's MARITAL_STATUSES. */
+export const MARITAL_STATUSES: { value: string; label: string }[] = [
+  { value: 'single', label: 'Single' },
+  { value: 'married', label: 'Married' },
+  { value: 'widowed', label: 'Widowed' },
+]
+
+/**
+ * Same value tokens as the internal app's own RELIGION enum
+ * (src/constants/hr.ts), minus 'other' — not requested here.
+ */
+export const RELIGIONS: { value: string; label: string }[] = [
+  { value: 'christian', label: 'Christian' },
+  { value: 'catholic', label: 'Catholic' },
+  { value: 'islam', label: 'Islam' },
+  { value: 'hindu', label: 'Hindu' },
+]
+
+/** Mirrored server-side in applicationForm.ts's BUSINESS_TYPES. */
+export const BUSINESS_TYPES: { value: string; label: string }[] = [
+  { value: 'foodAndBeverage', label: 'Food and Beverage' },
+  { value: 'hospitality', label: 'Hospitality' },
+  { value: 'retail', label: 'Retail' },
+]
+
 /** The F010 "how did you hear about us" superset — employment-application-form.md §2. */
 export const SOURCES: { value: string; label: string }[] = [
   { value: 'jobPortal', label: 'Job portal' },

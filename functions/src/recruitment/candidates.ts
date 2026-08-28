@@ -51,6 +51,8 @@ const HIRED_STAGE: CandidateStage = 'ST-06'
 /** Interview stages, whose scores land on distinct candidate fields (§12.3). */
 export const HR_INTERVIEW_STAGE: CandidateStage = 'ST-03'
 export const USER_INTERVIEW_STAGE: CandidateStage = 'ST-04'
+/** Optional — ST-04 can skip straight to ST-05 instead. */
+export const GM_INTERVIEW_STAGE: CandidateStage = 'ST-04B'
 
 /**
  * Indonesian mobile numbers are written three ways for the same line — 0811…,

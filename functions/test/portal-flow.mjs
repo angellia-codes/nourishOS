@@ -78,8 +78,8 @@ const form = {
     placeOfBirth: 'Denpasar',
     dateOfBirth: '1998-04-12',
     nationality: 'Indonesia',
-    maritalStatus: 'Single',
-    religion: 'Hindu',
+    maritalStatus: 'single',
+    religion: 'hindu',
     email: 'smoke@example.com',
     phone: '081200000001',
   },
@@ -93,11 +93,10 @@ const form = {
   workExperience: [
     {
       companyName: 'XYZ Coffee',
-      companyType: 'Cafe',
-      periodStart: '2022-01',
-      periodEnd: '2026-06',
+      companyType: 'foodAndBeverage',
+      periodStart: '2022-01-15',
+      periodEnd: '2026-06-30',
       position: 'Barista',
-      superiorName: 'Budi',
       reasonForResignation: 'Career development',
       salary: 4500000,
     },
@@ -211,7 +210,11 @@ async function main() {
   await expectFailure('saveApplicationForm', { applicationToken: token, form }, /already been submitted/i)
 
   const status = await call('getApplicationStatus', { applicationToken: token })
-  assert.equal(status.stageLabel, 'Screening')
+  assert.ok(status.submittedAt, 'a completed application should be marked submitted')
+  // A candidate must not see recruitment-pipeline progress after submitting.
+  assert.equal(status.stageLabel, undefined)
+  assert.equal(status.stage, undefined)
+  assert.equal(status.stages, undefined)
   assert.deepEqual(status.steps, { form: true, disc: true, cv: true })
   assert.ok(status.submittedAt, 'submittedAt should be stamped')
   assert.ok(!JSON.stringify(status).includes('primaryStyle'), 'the status view must not expose the DISC result')

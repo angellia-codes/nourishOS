@@ -17,12 +17,9 @@ function Layout() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="border-b border-border bg-surface">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4">
+        <div className="mx-auto max-w-3xl px-4 py-4">
           <Link to="/" className="text-lg font-semibold">
             Nourish Group Indonesia
-          </Link>
-          <Link to="/status" className="text-sm text-muted-foreground hover:text-foreground">
-            My application
           </Link>
         </div>
       </header>

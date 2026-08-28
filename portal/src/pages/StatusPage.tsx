@@ -50,30 +50,40 @@ export function StatusPage() {
       </Card>
 
       <Card className="flex flex-col gap-3">
-        <h2 className="text-base font-semibold">Progress</h2>
-        {status.closed ? (
+        {status.submittedAt ? (
+          <Notice>
+            Your application has been submitted. Thank you — we will contact you on WhatsApp about the next step.
+          </Notice>
+        ) : status.closed ? (
           <Notice>
             This application is closed ({status.stageLabel}). Thank you for your interest — you are welcome to apply
             again for another role.
           </Notice>
         ) : (
-          <ol className="flex flex-col gap-2">
-            {status.stages.map((step, index) => (
-              <li key={step.stage} className="flex items-center gap-2 text-sm">
-                <span
-                  className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-xs ${
-                    index <= status.stageIndex ? 'bg-primary text-primary-foreground' : 'bg-sunken text-muted-foreground'
-                  }`}
-                  aria-hidden="true"
-                >
-                  {index <= status.stageIndex ? '✓' : index + 1}
-                </span>
-                <span className={index === status.stageIndex ? 'font-medium text-foreground' : 'text-muted-foreground'}>
-                  {step.label}
-                </span>
-              </li>
-            ))}
-          </ol>
+          <>
+            <h2 className="text-base font-semibold">Progress</h2>
+            <ol className="flex flex-col gap-2">
+              {(status.stages ?? []).map((step, index) => (
+                <li key={step.stage} className="flex items-center gap-2 text-sm">
+                  <span
+                    className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-xs ${
+                      index <= (status.stageIndex ?? -1)
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-sunken text-muted-foreground'
+                    }`}
+                    aria-hidden="true"
+                  >
+                    {index <= (status.stageIndex ?? -1) ? '✓' : index + 1}
+                  </span>
+                  <span
+                    className={index === status.stageIndex ? 'font-medium text-foreground' : 'text-muted-foreground'}
+                  >
+                    {step.label}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </>
         )}
       </Card>
 

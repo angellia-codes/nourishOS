@@ -55,7 +55,8 @@ const NEXT_STAGES: Record<CandidateStage, CandidateStage[]> = {
   'ST-01': ['ST-02', 'ST-07', 'ST-08'],
   'ST-02': ['ST-03', 'ST-07', 'ST-08'],
   'ST-03': ['ST-04', 'ST-05', 'ST-07', 'ST-08'],
-  'ST-04': ['ST-05', 'ST-07', 'ST-08'],
+  'ST-04': ['ST-04B', 'ST-05', 'ST-07', 'ST-08'],
+  'ST-04B': ['ST-05', 'ST-07', 'ST-08'],
   'ST-05': ['ST-06', 'ST-07', 'ST-08'],
   'ST-06': [],
   'ST-07': [],
@@ -265,7 +266,8 @@ export function CandidateDetailPage() {
           <div>
             <p className="text-xs uppercase tracking-wide text-muted-foreground">Interview scores</p>
             <p>
-              HR {candidate.hrInterviewScore ?? '—'} · User {candidate.userInterviewScore ?? '—'}
+              HR {candidate.hrInterviewScore ?? '—'} · User {candidate.userInterviewScore ?? '—'} · GM{' '}
+              {candidate.gmInterviewScore ?? '—'}
             </p>
           </div>
           {candidate.notes && (

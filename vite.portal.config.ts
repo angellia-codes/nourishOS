@@ -13,6 +13,12 @@ import path from 'node:path'
  */
 export default defineConfig({
   root: path.resolve(__dirname, 'portal'),
+  // Its own dep cache. Both apps share the repo's node_modules, so with the
+  // default cacheDir the two dev servers optimize different dep sets into the
+  // same node_modules/.vite/deps and clobber each other — the surviving symptom
+  // is "more than one copy of React" and a null hook dispatcher in whichever
+  // server did not write last.
+  cacheDir: path.resolve(__dirname, 'node_modules/.vite-portal'),
   // The portal reads the same VITE_FIREBASE_* values as the internal app —
   // one Firebase project, one .env.local, no second copy to drift.
   envDir: __dirname,

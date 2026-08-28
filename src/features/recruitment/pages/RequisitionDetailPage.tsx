@@ -4,6 +4,7 @@ import { ArrowLeft, UserPlus } from 'lucide-react'
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Spinner, StatusPill } from '@/components/ui'
 import { EmptyState, ErrorMessage, FileList, FileUpload, PermissionGuard } from '@/components/shared'
 import { COLLECTIONS, DEPARTMENTS, OUTLETS, PERMISSIONS } from '@/constants'
+import { CONTRACT_TYPE_LABELS } from '@/constants/hr'
 import { useAuth, useFirestoreQuery, usePermissions, useToast } from '@/hooks'
 import { where, orderBy } from '@/services/firestore'
 import { ApiError } from '@/services/api'
@@ -241,6 +242,9 @@ export function RequisitionDetailPage() {
           <Field label="Outlet" value={OUTLET_NAMES[requisition.outletId] ?? requisition.outletId} />
           <Field label="Department" value={DEPARTMENT_NAMES[requisition.departmentId] ?? requisition.departmentId} />
           <Field label="Employment type" value={EMPLOYMENT_TYPE_LABELS[requisition.employmentType] ?? requisition.employmentType} />
+          {requisition.contractType && (
+            <Field label="Contract type" value={CONTRACT_TYPE_LABELS[requisition.contractType]} />
+          )}
           <Field label="Requisition type" value={REQUISITION_TYPE_LABELS[requisition.requisitionType] ?? requisition.requisitionType} />
           <Field label="Target join date" value={requisition.targetJoinDate} />
           <Field label="Budgeted" value={requisition.budgeted ? 'Yes' : 'No'} />

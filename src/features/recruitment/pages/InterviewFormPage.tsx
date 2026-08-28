@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { Lock } from 'lucide-react'
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Select, Spinner } from '@/components/ui'
 import { EmptyState } from '@/components/shared'
-import { COLLECTIONS, PERMISSIONS } from '@/constants'
+import { COLLECTIONS, INTERVIEWER_ROLES, PERMISSIONS } from '@/constants'
 import { queryDocuments, where } from '@/services/firestore'
 import { usePermissions, useToast } from '@/hooks'
 import * as recruitmentService from '../recruitmentService'
@@ -44,7 +44,10 @@ export function InterviewFormPage() {
       try {
         const [row, users] = await Promise.all([
           candidateId ? recruitmentService.getCandidate(candidateId) : Promise.resolve(null),
-          queryDocuments<UserProfile & { id: string }>(COLLECTIONS.USERS, [where('status', '==', 'active')]),
+          queryDocuments<UserProfile & { id: string }>(COLLECTIONS.USERS, [
+            where('status', '==', 'active'),
+            where('roleId', 'in', INTERVIEWER_ROLES),
+          ]),
         ])
         if (cancelled) return
         setCandidate(row)
@@ -148,6 +151,7 @@ export function InterviewFormPage() {
             <Select id="interviewStage" value={stage} onChange={(e) => setStage(e.target.value as CandidateStage)}>
               <option value="ST-03">{CANDIDATE_STAGE_LABELS['ST-03']}</option>
               <option value="ST-04">{CANDIDATE_STAGE_LABELS['ST-04']}</option>
+              <option value="ST-04B">{CANDIDATE_STAGE_LABELS['ST-04B']}</option>
             </Select>
           </div>
 
