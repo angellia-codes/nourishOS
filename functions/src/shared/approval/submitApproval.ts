@@ -39,6 +39,7 @@ export async function submitApprovalInternal(input: SubmitApprovalInternalInput)
 
   await notifyStepApprovers({
     approverRole: steps[0].approverRole,
+    approverOutletId: steps[0].approverOutletId,
     module: input.module,
     resourceType: input.resourceType,
     resourceId: input.resourceId,

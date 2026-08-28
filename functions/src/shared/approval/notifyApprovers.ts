@@ -13,6 +13,8 @@ import { notifyUsersByRole } from '../notifications'
  */
 export async function notifyStepApprovers(input: {
   approverRole: string
+  /** equipment-master-design.md §5.2 — narrows notification to one outlet's holders of approverRole. */
+  approverOutletId?: string
   module: string
   resourceType: string
   resourceId: string
@@ -21,6 +23,7 @@ export async function notifyStepApprovers(input: {
 
   await notifyUsersByRole({
     role: input.approverRole,
+    outletId: input.approverOutletId,
     module: input.module,
     title: `${label} Awaiting Your Approval`,
     message: `A ${input.resourceType} has been submitted and requires your approval.`,

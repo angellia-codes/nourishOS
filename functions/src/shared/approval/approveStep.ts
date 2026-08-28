@@ -56,6 +56,13 @@ export const approveStep = onCall({ region: REGION }, async (request) => {
       if (user.roleId !== currentStep.approverRole && !isOverride) {
         throw new AppError('permission-denied', 'You are not the approver for the current step.')
       }
+      // equipment-master-design.md §5.2 — a step may name the specific outlet
+      // it's scoped to (approverOutletId), not just a role every outlet's
+      // manager shares. Checked against the approver's own outletId, already
+      // re-read live by requireActiveUser above.
+      if (currentStep.approverOutletId && user.outletId !== currentStep.approverOutletId && !isOverride) {
+        throw new AppError('permission-denied', 'You are not the approver for this outlet.')
+      }
       // approval_engine.md §23 — the requester never approves their own
       // request, even if they hold the approver role for this step.
       if (data.requestedBy === user.uid && !isOverride) {
@@ -122,6 +129,7 @@ export const approveStep = onCall({ region: REGION }, async (request) => {
     if (outcome.nextStep) {
       await notifyStepApprovers({
         approverRole: outcome.nextStep.approverRole,
+        approverOutletId: outcome.nextStep.approverOutletId,
         module: outcome.data.module,
         resourceType: outcome.data.resourceType,
         resourceId: outcome.data.resourceId,

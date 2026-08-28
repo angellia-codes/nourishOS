@@ -13,6 +13,13 @@ export interface ApprovalStepDefinition {
   sequence: number
   approverRole: string
   slaHours?: number
+  /**
+   * Restricts this step to the approver whose own `outletId` matches, on top
+   * of the `approverRole` check — equipment-master-design.md §5.2 ("the
+   * asset's Outlet Manager", not any outletManager anywhere). Omitted by
+   * every other route today; approveStep.ts only applies the check when set.
+   */
+  approverOutletId?: string
 }
 
 /**

@@ -3,6 +3,8 @@ import { sendNotificationInternal } from './notifications'
 
 export interface NotifyUsersByRoleInput {
   role: string
+  /** equipment-master-design.md §5.2 — narrows to one outlet's holders of `role`, instead of every outlet's. */
+  outletId?: string
   module: string
   title: string
   message: string
@@ -13,11 +15,14 @@ export interface NotifyUsersByRoleInput {
 }
 
 export async function notifyUsersByRole(input: NotifyUsersByRoleInput): Promise<void> {
-  const usersSnap = await db
+  let query = db
     .collection(COLLECTIONS.USERS)
     .where('roleId', '==', input.role)
     .where('status', '==', 'active')
-    .get()
+  if (input.outletId) {
+    query = query.where('outletId', '==', input.outletId)
+  }
+  const usersSnap = await query.get()
 
   await Promise.all(
     usersSnap.docs.map((userDoc) =>
