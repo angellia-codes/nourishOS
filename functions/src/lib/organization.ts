@@ -13,6 +13,24 @@
  * derived. Admin & General (§2: "HQ / Outlet Management") is HQ-only — it
  * staffs boh_nourish_group and nowhere else.
  */
+/**
+ * Display names for the nine outlets — mirrors src/constants/organization.ts's
+ * OUTLETS list. Added for payroll: a payslip freezes `outletName` at issue
+ * (payroll-components-payslip-design.md §4.5), so the server has to resolve it
+ * rather than leaving the client to label a stored id.
+ */
+export const OUTLET_NAMES: Record<string, string> = {
+  nourish_ungasan: 'Nourish Ungasan',
+  nourish_uluwatu: 'Nourish Uluwatu',
+  nourish_berawa: 'Nourish Berawa',
+  the_bakery_uluwatu: 'The Bakery Uluwatu',
+  the_bakery_kitchen: 'The Bakery Kitchen',
+  wholefood_ungasan: 'Wholefood Ungasan',
+  wholefood_uluwatu: 'Wholefood Uluwatu',
+  wholefood_berawa: 'Wholefood Berawa',
+  boh_nourish_group: 'BOH Nourish Group',
+}
+
 export const OUTLET_DEPARTMENTS: Record<string, readonly string[]> = {
   nourish_ungasan: ['cashier', 'fb_service', 'bar', 'kitchen', 'security'],
   nourish_uluwatu: ['cashier', 'fb_service', 'bar', 'kitchen', 'security'],
@@ -30,6 +48,40 @@ export const OUTLET_DEPARTMENTS: Record<string, readonly string[]> = {
     'driver',
     'engineering_pomec',
   ],
+}
+
+/**
+ * Per-outlet area lists — mirrors src/constants/organization.ts's OUTLET_AREAS.
+ * equipment-master-design.md §3.1/§4.1: import validation checks a row's
+ * `area` against this map (via OUTLET_CODES-resolved outlet), server-side.
+ */
+export const OUTLET_AREAS: Record<string, readonly string[]> = {
+  nourish_ungasan: ['kitchen', 'bar', 'dining', 'coldStorage', 'backOfHouse', 'exterior'],
+  nourish_uluwatu: ['kitchen', 'bar', 'dining', 'coldStorage', 'backOfHouse', 'exterior'],
+  nourish_berawa: ['kitchen', 'bar', 'dining', 'coldStorage', 'backOfHouse', 'exterior'],
+  the_bakery_uluwatu: ['bakery', 'retail', 'bar', 'coldStorage', 'backOfHouse'],
+  the_bakery_kitchen: ['bakery', 'kitchen', 'coldStorage', 'backOfHouse', 'exterior'],
+  wholefood_ungasan: ['retail', 'coldStorage', 'backOfHouse', 'exterior'],
+  wholefood_uluwatu: ['retail', 'coldStorage', 'backOfHouse', 'exterior'],
+  wholefood_berawa: ['retail', 'coldStorage', 'backOfHouse', 'exterior'],
+  boh_nourish_group: ['office', 'warehouse', 'backOfHouse', 'exterior'],
+}
+
+/**
+ * Three-letter outlet codes — mirrors src/constants/organization.ts's
+ * OUTLET_CODES. Feeds equipment-master-design.md §3.5's assetCode generation
+ * and CSV import's `outletCode` column resolution.
+ */
+export const OUTLET_CODES: Record<string, string> = {
+  nourish_ungasan: 'NUN',
+  nourish_uluwatu: 'NUL',
+  nourish_berawa: 'NBR',
+  the_bakery_uluwatu: 'BKU',
+  the_bakery_kitchen: 'BKK',
+  wholefood_ungasan: 'WFN',
+  wholefood_uluwatu: 'WFU',
+  wholefood_berawa: 'WFB',
+  boh_nourish_group: 'BOH',
 }
 
 /** RBAC.md §4 roles, scoped by department. superAdmin is deliberately absent — bootstrap-only. */
@@ -71,10 +123,22 @@ const LEADER = [
   'incidents.read',
   'lostFound.create',
   'lostFound.read',
+  // appraisal-v2-design.md §10 — v1's blanket appraisals.create/appraisals.submit
+  // are gone (v2 has no leader-facing "create"; creation is scheduler/HR-driven,
+  // §7). scorePrimary/acknowledge are resource-scoped inside the callable
+  // itself (must be the appraisal's own primaryScorerUid / the subject's own
+  // department), same trust level a bare 'appraisals.read' grant already implied.
   'appraisals.read',
-  'appraisals.create',
-  'appraisals.submit',
+  'appraisals.scorePrimary',
+  'appraisals.acknowledge',
   'training.read',
+  // training-module-spec-v1.0.md §5: "Department Heads hold verify, not
+  // manage" — a leader signs off their own team's training but never edits the
+  // catalogue. Scoped to their own outlet+department inside the callable.
+  'training.verify',
+  // attendance.md §8 — outletManager/department heads see their own outlet's
+  // approved attendance records only, resolved against outletIdSnapshot.
+  'attendance.viewOwnOutlet',
   'tasks.assign',
   'expenseRequests.submit',
   // communications.md §19: Leader is "Limited" on Create Announcement and ❌ on
@@ -116,9 +180,21 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'recruitment.read',
     'recruitment.viewCompensation',
     'appraisals.read',
+    // appraisal-v2-design.md §10 — reopenAppraisal is Super Admin/Director
+    // only (superAdmin bypasses requirePermission entirely).
+    'appraisals.readRecommendation',
+    'appraisals.reopen',
     'training.read',
     'reports.read',
     'reports.create',
+    // payroll-components-payslip-design.md §8 — payroll is a disbursement
+    // authorisation, so the approval chain is finance -> GM -> director.
+    'payroll.read',
+    'payroll.approve',
+    // attendance.md §8 — Director is unscoped-read/export, same audience as
+    // Finance and GM (canReadPayroll's role set doubles as this one).
+    'attendance.viewAllOutlets',
+    'attendance.export',
     'expenseRequests.approve',
     'expenseRequests.reject',
     'announcements.create',
@@ -144,11 +220,24 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'recruitment.read',
     'recruitment.viewCompensation',
     'appraisals.read',
-    'appraisals.approve',
-    'appraisals.reject',
+    // appraisal-v2-design.md §2.3 — GM is the sole (100%) primary scorer for
+    // every soloScorer (Level I-III) appraisal. Approval itself is gated by
+    // the Approval Engine's approverRole check on 'hr/appraisalV2', not a
+    // permission string (same as v1) — v2 dropped the dead
+    // appraisals.approve/appraisals.reject strings accordingly.
+    'appraisals.scorePrimary',
+    'appraisals.readRecommendation',
     'training.read',
     'reports.read',
     'reports.create',
+    // §8 — the second signature on a payroll batch.
+    'payroll.read',
+    'payroll.approve',
+    // attendance.md §6.1/§8 — GM is step 2 on 'people/attendancePeriod', and
+    // unscoped-read/export like the rest of the executive audience.
+    'attendance.approve',
+    'attendance.viewAllOutlets',
+    'attendance.export',
     'expenseRequests.approve',
     'expenseRequests.reject',
     'announcements.create',
@@ -168,6 +257,8 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'contracts.sign',
     'tasks.assign',
     'chat.manageChannels',
+    // fire-extinguisher.md §7 — executive oversight of the compliance register.
+    'apar.manage',
   ],
   hrManager: [
     'workOrders.create',
@@ -187,12 +278,21 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     // previous-salary answers — HR Manager and superAdmin only.
     'recruitment.viewSensitive',
     'appraisals.read',
-    'appraisals.create',
-    'appraisals.submit',
+    // appraisal-v2-design.md §10 — HR scores the 40% (scoreSecondary), reads
+    // the confidential recommendation, acts as device operator for
+    // on-device acknowledgement, and owns the template generate/approve gate.
+    'appraisals.scoreSecondary',
+    'appraisals.readRecommendation',
+    'appraisals.acknowledge',
     'appraisals.generateInsights',
-    'appraisals.manageTemplates',
+    'appraisalTemplates.generate',
+    'appraisalTemplates.approve',
     'training.read',
     'training.assign',
+    // training-module-spec-v1.0.md §5 — HR owns the catalogue, campaigns and
+    // the D6 gate override, and can verify anywhere (unscoped, unlike a leader).
+    'training.manage',
+    'training.verify',
     'documents.publish',
     'reports.read',
     'reports.create',
@@ -210,6 +310,12 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'shiftReports.submit',
     'shiftReports.read',
     'shiftReports.readAll',
+    // security-control-point.md §6: registering, editing and retiring patrol
+    // control points is an administrative act, not a guard's — the `security`
+    // role logs patrols against these points and never defines them. Until now
+    // this string was granted to no role at all, so only superAdmin (which
+    // bypasses requirePermission) could create one.
+    'security.manageCheckpoints',
     'chat.manageChannels',
     'projects.read',
     'projects.create',
@@ -217,6 +323,28 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     // exit-interview.md §4: gates both reading exitInterviews records and
     // conducting/submitting one.
     'exitInterviews.view',
+    // POSITIONS_MASTER_DESIGN.md §10 — positions.read needs no permission
+    // string (all authenticated), so only the write actions are granted here.
+    'positions.create',
+    'positions.update',
+    'positions.archive',
+    'positions.setScorer',
+    // fire-extinguisher.md §7.1 — HR-P&P-03 is an HR-issued policy and HR owns
+    // the compliance documentation, so HR owns the register alongside Engineering.
+    'apar.manage',
+    // payroll-components-payslip-design.md §8 — HR runs the import and curates
+    // the discretionary component registry. It deliberately does NOT hold
+    // payroll.approve: whoever assembles the batch cannot also authorise it.
+    'payroll.read',
+    'payroll.import',
+    'payroll.manageComponents',
+    'employeeEngagement.manage',
+    // attendance.md §5/§6/§8 — HR runs the import and is step 1 on the
+    // 'people/attendancePeriod' approval chain; unscoped read/export.
+    'attendance.import',
+    'attendance.approve',
+    'attendance.viewAllOutlets',
+    'attendance.export',
   ],
   finance: [
     'recruitment.read',
@@ -231,6 +359,14 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'expenseRequests.pay',
     'reports.read',
     'reports.create',
+    // §8 — the spec's "Finance Manager"; no financeManager role exists. First
+    // step on the 'hr/payrollBatch' chain.
+    'payroll.read',
+    'payroll.approve',
+    // attendance.md §8 — the same "Finance Manager" resolution: unscoped
+    // read/export, no approval step on 'people/attendancePeriod'.
+    'attendance.viewAllOutlets',
+    'attendance.export',
     'employees.read',
     'tasks.assign',
   ],
@@ -264,6 +400,10 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'lostFound.manage',
     'dailyUpdates.submit',
     'dailyUpdates.read',
+    // fire-extinguisher.md §7.1 — Security inspects but deliberately does NOT
+    // hold apar.manage: letting the inspector edit expiry dates on the units
+    // they inspect is a segregation-of-duties failure in a compliance system.
+    'apar.inspect',
   ],
   engineering: [
     'recruitment.read',
@@ -277,6 +417,17 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'incidents.read',
     'dailyUpdates.submit',
     'dailyUpdates.read',
+    // §7.1 — Engineering services the units, so it owns the register and can
+    // also record the annual maintenance inspection (§Pemeliharaan Tahunan).
+    'apar.manage',
+    'apar.inspect',
+    // equipment-master-design.md §6.2 — Engineering owns the equipment
+    // register end to end: create/edit/status/transfer, bulk import, and
+    // submitting a decommission request (approval itself is the outletManager
+    // step, not a permission grant).
+    'equipment.manage',
+    'equipment.import',
+    'equipment.decommission',
   ],
   outletManager: [
     ...LEADER,

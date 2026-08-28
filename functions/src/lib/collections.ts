@@ -11,16 +11,33 @@ export const COLLECTIONS = {
 
   APPRAISAL_TEMPLATES: 'appraisalTemplates',
   APPRAISALS: 'appraisals',
+  POSITIONS: 'positions',
 
   EMPLOYEES: 'employees',
   EMPLOYEE_ACTIVITIES: 'employeeActivities',
   DISCIPLINARY_ACTIONS: 'disciplinaryActions',
   CONTRACTS: 'contracts',
   TRAININGS: 'trainings',
+  TRAINING_TOPICS: 'trainingTopics',
+  TRAINING_BINDINGS: 'trainingBindings',
   TRAINING_ASSIGNMENTS: 'trainingAssignments',
+  DEPARTMENTS: 'departments',
   HR_INVENTORY_ITEMS: 'hrInventoryItems',
   HR_STOCK_LEVELS: 'hrStockLevels',
   HR_STOCK_MOVEMENTS: 'hrStockMovements',
+  PAYROLL_RECORDS: 'payrollRecords',
+  MONTHLY_REVENUE: 'monthlyRevenue',
+  // Payroll Components & Payslip (payroll-components-payslip-design.md §4).
+  // PAYROLL_RECORDS above is the superseded flat model — historical, read-only.
+  PAYROLL_COMPONENTS: 'payrollComponents',
+  PAYROLL_PARAMETERS: 'payrollParameters',
+  PAYROLL_BATCHES: 'payrollBatches',
+  PAYSLIPS: 'payslips',
+  EMPLOYEE_ENGAGEMENTS: 'employeeEngagements',
+  // Attendance (attendance.md §3) — monthly aggregate ledger, company-wide
+  // periods with one record per employee per period.
+  ATTENDANCE_PERIODS: 'attendancePeriods',
+  ATTENDANCE_RECORDS: 'attendanceRecords',
 
   RECRUITMENTS: 'recruitments',
   CANDIDATES: 'candidates',
@@ -42,6 +59,7 @@ export const COLLECTIONS = {
 
   ANNOUNCEMENTS: 'announcements',
   ANNOUNCEMENT_READS: 'announcementReads',
+  ANNOUNCEMENT_WISHES: 'announcementWishes',
   CHAT_CHANNELS: 'chatChannels',
   CHAT_MESSAGES: 'chatMessages',
   MENTIONS: 'mentions',
@@ -56,11 +74,12 @@ export const COLLECTIONS = {
 
   JOB_DESCRIPTIONS: 'jobDescriptions',
   SOPS: 'sops',
-  TEMPLATES: 'templates',
   COMPANY_FORMS: 'companyForms',
 
   CHECKPOINTS: 'checkpoints',
   PATROL_LOGS: 'patrolLogs',
+  FIRE_EXTINGUISHERS: 'fireExtinguishers',
+  FIRE_EXTINGUISHER_INSPECTIONS: 'fireExtinguisherInspections',
 
   DAILY_REPORTS: 'dailyReports',
   PROJECTS: 'projects',
@@ -68,6 +87,9 @@ export const COLLECTIONS = {
   WORK_ORDERS: 'workOrders',
   LOST_FOUND_ITEMS: 'lostFoundItems',
   SHIFT_HANDOVERS: 'shiftHandovers',
+  // equipment-master-design.md §3.2. EQUIPMENT_INSPECTIONS (client mirror) stays
+  // unused — reserved for Module B / a future shared inspection engine.
+  EQUIPMENT: 'equipment',
 
   EXPENSE_REQUESTS: 'expenseRequests',
 

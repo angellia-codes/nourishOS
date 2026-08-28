@@ -62,7 +62,7 @@ export const DEPARTMENTS: readonly OrgOption[] = [
  * boh_nourish_group and nowhere else, not every outlet.
  */
 export const OUTLET_DEPARTMENTS: Record<string, readonly string[]> = {
-  nourish_ungasan: ['cashier', 'fb_service', 'bar', 'kitchen', 'security'],
+  nourish_ungasan: ['cashier', 'fb_service', 'bar', 'kitchen', 'central_kitchen', 'security'],
   nourish_uluwatu: ['cashier', 'fb_service', 'bar', 'kitchen', 'security'],
   nourish_berawa: ['cashier', 'fb_service', 'bar', 'kitchen', 'security'],
   the_bakery_uluwatu: ['cashier', 'bar'],
@@ -130,4 +130,44 @@ export const ROLE_LABELS: Record<Role, string> = {
 /** Options for a dropdown, resolved from an id list — keeps the pages declarative. */
 export function optionsFor(ids: readonly string[], source: readonly OrgOption[]): OrgOption[] {
   return source.filter((option) => ids.includes(option.id))
+}
+
+/**
+ * Per-outlet area lists — equipment-master-design.md §3.1/§4.1. Kept as a
+ * constant rather than an `outlets.areas` Firestore field for the same reason
+ * OUTLET_DEPARTMENTS is: there is no `outlets` collection, only this mirrored
+ * pair of files. Content is a stub-then-fill task (equipment-master-design.md
+ * A-O3) — Engineering/Operations should review the actual lists before the
+ * first import runs; these are a reasonable starting point per outlet format,
+ * not a signed-off register.
+ */
+export const OUTLET_AREAS: Record<string, readonly string[]> = {
+  nourish_ungasan: ['kitchen', 'bar', 'dining', 'coldStorage', 'backOfHouse', 'exterior'],
+  nourish_uluwatu: ['kitchen', 'bar', 'dining', 'coldStorage', 'backOfHouse', 'exterior'],
+  nourish_berawa: ['kitchen', 'bar', 'dining', 'coldStorage', 'backOfHouse', 'exterior'],
+  the_bakery_uluwatu: ['bakery', 'retail', 'bar', 'coldStorage', 'backOfHouse'],
+  the_bakery_kitchen: ['bakery', 'kitchen', 'coldStorage', 'backOfHouse', 'exterior'],
+  wholefood_ungasan: ['retail', 'coldStorage', 'backOfHouse', 'exterior'],
+  wholefood_uluwatu: ['retail', 'coldStorage', 'backOfHouse', 'exterior'],
+  wholefood_berawa: ['retail', 'coldStorage', 'backOfHouse', 'exterior'],
+  boh_nourish_group: ['office', 'warehouse', 'backOfHouse', 'exterior'],
+}
+
+/**
+ * Three-letter codes feeding equipment-master-design.md §3.5's assetCode
+ * format ({OUTLET}-{CAT}-{NNN}). Purely a display label baked into a
+ * generated string, not a foreign key — renaming a code here needs no
+ * migration of existing assets, since codes are immutable per-asset once
+ * issued (§3.5).
+ */
+export const OUTLET_CODES: Record<string, string> = {
+  nourish_ungasan: 'NUN',
+  nourish_uluwatu: 'NUL',
+  nourish_berawa: 'NBR',
+  the_bakery_uluwatu: 'BKU',
+  the_bakery_kitchen: 'BKK',
+  wholefood_ungasan: 'WFN',
+  wholefood_uluwatu: 'WFU',
+  wholefood_berawa: 'WFB',
+  boh_nourish_group: 'BOH',
 }

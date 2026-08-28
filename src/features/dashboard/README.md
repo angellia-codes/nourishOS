@@ -32,7 +32,10 @@ list — **adding an approver role outside that list means updating `firestore.r
 ## Planned
 
 KPI cards (§7), quick actions (§8), activity feed (§13), department widgets (§14) and the per-role variants
-(§15) are unbuilt. "Upcoming birthdays and anniversaries" (§26) — the other half of that wishlist bullet — is
-not built; there is no birthday/anniversary field on `Employee` to source it from. §11's notifications widget is deliberately absent: `src/components/layout/NotificationBell.tsx`
+(§15) are unbuilt. "Upcoming birthdays and anniversaries" (§26) has no *dashboard widget*, but it is no longer
+unsourceable — `Employee.birthDate`/`joinDate` do exist, and as of 2026-08-25 the `milestoneAnnouncements`
+scheduled job reads them to auto-publish a celebration post in Communications instead (see
+`src/features/communications/CLAUDE.md`). A widget here would be a second surface on the same data.
+§11's notifications widget is deliberately absent: `src/components/layout/NotificationBell.tsx`
 already is one. §17's `getDashboardSummary()`/`getPendingApprovals()` aggregation callables are not built —
 every widget reads Firestore directly through a query that matches its own read rule.

@@ -17,6 +17,8 @@ export interface AuthedUser {
   departmentId: string | null
   outletId: string | null
   permissions: string[]
+  /** users/{uid}.employeeId, if this account is linked to an employee record — see lib/identity.ts. Null for most floor staff, who have no login at all. */
+  employeeId: string | null
 }
 
 /** Cheapest gate — signed in at all. Prefer requireActiveUser for anything that mutates. */
@@ -59,6 +61,7 @@ export async function requireActiveUser(request: CallableRequest): Promise<Authe
     departmentId: (profile.departmentId as string | undefined) ?? null,
     outletId: (profile.outletId as string | undefined) ?? null,
     permissions,
+    employeeId: (profile.employeeId as string | undefined) ?? null,
   }
 }
 

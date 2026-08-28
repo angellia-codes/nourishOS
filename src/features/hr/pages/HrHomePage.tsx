@@ -1,16 +1,18 @@
 import { useNavigate } from 'react-router-dom'
-import { BarChart3, Boxes, GraduationCap, LogOut, UserPlus, Users } from 'lucide-react'
+import { BarChart3, Boxes, Briefcase, CalendarCheck, ClipboardCheck, GraduationCap, LogOut, MessageSquareWarning, PartyPopper, UserPlus, Users, Wallet } from 'lucide-react'
 import { Button, Card, CardContent } from '@/components/ui'
 
 /**
- * The HR hub. Five sub-modules ship: the employee register, offboarding (exit checklists, clearance and exit interviews — the OUT
- * counterpart to onboarding, triggered from Archive on the employee profile),
- * the uniform/asset stock ledger, the training catalog, and the reports
- * register. Employment Contracts is not a card here — like Disciplinary
- * Records, it's reached from the employee profile since it's always
- * employee-scoped, not a register of its own. The hiring pipeline left for
- * its own /recruitment module (2026-08-19) and is linked from here as a
- * cross-reference rather than owned.
+ * The People hub (renamed from "HR" in the 2026-08-25 nav restructure — the
+ * sidebar group and this page carry the same name). Employment Contracts is
+ * not a card here: it's reached from the employee profile, since it's always
+ * employee-scoped rather than a register of its own.
+ *
+ * Three cards link OUT of `/hr` and stay outside its role gate on purpose —
+ * Recruitment (`/recruitment`), Positions (`/positions`, all-authenticated
+ * read) and Employee Communication (`/communications/employee`, which the
+ * employee themselves must be able to open). They belong to People in the
+ * navigation, not in the URL tree.
  *
  * No permission gating on the cards — each page enforces its own read access
  * through firestore.rules, so a card that leads to an empty list is honest
@@ -39,13 +41,49 @@ const SUB_MODULES = [
     to: '/hr/training',
     icon: GraduationCap,
     title: 'Training',
-    description: 'Catalog, assignment and completion tracking.',
+    description: '197-topic catalogue, department delivery sequences and gating.',
   },
   {
     to: '/recruitment',
     icon: UserPlus,
     title: 'Recruitment',
     description: 'Requisitions, candidates and onboarding — now its own module.',
+  },
+  {
+    to: '/positions',
+    icon: Briefcase,
+    title: 'Positions',
+    description: 'Job descriptions, tiers and appraisal scorers — its own module.',
+  },
+  {
+    to: '/hr/appraisal-templates',
+    icon: ClipboardCheck,
+    title: 'Appraisal',
+    description: 'Generate, review and approve per-position appraisal criteria.',
+  },
+  {
+    to: '/communications/employee',
+    icon: MessageSquareWarning,
+    title: 'Employee Communication',
+    description: 'Coaching, warnings and terminations — issued, signed and tracked.',
+  },
+  {
+    to: '/hr/payroll',
+    icon: Wallet,
+    title: 'Payroll',
+    description: 'Payroll records, bulk import and monthly revenue.',
+  },
+  {
+    to: '/hr/attendance',
+    icon: CalendarCheck,
+    title: 'Attendance',
+    description: 'Monthly attendance import, approval and reporting.',
+  },
+  {
+    to: '/hr/engagement',
+    icon: PartyPopper,
+    title: 'Employee Engagement',
+    description: 'Company events and activities, cost and participants.',
   },
   {
     to: '/hr/reports',
@@ -61,8 +99,8 @@ export function HrHomePage() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
       <div>
-        <h1 className="text-xl font-semibold text-foreground">Human Resources</h1>
-        <p className="text-sm text-muted-foreground">People, hiring and onboarding.</p>
+        <h1 className="text-xl font-semibold text-foreground">People</h1>
+        <p className="text-sm text-muted-foreground">The employee lifecycle, from hiring to exit.</p>
       </div>
 
       {SUB_MODULES.map(({ to, icon: Icon, title, description }) => (

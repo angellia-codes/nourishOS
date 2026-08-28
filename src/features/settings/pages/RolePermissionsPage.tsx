@@ -82,6 +82,7 @@ export function RolePermissionsPage() {
   }, [roleId, isSuperAdmin])
 
   const dirty = useMemo(() => !sameSet(checked, original), [checked, original])
+  const isEditingSuperAdmin = roleId === ROLES.SUPER_ADMIN
 
   function toggle(permission: string) {
     setChecked((current) => {
@@ -169,6 +170,13 @@ export function RolePermissionsPage() {
             </p>
           )}
 
+          {isEditingSuperAdmin && (
+            <p className="text-sm text-muted-foreground">
+              superAdmin bypasses every permission check at runtime — this list is for visibility and audit only.
+              Editing it has no effect on what a super admin can do.
+            </p>
+          )}
+
           <div className="flex flex-col gap-4">
             {PERMISSION_GROUPS.map((group) => (
               <Card key={group.moduleId}>
@@ -181,6 +189,7 @@ export function RolePermissionsPage() {
                       <Checkbox
                         id={`perm-${entry.value}`}
                         checked={checked.has(entry.value)}
+                        disabled={isEditingSuperAdmin}
                         onChange={() => toggle(entry.value)}
                       />
                       <Label htmlFor={`perm-${entry.value}`}>{entry.label}</Label>
@@ -192,7 +201,7 @@ export function RolePermissionsPage() {
           </div>
 
           <div className="flex justify-end">
-            <Button onClick={handleSave} loading={saving} disabled={!dirty}>
+            <Button onClick={handleSave} loading={saving} disabled={!dirty || isEditingSuperAdmin}>
               Save permissions
             </Button>
           </div>

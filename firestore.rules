@@ -222,30 +222,176 @@ service cloud.firestore {
     // Assignments denormalize departmentId at write time (assignTraining) so
     // a department leader can see their own team's assigned/overdue training
     // (HR.md §22: Assign Training is "Limited" for Department Leader).
+    // Legacy flat catalogue — superseded by trainingTopics/trainingBindings
+    // below (training-module-spec-v1.0.md). Nothing writes here any more; the
+    // block stays so assignments issued before 2026-08-26 still resolve a title.
     match /trainings/{trainingId} {
       allow read: if isSignedIn();
-      allow write: if false; // createTraining / updateTraining Cloud Functions only
+      allow write: if false;
+    }
+
+    // Canonical catalogue content — every trainee reads their own department's
+    // sequence, and topics are department-agnostic by design (§4.2).
+    match /trainingTopics/{topicId} {
+      allow read: if isSignedIn();
+      allow write: if false; // seedTrainingCatalog Cloud Function only
+    }
+
+    match /trainingBindings/{bindingId} {
+      allow read: if isSignedIn();
+      allow write: if false; // seedTrainingCatalog Cloud Function only
+    }
+
+    // §4.1 — the group-wide department taxonomy, seeded alongside the
+    // catalogue and read by useDepartment.
+    match /departments/{departmentId} {
+      allow read: if isSignedIn();
+      allow write: if false; // seedTrainingCatalog Cloud Function only
     }
 
     match /trainingAssignments/{assignmentId} {
       allow read: if isHrOrAbove() ||
-        (isLeader() && resource.data.departmentId == request.auth.token.departmentId);
-      allow write: if false; // assignTraining / completeTraining Cloud Functions only
+        (isLeader() && resource.data.departmentId == request.auth.token.departmentId) ||
+        // §5's "All staff — own assignments only". Employee.id is not an auth
+        // uid, so generateTrainingAssignments resolves and denormalises one
+        // (lib/identity.ts) — the same trick disciplinaryActions uses.
+        resource.data.employeeUid == request.auth.uid;
+      allow write: if false; // generateTrainingAssignments / verifyTrainingCompletion / overrideTrainingGate Cloud Functions only
     }
 
-    // ---- HR: Appraisal ----
+    // ---- HR: Payroll & Revenue ----
+    // payrollRecords carries individual netPay — at least as locked down as
+    // employees/{id}/compensation/current (no GM/Director branch; they see
+    // manning cost only through getManningCostSummary's aggregate).
+    match /payrollRecords/{recordId} {
+      allow read: if hasAnyRole(['hrManager', 'superAdmin']);
+      allow write: if false; // importPayroll Cloud Function only
+    }
+    // Revenue is a company figure, not individually sensitive — readable by
+    // the same audience as the Manning Cost vs Revenue report.
+    match /monthlyRevenue/{recordId} {
+      allow read: if hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']);
+      allow write: if false; // recordMonthlyRevenue Cloud Function only
+    }
+
+    // ---- HR: Payroll Components & Payslip ----
+    // payroll-components-payslip-design.md §8. One audience across all four
+    // collections: HR Manager, Finance ("Finance Manager" in the spec — no
+    // financeManager role exists here), GM, Director, Super Admin. Outlet
+    // Managers are deliberately excluded: payroll visibility is HQ-only in v1.
+    function canReadPayroll() {
+      return hasAnyRole(['hrManager', 'finance', 'generalManager', 'director', 'superAdmin']);
+    }
+
+    match /payrollComponents/{componentId} {
+      allow read: if canReadPayroll();
+      allow write: if false; // upsertPayrollComponent / seedPayrollComponents only
+    }
+    match /payrollParameters/{year} {
+      allow read: if canReadPayroll();
+      allow write: if false; // upsertPayrollParameters only (Super Admin)
+    }
+    // Readable at any status, unlike payslips: the batch holds totals and the
+    // reconciliation report, no per-person net pay, and HR has to be able to
+    // reload a draft's preview after leaving the page.
+    match /payrollBatches/{batchId} {
+      allow read: if canReadPayroll();
+      allow write: if false; // createPayrollBatch / submitPayrollBatch only
+    }
+    // §8: readable only once the parent batch is approved. `isIssued` is
+    // stamped true on every payslip by the 'hr/payrollBatch' approval-resolved
+    // handler and never cleared, so it IS that condition — and testing a field
+    // already on the document costs no extra read, where a get() on the parent
+    // batch would cost one per payslip evaluated.
+    //
+    // It is a boolean rather than a test on `issuedAt` because rules do not
+    // filter, they validate: on a `list` the rule is checked against the QUERY,
+    // so `issuedAt != null` would deny every list that does not itself
+    // constrain issuedAt. Client queries pair this with
+    // where('isIssued','==',true), which IS provable. See payrollService.ts.
+    match /payslips/{payslipId} {
+      allow read: if canReadPayroll() && resource.data.isIssued == true;
+      allow write: if false; // createPayrollBatch / supersedePayslip only
+    }
+
+    // ---- HR: Attendance ----
+    // attendance.md §3.1/§8 — periods are company-wide (D3), so the parent
+    // carries no outlet field; scoping happens per-record via
+    // outletIdSnapshot. Same unscoped audience as Payroll (canReadPayroll)
+    // plus every department head/outlet leader, since a leader needs to see
+    // their own team's period metadata (status, warnings) to know a
+    // correction is coming.
+    match /attendancePeriods/{periodId} {
+      allow read: if canReadPayroll() || isDepartmentHead();
+      allow write: if false; // importAttendancePeriod Cloud Function only
+    }
+    // isApproved is stamped true only once the 'people/attendancePeriod'
+    // approval resolves — same isIssued-style gate payslips use above, and for
+    // the same reason: nobody should see a figure that might still be
+    // rejected or corrected.
+    match /attendanceRecords/{recordId} {
+      allow read: if resource.data.isApproved == true && (
+        canReadPayroll() ||
+        (isDepartmentHead() && resource.data.outletIdSnapshot == request.auth.token.outletId)
+      );
+      allow write: if false; // importAttendancePeriod Cloud Function only
+    }
+
+    // ---- HR: Employee Engagement ----
+    // Company events/activities — cost and participant lists, no approval
+    // chain. Same HR-only read line as payrollRecords: nothing in scope calls
+    // for broader visibility, and cost sits alongside participant lists here.
+    match /employeeEngagements/{engagementId} {
+      allow read: if hasAnyRole(['hrManager', 'superAdmin']);
+      allow write: if false; // createEngagement / updateEngagement Cloud Functions only
+    }
+
+    // ---- HR: Positions Master ----
+    // POSITIONS_MASTER_DESIGN.md §2.1/§10 — org-wide, no outletId scoping: a
+    // Cook is a Cook at every outlet. Read for any authenticated active user;
+    // all writes are Cloud-Function-only (seedPositions / createPosition /
+    // updatePosition / archivePosition / setAppraisalScorer /
+    // migrateEmployeePositions).
+    match /positions/{positionId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // ---- HR: Appraisal v2 ----
+    // appraisal-v2-design.md. appraisalTemplates stays open-read (needed to
+    // render the generation/approval review UI); appraisals is HR-only, DH
+    // (own department), or the confidential-recommendation-excluded roles —
+    // deliberately no subject self-read branch (§10's own RBAC table
+    // excludes the subject; the old employeeId==uid branch here was dead
+    // code anyway — Appraisal.employeeId is an employees/{id} doc id, never
+    // a Firebase Auth uid, confirmed nothing in this codebase ever arranges
+    // otherwise).
     match /appraisalTemplates/{templateId} {
-      allow read: if isSignedIn(); // needed to render the review form
-      allow write: if false; // seedAppraisalTemplates / future Settings UI Cloud Function only
+      allow read: if isSignedIn();
+      allow write: if false; // generateAppraisalTemplate / approveAppraisalTemplate Cloud Functions only
     }
 
     match /appraisals/{appraisalId} {
       allow read: if isSignedIn() && (
-        resource.data.employeeId == request.auth.uid ||
-        resource.data.reviewerId == request.auth.uid ||
-        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin'])
+        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
+        (hasAnyRole(['kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader', 'wholefoodLeader',
+          'outletManager', 'restaurantManager', 'finance', 'purchasing', 'security', 'engineering', 'marketing']) &&
+          resource.data.employeeDepartmentId == request.auth.token.departmentId)
       );
-      allow write: if false; // createAppraisal / submitAppraisal / approval flow only
+      allow write: if false; // createAppraisal / submitPrimaryScores / submitSecondaryScores / acknowledgeAppraisal / reopenAppraisal / approval flow only
+
+      // §2.6 — confidential subcollection, never readable by the appraisal
+      // subject even though HR Manager/GM hold appraisals.readRecommendation
+      // and are themselves appraisal subjects (self-exclusion). This Rule is
+      // defense in depth; the primary control is getAppraisalRecommendation.ts,
+      // which is how the UI actually reaches this data.
+      match /confidential/{document=**} {
+        allow read: if hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) &&
+          !(exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+            'employeeId' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data &&
+            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.employeeId == resource.data.employeeId);
+        allow write: if false;
+      }
     }
 
     // ---- Shared: Approval Engine ----
@@ -366,6 +512,34 @@ service cloud.firestore {
         hasAnyRole(['security', 'generalManager', 'director', 'superAdmin'])
       );
       allow write: if false; // createPatrolLog Cloud Function only
+    }
+
+    // ---- Security: Fire Extinguishers (APAR) ----
+    // fire-extinguisher.md — broad signed-in read, the same shape checkpoints
+    // uses and for the same reason: a guard has to read the register to run a
+    // round, and a compliance history carries nothing sensitive. Cross-outlet
+    // visibility is deliberate here — Engineering services units everywhere.
+    match /fireExtinguishers/{extinguisherId} {
+      allow read: if isSignedIn();
+      allow write: if false; // registerFireExtinguisher / updateFireExtinguisher / retireFireExtinguisher / submitAparInspection / checkAparExpiry Cloud Functions only
+    }
+
+    match /fireExtinguisherInspections/{inspectionId} {
+      allow read: if isSignedIn();
+      allow write: if false; // submitAparInspection Cloud Function only — §Kebijakan 4, records are never edited or deleted
+    }
+
+    // ---- Engineering: Equipment Master ----
+    // equipment-master-design.md §6 — unlike Fire Extinguishers above, read is
+    // outlet-scoped for everyone except the elevated set: the design doc's own
+    // RBAC table gives a Kitchen/Bar/Floor leader only their own outlet (AC #12),
+    // while Engineering, GM, Director and superAdmin see every outlet (§6.2 D9).
+    match /equipment/{equipmentId} {
+      allow read: if isSignedIn() && (
+        hasAnyRole(['superAdmin', 'director', 'generalManager', 'engineering']) ||
+        resource.data.outletId == request.auth.token.outletId
+      );
+      allow write: if false; // createEquipment / updateEquipment / updateEquipmentStatus / transferEquipmentOutlet / previewEquipmentImport / commitEquipmentImport / onEquipmentDecommissionResolved Cloud Functions only
     }
 
     // ---- Operations: Lost & Found ----
@@ -538,11 +712,6 @@ service cloud.firestore {
       allow write: if false; // createDocumentResource / updateDocumentResource / deleteDocumentResource only
     }
 
-    match /templates/{templateId} {
-      allow read: if isSignedIn();
-      allow write: if false; // createDocumentResource / updateDocumentResource / deleteDocumentResource only
-    }
-
     // ---- Finance: Expense Requests ----
     // expense-request.md §7's view column: own always, Finance and above see
     // everything, and a department leader sees their own department's — that
@@ -580,6 +749,18 @@ service cloud.firestore {
     match /announcementReads/{readId} {
       allow read: if isSignedIn() && resource.data.uid == request.auth.uid;
       allow write: if false; // recordAnnouncementRead Cloud Function only
+    }
+
+    // Birthday/anniversary/new-hire/farewell wishes. Readable by every signed-in
+    // user with no audience check, which is sound only because sendMilestoneWish
+    // refuses to write onto an announcement that has no milestoneType, and every
+    // milestone announcement is published company-wide by construction
+    // (functions/src/communications/milestoneAnnouncements.ts). Targeting a
+    // milestone post at one outlet would break that invariant, and this rule
+    // with it — denormalise the audience here first if that day comes.
+    match /announcementWishes/{wishId} {
+      allow read: if isSignedIn();
+      allow write: if false; // sendMilestoneWish Cloud Function only
     }
 
     // ---- Default deny ----

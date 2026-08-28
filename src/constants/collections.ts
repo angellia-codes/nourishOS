@@ -35,7 +35,14 @@ export const COLLECTIONS = {
   APPRAISAL_TEMPLATES: 'appraisalTemplates',
   APPRAISALS: 'appraisals',
   DISCIPLINARY_ACTIONS: 'disciplinaryActions',
+  // Legacy: the flat pre-2026-08-26 catalog. Superseded by TRAINING_TOPICS +
+  // TRAINING_BINDINGS (training-module-spec-v1.0.md); kept readable because
+  // trainingAssignments written before that date still reference it.
   TRAININGS: 'trainings',
+  /** training-module-spec-v1.0.md §4.2 — canonical, department-agnostic content. */
+  TRAINING_TOPICS: 'trainingTopics',
+  /** §4.3 — places a canonical topic into one department's delivery sequence. */
+  TRAINING_BINDINGS: 'trainingBindings',
   TRAINING_ASSIGNMENTS: 'trainingAssignments',
   EMPLOYEE_ASSETS: 'employeeAssets',
   EMPLOYEE_ACTIVITIES: 'employeeActivities',
@@ -45,6 +52,19 @@ export const COLLECTIONS = {
   HR_INVENTORY_ITEMS: 'hrInventoryItems',
   HR_STOCK_LEVELS: 'hrStockLevels',
   HR_STOCK_MOVEMENTS: 'hrStockMovements',
+  PAYROLL_RECORDS: 'payrollRecords',
+  MONTHLY_REVENUE: 'monthlyRevenue',
+  // Payroll Components & Payslip (payroll-components-payslip-design.md §4).
+  // PAYROLL_RECORDS above is the superseded flat model — historical, read-only.
+  PAYROLL_COMPONENTS: 'payrollComponents',
+  PAYROLL_PARAMETERS: 'payrollParameters',
+  PAYROLL_BATCHES: 'payrollBatches',
+  PAYSLIPS: 'payslips',
+  EMPLOYEE_ENGAGEMENTS: 'employeeEngagements',
+  // Attendance (attendance.md §3) — monthly aggregate ledger, company-wide
+  // periods with one record per employee per period.
+  ATTENDANCE_PERIODS: 'attendancePeriods',
+  ATTENDANCE_RECORDS: 'attendanceRecords',
 
   // Documents
   SOPS: 'sops',
@@ -54,7 +74,6 @@ export const COLLECTIONS = {
   DOCUMENT_CATEGORIES: 'documentCategories',
   DOCUMENT_TAGS: 'documentTags',
   DOCUMENT_APPROVALS: 'documentApprovals',
-  TEMPLATES: 'templates',
   COMPANY_FORMS: 'companyForms',
   TRAINING_MODULES: 'trainingModules',
   KNOWLEDGE_BASE: 'knowledgeBase',
@@ -91,6 +110,7 @@ export const COLLECTIONS = {
   // Communications
   ANNOUNCEMENTS: 'announcements',
   ANNOUNCEMENT_READS: 'announcementReads',
+  ANNOUNCEMENT_WISHES: 'announcementWishes',
   CHAT_CHANNELS: 'chatChannels',
   CHAT_MESSAGES: 'chatMessages',
   DIRECT_MESSAGES: 'directMessages',
@@ -145,6 +165,12 @@ export const COLLECTIONS = {
   // Security
   CHECKPOINTS: 'checkpoints',
   PATROL_LOGS: 'patrolLogs',
+  // fire-extinguisher.md §4.1 — dedicated collections rather than the reserved
+  // EQUIPMENT/EQUIPMENT_INSPECTIONS names above (§2.2: a generic asset schema
+  // plus a per-type inspection-template engine is a Phase 2 module). The
+  // migration-shaped field names are what makes absorption a collection move.
+  FIRE_EXTINGUISHERS: 'fireExtinguishers',
+  FIRE_EXTINGUISHER_INSPECTIONS: 'fireExtinguisherInspections',
 
   // Settings
   COMPANIES: 'companies',

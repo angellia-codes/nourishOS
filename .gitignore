@@ -31,8 +31,14 @@ dist-ssr
 # Firebase
 .firebase/
 firebase-debug.log
+firestore-debug.log
+ui-debug.log
 functions/lib/
 functions/node_modules/
+
+# Emulator Suite data — local dev seed/export dumps, never source-controlled
+emulator-data/
+firebase-export-*/
 
 # Generated knowledge graph (graphify skill output)
 graphify-out/

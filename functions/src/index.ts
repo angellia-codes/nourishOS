@@ -25,16 +25,74 @@ export { createFileMetadata, deleteFile } from './shared/fileStorage'
 export { createCalendarEvent, cancelCalendarEvent, syncCalendarEvents } from './shared/calendar'
 
 // ---- Security ----
-export { createCheckpoint, createPatrolLog, checkOverdueCheckpoints } from './security'
-
-// ---- HR: Appraisal ----
 export {
-  seedAppraisalTemplates,
+  createCheckpoint,
+  updateCheckpoint,
+  archiveCheckpoint,
+  createPatrolLog,
+  checkOverdueCheckpoints,
+  // fire-extinguisher.md — APAR register, monthly rounds, expiry monitoring.
+  registerFireExtinguisher,
+  updateFireExtinguisher,
+  retireFireExtinguisher,
+  submitAparInspection,
+  generateMonthlyAparRounds,
+  checkAparExpiry,
+} from './security'
+
+// ---- HR: Appraisal v2 ----
+export {
+  generateAppraisalTemplate,
+  approveAppraisalTemplate,
   createAppraisal,
-  submitAppraisal,
+  submitPrimaryScores,
+  submitSecondaryScores,
+  acknowledgeAppraisal,
+  reopenAppraisal,
+  getAppraisalRecommendation,
   generateAppraisalInsights,
-  triggerProbationReviews,
+  scheduleAppraisalCycles,
 } from './hr/appraisal'
+
+// ---- HR: Positions Master ----
+export {
+  seedPositions,
+  createPosition,
+  updatePosition,
+  archivePosition,
+  setAppraisalScorer,
+  migrateEmployeePositions,
+} from './hr/positions'
+
+// ---- HR: Payroll & Revenue ----
+// Payroll Components & Payslip (payroll-components-payslip-design.md §7).
+// `importPayroll` and its flat payrollRecords model were retired here on
+// 2026-08-26 — superseded by the batch/payslip model below.
+export {
+  parsePayrollCsv,
+  createPayrollBatch,
+  submitPayrollBatch,
+  supersedePayslip,
+  upsertPayrollComponent,
+  seedPayrollComponents,
+  upsertPayrollParameters,
+  recordMonthlyRevenue,
+  getManningCostSummary,
+} from './hr/payroll'
+
+// ---- HR: Attendance ----
+// attendance.md — monthly aggregate ledger: CSV import, HR Manager -> GM
+// approval, immutable-once-approved records with a supersede-on-correction
+// pattern.
+export {
+  previewAttendanceImport,
+  importAttendancePeriod,
+  submitAttendancePeriod,
+  remindAttendanceImport,
+} from './hr/attendance'
+
+// ---- HR: Employee Engagement ----
+export { createEngagement, updateEngagement } from './hr/engagement'
 
 // ---- HR: Employee Database ----
 export {
@@ -66,7 +124,14 @@ export { createInventoryItem, updateInventoryItem, receiveStock, issueStock, tra
 export { renewContract, terminateContract, submitContractForSigning } from './hr/contracts'
 
 // ---- HR: Training ----
-export { createTraining, updateTraining, assignTraining, completeTraining } from './hr/training'
+// training-module-spec-v1.0.md — the canonical catalogue replaced the flat
+// createTraining/updateTraining/assignTraining/completeTraining set.
+export {
+  seedTrainingCatalog,
+  generateTrainingAssignments,
+  verifyTrainingCompletion,
+  overrideTrainingGate,
+} from './hr/training'
 
 // ---- HR: Recruitment (requisitions → candidates → interviews → onboarding) ----
 export {
@@ -106,7 +171,7 @@ export {
 // ---- Documents: SOP Library ----
 export { createSop, updateSop, deleteSop, setSopAccess } from './documents/sopLibrary'
 
-// ---- Documents: Company Forms + Templates ----
+// ---- Documents: Company Forms ----
 export { createDocumentResource, updateDocumentResource, deleteDocumentResource } from './documents/resources'
 
 // ---- Finance: Expense Requests ----
@@ -127,6 +192,9 @@ export {
   recordAnnouncementRead,
 } from './communications/announcements'
 
+// ---- Communications: Milestone announcements (birthday / anniversary / new hire / farewell) ----
+export { milestoneAnnouncements, sendMilestoneWish } from './communications/milestoneAnnouncements'
+
 // ---- Communications: Team Chat ----
 export { createChannel, sendMessage } from './communications/chat'
 
@@ -141,6 +209,17 @@ export { createProject, updateProject, submitProject, moveProjectColumn } from '
 
 // ---- Operations: Shift Reports ----
 export { submitShiftReport } from './operations/shiftReports'
+
+// ---- Engineering: Equipment Master ----
+export {
+  createEquipment,
+  updateEquipment,
+  updateEquipmentStatus,
+  transferEquipmentOutlet,
+  requestEquipmentDecommission,
+  previewEquipmentImport,
+  commitEquipmentImport,
+} from './operations/equipment'
 
 // ---- Operations: Lost & Found ----
 export {

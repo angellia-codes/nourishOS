@@ -32,7 +32,7 @@ import {
 import * as contractService from '@/features/hr/contracts/contractService'
 import * as trainingService from '@/features/hr/training/trainingService'
 import * as offboardingService from '@/features/hr/offboarding/offboardingService'
-import type { Contract, DisciplinaryRecord, Training, TrainingAssignment } from '@/types'
+import type { Contract, DisciplinaryRecord, Training, TrainingAssignment, TrainingTopic } from '@/types'
 import {
   formatIsoDate,
   formatTenure,
@@ -66,6 +66,9 @@ function TrainingAssignmentRow({
 }) {
   const toast = useToast()
   const [completing, setCompleting] = useState(false)
+  // Legacy rows (no topicId) predate the canonical catalogue and have no
+  // verification path — they are shown, not acted on.
+  const canVerify = Boolean(assignment.topicId) && assignment.status === 'assigned'
   const { data: certificates } = useFirestoreQuery<FileMetadata>(
     COLLECTIONS.FILES,
     assignment.status === 'completed'
@@ -82,8 +85,15 @@ function TrainingAssignmentRow({
   async function handleComplete() {
     setCompleting(true)
     try {
-      await trainingService.completeTraining(assignment.id)
-      toast.success('Marked complete.')
+      const result = await trainingService.verifyTrainingCompletion({
+        assignmentId: assignment.id,
+        assessment: { passed: true },
+      })
+      toast.success(
+        result.unlocked > 0
+          ? `Signed off — ${result.unlocked} further topic${result.unlocked === 1 ? '' : 's'} unlocked.`
+          : 'Signed off.',
+      )
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to mark complete.')
     } finally {
@@ -96,21 +106,27 @@ function TrainingAssignmentRow({
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-sm text-foreground">{trainingTitle}</p>
-          {assignment.dueDate && <p className="text-xs text-muted-foreground">Due {formatDate(assignment.dueDate)}</p>}
+          {(assignment.dueAt || assignment.dueDate) && (
+            <p className="text-xs text-muted-foreground">Due {formatDate(assignment.dueAt ?? assignment.dueDate)}</p>
+          )}
         </div>
         {assignment.status === 'completed' ? (
           <Badge variant="success">Completed</Badge>
-        ) : (
-          <PermissionGuard permission={PERMISSIONS.TRAINING_ASSIGN}>
+        ) : assignment.status === 'locked' ? (
+          <Badge variant="neutral">Locked</Badge>
+        ) : canVerify ? (
+          <PermissionGuard permission={PERMISSIONS.TRAINING_VERIFY}>
             <Button variant="secondary" size="sm" disabled={completing} onClick={() => void handleComplete()}>
-              {completing ? <Spinner className="h-4 w-4" /> : 'Mark complete'}
+              {completing ? <Spinner className="h-4 w-4" /> : 'Sign off'}
             </Button>
           </PermissionGuard>
+        ) : (
+          <Badge variant="neutral">{assignment.status}</Badge>
         )}
       </div>
       {assignment.status === 'completed' && (
         <div className="flex flex-col gap-2">
-          <PermissionGuard permission={PERMISSIONS.TRAINING_ASSIGN}>
+          <PermissionGuard permission={PERMISSIONS.TRAINING_VERIFY}>
             <FileUpload module="hr" resourceType="trainingCertificate" resourceId={assignment.id} accept="application/pdf,image/*" />
           </PermissionGuard>
           <FileList files={certificates} />
@@ -149,6 +165,7 @@ export function EmployeeProfilePage() {
   const [contracts, setContracts] = useState<Contract[] | null>(null)
   const [trainingAssignments, setTrainingAssignments] = useState<TrainingAssignment[]>([])
   const [trainings, setTrainings] = useState<Training[]>([])
+  const [trainingTopics, setTrainingTopics] = useState<TrainingTopic[]>([])
   const [signingContractId, setSigningContractId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -178,9 +195,19 @@ export function EmployeeProfilePage() {
     return trainingService.subscribeToAssignmentsForEmployee(employeeId, setTrainingAssignments)
   }, [employeeId])
 
-  useEffect(() => trainingService.subscribeToTrainings(setTrainings), [])
+  // Both catalogues: canonical topics for current assignments, the retired flat
+  // catalogue so pre-2026-08-26 rows still resolve a title.
+  useEffect(() => trainingService.subscribeToLegacyTrainings(setTrainings), [])
+  useEffect(() => trainingService.subscribeToTrainingTopics(setTrainingTopics), [])
 
-  const trainingTitleById = useMemo(() => Object.fromEntries(trainings.map((t) => [t.id, t.title])), [trainings])
+  const trainingTitleById = useMemo(
+    () =>
+      Object.fromEntries([
+        ...trainings.map((t) => [t.id, t.title] as const),
+        ...trainingTopics.map((topic) => [topic.id, topic.title.en] as const),
+      ]),
+    [trainings, trainingTopics],
+  )
 
   const { data: documents } = useFirestoreQuery<FileMetadata>(
     COLLECTIONS.FILES,
@@ -432,6 +459,9 @@ export function EmployeeProfilePage() {
           <Field label="Phone" value={employee.phone} />
           <Field label="Email" value={employee.email} />
           <Field label="Address" value={employee.address} />
+          {/* HR_OPERATIONS.md §12.1 — KTP address vs. current residence. */}
+          <Field label="Permanent address (KTP)" value={employee.permanentAddress} />
+          <Field label="Domicile address" value={employee.domicileAddress} />
           <Field label="Emergency contact" value={employee.emergencyContactName} />
           <Field label="Emergency phone" value={employee.emergencyContactPhone} />
         </CardContent>
@@ -723,7 +753,12 @@ export function EmployeeProfilePage() {
                   <TrainingAssignmentRow
                     key={assignment.id}
                     assignment={assignment}
-                    trainingTitle={trainingTitleById[assignment.trainingId] ?? assignment.trainingId}
+                    trainingTitle={
+                      trainingTitleById[assignment.topicId ?? assignment.trainingId ?? ''] ??
+                      assignment.topicId ??
+                      assignment.trainingId ??
+                      'Training'
+                    }
                   />
                 ))}
               </div>

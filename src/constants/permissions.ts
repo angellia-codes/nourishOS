@@ -43,6 +43,13 @@ export const PERMISSION_MODULES = {
   EXIT_INTERVIEWS: 'exitInterviews',
   PROJECTS: 'projects',
   CONTRACTS: 'contracts',
+  APPRAISAL_TEMPLATES: 'appraisalTemplates',
+  POSITIONS: 'positions',
+  APAR: 'apar',
+  PAYROLL: 'payroll',
+  EMPLOYEE_ENGAGEMENT: 'employeeEngagement',
+  ATTENDANCE: 'attendance',
+  EQUIPMENT: 'equipment',
 } as const
 
 export type PermissionModule = (typeof PERMISSION_MODULES)[keyof typeof PERMISSION_MODULES]
@@ -102,8 +109,43 @@ export const PERMISSIONS = {
   APPRAISALS_GENERATE_INSIGHTS: permission(PERMISSION_MODULES.APPRAISALS, 'generateInsights'),
   APPRAISALS_MANAGE_TEMPLATES: permission(PERMISSION_MODULES.APPRAISALS, 'manageTemplates'),
 
+  // Appraisal v2 (appraisal-v2-design.md) — replaces the v1 create/submit
+  // pair above for new appraisals; those two strings stay defined so v1
+  // historical records/permissions docs keep resolving, but are no longer
+  // granted to any role going forward (see organization.ts).
+  APPRAISALS_SCORE_PRIMARY: permission(PERMISSION_MODULES.APPRAISALS, 'scorePrimary'),
+  APPRAISALS_SCORE_SECONDARY: permission(PERMISSION_MODULES.APPRAISALS, 'scoreSecondary'),
+  APPRAISALS_READ_RECOMMENDATION: permission(PERMISSION_MODULES.APPRAISALS, 'readRecommendation'),
+  APPRAISALS_ACKNOWLEDGE: permission(PERMISSION_MODULES.APPRAISALS, 'acknowledge'),
+  APPRAISALS_REOPEN: permission(PERMISSION_MODULES.APPRAISALS, 'reopen'),
+  APPRAISAL_TEMPLATES_READ: permission(PERMISSION_MODULES.APPRAISAL_TEMPLATES, ACTIONS.READ),
+  APPRAISAL_TEMPLATES_GENERATE: permission(PERMISSION_MODULES.APPRAISAL_TEMPLATES, 'generate'),
+  APPRAISAL_TEMPLATES_APPROVE: permission(PERMISSION_MODULES.APPRAISAL_TEMPLATES, 'approve'),
+
+  // Positions Master (POSITIONS_MASTER_DESIGN.md §10). READ needs no permission
+  // string beyond isSignedIn() (all authenticated, firestore.rules) — kept
+  // here only for PermissionGuard consistency on write-gated UI buttons.
+  POSITIONS_READ: permission(PERMISSION_MODULES.POSITIONS, ACTIONS.READ),
+  POSITIONS_CREATE: permission(PERMISSION_MODULES.POSITIONS, ACTIONS.CREATE),
+  POSITIONS_UPDATE: permission(PERMISSION_MODULES.POSITIONS, ACTIONS.UPDATE),
+  POSITIONS_ARCHIVE: permission(PERMISSION_MODULES.POSITIONS, 'archive'),
+  POSITIONS_SET_SCORER: permission(PERMISSION_MODULES.POSITIONS, 'setScorer'),
+  POSITIONS_SEED: permission(PERMISSION_MODULES.POSITIONS, 'seed'),
+
   TRAINING_READ: permission(PERMISSION_MODULES.TRAINING, ACTIONS.READ),
+  /**
+   * Superseded by TRAINING_MANAGE when the canonical catalogue shipped
+   * (training-module-spec-v1.0.md). No callable checks it any more; kept
+   * defined so live roles/{roleId} documents that hold it still resolve.
+   */
   TRAINING_ASSIGN: permission(PERMISSION_MODULES.TRAINING, ACTIONS.ASSIGN),
+  // §5 — MANAGE owns the catalogue, campaigns and the gate override (HR only);
+  // VERIFY is the manager-tier sign-off on a trainee, scoped to their own
+  // outlet + department. §5's third row (`training.view`, all staff, own
+  // assignments) has no enforcement point — reads are gated by firestore.rules
+  // against the denormalised employeeUid — so it is not a string here.
+  TRAINING_MANAGE: permission(PERMISSION_MODULES.TRAINING, ACTIONS.MANAGE),
+  TRAINING_VERIFY: permission(PERMISSION_MODULES.TRAINING, 'verify'),
 
   DOCUMENTS_READ: permission(PERMISSION_MODULES.DOCUMENTS, ACTIONS.READ),
   DOCUMENTS_PUBLISH: permission(PERMISSION_MODULES.DOCUMENTS, ACTIONS.PUBLISH),
@@ -153,6 +195,22 @@ export const PERMISSIONS = {
   PATROLS_CREATE: permission(PERMISSION_MODULES.SECURITY, ACTIONS.CREATE),
   PATROLS_READ: permission(PERMISSION_MODULES.SECURITY, ACTIONS.READ),
   CHECKPOINTS_MANAGE: permission(PERMISSION_MODULES.SECURITY, 'manageCheckpoints'),
+
+  // Security — Fire Extinguishers (fire-extinguisher.md §7). Two strings, not
+  // the doc's five: `apar.view`/`apar.viewAllOutlets` have no enforcement point
+  // (reads are rules-gated, the same call lostFound documents above) and
+  // `apar.reportUsage` ships with the deferred usage report. MANAGE owns the
+  // register; INSPECT records a round — §7.1 keeps Security off MANAGE on
+  // purpose, so the inspector cannot edit the expiry dates they inspect.
+  APAR_MANAGE: permission(PERMISSION_MODULES.APAR, ACTIONS.MANAGE),
+  APAR_INSPECT: permission(PERMISSION_MODULES.APAR, 'inspect'),
+
+  // Engineering — Equipment Master (equipment-master-design.md §6.1). No
+  // view/view_all strings — reads are rules-gated and outlet-scoped in
+  // firestore.rules, same call APAR/lostFound above make.
+  EQUIPMENT_MANAGE: permission(PERMISSION_MODULES.EQUIPMENT, ACTIONS.MANAGE),
+  EQUIPMENT_IMPORT: permission(PERMISSION_MODULES.EQUIPMENT, 'import'),
+  EQUIPMENT_DECOMMISSION: permission(PERMISSION_MODULES.EQUIPMENT, 'decommission'),
 
   // Operations — Lost & Found (lost-and-found-report.md §7). No separate
   // "view_all" string — cross-outlet visibility is a rules-layer role check
@@ -211,6 +269,36 @@ export const PERMISSIONS = {
   // HR — the GM/Director digital-signature step on a new contract (§7.3 /
   // §9.14). The rest of the contract lifecycle stays on employees.update.
   CONTRACTS_SIGN: permission(PERMISSION_MODULES.CONTRACTS, 'sign'),
+
+  // Payroll Components & Payslip (payroll-components-payslip-design.md §8).
+  // The spec's `payroll.readOwn` is deliberately NOT defined: it is reserved
+  // for a future employee self-service with no enforcement point today, and
+  // this codebase does not define strings nothing checks (same call as
+  // apar.view / training.view). The spec's "Finance Manager" is the `finance`
+  // role — no financeManager exists in ROLES.
+  PAYROLL_READ: permission(PERMISSION_MODULES.PAYROLL, ACTIONS.READ),
+  PAYROLL_IMPORT: permission(PERMISSION_MODULES.PAYROLL, 'import'),
+  PAYROLL_APPROVE: permission(PERMISSION_MODULES.PAYROLL, ACTIONS.APPROVE),
+  PAYROLL_MANAGE_COMPONENTS: permission(PERMISSION_MODULES.PAYROLL, 'manageComponents'),
+  // Super Admin only — granted to no role in ROLE_PERMISSIONS, since superAdmin
+  // bypasses requirePermission entirely (2026-08-15).
+  PAYROLL_MANAGE_PARAMETERS: permission(PERMISSION_MODULES.PAYROLL, 'manageParameters'),
+
+  // Employee Engagement — company events/activities, cost and participants.
+  // HR-only, no separate read string: read access is rules-gated (hrManager/
+  // superAdmin), same shape as payrollRecords.
+  EMPLOYEE_ENGAGEMENT_MANAGE: permission(PERMISSION_MODULES.EMPLOYEE_ENGAGEMENT, ACTIONS.MANAGE),
+
+  // Attendance (attendance.md §8). The doc's `attendance.readOwn` is
+  // deliberately NOT defined — reserved for a future employee self-service
+  // with no enforcement point today, same call as payroll.readOwn above.
+  // "Finance Manager" is the `finance` role, same resolution payroll.approve
+  // already uses.
+  ATTENDANCE_IMPORT: permission(PERMISSION_MODULES.ATTENDANCE, 'import'),
+  ATTENDANCE_APPROVE: permission(PERMISSION_MODULES.ATTENDANCE, ACTIONS.APPROVE),
+  ATTENDANCE_VIEW_ALL_OUTLETS: permission(PERMISSION_MODULES.ATTENDANCE, 'viewAllOutlets'),
+  ATTENDANCE_VIEW_OWN_OUTLET: permission(PERMISSION_MODULES.ATTENDANCE, 'viewOwnOutlet'),
+  ATTENDANCE_EXPORT: permission(PERMISSION_MODULES.ATTENDANCE, ACTIONS.EXPORT),
 } as const
 
 export type PermissionString = (typeof PERMISSIONS)[keyof typeof PERMISSIONS]
