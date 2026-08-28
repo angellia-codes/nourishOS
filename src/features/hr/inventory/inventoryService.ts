@@ -30,7 +30,6 @@ export function updateInventoryItem(input: UpdateInventoryItemInput): Promise<{ 
 
 export interface ReceiveStockInput {
   itemId: string
-  outletId: string
   sizeVariant?: string
   quantity: number
   reasonCode: 'supplierReceipt' | 'employeeReturn' | 'adjustment'
@@ -43,7 +42,6 @@ export function receiveStock(input: ReceiveStockInput): Promise<{ movementId: st
 
 export interface IssueStockInput {
   itemId: string
-  outletId: string
   sizeVariant?: string
   quantity: number
   reasonCode: 'employeeIssue' | 'writeOff' | 'adjustment'
@@ -57,8 +55,8 @@ export function issueStock(input: IssueStockInput): Promise<{ movementId: string
 
 export interface TransferStockInput {
   itemId: string
-  sourceOutletId: string
-  destinationOutletId: string
+  destinationType: 'outlet' | 'department'
+  destinationId: string
   sizeVariant?: string
   quantity: number
   notes?: string
@@ -66,7 +64,7 @@ export interface TransferStockInput {
 
 export function transferStock(
   input: TransferStockInput,
-): Promise<{ movementOutId: string; movementInId: string }> {
+): Promise<{ movementOutId: string; movementInId: string | null }> {
   return callFunction('transferStock', input)
 }
 

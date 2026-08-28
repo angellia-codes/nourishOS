@@ -14,9 +14,9 @@ import {
 } from '../../lib'
 import {
   type MovementType,
+  HR_STORE_ID,
   loadItemInTransaction,
   validateSizeVariant,
-  validateOutletId,
   validateQuantity,
   readStockLevel,
   writeStockLevel,
@@ -40,14 +40,17 @@ const DEFAULT_LABEL: Record<ReasonCode, string> = {
 
 interface ReceiveStockInput {
   itemId: string
-  outletId: string
   sizeVariant?: string
   quantity: number
   reasonCode: ReasonCode
   notes?: string
 }
 
-/** Always increases quantityOnHand. Adjustments require a stated reason since they have no other paper trail. */
+/**
+ * Always increases quantityOnHand at HR_STORE_ID — receive always lands stock
+ * at the central HR Store, never a client-picked outlet. Adjustments require
+ * a stated reason since they have no other paper trail.
+ */
 export const receiveStock = onCall({ region: REGION }, async (request) => {
   try {
     const user = await requireActiveUser(request)
@@ -59,7 +62,7 @@ export const receiveStock = onCall({ region: REGION }, async (request) => {
       throw new AppError('invalid-argument', `reasonCode must be one of: ${REASON_CODES.join(', ')}.`)
     }
     const reasonCode = input.reasonCode as ReasonCode
-    const outletId = validateOutletId(input.outletId)
+    const outletId = HR_STORE_ID
     const quantity = validateQuantity(input.quantity)
     const notes = typeof input.notes === 'string' ? input.notes.trim() : ''
     if (reasonCode === 'adjustment' && !notes) {
@@ -87,6 +90,9 @@ export const receiveStock = onCall({ region: REGION }, async (request) => {
         totalCost: quantity * unitCost,
         reason: notes || DEFAULT_LABEL[reasonCode],
         issuedToEmployeeId: null,
+        issuedToEmployeeName: null,
+        issuedToDepartmentId: null,
+        issuedToPosition: null,
         linkedMovementId: null,
         performedBy: user.uid,
         ...newDocumentBaseFields(user.uid),

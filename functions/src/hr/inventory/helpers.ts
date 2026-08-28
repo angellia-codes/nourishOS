@@ -4,8 +4,23 @@ type Transaction = FirebaseFirestore.Transaction
 type DocumentReference = FirebaseFirestore.DocumentReference
 type DocumentData = FirebaseFirestore.DocumentData
 
-export const CATEGORIES = ['uniform', 'idCard', 'keys', 'equipment', 'electronics', 'other'] as const
+export const CATEGORIES = [
+  'uniform',
+  'safetyShoes',
+  'apron',
+  'hat',
+  'equipment',
+  'electronics',
+  'bikeSeatCover',
+  'handTowelGreen',
+  'handTowelBlack',
+  'nametag',
+  'other',
+] as const
 export type Category = (typeof CATEGORIES)[number]
+
+/** Central store all uniform/asset stock is received into, issued from, and transferred out of — not a real outlet, so it stays out of OUTLETS. */
+export const HR_STORE_ID = 'hr_store'
 
 /** Mirrors MovementType in src/types/inventory.types.ts — functions/ can't import from src/. */
 export type MovementType = 'receive' | 'issue' | 'return' | 'transferOut' | 'transferIn' | 'adjustment'

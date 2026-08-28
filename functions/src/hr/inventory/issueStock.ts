@@ -14,9 +14,9 @@ import {
 } from '../../lib'
 import {
   type MovementType,
+  HR_STORE_ID,
   loadItemInTransaction,
   validateSizeVariant,
-  validateOutletId,
   validateQuantity,
   readStockLevel,
   writeStockLevel,
@@ -40,7 +40,6 @@ const DEFAULT_LABEL: Record<ReasonCode, string> = {
 
 interface IssueStockInput {
   itemId: string
-  outletId: string
   sizeVariant?: string
   quantity: number
   reasonCode: ReasonCode
@@ -49,9 +48,11 @@ interface IssueStockInput {
 }
 
 /**
- * Always decreases quantityOnHand; rejects if it would go negative. Loss and
- * write-off reasons require a stated notes, same as receiveStock's adjustment
- * branch — an employee issue is self-documenting via employeeId instead.
+ * Always decreases quantityOnHand at HR_STORE_ID — issue always draws from
+ * the central HR Store, never a client-picked outlet. Rejects if it would go
+ * negative. Loss and write-off reasons require a stated notes, same as
+ * receiveStock's adjustment branch — an employee issue is self-documenting
+ * via employeeId instead.
  */
 export const issueStock = onCall({ region: REGION }, async (request) => {
   try {
@@ -64,20 +65,27 @@ export const issueStock = onCall({ region: REGION }, async (request) => {
       throw new AppError('invalid-argument', `reasonCode must be one of: ${REASON_CODES.join(', ')}.`)
     }
     const reasonCode = input.reasonCode as ReasonCode
-    const outletId = validateOutletId(input.outletId)
+    const outletId = HR_STORE_ID
     const quantity = validateQuantity(input.quantity)
     const notes = typeof input.notes === 'string' ? input.notes.trim() : ''
 
     let employeeId: string | null = null
+    let employeeName: string | null = null
+    let employeeDepartmentId: string | null = null
+    let employeePosition: string | null = null
     if (reasonCode === 'employeeIssue') {
       if (!input.employeeId) {
         throw new AppError('invalid-argument', 'employeeId is required when reasonCode is employeeIssue.')
       }
       const employeeSnap = await db.collection(COLLECTIONS.EMPLOYEES).doc(input.employeeId).get()
-      if (!employeeSnap.exists || employeeSnap.data()?.status !== 'active') {
+      const employeeData = employeeSnap.data()
+      if (!employeeSnap.exists || employeeData?.status !== 'active') {
         throw new AppError('failed-precondition', 'employeeId must refer to an active employee.')
       }
       employeeId = input.employeeId
+      employeeName = (employeeData?.fullName as string) ?? null
+      employeeDepartmentId = (employeeData?.departmentId as string) ?? null
+      employeePosition = (employeeData?.position as string) ?? null
     } else if (!notes) {
       throw new AppError('invalid-argument', 'notes is required for a write-off or adjustment.')
     }
@@ -103,6 +111,9 @@ export const issueStock = onCall({ region: REGION }, async (request) => {
         totalCost: -quantity * unitCost,
         reason: notes || DEFAULT_LABEL[reasonCode],
         issuedToEmployeeId: employeeId,
+        issuedToEmployeeName: employeeName,
+        issuedToDepartmentId: employeeDepartmentId,
+        issuedToPosition: employeePosition,
         linkedMovementId: null,
         performedBy: user.uid,
         ...newDocumentBaseFields(user.uid),

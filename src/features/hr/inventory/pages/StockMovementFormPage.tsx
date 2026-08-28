@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Select, Spinner, Textarea } from '@/components/ui'
-import { OUTLETS } from '@/constants'
+import { DEPARTMENTS, OUTLETS } from '@/constants'
 import { useToast } from '@/hooks'
 import { subscribeToEmployees } from '@/features/hr/services/employeeService'
 import * as inventoryService from '../inventoryService'
+import { HR_STORE_ID, HR_STORE_NAME } from '../inventoryFormat'
 import type { Employee, InventoryItem, StockLevel } from '@/types'
+
+type DestinationType = 'outlet' | 'department'
 
 type Mode = 'receive' | 'issue' | 'transfer'
 
@@ -49,12 +52,13 @@ export function StockMovementFormPage() {
   const [levels, setLevels] = useState<StockLevel[]>([])
   const [employees, setEmployees] = useState<Employee[]>([])
 
-  const [outletId, setOutletId] = useState(OUTLETS[0]?.id ?? '')
-  const [destinationOutletId, setDestinationOutletId] = useState(OUTLETS[1]?.id ?? OUTLETS[0]?.id ?? '')
+  const [destinationType, setDestinationType] = useState<DestinationType>('outlet')
+  const [destinationId, setDestinationId] = useState(OUTLETS[0]?.id ?? '')
   const [sizeVariant, setSizeVariant] = useState('')
   const [quantity, setQuantity] = useState('')
   const [reasonCode, setReasonCode] = useState<string>(mode === 'issue' ? 'employeeIssue' : 'supplierReceipt')
   const [employeeId, setEmployeeId] = useState('')
+  const [employeeSearch, setEmployeeSearch] = useState('')
   const [notes, setNotes] = useState('')
 
   useEffect(() => {
@@ -91,6 +95,11 @@ export function StockMovementFormPage() {
   }, [mode])
 
   const activeEmployees = useMemo(() => employees.filter((e) => e.status === 'active'), [employees])
+  const filteredEmployees = useMemo(() => {
+    const search = employeeSearch.trim().toLowerCase()
+    if (!search) return activeEmployees
+    return activeEmployees.filter((e) => e.fullName.toLowerCase().includes(search))
+  }, [activeEmployees, employeeSearch])
 
   const onHandAt = (outlet: string) => {
     const size = item?.hasSizes ? sizeVariant : null
@@ -101,16 +110,16 @@ export function StockMovementFormPage() {
   const isAdjustmentLike = mode === 'receive' ? reasonCode === 'adjustment' : mode === 'issue' && reasonCode !== 'employeeIssue'
   const notesOk = !isAdjustmentLike || notes.trim() !== ''
   const employeeOk = mode !== 'issue' || reasonCode !== 'employeeIssue' || employeeId !== ''
-  const outletsOk = mode !== 'transfer' || outletId !== destinationOutletId
+  const destinationOk = mode !== 'transfer' || destinationId !== ''
   const sizeOk = !item?.hasSizes || sizeVariant !== ''
   const quantityOk =
-    mode === 'receive' || Number.isInteger(parsedQuantity) === false || parsedQuantity <= onHandAt(outletId)
+    mode === 'receive' || Number.isInteger(parsedQuantity) === false || parsedQuantity <= onHandAt(HR_STORE_ID)
   const canSubmit =
     Number.isInteger(parsedQuantity) &&
     parsedQuantity > 0 &&
     notesOk &&
     employeeOk &&
-    outletsOk &&
+    destinationOk &&
     sizeOk &&
     quantityOk &&
     !submitting
@@ -123,7 +132,6 @@ export function StockMovementFormPage() {
       if (mode === 'receive') {
         await inventoryService.receiveStock({
           itemId,
-          outletId,
           sizeVariant: size,
           quantity: parsedQuantity,
           reasonCode: reasonCode as 'supplierReceipt' | 'employeeReturn' | 'adjustment',
@@ -132,7 +140,6 @@ export function StockMovementFormPage() {
       } else if (mode === 'issue') {
         await inventoryService.issueStock({
           itemId,
-          outletId,
           sizeVariant: size,
           quantity: parsedQuantity,
           reasonCode: reasonCode as 'employeeIssue' | 'writeOff' | 'adjustment',
@@ -142,8 +149,8 @@ export function StockMovementFormPage() {
       } else {
         await inventoryService.transferStock({
           itemId,
-          sourceOutletId: outletId,
-          destinationOutletId,
+          destinationType,
+          destinationId,
           sizeVariant: size,
           quantity: parsedQuantity,
           notes: notes.trim() || undefined,
@@ -180,35 +187,41 @@ export function StockMovementFormPage() {
         <CardContent className="flex flex-col gap-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="outlet">{mode === 'transfer' ? 'From outlet' : 'Outlet'}</Label>
-              <Select id="outlet" value={outletId} onChange={(e) => setOutletId(e.target.value)}>
-                {OUTLETS.map((outlet) => (
-                  <option key={outlet.id} value={outlet.id}>
-                    {outlet.name}
-                  </option>
-                ))}
-              </Select>
-              {mode !== 'transfer' && (
-                <p className="text-xs text-muted-foreground">{onHandAt(outletId)} currently on hand.</p>
-              )}
+              <Label>{mode === 'transfer' ? 'From' : 'Location'}</Label>
+              <p className="flex h-10 items-center rounded-md border border-input bg-muted px-3 text-sm text-foreground">
+                {HR_STORE_NAME}
+              </p>
+              <p className="text-xs text-muted-foreground">{onHandAt(HR_STORE_ID)} currently on hand.</p>
             </div>
 
             {mode === 'transfer' && (
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="destinationOutlet">To outlet</Label>
-                <Select
-                  id="destinationOutlet"
-                  value={destinationOutletId}
-                  onChange={(e) => setDestinationOutletId(e.target.value)}
-                >
-                  {OUTLETS.map((outlet) => (
-                    <option key={outlet.id} value={outlet.id}>
-                      {outlet.name}
-                    </option>
-                  ))}
-                </Select>
-                {!outletsOk && <p className="text-xs text-destructive">Must differ from the source outlet.</p>}
-              </div>
+              <>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="destinationType">Transfer to</Label>
+                  <Select
+                    id="destinationType"
+                    value={destinationType}
+                    onChange={(e) => {
+                      const nextType = e.target.value as DestinationType
+                      setDestinationType(nextType)
+                      setDestinationId((nextType === 'outlet' ? OUTLETS[0]?.id : DEPARTMENTS[0]?.id) ?? '')
+                    }}
+                  >
+                    <option value="outlet">Outlet</option>
+                    <option value="department">Department</option>
+                  </Select>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="destinationId">{destinationType === 'outlet' ? 'Outlet' : 'Department'}</Label>
+                  <Select id="destinationId" value={destinationId} onChange={(e) => setDestinationId(e.target.value)}>
+                    {(destinationType === 'outlet' ? OUTLETS : DEPARTMENTS).map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.name}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+              </>
             )}
 
             {item.hasSizes && (
@@ -236,7 +249,7 @@ export function StockMovementFormPage() {
                 onChange={(e) => setQuantity(e.target.value)}
               />
               {mode !== 'receive' && !quantityOk && (
-                <p className="text-xs text-destructive">Only {onHandAt(outletId)} on hand at that outlet.</p>
+                <p className="text-xs text-destructive">Only {onHandAt(HR_STORE_ID)} on hand at HR Store.</p>
               )}
             </div>
           </div>
@@ -256,10 +269,16 @@ export function StockMovementFormPage() {
 
           {mode === 'issue' && reasonCode === 'employeeIssue' && (
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="employee">Employee</Label>
+              <Label htmlFor="employeeSearch">Employee</Label>
+              <Input
+                id="employeeSearch"
+                placeholder="Search by name…"
+                value={employeeSearch}
+                onChange={(e) => setEmployeeSearch(e.target.value)}
+              />
               <Select id="employee" value={employeeId} onChange={(e) => setEmployeeId(e.target.value)}>
                 <option value="">Select an employee…</option>
-                {activeEmployees.map((employee) => (
+                {filteredEmployees.map((employee) => (
                   <option key={employee.id} value={employee.id}>
                     {employee.fullName}
                   </option>

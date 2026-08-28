@@ -14,14 +14,21 @@ import {
   TimelineItem,
 } from '@/components/ui'
 import { EmptyState, PermissionGuard } from '@/components/shared'
-import { COLLECTIONS, OUTLETS, PERMISSIONS } from '@/constants'
+import { COLLECTIONS, PERMISSIONS } from '@/constants'
 import { useFirestoreDoc } from '@/hooks'
 import { formatDateTime } from '@/utils'
 import * as inventoryService from '../inventoryService'
-import { INVENTORY_CATEGORY_LABELS, MOVEMENT_TYPE_ICON, MOVEMENT_TYPE_LABELS, MOVEMENT_TYPE_TONE, formatIdr } from '../inventoryFormat'
+import {
+  INVENTORY_CATEGORY_LABELS,
+  MOVEMENT_TYPE_ICON,
+  MOVEMENT_TYPE_LABELS,
+  MOVEMENT_TYPE_TONE,
+  formatIdr,
+  formatIssuedTo,
+  formatMovementCost,
+  locationName,
+} from '../inventoryFormat'
 import type { InventoryItem, StockLevel, StockMovement } from '@/types'
-
-const outletName = (outletId: string) => OUTLETS.find((o) => o.id === outletId)?.name ?? outletId
 
 /** Item info, stock levels by outlet/size, and the append-only movement ledger. */
 export function InventoryItemDetailPage() {
@@ -119,7 +126,7 @@ export function InventoryItemDetailPage() {
               .map((level) => (
                 <div key={level.id} className="flex items-baseline justify-between gap-3 text-sm">
                   <span className="text-foreground">
-                    {outletName(level.outletId)}
+                    {locationName(level.outletId)}
                     {level.sizeVariant && ` · ${level.sizeVariant}`}
                   </span>
                   <span className="font-mono tabular-nums text-muted-foreground">{level.quantityOnHand}</span>
@@ -136,29 +143,38 @@ export function InventoryItemDetailPage() {
           </CardHeader>
           <CardContent>
             <Timeline>
-              {movements.map((movement) => (
-                <TimelineItem
-                  key={movement.id}
-                  title={
-                    <span className="inline-flex items-center gap-2">
-                      <StatusPill
-                        tone={MOVEMENT_TYPE_TONE[movement.movementType]}
-                        icon={MOVEMENT_TYPE_ICON[movement.movementType]}
-                        label={MOVEMENT_TYPE_LABELS[movement.movementType]}
-                      />
-                      <span className="font-mono tabular-nums text-foreground">
-                        {movement.quantityDelta > 0 ? '+' : ''}
-                        {movement.quantityDelta}
-                        {movement.sizeVariant && ` (${movement.sizeVariant})`}
+              {movements.map((movement) => {
+                const issuedTo = formatIssuedTo(movement)
+                return (
+                  <TimelineItem
+                    key={movement.id}
+                    title={
+                      <span className="flex flex-col gap-1">
+                        <span className="inline-flex flex-wrap items-center gap-2">
+                          <StatusPill
+                            tone={MOVEMENT_TYPE_TONE[movement.movementType]}
+                            icon={MOVEMENT_TYPE_ICON[movement.movementType]}
+                            label={MOVEMENT_TYPE_LABELS[movement.movementType]}
+                          />
+                          <span className="font-mono tabular-nums text-foreground">
+                            {movement.quantityDelta > 0 ? '+' : ''}
+                            {movement.quantityDelta}
+                            {movement.sizeVariant && ` (${movement.sizeVariant})`}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {locationName(movement.outletId)} · {movement.reason}
+                          </span>
+                        </span>
+                        {issuedTo && <span className="text-xs text-muted-foreground">{issuedTo}</span>}
+                        <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                          {formatMovementCost(movement)}
+                        </span>
                       </span>
-                      <span className="text-xs text-muted-foreground">
-                        {outletName(movement.outletId)} · {movement.reason}
-                      </span>
-                    </span>
-                  }
-                  timestamp={formatDateTime(movement.createdAt)}
-                />
-              ))}
+                    }
+                    timestamp={formatDateTime(movement.createdAt)}
+                  />
+                )
+              })}
             </Timeline>
           </CardContent>
         </Card>
