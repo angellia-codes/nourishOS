@@ -1,6 +1,6 @@
 import { FileEdit, Megaphone, Archive, type LucideIcon } from 'lucide-react'
 import type { StatusTone } from '@/components/ui'
-import type { Announcement, AnnouncementCategory, AnnouncementStatus } from '@/types'
+import type { Announcement, AnnouncementCategory, AnnouncementStatus, MilestoneType } from '@/types'
 import type { NotificationPriority } from '@/constants/statuses'
 
 /** communications.md §5 — Categories. `emergency` is §13's Broadcast. */
@@ -41,6 +41,26 @@ export const PRIORITY_VARIANT: Record<NotificationPriority, 'neutral' | 'success
   low: 'neutral',
   informational: 'neutral',
 }
+
+/** Auto-generated milestone posts — functions/src/communications/milestoneAnnouncements.ts. */
+export const MILESTONE_LABELS: Record<MilestoneType, string> = {
+  birthday: 'Birthday',
+  anniversary: 'Work Anniversary',
+  newHire: 'New Team Member',
+  farewell: 'Farewell',
+}
+
+export const MILESTONE_EMOJI: Record<MilestoneType, string> = {
+  birthday: '🎂',
+  anniversary: '🎊',
+  newHire: '👋',
+  farewell: '🙏',
+}
+
+/** Mirrors WISH_EMOJI in functions/src/communications/milestoneAnnouncements.ts — the callable rejects anything else. */
+export const WISH_EMOJI = ['🎉', '🎂', '❤️', '👏', '🔥'] as const
+
+export const WISH_MESSAGE_MAX = 280
 
 /**
  * Pinned first, then newest. Sorted here rather than in the query so the feed

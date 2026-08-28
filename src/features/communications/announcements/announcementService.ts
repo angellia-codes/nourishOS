@@ -85,6 +85,14 @@ export function subscribeToManagedAnnouncements(
   )
 }
 
+export function sendMilestoneWish(input: {
+  announcementId: string
+  emoji: string
+  message?: string
+}): Promise<{ announcementId: string }> {
+  return callFunction('sendMilestoneWish', input)
+}
+
 /** One query for the whole unread state, rather than a read-receipt lookup per row. */
 export function subscribeToMyReads(
   uid: string,

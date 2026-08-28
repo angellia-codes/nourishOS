@@ -63,7 +63,7 @@ const VALID_DEPARTMENT_IDS = Object.keys(DEPARTMENT_ROLES)
 const VALID_ROLE_IDS = ['superAdmin', ...Object.keys(ROLE_PERMISSIONS)]
 
 /** A type alias, not an interface: only aliases get the implicit index signature recordAuditEvent's Record<string, unknown> fields need. */
-type AnnouncementFields = {
+export type AnnouncementFields = {
   title: string
   body: string
   category: (typeof CATEGORIES)[number]
@@ -160,8 +160,14 @@ async function resolveAudienceUids(fields: AnnouncementFields): Promise<string[]
     .map((doc) => doc.id)
 }
 
-/** Publishes in place: resolves the audience, stamps the publish fields, then notifies. Shared by createAnnouncement(publishNow) and publishAnnouncement. */
-async function publishInternal(
+/**
+ * Publishes in place: resolves the audience, stamps the publish fields, then
+ * notifies. Shared by createAnnouncement(publishNow), publishAnnouncement, and
+ * the milestone job (milestoneAnnouncements.ts), which passes a system actor —
+ * the `recipientUid !== user.uid` filter below then matches nobody, which is
+ * what lets the celebrant receive their own announcement.
+ */
+export async function publishInternal(
   announcementId: string,
   fields: AnnouncementFields,
   user: AuthedUser,

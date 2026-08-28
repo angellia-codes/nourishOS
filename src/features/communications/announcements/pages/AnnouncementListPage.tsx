@@ -12,6 +12,8 @@ import {
   ANNOUNCEMENT_STATUS_ICON,
   ANNOUNCEMENT_STATUS_LABELS,
   ANNOUNCEMENT_STATUS_TONE,
+  MILESTONE_EMOJI,
+  MILESTONE_LABELS,
   PRIORITY_VARIANT,
   sortForFeed,
 } from '../announcementFormat'
@@ -179,6 +181,11 @@ export function AnnouncementListPage() {
                         {row.isPinned && (
                           <Pin className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-label="Pinned" />
                         )}
+                        {row.milestoneType && (
+                          <span className="shrink-0" aria-label={MILESTONE_LABELS[row.milestoneType]}>
+                            {MILESTONE_EMOJI[row.milestoneType]}
+                          </span>
+                        )}
                         <p className={unread ? 'truncate font-semibold text-foreground' : 'truncate text-foreground'}>
                           {row.title}
                         </p>
@@ -189,6 +196,9 @@ export function AnnouncementListPage() {
                       </p>
                     </button>
                     <div className="flex shrink-0 flex-wrap items-center gap-2">
+                      {row.milestoneType && (row.wishCount ?? 0) > 0 && (
+                        <Badge variant="neutral">🎉 {row.wishCount}</Badge>
+                      )}
                       {row.priority !== 'medium' && (
                         <Badge variant={PRIORITY_VARIANT[row.priority]}>{row.priority}</Badge>
                       )}

@@ -8,8 +8,11 @@ import { where, orderBy } from '@/services/firestore'
 import { useAuth, useFirestoreDoc, useFirestoreQuery, usePermissions, useToast } from '@/hooks'
 import { formatDateTime } from '@/utils'
 import * as announcementService from '../announcementService'
+import { Confetti } from '../components/Confetti'
+import { MilestoneWishes } from '../components/MilestoneWishes'
 import {
   ANNOUNCEMENT_CATEGORY_LABELS,
+  MILESTONE_LABELS,
   ANNOUNCEMENT_STATUS_ICON,
   ANNOUNCEMENT_STATUS_LABELS,
   ANNOUNCEMENT_STATUS_TONE,
@@ -87,6 +90,7 @@ export function AnnouncementDetailPage() {
     )
   }
 
+  const milestoneType = announcement.milestoneType ?? null
   const isAuthor = announcement.createdBy === user?.uid
   const canPublish = can(PERMISSIONS.ANNOUNCEMENTS_PUBLISH)
   const isDraft = announcement.announcementStatus === 'draft'
@@ -112,9 +116,11 @@ export function AnnouncementDetailPage() {
         Announcements
       </Button>
 
-      <Card>
+      <Card className={milestoneType ? 'relative overflow-hidden' : undefined}>
+        {milestoneType && announcement.announcementStatus === 'published' && <Confetti />}
         <CardHeader className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-2">
+            {milestoneType && <Badge variant="success">{MILESTONE_LABELS[milestoneType]}</Badge>}
             <StatusPill
               tone={ANNOUNCEMENT_STATUS_TONE[announcement.announcementStatus]}
               icon={ANNOUNCEMENT_STATUS_ICON[announcement.announcementStatus]}
@@ -140,6 +146,10 @@ export function AnnouncementDetailPage() {
           <p className="text-xs text-muted-foreground">{describeAudience(announcement, labelFor)}</p>
         </CardContent>
       </Card>
+
+      {milestoneType && announcement.announcementStatus === 'published' && (
+        <MilestoneWishes announcementId={announcementId} />
+      )}
 
       <Card>
         <CardHeader>

@@ -48,6 +48,35 @@ export interface Announcement extends BaseDocument {
   audienceUids: string[]
   publishedAt?: string | null
   publishedBy?: string | null
+
+  /**
+   * Set only by the milestoneAnnouncements scheduled job — never accepted from
+   * a client. Its presence is what turns the detail page into a celebration
+   * card and opens the post for wishes.
+   */
+  milestoneType?: MilestoneType | null
+  milestoneEmployeeId?: string | null
+  /** Denormalised count of announcementWishes, so the feed row needs no second query. */
+  wishCount?: number
+}
+
+/** functions/src/communications/milestoneMatch.ts — the four auto-generated employee milestones. */
+export type MilestoneType = 'birthday' | 'anniversary' | 'newHire' | 'farewell'
+
+/**
+ * One per (milestone announcement, person). Doc id is
+ * `${announcementId}_${uid}`, so a person holds one wish — tapping a different
+ * emoji or adding a message updates it in place rather than stacking.
+ */
+export interface MilestoneWish {
+  id: string
+  announcementId: string
+  uid: string
+  senderName: string
+  emoji: string
+  message: string
+  createdAt: string
+  updatedAt: string
 }
 
 /** One per (announcement, reader). Doc id is `${announcementId}_${uid}`, so recording a read twice is idempotent. */
