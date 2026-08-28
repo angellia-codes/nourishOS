@@ -328,17 +328,13 @@ export function CommunicationRecordDetailPage() {
         </CardContent>
       </Card>
 
-      {(record.proposedAction?.description || record.proposedAction?.category) && (
+      {record.proposedAction?.category && (
         <Card>
           <CardHeader>
             <SectionTitle section="proposedAction" />
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
-            {record.proposedAction?.category && (
-              <Field label="Category" value={PROPOSED_ACTION_CATEGORY_LABELS[record.proposedAction.category]} />
-            )}
-            <Field label="Action" value={record.proposedAction?.description} />
-            <Field label="Owner" value={record.proposedAction?.owner} />
+            <Field label="Category" value={PROPOSED_ACTION_CATEGORY_LABELS[record.proposedAction.category]} />
             <Field label="Target date" value={record.proposedAction?.targetDate} />
           </CardContent>
         </Card>
@@ -365,28 +361,12 @@ export function CommunicationRecordDetailPage() {
         </CardContent>
       </Card>
 
-      {(record.furtherAction?.employer || record.furtherAction?.employee) && (
-        <Card>
-          <CardHeader>
-            <SectionTitle section="furtherAction" />
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            <Field label="By the employer" value={record.furtherAction?.employer} />
-            <Field label="Employer owner" value={record.furtherAction?.employerOwner} />
-            <Field label="Employer date" value={record.furtherAction?.employerDate} />
-            <Field label="By the employee" value={record.furtherAction?.employee} />
-            <Field label="Employee action due" value={record.furtherAction?.employeeDueDate} />
-          </CardContent>
-        </Card>
-      )}
-
-      {(record.repeatIncident?.consequence || record.repeatIncident?.nextExpectedAction) && (
+      {(record.repeatIncident?.nextExpectedAction || record.repeatIncident?.linkedPreviousRecordId) && (
         <Card>
           <CardHeader>
             <SectionTitle section="repeatIncident" />
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
-            <Field label="Consequence of a repeat" value={record.repeatIncident?.consequence} />
             {record.repeatIncident?.nextExpectedAction && (
               <Field
                 label="Next expected action"

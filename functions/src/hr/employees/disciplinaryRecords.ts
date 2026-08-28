@@ -15,6 +15,7 @@ import {
   handleError,
   successResponse,
   PERMISSIONS,
+  resolveEmployeeUid,
   type AuthedUser,
 } from '../../lib'
 import { submitApprovalInternal } from '../../shared/approval'
@@ -68,21 +69,10 @@ interface IncidentInput {
 
 interface ProposedActionInput {
   category?: ProposedActionCategory
-  description?: string
-  owner?: string
   targetDate?: string
 }
 
-interface FurtherActionInput {
-  employer?: string
-  employerOwner?: string
-  employerDate?: string
-  employee?: string
-  employeeDueDate?: string
-}
-
 interface RepeatIncidentInput {
-  consequence?: string
   nextExpectedAction?: DisciplinaryType
   linkedPreviousRecordId?: string
 }
@@ -92,7 +82,6 @@ interface CommunicationFormInput {
   description?: string
   incident?: IncidentInput
   proposedAction?: ProposedActionInput
-  furtherAction?: FurtherActionInput
   repeatIncident?: RepeatIncidentInput
   validityDays?: number | null
 }
@@ -156,7 +145,6 @@ function normalizeForm(input: CommunicationFormInput) {
 
   const incident = input.incident ?? {}
   const proposedAction = input.proposedAction ?? {}
-  const furtherAction = input.furtherAction ?? {}
   const repeatIncident = input.repeatIncident ?? {}
 
   if (
@@ -191,19 +179,9 @@ function normalizeForm(input: CommunicationFormInput) {
     },
     proposedAction: {
       category: proposedAction.category ?? null,
-      description: optionalText(proposedAction.description, 'proposedAction.description'),
-      owner: optionalText(proposedAction.owner, 'proposedAction.owner', MAX_SHORT_TEXT),
       targetDate: optionalIsoDate(proposedAction.targetDate, 'proposedAction.targetDate'),
     },
-    furtherAction: {
-      employer: optionalText(furtherAction.employer, 'furtherAction.employer'),
-      employerOwner: optionalText(furtherAction.employerOwner, 'furtherAction.employerOwner', MAX_SHORT_TEXT),
-      employerDate: optionalIsoDate(furtherAction.employerDate, 'furtherAction.employerDate'),
-      employee: optionalText(furtherAction.employee, 'furtherAction.employee'),
-      employeeDueDate: optionalIsoDate(furtherAction.employeeDueDate, 'furtherAction.employeeDueDate'),
-    },
     repeatIncident: {
-      consequence: optionalText(repeatIncident.consequence, 'repeatIncident.consequence'),
       nextExpectedAction: repeatIncident.nextExpectedAction ?? null,
       linkedPreviousRecordId: optionalText(
         repeatIncident.linkedPreviousRecordId,
@@ -213,17 +191,6 @@ function normalizeForm(input: CommunicationFormInput) {
     },
     validityDays: resolveValidityDays(input.type, input.validityDays),
   }
-}
-
-/**
- * The employee's own login, if they have one. Firestore rules can only compare
- * against `request.auth.uid`, so the employee's read access has to be resolved
- * to a concrete uid at write time — the same trick publishAnnouncement uses for
- * `audienceUids`. Most floor staff have no users doc, hence the null.
- */
-async function resolveEmployeeUid(employeeId: string): Promise<string | null> {
-  const snap = await db.collection(COLLECTIONS.USERS).where('employeeId', '==', employeeId).limit(1).get()
-  return snap.empty ? null : snap.docs[0].id
 }
 
 async function loadRecord(recordId: string) {

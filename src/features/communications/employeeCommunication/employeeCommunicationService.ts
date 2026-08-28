@@ -32,19 +32,9 @@ export interface CommunicationFormInput {
   }
   proposedAction: {
     category?: ProposedActionCategory
-    description?: string
-    owner?: string
     targetDate?: string
   }
-  furtherAction: {
-    employer?: string
-    employerOwner?: string
-    employerDate?: string
-    employee?: string
-    employeeDueDate?: string
-  }
   repeatIncident: {
-    consequence?: string
     nextExpectedAction?: DisciplinaryType
     linkedPreviousRecordId?: string
   }

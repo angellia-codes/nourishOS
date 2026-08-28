@@ -68,15 +68,7 @@ export function CommunicationRecordFormPage() {
   const [policyReference, setPolicyReference] = useState('')
   const [codeOfConductReference, setCodeOfConductReference] = useState('')
   const [actionCategory, setActionCategory] = useState<ProposedActionCategory | ''>('')
-  const [actionDescription, setActionDescription] = useState('')
-  const [actionOwner, setActionOwner] = useState('')
   const [actionTargetDate, setActionTargetDate] = useState('')
-  const [employerAction, setEmployerAction] = useState('')
-  const [employerActionOwner, setEmployerActionOwner] = useState('')
-  const [employerActionDate, setEmployerActionDate] = useState('')
-  const [employeeAction, setEmployeeAction] = useState('')
-  const [employeeActionDueDate, setEmployeeActionDueDate] = useState('')
-  const [repeatConsequence, setRepeatConsequence] = useState('')
   const [nextExpectedAction, setNextExpectedAction] = useState<DisciplinaryType | ''>('')
   const [linkedPreviousRecordId, setLinkedPreviousRecordId] = useState('')
   /** Kept as a string so the field can be emptied while typing; '' means no expiry. */
@@ -133,15 +125,7 @@ export function CommunicationRecordFormPage() {
         setPolicyReference(row.incident?.policyReference ?? '')
         setCodeOfConductReference(row.incident?.codeOfConductReference ?? '')
         setActionCategory(row.proposedAction?.category ?? '')
-        setActionDescription(row.proposedAction?.description ?? '')
-        setActionOwner(row.proposedAction?.owner ?? '')
         setActionTargetDate(row.proposedAction?.targetDate ?? '')
-        setEmployerAction(row.furtherAction?.employer ?? '')
-        setEmployerActionOwner(row.furtherAction?.employerOwner ?? '')
-        setEmployerActionDate(row.furtherAction?.employerDate ?? '')
-        setEmployeeAction(row.furtherAction?.employee ?? '')
-        setEmployeeActionDueDate(row.furtherAction?.employeeDueDate ?? '')
-        setRepeatConsequence(row.repeatIncident?.consequence ?? '')
         setNextExpectedAction(row.repeatIncident?.nextExpectedAction ?? '')
         setLinkedPreviousRecordId(row.repeatIncident?.linkedPreviousRecordId ?? '')
         setValidityDays(row.validityDays === null || row.validityDays === undefined ? '' : String(row.validityDays))
@@ -218,19 +202,9 @@ export function CommunicationRecordFormPage() {
         },
         proposedAction: {
           category: actionCategory || undefined,
-          description: actionDescription.trim() || undefined,
-          owner: actionOwner.trim() || undefined,
           targetDate: actionTargetDate || undefined,
         },
-        furtherAction: {
-          employer: employerAction.trim() || undefined,
-          employerOwner: employerActionOwner.trim() || undefined,
-          employerDate: employerActionDate || undefined,
-          employee: employeeAction.trim() || undefined,
-          employeeDueDate: employeeActionDueDate || undefined,
-        },
         repeatIncident: {
-          consequence: repeatConsequence.trim() || undefined,
           nextExpectedAction: nextExpectedAction || undefined,
           linkedPreviousRecordId: linkedPreviousRecordId || undefined,
         },
@@ -480,77 +454,6 @@ export function CommunicationRecordFormPage() {
               />
             </div>
           </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="actionDescription">Proposed solution or action</Label>
-            <Textarea
-              id="actionDescription"
-              rows={3}
-              value={actionDescription}
-              maxLength={5000}
-              onChange={(e) => setActionDescription(e.target.value)}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="actionOwner">Owner</Label>
-            <Input id="actionOwner" value={actionOwner} maxLength={500} onChange={(e) => setActionOwner(e.target.value)} />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <SectionTitle section="furtherAction" />
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="employerAction">Further action by employer</Label>
-            <Textarea
-              id="employerAction"
-              rows={3}
-              value={employerAction}
-              maxLength={5000}
-              onChange={(e) => setEmployerAction(e.target.value)}
-            />
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="employerActionOwner">Employer action owner</Label>
-              <Input
-                id="employerActionOwner"
-                value={employerActionOwner}
-                maxLength={500}
-                onChange={(e) => setEmployerActionOwner(e.target.value)}
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="employerActionDate">Employer action date</Label>
-              <Input
-                id="employerActionDate"
-                type="date"
-                value={employerActionDate}
-                onChange={(e) => setEmployerActionDate(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="employeeAction">Further action by employee</Label>
-            <Textarea
-              id="employeeAction"
-              rows={3}
-              value={employeeAction}
-              maxLength={5000}
-              onChange={(e) => setEmployeeAction(e.target.value)}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="employeeActionDueDate">Employee action due</Label>
-            <Input
-              id="employeeActionDueDate"
-              type="date"
-              value={employeeActionDueDate}
-              onChange={(e) => setEmployeeActionDueDate(e.target.value)}
-            />
-          </div>
         </CardContent>
       </Card>
 
@@ -559,16 +462,6 @@ export function CommunicationRecordFormPage() {
           <SectionTitle section="repeatIncident" />
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="repeatConsequence">Consequence of a repeated incident</Label>
-            <Textarea
-              id="repeatConsequence"
-              rows={3}
-              value={repeatConsequence}
-              maxLength={5000}
-              onChange={(e) => setRepeatConsequence(e.target.value)}
-            />
-          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="nextExpectedAction">Next expected action</Label>

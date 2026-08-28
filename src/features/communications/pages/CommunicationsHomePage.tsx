@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Megaphone, ListChecks, MessageSquareWarning } from 'lucide-react'
+import { Megaphone, ListChecks } from 'lucide-react'
 import { Button, Card, CardContent } from '@/components/ui'
 
 /**
@@ -13,7 +13,10 @@ import { Button, Card, CardContent } from '@/components/ui'
  * (`/communications/chat/new`) still have real pages, reached from that
  * button, since a header dropdown can't host actual messaging. Communication
  * Settings (§14) moved to Settings (`/settings/communications`) since it's
- * account-level configuration, not a Communications record.
+ * account-level configuration, not a Communications record. Employee
+ * Communication is listed under People in the nav (2026-08-25) — HR looks for
+ * it there — but its pages stay at `/communications/employee`, outside the
+ * `/hr` role gate, because the employee must be able to read their own record.
  *
  * No permission gating on the cards: each page enforces its own access through
  * firestore.rules, so a card that leads somewhere restricted is honest about
@@ -31,12 +34,6 @@ const SUB_MODULES = [
     icon: ListChecks,
     title: 'Tasks',
     description: 'Work assigned to you, and what you have handed out.',
-  },
-  {
-    to: '/communications/employee',
-    icon: MessageSquareWarning,
-    title: 'Employee Communication',
-    description: 'Coaching, warnings and terminations — issued, signed and tracked.',
   },
 ]
 

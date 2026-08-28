@@ -97,7 +97,6 @@ export const BILINGUAL: Record<string, { en: string; id: string }> = {
   employeeStatement: { en: 'Employee Statement', id: 'Pernyataan Karyawan' },
   proposedAction: { en: 'Proposed Solution / Action', id: 'Usulan Solusi / Tindakan' },
   disciplinaryAction: { en: 'Disciplinary Action', id: 'Tindakan Disiplin' },
-  furtherAction: { en: 'Further Action', id: 'Tindakan yang Dilakukan' },
   repeatIncident: { en: 'Consequences of Repeated Incidents', id: 'Konsekuensi Pelanggaran Berulang' },
   declaration: { en: 'Declaration', id: 'Pernyataan' },
   signatures: { en: 'Signatures', id: 'Tanda Tangan' },

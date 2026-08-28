@@ -60,18 +60,7 @@ export interface CommunicationEmployeeStatement {
 /** §11. */
 export interface CommunicationProposedAction {
   category: ProposedActionCategory | null
-  description: string | null
-  owner: string | null
   targetDate: string | null
-}
-
-/** §14 — the two follow-up halves, employer and employee. */
-export interface CommunicationFurtherAction {
-  employer: string | null
-  employerOwner: string | null
-  employerDate: string | null
-  employee: string | null
-  employeeDueDate: string | null
 }
 
 /**
@@ -79,7 +68,6 @@ export interface CommunicationFurtherAction {
  * but never issues the next step itself — §35 Rule 4 keeps that with HR.
  */
 export interface CommunicationRepeatIncident {
-  consequence: string | null
   nextExpectedAction: DisciplinaryType | null
   linkedPreviousRecordId: string | null
 }
@@ -131,7 +119,6 @@ export interface DisciplinaryRecord extends BaseDocument {
   incident?: CommunicationIncident | null
   employeeStatement?: CommunicationEmployeeStatement | null
   proposedAction?: CommunicationProposedAction | null
-  furtherAction?: CommunicationFurtherAction | null
   repeatIncident?: CommunicationRepeatIncident | null
   acknowledgement?: CommunicationAcknowledgement | null
 

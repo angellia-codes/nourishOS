@@ -22,6 +22,7 @@ const SYSTEM_USER: AuthedUser = {
   departmentId: null,
   outletId: null,
   permissions: [],
+  employeeId: null,
 }
 
 /**
