@@ -36,11 +36,27 @@ const require = createRequire(import.meta.url)
 const here = path.dirname(fileURLToPath(import.meta.url))
 
 let ROLE_PERMISSIONS
+let PERMISSIONS
 try {
   ;({ ROLE_PERMISSIONS } = require(path.join(here, '..', 'lib', 'lib', 'organization.js')))
+  ;({ PERMISSIONS } = require(path.join(here, '..', 'lib', 'lib', 'permissions.js')))
 } catch {
-  console.error('Could not load functions/lib/lib/organization.js — run `npm --prefix functions run build` first.')
+  console.error('Could not load the compiled lib — run `npm --prefix functions run build` first.')
   process.exit(1)
+}
+
+/**
+ * superAdmin is absent from ROLE_PERMISSIONS by design (it is seeded once during
+ * bootstrap, and re-deriving it risks silently narrowing the one account that
+ * can fix everything else), but it is exactly the account you want when walking
+ * the whole app: it bypasses requirePermission server-side, AuthProvider grants
+ * it every permission client-side, and firestore.rules includes it everywhere.
+ * So it is special-cased here, filled from the server's PERMISSIONS mirror —
+ * which is a subset of the client's list, and only ever read for display, since
+ * nothing actually enforces against this document.
+ */
+function permissionsFor(roleId) {
+  return roleId === 'superAdmin' ? Object.values(PERMISSIONS) : ROLE_PERMISSIONS[roleId]
 }
 
 const AUTH = 'http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1'
@@ -75,9 +91,8 @@ function parseArgs(argv) {
 
 const args = parseArgs(process.argv.slice(2))
 
-if (!ROLE_PERMISSIONS[args.role]) {
-  console.error(`Unknown role "${args.role}". Known roles: ${Object.keys(ROLE_PERMISSIONS).sort().join(', ')}`)
-  console.error('(superAdmin is deliberately absent from ROLE_PERMISSIONS — it is seeded by hand during bootstrap.)')
+if (!permissionsFor(args.role)) {
+  console.error(`Unknown role "${args.role}". Known roles: ${['superAdmin', ...Object.keys(ROLE_PERMISSIONS)].sort().join(', ')}`)
   process.exit(2)
 }
 
@@ -130,7 +145,7 @@ async function main() {
   })
   if (!claimed.ok) throw new Error(`claims: ${claimed.status} ${await claimed.text()}`)
 
-  const permissions = ROLE_PERMISSIONS[args.role]
+  const permissions = permissionsFor(args.role)
   const now = new Date().toISOString()
 
   await seed(`roles/${args.role}`, {
