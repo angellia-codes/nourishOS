@@ -1,14 +1,30 @@
 import type { BaseDocument } from './firestore.types'
 
 /** hr.md §12's asset-type list, collapsed to categories a stock item can belong to. */
-export type InventoryCategory = 'uniform' | 'idCard' | 'keys' | 'equipment' | 'electronics' | 'other'
+export type InventoryCategory =
+  | 'uniform'
+  | 'safetyShoes'
+  | 'apron'
+  | 'hat'
+  | 'equipment'
+  | 'electronics'
+  | 'bikeSeatCover'
+  | 'handTowelGreen'
+  | 'handTowelBlack'
+  | 'nametag'
+  | 'other'
 
 export const INVENTORY_CATEGORIES: InventoryCategory[] = [
   'uniform',
-  'idCard',
-  'keys',
+  'safetyShoes',
+  'apron',
+  'hat',
   'equipment',
   'electronics',
+  'bikeSeatCover',
+  'handTowelGreen',
+  'handTowelBlack',
+  'nametag',
   'other',
 ]
 
@@ -59,6 +75,10 @@ export interface StockMovement extends BaseDocument {
   totalCost: number
   reason: string
   issuedToEmployeeId: string | null
+  /** Snapshotted from the employee doc at issue time — not retroactive if the employee later changes department/position. */
+  issuedToEmployeeName: string | null
+  issuedToDepartmentId: string | null
+  issuedToPosition: string | null
   /** Pairs a transferOut movement with its transferIn counterpart. */
   linkedMovementId: string | null
   performedBy: string
