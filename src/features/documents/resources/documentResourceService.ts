@@ -3,12 +3,11 @@ import { getDocument, subscribeToCollection, orderBy, where, type Unsubscribe } 
 import { COLLECTIONS } from '@/constants'
 import type { DocumentResource } from '@/types'
 
-/** Company Forms + Templates share this service (one collection-picking Cloud Function set) — see functions/src/documents/resources.ts. */
-export type DocumentResourceKind = 'form' | 'template'
+/** Company Forms uses this service (one collection-picking Cloud Function set) — see functions/src/documents/resources.ts. */
+export type DocumentResourceKind = 'form'
 
 const COLLECTION_FOR_KIND: Record<DocumentResourceKind, string> = {
   form: COLLECTIONS.COMPANY_FORMS,
-  template: COLLECTIONS.TEMPLATES,
 }
 
 export interface DocumentResourceInput {

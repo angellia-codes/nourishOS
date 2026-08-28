@@ -15,11 +15,11 @@ import {
 } from '../lib'
 
 /**
- * Company Forms + Templates — FEATURE_SPECIFICATIONS.md Module 4. Both are
- * curated-by-hand "title + external link" registers, same shape as SOP
- * Library, so they share one collection-picking implementation instead of
- * duplicating SOP Library's four-callable shape twice. The spec's "Approval
- * Workflow" sub-feature for Company Forms would mean a generic dynamic
+ * Company Forms — FEATURE_SPECIFICATIONS.md Module 4. A curated-by-hand
+ * "title + external link" register, same shape as SOP Library. Kept as a
+ * collection-picking implementation (rather than a hardcoded single
+ * collection) since Templates used to share this same code before removal.
+ * The spec's "Approval Workflow" sub-feature would mean a generic dynamic
  * form-submission engine — out of scope, a deliberate deviation noted here,
  * same kind of scope-down SOP Library already made against its own spec.
  *
@@ -29,11 +29,10 @@ import {
  * in the app defaults to unless a doc says otherwise.
  */
 
-export type DocumentResourceKind = 'form' | 'template'
+export type DocumentResourceKind = 'form'
 
 const COLLECTION_FOR_KIND: Record<DocumentResourceKind, string> = {
   form: COLLECTIONS.COMPANY_FORMS,
-  template: COLLECTIONS.TEMPLATES,
 }
 
 type ResourceFields = {
@@ -67,8 +66,8 @@ function validateFields(input: Partial<ResourceFields>): ResourceFields {
 }
 
 function requireKind(kind: unknown): DocumentResourceKind {
-  if (kind !== 'form' && kind !== 'template') {
-    throw new AppError('invalid-argument', 'resourceKind must be "form" or "template".')
+  if (kind !== 'form') {
+    throw new AppError('invalid-argument', 'resourceKind must be "form".')
   }
   return kind
 }
@@ -96,7 +95,7 @@ export const createDocumentResource = onCall({ region: REGION }, async (request)
       newValues: fields,
     })
 
-    return successResponse({ resourceId: ref.id }, resourceKind === 'form' ? 'Form added.' : 'Template added.')
+    return successResponse({ resourceId: ref.id }, 'Form added.')
   } catch (error) {
     return handleError(error)
   }

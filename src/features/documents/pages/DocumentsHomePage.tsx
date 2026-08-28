@@ -1,10 +1,10 @@
 import { useNavigate } from 'react-router-dom'
-import { BookText, ClipboardList, FileSpreadsheet, FileText } from 'lucide-react'
+import { BookText, ClipboardList, FileText } from 'lucide-react'
 import { Button, Card, CardContent } from '@/components/ui'
 
 /**
  * The Documents hub — documents.md §4 plus FEATURE_SPECIFICATIONS.md Module 4's
- * Company Forms and Templates. Training materials/KPI are still unbuilt.
+ * Company Forms. Training materials/KPI are still unbuilt.
  *
  * No permission gating here: each register enforces its own read access through
  * firestore.rules, so a card that leads to an access-restricted page is honest
@@ -26,14 +26,8 @@ const SUB_MODULES = [
   {
     to: '/documents/company-forms',
     icon: ClipboardList,
-    title: 'Company Forms',
+    title: 'Company Documents',
     description: 'Downloadable company forms.',
-  },
-  {
-    to: '/documents/templates',
-    icon: FileSpreadsheet,
-    title: 'Templates',
-    description: 'Word, Excel and PDF templates.',
   },
 ]
 

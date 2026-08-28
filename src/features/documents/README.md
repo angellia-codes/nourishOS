@@ -1,6 +1,6 @@
 # documents
 
-Documents domain UI: SOP library, job descriptions, templates, training materials, key performance indicator
+Documents domain UI: SOP library, job descriptions, company forms, training materials, key performance indicator
 
 ## Built
 
@@ -16,5 +16,5 @@ Documents domain UI: SOP library, job descriptions, templates, training material
 
 ## Planned
 
-Templates, training materials, KPI — still unbuilt. `docs/modules/documents.md` is the spec for those; note it
+Training materials, KPI — still unbuilt. `docs/modules/documents.md` is the spec for those; note it
 has no Job Descriptions section, which is why that sub-module documents its own deviations.

@@ -4,7 +4,7 @@ export function CompanyFormListPage() {
   return (
     <ResourceListPage
       kind="form"
-      title="Company Forms"
+      title="Company Documents"
       description="Downloadable company forms."
       basePath="/documents/company-forms"
     />
