@@ -62,7 +62,7 @@ npm run test:rules
 ```
 
 Wraps `firebase emulators:exec --only firestore`, so it starts the emulator,
-runs `rules.mjs`, and tears down. 57 tests, ~11s once the JVM is warm. Needs
+runs `rules.mjs`, and tears down. 84 tests, ~13s once the JVM is warm. Needs
 `JAVA_HOME` on the path (the emulator is JVM-based) but **not** the rest of the
 suite — no Auth, Functions or Storage emulator, which keeps it runnable on a
 low-RAM machine.
@@ -85,13 +85,20 @@ What is pinned:
   and the employee's own record once released), `equipment` by outlet,
   `appraisals` by department, and the own-record collections.
 
-Two things it does not do. It does not evaluate `list` (query) rules — rules
-validate a query rather than filtering it, which is why several rules are
-written to be provable against a client query (`isIssued` as a boolean,
-`audienceUids` as an array); those are pinned at the `get` level only, and
-query-level coverage is the obvious next layer. And it asserts what the rules
-do, not what the callables do — `getAppraisalRecommendation.ts` is the primary
-control for the recommendation, with the rule as defence in depth.
+- **`list` (query) evaluation**, which is a different thing from `get`: the
+  rule is checked against the *query*, so `resource.data.x == y` must be
+  provable from the query's own constraints — an unconstrained query is denied
+  outright rather than returning the subset that would have passed. Each list
+  test issues the query a service function in `src/` actually sends, cited by
+  `file:line`, so it fails when a service drifts rather than when a rule does.
+  **Two of those currently fail as designed and are pinned as `BUG:`** — see
+  `equipmentService.ts:82` and `employeeCommunicationService.ts:122`. Fixing
+  either means flipping its test from `assertListDenied` to
+  `assertListAllowed`.
+
+It asserts what the rules do, not what the callables do — for example
+`getAppraisalRecommendation.ts` is the primary control for the recommendation,
+with the rule as defence in depth.
 
 No dependency, and deliberately not `@firebase/rules-unit-testing`: the
 Firestore emulator accepts an unsigned JWT as a bearer token, so the custom

@@ -21,11 +21,18 @@
  * so a denied read comes back 403 and an allowed-but-missing one comes back
  * 404. Same REST approach every emulator script in this folder already uses.
  *
- * What this does NOT cover: `list` (query) evaluation. Rules validate a query
- * rather than filtering it, so several rules here are written to be provable
- * against a client query (payslips' isIssued boolean, announcements'
- * audienceUids). Those get-level assertions are pinned below; the query-level
- * ones are not, and that is the obvious next layer.
+ * Two layers, and they are not interchangeable:
+ *
+ *   `get`  — the rule is evaluated against the DOCUMENT.
+ *   `list` — the rule is evaluated against the QUERY. `resource.data.x == y`
+ *            has to be PROVABLE from the query's own constraints, so a query
+ *            that omits the constraint is denied outright rather than
+ *            returning the subset that would have passed.
+ *
+ * Every list test below issues the query a service function in src/ actually
+ * sends, cited by file:line, because the thing worth knowing is not whether a
+ * rule CAN be satisfied but whether this app's own query satisfies it. Two of
+ * them currently do not — see the tests marked BUG.
  */
 import { describe, test, before } from 'node:test'
 import assert from 'node:assert/strict'
@@ -87,6 +94,50 @@ async function seed(path, data) {
 
 const read = (user, path) => request('GET', path, user.token)
 const write = (user, path) => request('PATCH', path, user.token, { fields: toFields({ tampered: true }) })
+
+// --- list (query) evaluation ----------------------------------------------
+//
+// A `list` is NOT a batch of `get`s. Firestore evaluates the rule against the
+// QUERY, so `resource.data.x == y` has to be PROVABLE from the query's own
+// constraints — a query that omits the constraint is denied outright rather
+// than returning the subset that would have passed. That is why several rules
+// in firestore.rules are shaped the way they are (payslips' isIssued as a
+// boolean, announcements' audienceUids as an array), and it is the single
+// easiest thing to get wrong when writing a service function.
+
+const eq = (field, value) => ({ fieldFilter: { field: { fieldPath: field }, op: 'EQUAL', value: toValue(value) } })
+const arrayContains = (field, value) => ({
+  fieldFilter: { field: { fieldPath: field }, op: 'ARRAY_CONTAINS', value: toValue(value) },
+})
+
+/** Mirrors what subscribeToCollection/queryDocuments send for a given constraint list. */
+async function list(user, collectionId, { filters = [], orderBy = [] } = {}) {
+  const structuredQuery = { from: [{ collectionId }] }
+  if (filters.length === 1) structuredQuery.where = filters[0]
+  else if (filters.length > 1) structuredQuery.where = { compositeFilter: { op: 'AND', filters } }
+  if (orderBy.length) {
+    structuredQuery.orderBy = orderBy.map(([fieldPath, direction = 'ASCENDING']) => ({
+      field: { fieldPath },
+      direction,
+    }))
+  }
+  const response = await fetch(`${BASE}:runQuery`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${user.token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ structuredQuery }),
+  })
+  return response.status
+}
+
+async function assertListAllowed(user, collectionId, query, note = '') {
+  const status = await list(user, collectionId, query)
+  assert.equal(status, 200, `${user.label} should be able to LIST ${collectionId}${note ? ` — ${note}` : ''}`)
+}
+
+async function assertListDenied(user, collectionId, query, note = '') {
+  const status = await list(user, collectionId, query)
+  assert.equal(status, 403, `${user.label} must NOT be able to LIST ${collectionId}${note ? ` — ${note}` : ''}`)
+}
 
 /**
  * 200 = allowed and the document exists. 403 = denied by rules. A 404 would
@@ -157,10 +208,31 @@ before(async () => {
     seed('payrollBatches/b1', { period: '2026-07', status: 'draft' }),
 
     // --- Attendance --------------------------------------------------------
-    seed('attendanceRecords/approved-ulu', { isApproved: true, outletIdSnapshot: 'nourish_uluwatu' }),
-    seed('attendanceRecords/pending-ulu', { isApproved: false, outletIdSnapshot: 'nourish_uluwatu' }),
-    seed('attendanceRecords/approved-ung', { isApproved: true, outletIdSnapshot: 'nourish_ungasan' }),
+    seed('attendanceRecords/approved-ulu', {
+      isApproved: true,
+      outletIdSnapshot: 'nourish_uluwatu',
+      periodId: '2026-07',
+    }),
+    seed('attendanceRecords/pending-ulu', {
+      isApproved: false,
+      outletIdSnapshot: 'nourish_uluwatu',
+      periodId: '2026-07',
+    }),
+    seed('attendanceRecords/approved-ung', {
+      isApproved: true,
+      outletIdSnapshot: 'nourish_ungasan',
+      periodId: '2026-07',
+    }),
     seed('attendancePeriods/2026-07', { period: '2026-07', status: 'approved' }),
+
+    // --- Announcements (audience resolved to uids at publish time) ---------
+    seed('announcements/published', {
+      audienceUids: ['uid-staff', 'uid-kl-ulu'],
+      createdBy: 'uid-hr',
+      status: 'published',
+      publishedAt: '2026-08-20T00:00:00Z',
+    }),
+    seed('announcements/draft', { audienceUids: [], createdBy: 'uid-hr', status: 'draft' }),
 
     // --- Appraisal v2 ------------------------------------------------------
     seed('appraisals/on-a-cook', { employeeId: 'emp-cook', employeeDepartmentId: 'kitchen' }),
@@ -511,5 +583,198 @@ describe('own-record collections', () => {
   test('communication settings are readable only by their owner', async () => {
     await assertAllowed(STAFF, 'communicationSettings/uid-staff')
     await assertDenied(HR, 'communicationSettings/uid-staff')
+  })
+})
+
+// ---------------------------------------------------------------------------
+// list (query) rules
+//
+// Every query below is the one a service function in src/ actually issues,
+// cited by file:line, because the thing worth testing is not whether a rule
+// CAN be satisfied but whether the app's own query satisfies it. A `get` test
+// passing says nothing here: the rule is evaluated against the query.
+// ---------------------------------------------------------------------------
+
+describe('list: payslips — the isIssued filter is load-bearing, not cosmetic', () => {
+  test('payrollService.ts:148 — where(isIssued,==,true) + orderBy(period) is allowed', async () => {
+    await assertListAllowed(HR, 'payslips', {
+      filters: [eq('isIssued', true)],
+      orderBy: [['period', 'DESCENDING']],
+    })
+  })
+
+  test('the same query WITHOUT the filter is denied outright', async () => {
+    // Not "returns only the issued ones" — denied. This is the whole reason
+    // the rule tests a stored boolean instead of issuedAt != null.
+    await assertListDenied(HR, 'payslips', { orderBy: [['period', 'DESCENDING']] })
+  })
+
+  test('payrollService.ts:164 — the per-batch query carries it too', async () => {
+    await assertListAllowed(HR, 'payslips', { filters: [eq('batchId', 'b1'), eq('isIssued', true)] })
+  })
+
+  test('a correct filter does not rescue a caller outside canReadPayroll()', async () => {
+    await assertListDenied(KITCHEN_ULU, 'payslips', { filters: [eq('isIssued', true)] })
+  })
+})
+
+describe('list: attendanceRecords', () => {
+  test('attendanceService.ts:85 — periodId + isApproved is allowed for HR', async () => {
+    await assertListAllowed(HR, 'attendanceRecords', {
+      filters: [eq('periodId', '2026-07'), eq('isApproved', true)],
+    })
+  })
+
+  test('dropping isApproved denies it, as that service’s own comment warns', async () => {
+    await assertListDenied(HR, 'attendanceRecords', { filters: [eq('periodId', '2026-07')] })
+  })
+
+  test('a department head is denied by that query — the outlet is not constrained', async () => {
+    // The rule's department-head branch needs outletIdSnapshot == the caller's
+    // outlet to be PROVABLE. attendanceService.ts:85 never constrains it, so
+    // the branch is unreachable by list. Harmless today because both callers
+    // (AttendancePeriodDetailPage, AttendanceReportPage) sit under /hr/*,
+    // which RoleRoute limits to HR/GM/Director — but the day a leader-facing
+    // page reuses that function, it returns nothing.
+    await assertListDenied(KITCHEN_ULU, 'attendanceRecords', {
+      filters: [eq('periodId', '2026-07'), eq('isApproved', true)],
+    })
+  })
+
+  test('...and is allowed once the query constrains the outlet too', async () => {
+    await assertListAllowed(KITCHEN_ULU, 'attendanceRecords', {
+      filters: [
+        eq('periodId', '2026-07'),
+        eq('isApproved', true),
+        eq('outletIdSnapshot', 'nourish_uluwatu'),
+      ],
+    })
+  })
+})
+
+describe('list: announcements — audienceUids is what makes the feed provable', () => {
+  test('announcementService.ts:64 — array-contains(audienceUids, uid) is allowed', async () => {
+    await assertListAllowed(STAFF, 'announcements', {
+      filters: [arrayContains('audienceUids', 'uid-staff')],
+      orderBy: [['publishedAt', 'DESCENDING']],
+    })
+  })
+
+  test('an unfiltered feed query is denied for an ordinary reader', async () => {
+    await assertListDenied(STAFF, 'announcements', { orderBy: [['publishedAt', 'DESCENDING']] })
+  })
+
+  test('announcementService.ts:82 — the author’s own drafts, by createdBy', async () => {
+    await assertListAllowed(HR, 'announcements', {
+      filters: [eq('createdBy', 'uid-hr')],
+      orderBy: [['createdAt', 'DESCENDING']],
+    })
+  })
+
+  test('...and an elevated reader passes no uid at all, on the isElevated branch', async () => {
+    await assertListAllowed(GM, 'announcements', { orderBy: [['createdAt', 'DESCENDING']] })
+  })
+})
+
+describe('list: disciplinaryActions — one query per readable branch', () => {
+  test('scope "all": HR lists the whole register', async () => {
+    await assertListAllowed(HR, 'disciplinaryActions', { orderBy: [['createdAt', 'DESCENDING']] })
+  })
+
+  test('scope "department": a leader lists their own department', async () => {
+    await assertListAllowed(KITCHEN_ULU, 'disciplinaryActions', {
+      filters: [eq('departmentId', 'kitchen')],
+      orderBy: [['createdAt', 'DESCENDING']],
+    })
+  })
+
+  test('a leader cannot take the "all" branch', async () => {
+    await assertListDenied(KITCHEN_ULU, 'disciplinaryActions', { orderBy: [['createdAt', 'DESCENDING']] })
+  })
+
+  test('nor claim another department', async () => {
+    await assertListDenied(KITCHEN_ULU, 'disciplinaryActions', { filters: [eq('departmentId', 'bar')] })
+  })
+
+  test('scope "employee": employeeUid alone is DENIED — releasedToEmployee is unproven', async () => {
+    // employeeCommunicationService.ts:122 filters on employeeUid only, but the
+    // rule's own-record branch is `employeeUid == uid && releasedToEmployee ==
+    // true`. Both halves have to be provable, so this query is refused
+    // wholesale. CommunicationRecordListPage does surface the denial (it sets
+    // `denied` from onError) rather than silently showing an empty register,
+    // but the employee never sees their own released records through it.
+    await assertListDenied(SUBJECT, 'disciplinaryActions', {
+      filters: [eq('employeeUid', 'uid-subject')],
+      orderBy: [['createdAt', 'DESCENDING']],
+    })
+  })
+
+  test('...and allowed once the query also constrains releasedToEmployee', async () => {
+    await assertListAllowed(SUBJECT, 'disciplinaryActions', {
+      filters: [eq('employeeUid', 'uid-subject'), eq('releasedToEmployee', true)],
+      orderBy: [['createdAt', 'DESCENDING']],
+    })
+  })
+})
+
+describe('list: equipment — the register query is not outlet-constrained', () => {
+  test('Engineering and the executives list the whole register', async () => {
+    await assertListAllowed(ENGINEERING, 'equipment', { orderBy: [['assetCode', 'ASCENDING']] })
+    await assertListAllowed(GM, 'equipment', { orderBy: [['assetCode', 'ASCENDING']] })
+  })
+
+  test('BUG: equipmentService.ts:82 is denied for every non-elevated user', async () => {
+    // subscribeToRegister sends orderBy('assetCode') and nothing else, and
+    // EquipmentListPage filters outlet client-side. But rules do not filter,
+    // so for a leader or staff member the query is refused in its entirety and
+    // the register renders empty — the design doc's AC #12 ("a leader sees
+    // their own outlet") is unmet through the list page. Worse, that call
+    // passes no onError, so the denial is silent.
+    //
+    // The fix is one constraint: a non-elevated caller must send
+    // where('outletId','==',profile.outletId), the way every other
+    // outlet-scoped service in this codebase already does.
+    await assertListDenied(KITCHEN_ULU, 'equipment', { orderBy: [['assetCode', 'ASCENDING']] })
+    await assertListDenied(STAFF, 'equipment', { orderBy: [['assetCode', 'ASCENDING']] })
+  })
+
+  test('...and allowed the moment the query constrains the outlet', async () => {
+    await assertListAllowed(KITCHEN_ULU, 'equipment', {
+      filters: [eq('outletId', 'nourish_uluwatu')],
+      orderBy: [['assetCode', 'ASCENDING']],
+    })
+  })
+})
+
+describe('list: employees — department scoping has to be in the query', () => {
+  test('HR lists every employee', async () => {
+    await assertListAllowed(HR, 'employees', { orderBy: [['fullName', 'ASCENDING']] })
+  })
+
+  test('a department head must constrain departmentId', async () => {
+    await assertListAllowed(KITCHEN_ULU, 'employees', { filters: [eq('departmentId', 'kitchen')] })
+    await assertListDenied(KITCHEN_ULU, 'employees', { orderBy: [['fullName', 'ASCENDING']] })
+  })
+
+  test('and cannot claim a department that is not theirs', async () => {
+    await assertListDenied(KITCHEN_ULU, 'employees', { filters: [eq('departmentId', 'bar')] })
+  })
+})
+
+describe('list: own-record collections', () => {
+  test('NotificationBell.tsx:16 — where(recipientUid,==,uid) + orderBy(createdAt)', async () => {
+    await assertListAllowed(STAFF, 'notifications', {
+      filters: [eq('recipientUid', 'uid-staff')],
+      orderBy: [['createdAt', 'DESCENDING']],
+    })
+  })
+
+  test('an unfiltered notification list is denied for everyone', async () => {
+    await assertListDenied(STAFF, 'notifications', { orderBy: [['createdAt', 'DESCENDING']] })
+    await assertListDenied(SUPER, 'notifications', { orderBy: [['createdAt', 'DESCENDING']] })
+  })
+
+  test('and nobody can list someone else’s', async () => {
+    await assertListDenied(KITCHEN_ULU, 'notifications', { filters: [eq('recipientUid', 'uid-staff')] })
   })
 })
