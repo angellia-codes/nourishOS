@@ -25,15 +25,30 @@ export function createPatrolLog(input: CreatePatrolLogInput): Promise<CreatePatr
 export interface CreateCheckpointInput {
   name: string
   description?: string
+  outletId: string
   latitude: number
   longitude: number
   geofenceRadiusMeters: number
   scheduleIntervalMinutes: number
 }
 
-/** Supervisor-only — checkpoint registration doesn't have an admin UI yet; call this from the emulator shell or a future Settings screen. */
+/** All three gated on `security.manageCheckpoints` server-side — see security-control-point.md §6. */
 export function createCheckpoint(input: CreateCheckpointInput): Promise<{ checkpointId: string }> {
   return callFunction('createCheckpoint', input)
+}
+
+export function updateCheckpoint(
+  input: CreateCheckpointInput & { checkpointId: string },
+): Promise<{ checkpointId: string }> {
+  return callFunction('updateCheckpoint', input)
+}
+
+/**
+ * Soft archive — drops the checkpoint out of the guard's list and the overdue
+ * sweep while patrolLogs keep resolving its name. Reversible server-side.
+ */
+export function archiveCheckpoint(checkpointId: string): Promise<{ checkpointId: string }> {
+  return callFunction('archiveCheckpoint', { checkpointId })
 }
 
 export function getCheckpoint(checkpointId: string): Promise<Checkpoint | null> {

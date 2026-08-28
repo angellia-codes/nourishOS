@@ -7,52 +7,29 @@ import {
   requirePermission,
   recordAuditEvent,
   newDocumentBaseFields,
-  AppError,
   handleError,
   successResponse,
   PERMISSIONS,
 } from '../lib'
+import { validateCheckpointFields } from './helpers'
 
-interface CreateCheckpointInput {
-  name: string
-  description?: string
-  latitude: number
-  longitude: number
-  geofenceRadiusMeters: number
-  scheduleIntervalMinutes: number
-}
-
+/**
+ * security-control-point.md §2 — registers a patrol control point.
+ *
+ * Field validation lives in ./helpers so updateCheckpoint enforces exactly the
+ * same rules. The three patrol-state fields are initialised null here and are
+ * only ever written afterwards by createPatrolLog and checkOverdueCheckpoints.
+ */
 export const createCheckpoint = onCall({ region: REGION }, async (request) => {
   try {
     const user = await requireActiveUser(request)
     requirePermission(user, PERMISSIONS.CHECKPOINTS_MANAGE)
 
-    const input = (request.data ?? {}) as Partial<CreateCheckpointInput>
-
-    if (
-      !input.name ||
-      typeof input.latitude !== 'number' ||
-      typeof input.longitude !== 'number' ||
-      typeof input.geofenceRadiusMeters !== 'number' ||
-      typeof input.scheduleIntervalMinutes !== 'number'
-    ) {
-      throw new AppError(
-        'invalid-argument',
-        'name, latitude, longitude, geofenceRadiusMeters, and scheduleIntervalMinutes are required.',
-      )
-    }
-    if (input.geofenceRadiusMeters <= 0 || input.scheduleIntervalMinutes <= 0) {
-      throw new AppError('invalid-argument', 'geofenceRadiusMeters and scheduleIntervalMinutes must be positive.')
-    }
+    const fields = validateCheckpointFields((request.data ?? {}) as Record<string, unknown>)
 
     const checkpointRef = db.collection(COLLECTIONS.CHECKPOINTS).doc()
     await checkpointRef.set({
-      name: input.name,
-      description: input.description ?? null,
-      latitude: input.latitude,
-      longitude: input.longitude,
-      geofenceRadiusMeters: input.geofenceRadiusMeters,
-      scheduleIntervalMinutes: input.scheduleIntervalMinutes,
+      ...fields,
       lastVisitedAt: null,
       lastVisitedBy: null,
       lastAlertedAt: null,
@@ -67,11 +44,13 @@ export const createCheckpoint = onCall({ region: REGION }, async (request) => {
       resourceId: checkpointRef.id,
       action: 'create',
       user,
-      newValues: { name: input.name },
+      newValues: fields,
     })
 
     return successResponse({ checkpointId: checkpointRef.id }, 'Checkpoint created.')
   } catch (error) {
-    handleError(error)
+    // `return` matters: without it a thrown AppError resolves as an empty
+    // success and the client sees no error at all.
+    return handleError(error)
   }
 })

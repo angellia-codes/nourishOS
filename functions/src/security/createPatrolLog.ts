@@ -69,6 +69,9 @@ export const createPatrolLog = onCall({ region: REGION }, async (request) => {
     await checkpointRef.update({
       lastVisitedAt: FieldValue.serverTimestamp(),
       lastVisitedBy: user.uid,
+      // Denormalized so the checkpoint list can show "by <name>" without a
+      // second read — same reasoning as patrolLogs.checkpointName below.
+      lastVisitedByName: user.displayName || null,
       // Reset the alert cooldown now that the checkpoint has actually been visited.
       lastAlertedAt: null,
     })
