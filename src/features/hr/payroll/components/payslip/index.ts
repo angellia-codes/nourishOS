@@ -1,0 +1,6 @@
+export { PayslipDocument } from './PayslipDocument'
+export { PayslipHeader } from './PayslipHeader'
+export { PayslipColumn } from './PayslipColumn'
+export { PayslipLineRow } from './PayslipLineRow'
+export { PayslipTotals } from './PayslipTotals'
+export { PayslipSignatureBlock } from './PayslipSignatureBlock'
