@@ -37,7 +37,7 @@ export const checkLostFoundRetention = onSchedule({ schedule: 'every day 09:00',
       const pastDue = item.retentionExpiresAt <= today
 
       await notifyUsersByRole({
-        role: 'outletManager',
+        role: 'restaurantManager',
         module: 'operations',
         title: pastDue ? 'Lost & Found Item Past Retention' : 'Lost & Found Item Nearing Disposal',
         message: `"${item.itemDescription}" (${item.itemNumber}) ${

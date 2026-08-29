@@ -380,6 +380,8 @@ const orgBackendSrc = read('functions/src/lib/organization.ts')
 const grantedStrings = new Set([
   ...quotedStrings(constBody(orgBackendSrc, 'BASE', '[', ']')),
   ...quotedStrings(constBody(orgBackendSrc, 'LEADER', '[', ']')),
+  ...quotedStrings(constBody(orgBackendSrc, 'SUPERVISOR', '[', ']')),
+  ...quotedStrings(constBody(orgBackendSrc, 'RANK_FILE', '[', ']')),
   ...quotedStrings(constBody(orgBackendSrc, 'ROLE_PERMISSIONS')),
 ])
 

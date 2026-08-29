@@ -50,13 +50,13 @@ const CAST = [
 
   // --- Department heads ----------------------------------------------------
   ['Restaurant Manager', 'restaurant.manager@nourish.test', 'restaurantManager', 'nourish_uluwatu', 'fb_service'],
-  ['Head Chef', 'head.chef@nourish.test', 'kitchenLeader', 'nourish_uluwatu', 'kitchen'],
+  ['Head Chef', 'head.chef@nourish.test', 'headChef', 'nourish_uluwatu', 'kitchen'],
 
   // --- Outlet leaders ------------------------------------------------------
-  ['Sous Chef', 'sous.chef@nourish.test', 'kitchenLeader', 'nourish_ungasan', 'kitchen'],
-  ['Chef de Partie', 'chef.de.partie@nourish.test', 'kitchenLeader', 'nourish_berawa', 'kitchen'],
-  ['Bar Supervisor', 'bar.supervisor@nourish.test', 'barLeader', 'nourish_uluwatu', 'bar'],
-  ['Bar Captain', 'bar.captain@nourish.test', 'barLeader', 'nourish_ungasan', 'bar'],
+  ['Sous Chef', 'sous.chef@nourish.test', 'headChef', 'nourish_ungasan', 'kitchen'],
+  ['Chef de Partie', 'chef.de.partie@nourish.test', 'headChef', 'nourish_berawa', 'kitchen'],
+  ['Bar Supervisor', 'bar.supervisor@nourish.test', 'barManager', 'nourish_uluwatu', 'bar'],
+  ['Bar Captain', 'bar.captain@nourish.test', 'barManager', 'nourish_ungasan', 'bar'],
 
   // --- Staff ---------------------------------------------------------------
   ['Waiter', 'waiter@nourish.test', 'staff', 'nourish_uluwatu', 'fb_service'],

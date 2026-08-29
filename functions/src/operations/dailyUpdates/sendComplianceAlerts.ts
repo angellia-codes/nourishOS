@@ -5,7 +5,7 @@ import { sendNotificationInternal } from '../../shared/notifications'
 import { FONNTE_TOKEN } from '../../lib/secrets'
 import { todayIso } from './helpers'
 
-const LEADER_ROLES = ['kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader', 'wholefoodLeader', 'outletManager']
+const LEADER_ROLES = ['headChef', 'barManager', 'restaurantSupervisor', 'chiefBaker', 'wholefoodLeader', 'restaurantManager']
 
 /**
  * daily-updates.md §6, M17-F11. No "active outlet/department" master list

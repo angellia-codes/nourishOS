@@ -15,12 +15,12 @@ function departmentLeaderRole(departmentId: string | null | undefined): string |
  * (acknowledgeCommunicationRecord in disciplinaryRecords.ts).
  *
  * "Department Head" is likewise not a role that exists — the person who heads a
- * kitchen is `kitchenLeader` while a bar is `barLeader` — so step 1 is resolved
+ * kitchen is `headChef` while a bar is `barManager` — so step 1 is resolved
  * from the subject employee's own department. Same three corrections as
  * finance/expenseSteps.ts, in this order:
  *
  * 1. Drop any step naming the requester's own role. approveStep blocks
- *    self-approval by uid, so a lone kitchenLeader filing on their own team
+ *    self-approval by uid, so a lone headChef filing on their own team
  *    would otherwise land on a step nobody can clear.
  * 2. Dedupe — human_resources' leader role *is* `hrManager`, which would
  *    otherwise ask the same role to approve twice.

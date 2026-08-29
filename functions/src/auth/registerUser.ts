@@ -10,7 +10,7 @@ import {
   handleError,
   successResponse,
 } from '../lib'
-import { OUTLET_DEPARTMENTS, DEPARTMENT_ROLES, ROLE_PERMISSIONS } from '../lib/organization'
+import { OUTLET_DEPARTMENTS, rolesFor, ROLE_PERMISSIONS } from '../lib/organization'
 
 /**
  * Self-service registration for a signed-in Google account that has no
@@ -55,9 +55,12 @@ export const registerUser = onCall({ region: REGION }, async (request) => {
     if (!departmentId || !departments.includes(departmentId)) {
       throw new AppError('invalid-argument', 'Select a department that exists at this outlet.')
     }
-    const roles = DEPARTMENT_ROLES[departmentId] ?? []
+    // rolesFor, not DEPARTMENT_ROLES: `kitchen` and `wholefood_retail` offer
+    // different ladders per outlet (organization.ts's OUTLET_ONLY_ROLES), so a
+    // department-only check would let a Chief Baker register at a restaurant.
+    const roles = rolesFor(outletId, departmentId)
     if (!roleId || !roles.includes(roleId)) {
-      throw new AppError('invalid-argument', 'Select a role that exists in this department.')
+      throw new AppError('invalid-argument', 'Select a role that exists in this department at this outlet.')
     }
 
     const userRef = db.collection(COLLECTIONS.USERS).doc(uid)

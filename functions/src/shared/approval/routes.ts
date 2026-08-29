@@ -86,7 +86,7 @@ const APPROVAL_ROUTES: Record<string, ApprovalRoute> = {
   // The first conditional route — expense-request.md §3 / approval_engine.md §6.
   'finance/expenseRequest': buildExpenseApprovalSteps,
   // equipment-master-design.md §5.2 — single-step, but scoped to the asset's
-  // own outlet (approverOutletId), not any outletManager company-wide.
+  // own outlet (approverOutletId), not any holder of the role company-wide.
   'operations/equipmentDecommission': buildEquipmentDecommissionApprovalSteps,
   // operations/workOrder, ... — added as modules ship.
 }

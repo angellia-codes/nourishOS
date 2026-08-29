@@ -170,7 +170,7 @@ export const submitAparInspection = onCall({ region: REGION }, async (request) =
           priority: 'high',
         }),
         notifyUsersByRole({
-          role: 'outletManager',
+          role: 'restaurantManager',
           module: 'security',
           title: 'Fire Extinguisher Needs Service',
           message,

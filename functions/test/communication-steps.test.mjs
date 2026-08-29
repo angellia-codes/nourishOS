@@ -20,14 +20,14 @@ describe('buildCommunicationApprovalSteps', () => {
   // The spec's baseline: Department Head -> HR -> GM.
   test('a GM filing on a kitchen employee gets the full chain minus their own step', () => {
     assert.deepEqual(rolesFor({ departmentId: 'kitchen', requesterRoleId: 'generalManager' }), [
-      'kitchenLeader',
+      'headChef',
       'hrManager',
     ])
   })
 
   test('an unrelated role filing on a bar employee gets all three steps', () => {
     assert.deepEqual(rolesFor({ departmentId: 'bar', requesterRoleId: 'restaurantManager' }), [
-      'barLeader',
+      'barManager',
       'hrManager',
       'generalManager',
     ])
@@ -35,7 +35,7 @@ describe('buildCommunicationApprovalSteps', () => {
 
   // Correction 1 — the requester is never left as their own approver.
   test('a kitchen leader filing on their own team drops their own step', () => {
-    assert.deepEqual(rolesFor({ departmentId: 'kitchen', requesterRoleId: 'kitchenLeader' }), [
+    assert.deepEqual(rolesFor({ departmentId: 'kitchen', requesterRoleId: 'headChef' }), [
       'hrManager',
       'generalManager',
     ])
@@ -65,9 +65,10 @@ describe('buildCommunicationApprovalSteps', () => {
     assert.deepEqual(rolesFor({ requesterRoleId: 'staff' }), ['hrManager', 'generalManager'])
   })
 
-  // housekeeping's only role is `staff`, which is its own leader — the one case
-  // where the leader lookup returns a role that is not a leader at all.
-  test('housekeeping resolves its leader to staff, and drops it when staff files', () => {
+  // housekeeping's only role (`staff`) was removed 2026-08-29 with no
+  // replacement — DEPARTMENT_ROLES['housekeeping'] is now empty, so this
+  // department has no resolvable leader at all, same shape as an unknown one.
+  test('housekeeping has no leader to resolve, same as an unknown department', () => {
     assert.deepEqual(rolesFor({ departmentId: 'housekeeping', requesterRoleId: 'staff' }), [
       'hrManager',
       'generalManager',

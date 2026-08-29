@@ -62,7 +62,7 @@ async function callFn(name, data, idToken) {
 
 async function main() {
   // ---- Seed role + user (outlet manager with all Operations permissions) ----
-  await db.collection('roles').doc('outletManager').set({
+  await db.collection('roles').doc('restaurantManager').set({
     permissions: [
       'lostFound.create',
       'lostFound.manage',
@@ -75,7 +75,7 @@ async function main() {
   const mgr = await signUp(`manager-${RUN}@test.local`)
   await db.collection('users').doc(mgr.uid).set({
     status: 'active',
-    roleId: 'outletManager',
+    roleId: 'restaurantManager',
     displayName: 'Test Manager',
     email: `manager-${RUN}@test.local`,
     outletId: OUTLET,

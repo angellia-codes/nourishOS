@@ -67,7 +67,7 @@ const OWNER = { Authorization: 'Bearer owner', 'Content-Type': 'application/json
 function parseArgs(argv) {
   const args = {
     email: 'manager@nourish.test',
-    role: 'outletManager',
+    role: 'restaurantManager',
     outlet: 'nourish_uluwatu',
     department: 'fb_service',
     name: null,

@@ -1,7 +1,7 @@
 import { onSchedule } from 'firebase-functions/v2/scheduler'
 import { logger } from 'firebase-functions/v2'
 import { db, COLLECTIONS, REGION, BUSINESS_TIME_ZONE } from '../../lib'
-import { OUTLET_DEPARTMENTS } from '../../lib/organization'
+import { OUTLET_DEPARTMENTS, OUTLET_LEAD_ROLE } from '../../lib/organization'
 import { createTaskInternal } from '../../shared/tasks'
 import { currentPeriodMonth, periodMonthEnd, roundReferenceId } from './helpers'
 
@@ -66,11 +66,13 @@ export const generateMonthlyAparRounds = onSchedule(
 
 /**
  * §Kebijakan 2 — the round belongs to the outlet's guards; where an outlet has
- * none rostered in the system, its manager gets it rather than the round
- * silently not existing.
+ * none rostered in the system, its lead gets it rather than the round
+ * silently not existing. `outletManager` was the fallback here until its
+ * 2026-08-29 removal — OUTLET_LEAD_ROLE resolves the same idea per outlet.
  */
 async function roundAssignees(outletId: string): Promise<string[]> {
-  for (const roleId of ['security', 'outletManager']) {
+  for (const roleId of ['security', OUTLET_LEAD_ROLE[outletId]]) {
+    if (!roleId) continue
     const snap = await db
       .collection(COLLECTIONS.USERS)
       .where('roleId', '==', roleId)

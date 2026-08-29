@@ -88,22 +88,95 @@ export const OUTLET_CODES: Record<string, string> = {
   boh_nourish_group: 'BOH',
 }
 
-/** RBAC.md §4 roles, scoped by department. superAdmin is deliberately absent — bootstrap-only. */
+/**
+ * Roles scoped by department — mirrors src/constants/organization.ts's
+ * DEPARTMENT_ROLES, which is the org role ladder HR issued on 2026-08-29 (one
+ * role per job title). superAdmin is deliberately absent — bootstrap-only.
+ */
 export const DEPARTMENT_ROLES: Record<string, readonly string[]> = {
   admin_general: ['generalManager', 'director'],
-  cashier: ['finance', 'staff'],
-  fb_service: ['restaurantManager', 'floorLeader', 'staff'],
-  bar: ['barLeader', 'staff'],
-  kitchen: ['kitchenLeader', 'bakeryLeader', 'staff'],
-  central_kitchen: ['kitchenLeader', 'staff'],
-  sales_marketing: ['marketing', 'staff'],
-  security: ['security', 'staff'],
-  engineering_pomec: ['engineering', 'staff'],
-  human_resources: ['hrManager', 'staff'],
-  finance_accounting: ['finance', 'purchasing', 'staff'],
-  driver: ['purchasing', 'staff'],
-  housekeeping: ['staff'],
-  wholefood_retail: ['wholefoodLeader', 'wholefoodCashier', 'staff'],
+  cashier: ['cashierSupervisor', 'cashier'],
+  fb_service: ['restaurantManager', 'restaurantSupervisor', 'restaurantCaptain', 'waiter'],
+  bar: ['barManager', 'barSupervisor', 'barCaptain', 'barista'],
+  kitchen: [
+    'headChef',
+    'sousChef',
+    'chefDePartie',
+    'cook',
+    'cookHelper',
+    'steward',
+    'chiefBaker',
+    'chefDePartieBaker',
+    'cookBaker',
+  ],
+  central_kitchen: ['demiChef', 'cookHelper', 'steward'],
+  sales_marketing: ['marketing', 'juniorGraphicDesigner'],
+  security: ['security', 'securityGuard'],
+  engineering_pomec: ['restaurantMaintenanceManager', 'engineering'],
+  human_resources: ['hrManager', 'hrGeneralAdmin'],
+  finance_accounting: [
+    'finance',
+    'purchasing',
+    'purchasingSupervisor',
+    'generalCashierAp',
+    'arIncomeAudit',
+    'receivingStorekeeper',
+  ],
+  driver: ['driverLeader', 'driver'],
+  // `staff` was housekeeping's only role and is removed with no replacement
+  // yet — nobody currently holds it. Add a real housekeeping role here first.
+  housekeeping: [],
+  wholefood_retail: ['wholefoodLeader', 'wholefoodSupervisor', 'wholefoodCashier'],
+}
+
+/** Mirrors src/constants/organization.ts — see that file for why `kitchen` and `wholefood_retail` need outlet scoping. */
+const STANDARD_RESTAURANT_OUTLET_IDS = ['nourish_ungasan', 'nourish_uluwatu', 'nourish_berawa']
+
+export const OUTLET_ONLY_ROLES: Record<string, readonly string[]> = {
+  chiefBaker: ['the_bakery_kitchen'],
+  chefDePartieBaker: ['the_bakery_kitchen'],
+  cookBaker: ['the_bakery_kitchen'],
+  headChef: STANDARD_RESTAURANT_OUTLET_IDS,
+  sousChef: STANDARD_RESTAURANT_OUTLET_IDS,
+  chefDePartie: STANDARD_RESTAURANT_OUTLET_IDS,
+  cook: STANDARD_RESTAURANT_OUTLET_IDS,
+  cookHelper: STANDARD_RESTAURANT_OUTLET_IDS,
+  steward: STANDARD_RESTAURANT_OUTLET_IDS,
+  wholefoodLeader: ['wholefood_ungasan'],
+  wholefoodSupervisor: ['wholefood_ungasan'],
+}
+
+/**
+ * The one role that speaks for a whole outlet — what `outletManager` used to
+ * be before it was removed (2026-08-29 role-id migration; mirrors
+ * src/constants/organization.ts's comment). Used wherever logic needs "the
+ * outlet's own lead" rather than one department's leader: equipment
+ * decommission approval (approverOutletId makes the role+outlet pairing
+ * exact), and as the replacement for the bare 'outletManager' string
+ * incident-routing/escalation/lost-found notify used to carry.
+ */
+export const OUTLET_LEAD_ROLE: Record<string, string> = {
+  nourish_ungasan: 'restaurantManager',
+  nourish_uluwatu: 'restaurantManager',
+  nourish_berawa: 'restaurantManager',
+  // No fb_service department here — bar is the more senior of its two
+  // departments (cashier, bar), so it stands in for "the outlet's lead".
+  the_bakery_uluwatu: 'barManager',
+  the_bakery_kitchen: 'chiefBaker',
+  wholefood_ungasan: 'wholefoodLeader',
+  // wholefoodLeader is only ever assigned at wholefood_ungasan
+  // (OUTLET_ONLY_ROLES above) — these two are cashier/supervisor-only.
+  wholefood_uluwatu: 'wholefoodSupervisor',
+  wholefood_berawa: 'wholefoodSupervisor',
+  boh_nourish_group: 'generalManager',
+}
+
+/** What registerUser accepts for an outlet+department pair — mirrors the client's `rolesFor`. */
+export function rolesFor(outletId: string, departmentId: string): readonly string[] {
+  return (DEPARTMENT_ROLES[departmentId] ?? []).filter((role) => {
+    const restriction = OUTLET_ONLY_ROLES[role]
+    return !restriction || restriction.includes(outletId)
+  })
 }
 
 /** Granted to every role — the shell everyone needs to see anything at all (RBAC.md §5, Dashboard/Tasks/Notifications rows). */
@@ -140,7 +213,7 @@ const LEADER = [
   // manage" — a leader signs off their own team's training but never edits the
   // catalogue. Scoped to their own outlet+department inside the callable.
   'training.verify',
-  // attendance.md §8 — outletManager/department heads see their own outlet's
+  // attendance.md §8 — department heads see their own outlet's
   // approved attendance records only, resolved against outletIdSnapshot.
   'attendance.viewOwnOutlet',
   'tasks.assign',
@@ -167,6 +240,33 @@ const LEADER = [
   // owns assign/update/complete, so raising one grants no power over it.
   'workOrders.create',
 ]
+
+/**
+ * Supervisor tier (POSITIONS.md §2 Level V-VI) — runs a shift, does not own the
+ * department. Deliberately narrower than LEADER: no employees.communicate, no
+ * appraisal scoring, no recruitment.
+ *
+ * `incidents.read` is deliberately absent even though a supervisor files
+ * incidents: firestore.rules gates /incidentReports on a hardcoded leader role
+ * list, so the string would grant a page that then reads nothing. A supervisor
+ * still reads the incidents they reported (`reportedBy == uid`).
+ */
+const SUPERVISOR = [
+  ...BASE,
+  'dailyUpdates.submit',
+  'dailyUpdates.read',
+  'incidents.create',
+  'lostFound.create',
+  'lostFound.read',
+  'shiftReports.submit',
+  'shiftReports.read',
+  'training.read',
+  'tasks.assign',
+  'workOrders.create',
+]
+
+/** Rank & file (Level VII-VIII) — the set `staff` carried before its 2026-08-29 removal. */
+const RANK_FILE = [...BASE, 'dailyUpdates.submit', 'dailyUpdates.read', 'incidents.create', 'lostFound.create']
 
 /**
  * Permission set per role, read off the RBAC.md §5 matrix (✅ = full, 👁 = read)
@@ -384,12 +484,12 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'recruitment.read',
     'recruitment.create',
   ],
-  kitchenLeader: LEADER,
-  bakeryLeader: LEADER,
+  headChef: LEADER,
+  chiefBaker: LEADER,
   wholefoodLeader: LEADER,
-  barLeader: [...LEADER, 'workOrders.update'],
-  // §5 gives Floor Leader ✅ on Incident Reports — they own the guest-facing incidents.
-  floorLeader: [...LEADER, 'incidents.manage', 'lostFound.manage'],
+  barManager: [...LEADER, 'workOrders.update'],
+  // §5 gives Restaurant Supervisor ✅ on Incident Reports — they own the guest-facing incidents.
+  restaurantSupervisor: [...LEADER, 'incidents.manage', 'lostFound.manage'],
   security: [
     'recruitment.read',
     'recruitment.create',
@@ -427,26 +527,14 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'apar.inspect',
     // equipment-master-design.md §6.2 — Engineering owns the equipment
     // register end to end: create/edit/status/transfer, bulk import, and
-    // submitting a decommission request (approval itself is the outletManager
-    // step, not a permission grant).
+    // submitting a decommission request (approval itself is the outlet's own
+    // lead per OUTLET_LEAD_ROLE, not a permission grant).
     'equipment.manage',
     'equipment.import',
     'equipment.decommission',
   ],
-  outletManager: [
-    ...LEADER,
-    'incidents.manage',
-    'lostFound.manage',
-    'dailyUpdates.readAll',
-    'shiftReports.readAll',
-    'reports.read',
-    'calendar.create',
-    // §19 gives Manager "Limited" on Publish — scoped in practice by the
-    // audience they can pick, not by a second permission string.
-    'announcements.publish',
-  ],
-  // POSITIONS.md §3 Level III — runs one restaurant outlet end to end, so it
-  // carries the same set outletManager did before it left the form.
+  // POSITIONS.md §3 Level III — runs one restaurant outlet end to end.
+  // outletManager (removed 2026-08-29) carried this identical set.
   restaurantManager: [
     ...LEADER,
     'incidents.manage',
@@ -476,5 +564,62 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'recruitment.read',
     'recruitment.create',
   ],
-  staff: [...BASE, 'dailyUpdates.submit', 'dailyUpdates.read', 'incidents.create', 'lostFound.create'],
+  // --------------------------------------------------------------------------
+  // Org role ladder, 2026-08-29. Every role below is a job title HR issues; the
+  // tiers above (LEADER / SUPERVISOR / RANK_FILE) are what each one resolves to.
+  // --------------------------------------------------------------------------
+
+  // Engineering/POMEC department head — the `engineering` set plus the leader
+  // core, since it owns the department rather than working a queue in it.
+  restaurantMaintenanceManager: [
+    ...LEADER,
+    'workOrders.assign',
+    'workOrders.update',
+    'workOrders.complete',
+    'apar.manage',
+    'apar.inspect',
+    'equipment.manage',
+    'equipment.import',
+    'equipment.decommission',
+    'reports.read',
+  ],
+  // HR clerical support. Deliberately no employees.read: firestore.rules gates
+  // /employees on a hardcoded role list, so the string alone would grant a page
+  // that reads nothing. Add the role there first if HR wants directory access.
+  hrGeneralAdmin: [
+    ...BASE,
+    'recruitment.read',
+    'recruitment.create',
+    'training.read',
+    'hrInventory.record',
+    'tasks.assign',
+    'calendar.create',
+  ],
+  juniorGraphicDesigner: [...RANK_FILE, 'announcements.create'],
+  purchasingSupervisor: [...SUPERVISOR, 'expenseRequests.submit', 'reports.read', 'workOrders.update'],
+  // General Cashier & Accounts Payable — disburses, never approves.
+  generalCashierAp: [...BASE, 'expenseRequests.submit', 'expenseRequests.pay', 'reports.read'],
+  arIncomeAudit: [...BASE, 'reports.read', 'reports.create'],
+  receivingStorekeeper: [...RANK_FILE, 'hrInventory.record'],
+  driverLeader: [...SUPERVISOR, 'expenseRequests.submit'],
+  driver: RANK_FILE,
+  cashierSupervisor: [...SUPERVISOR, 'expenseRequests.submit', 'reports.read'],
+  cashier: RANK_FILE,
+  restaurantCaptain: SUPERVISOR,
+  waiter: RANK_FILE,
+  barSupervisor: SUPERVISOR,
+  barCaptain: SUPERVISOR,
+  barista: RANK_FILE,
+  sousChef: SUPERVISOR,
+  chefDePartie: SUPERVISOR,
+  demiChef: SUPERVISOR,
+  cook: RANK_FILE,
+  cookHelper: RANK_FILE,
+  steward: RANK_FILE,
+  chefDePartieBaker: SUPERVISOR,
+  cookBaker: RANK_FILE,
+  wholefoodSupervisor: [...SUPERVISOR, 'hrInventory.record'],
+  // fire-extinguisher.md §7.1 — the guard runs the monthly round; editing the
+  // register stays with the Supervisor/Engineering (segregation of duties).
+  securityGuard: [...RANK_FILE, 'security.create', 'security.read', 'apar.inspect'],
 }

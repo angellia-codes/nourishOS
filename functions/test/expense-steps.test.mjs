@@ -19,14 +19,14 @@ const rolesFor = (context) => buildExpenseApprovalSteps(context).map((step) => s
 describe('buildExpenseApprovalSteps', () => {
   test('kitchen staff, under threshold', () => {
     assert.deepEqual(rolesFor({ totalAmount: 3_000_000, departmentId: 'kitchen', requesterRoleId: 'staff' }), [
-      'kitchenLeader',
+      'headChef',
       'finance',
     ])
   })
 
   test('kitchen staff, over threshold', () => {
     assert.deepEqual(rolesFor({ totalAmount: 10_000_000, departmentId: 'kitchen', requesterRoleId: 'staff' }), [
-      'kitchenLeader',
+      'headChef',
       'finance',
       'generalManager',
       'director',
@@ -37,12 +37,12 @@ describe('buildExpenseApprovalSteps', () => {
     // The boundary is exclusive: exactly 5,000,000 is still the short chain.
     assert.deepEqual(
       rolesFor({ totalAmount: EXPENSE_APPROVAL_THRESHOLD_IDR, departmentId: 'bar', requesterRoleId: 'staff' }),
-      ['barLeader', 'finance'],
+      ['barManager', 'finance'],
     )
   })
 
   test('the department leader filing their own expense skips their own step', () => {
-    assert.deepEqual(rolesFor({ totalAmount: 3_000_000, departmentId: 'kitchen', requesterRoleId: 'kitchenLeader' }), [
+    assert.deepEqual(rolesFor({ totalAmount: 3_000_000, departmentId: 'kitchen', requesterRoleId: 'headChef' }), [
       'finance',
     ])
   })

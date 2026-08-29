@@ -97,7 +97,7 @@ export const createLostFoundItem = onCall({ region: REGION }, async (request) =>
     if (input.valueTier !== 'low') {
       await Promise.all([
         notifyUsersByRole({
-          role: 'outletManager',
+          role: 'restaurantManager',
           module: 'operations',
           title: 'Found Item Logged',
           message: `"${input.itemDescription}" (${itemNumber}, ${input.valueTier} value) logged at ${input.foundLocation}.`,

@@ -109,7 +109,7 @@ async function notifyOutlet(
   input: { title: string; message: string; priority: 'critical' | 'high' | 'medium' },
 ): Promise<void> {
   await Promise.all(
-    ['outletManager', 'engineering'].map((role) =>
+    ['restaurantManager', 'engineering'].map((role) =>
       notifyUsersByRole({
         role,
         module: 'security',

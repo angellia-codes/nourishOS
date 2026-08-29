@@ -266,7 +266,7 @@ async function main() {
     name: 'Flow HR Manager',
   })
   const kitchenLeader = await seedAccount({
-    role: 'kitchenLeader',
+    role: 'headChef',
     email: 'flow-headchef@nourish.test',
     outlet: OUTLET,
     department: 'kitchen',

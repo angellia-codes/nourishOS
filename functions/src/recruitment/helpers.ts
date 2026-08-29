@@ -77,12 +77,11 @@ export const ALLOWED_STAGE_TRANSITIONS: Record<CandidateStage, readonly Candidat
 
 /** Who may be picked as an interviewer — mirrors src/constants/roles.ts's INTERVIEWER_ROLES. */
 export const INTERVIEWER_ROLES = [
-  'kitchenLeader',
-  'barLeader',
-  'floorLeader',
-  'bakeryLeader',
+  'headChef',
+  'barManager',
+  'restaurantSupervisor',
+  'chiefBaker',
   'wholefoodLeader',
-  'outletManager',
   'restaurantManager',
   'hrManager',
   'generalManager',

@@ -177,13 +177,13 @@ console.log('Seeding actors and employees…')
 
 // EMP_A has a login; EMP_B does not — the two halves of the acknowledgement design.
 const lead = await actor(`lead-${stamp}@x.test`, {
-  role: 'kitchenLeader',
+  role: 'headChef',
   departmentId: 'kitchen',
   outletId: 'nourish_uluwatu',
   permissions: LEADER,
 })
 const otherLead = await actor(`bar-${stamp}@x.test`, {
-  role: 'barLeader',
+  role: 'barManager',
   departmentId: 'bar',
   outletId: 'nourish_uluwatu',
   permissions: LEADER,
@@ -271,7 +271,7 @@ const approvalRequestId = submitted.data?.approvalRequestId
 const req = (await read(`approvalRequests/${approvalRequestId}`, hr.token)).doc
 const chain = (req?.steps ?? []).map((s) => s.approverRole)
 check(
-  'the chain drops the requesting kitchenLeader: hrManager -> generalManager',
+  'the chain drops the requesting headChef: hrManager -> generalManager',
   JSON.stringify(chain) === JSON.stringify(['hrManager', 'generalManager']),
   `got ${JSON.stringify(chain)}`,
 )
@@ -393,8 +393,8 @@ check('validityDays defaulted to 90 for a verbal warning', bDoc?.validityDays ==
 await call('submitCommunicationRecord', hr.token, { recordId: bId })
 const bReq = (await read(`approvalRequests/${(await read(`disciplinaryActions/${bId}`, hr.token)).doc.approvalRequestId}`, hr.token)).doc
 check(
-  'HR filing gets kitchenLeader -> generalManager (their own step dropped)',
-  JSON.stringify((bReq?.steps ?? []).map((s) => s.approverRole)) === JSON.stringify(['kitchenLeader', 'generalManager']),
+  'HR filing gets headChef -> generalManager (their own step dropped)',
+  JSON.stringify((bReq?.steps ?? []).map((s) => s.approverRole)) === JSON.stringify(['headChef', 'generalManager']),
   JSON.stringify((bReq?.steps ?? []).map((s) => s.approverRole)),
 )
 const bApprovalId = (await read(`disciplinaryActions/${bId}`, hr.token)).doc.approvalRequestId

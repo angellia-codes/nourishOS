@@ -55,8 +55,9 @@ service cloud.firestore {
         // matches DEPARTMENT_ROLES[dept][0], which is what KpiCardsRow uses to
         // decide someone is a department manager. Without the back-office roles
         // here their headcount tile read denies.
-        (hasAnyRole(['kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader', 'wholefoodLeader',
-          'outletManager', 'restaurantManager', 'finance', 'purchasing', 'security', 'engineering', 'marketing']) &&
+        (hasAnyRole(['headChef', 'barManager', 'restaurantSupervisor', 'chiefBaker', 'wholefoodLeader',
+          'restaurantManager', 'restaurantMaintenanceManager',
+          'finance', 'purchasing', 'security', 'engineering', 'marketing']) &&
           resource.data.departmentId == request.auth.token.departmentId);
       allow write: if false; // createEmployee / updateEmployee / archiveEmployee Cloud Functions only
 
@@ -94,8 +95,9 @@ service cloud.firestore {
     //     matches, which is correct.
     match /disciplinaryActions/{recordId} {
       allow read: if hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
-        (hasAnyRole(['kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader', 'wholefoodLeader',
-          'outletManager', 'restaurantManager', 'finance', 'purchasing', 'security', 'engineering', 'marketing']) &&
+        (hasAnyRole(['headChef', 'barManager', 'restaurantSupervisor', 'chiefBaker', 'wholefoodLeader',
+          'restaurantManager', 'restaurantMaintenanceManager',
+          'finance', 'purchasing', 'security', 'engineering', 'marketing']) &&
           resource.data.departmentId == request.auth.token.departmentId) ||
         (resource.data.employeeUid == request.auth.uid && resource.data.releasedToEmployee == true);
       allow write: if false; // createDisciplinaryRecord / updateDisciplinaryRecord / submitCommunicationRecord / submitEmployeeStatement / acknowledgeCommunicationRecord / addInvestigationNote / closeDisciplinaryRecord Cloud Functions only (plus the expireCommunicationRecords scheduled job)
@@ -121,8 +123,8 @@ service cloud.firestore {
     }
 
     function isLeader() {
-      return hasAnyRole(['kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader',
-        'wholefoodLeader', 'outletManager', 'restaurantManager']);
+      return hasAnyRole(['headChef', 'barManager', 'restaurantSupervisor', 'chiefBaker',
+        'wholefoodLeader', 'restaurantManager', 'restaurantMaintenanceManager']);
     }
 
     // Requisitions are raised by every department head, not only the
@@ -374,8 +376,9 @@ service cloud.firestore {
     match /appraisals/{appraisalId} {
       allow read: if isSignedIn() && (
         hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
-        (hasAnyRole(['kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader', 'wholefoodLeader',
-          'outletManager', 'restaurantManager', 'finance', 'purchasing', 'security', 'engineering', 'marketing']) &&
+        (hasAnyRole(['headChef', 'barManager', 'restaurantSupervisor', 'chiefBaker', 'wholefoodLeader',
+          'restaurantManager', 'restaurantMaintenanceManager',
+          'finance', 'purchasing', 'security', 'engineering', 'marketing']) &&
           resource.data.employeeDepartmentId == request.auth.token.departmentId)
       );
       allow write: if false; // createAppraisal / submitPrimaryScores / submitSecondaryScores / acknowledgeAppraisal / reopenAppraisal / approval flow only
@@ -564,7 +567,8 @@ service cloud.firestore {
         resource.data.assignedToRole == role() ||
         hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
         (resource.data.incidentType != 'workplaceInjury' &&
-          hasAnyRole(['kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader', 'wholefoodLeader', 'outletManager', 'security', 'engineering']) &&
+          hasAnyRole(['headChef', 'barManager', 'restaurantSupervisor', 'chiefBaker', 'wholefoodLeader',
+            'restaurantManager', 'restaurantMaintenanceManager', 'security', 'engineering']) &&
           resource.data.outletId == request.auth.token.outletId)
       );
       allow write: if false; // createIncidentReport / updateIncidentStatus / reopenIncident Cloud Functions only
@@ -580,8 +584,8 @@ service cloud.firestore {
         resource.data.assignedToRole == role() ||
         hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
         hasAnyRole([
-          'kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader', 'wholefoodLeader',
-          'outletManager', 'restaurantManager', 'engineering',
+          'headChef', 'barManager', 'restaurantSupervisor', 'chiefBaker', 'wholefoodLeader',
+          'restaurantManager', 'restaurantMaintenanceManager', 'engineering',
           // Every role that can raise a work order can read the queue it
           // raised into — mirrors workOrders.create in ROLE_PERMISSIONS.
           'finance', 'purchasing',
@@ -638,7 +642,7 @@ service cloud.firestore {
         request.auth.uid in resource.data.participants ||
         resource.data.createdBy == request.auth.uid ||
         hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
-        (hasAnyRole(['outletManager', 'kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader', 'wholefoodLeader']) &&
+        (hasAnyRole(['restaurantManager', 'headChef', 'barManager', 'restaurantSupervisor', 'chiefBaker', 'wholefoodLeader']) &&
           resource.data.outletId == request.auth.token.outletId)
       );
       allow write: if false; // createCalendarEvent / cancelCalendarEvent Cloud Functions only

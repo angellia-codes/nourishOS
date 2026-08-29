@@ -176,9 +176,9 @@ const ENGINEERING = user('engineering', 'uid-eng', 'engineering', 'engineering_p
 // Two kitchen leaders at different outlets, and a bar leader at the same outlet
 // as the first — between them they separate outlet scoping from department
 // scoping, which several rules use for different things.
-const KITCHEN_ULU = user('kitchenLeader@uluwatu', 'uid-kl-ulu', 'kitchenLeader', 'kitchen', 'nourish_uluwatu')
-const KITCHEN_UNG = user('kitchenLeader@ungasan', 'uid-kl-ung', 'kitchenLeader', 'kitchen', 'nourish_ungasan')
-const BAR_ULU = user('barLeader@uluwatu', 'uid-bl-ulu', 'barLeader', 'bar', 'nourish_uluwatu')
+const KITCHEN_ULU = user('headChef@uluwatu', 'uid-kl-ulu', 'headChef', 'kitchen', 'nourish_uluwatu')
+const KITCHEN_UNG = user('headChef@ungasan', 'uid-kl-ung', 'headChef', 'kitchen', 'nourish_ungasan')
+const BAR_ULU = user('barManager@uluwatu', 'uid-bl-ulu', 'barManager', 'bar', 'nourish_uluwatu')
 const STAFF = user('staff', 'uid-staff', 'staff', 'kitchen', 'nourish_uluwatu')
 const SUBJECT = user('the disciplined employee', 'uid-subject', 'staff', 'kitchen', 'nourish_uluwatu')
 

@@ -6,8 +6,8 @@ import type { ApprovalRouteContext, ApprovalStepDefinition } from '../../shared/
  * Department Head → Approved by General Manager", the chain already printed
  * on every JD document. Same three corrections buildCommunicationApprovalSteps
  * (functions/src/hr/employees/communicationSteps.ts) established for
- * resolving "Department Head" (not a role that exists — kitchenLeader,
- * barLeader, etc. differ per department) against a real role id:
+ * resolving "Department Head" (not a role that exists — headChef,
+ * barManager, etc. differ per department) against a real role id:
  *
  * 1. Drop any step naming the requester's own role — approveStep blocks
  *    self-approval by uid, so an hrManager editing a Human Resources

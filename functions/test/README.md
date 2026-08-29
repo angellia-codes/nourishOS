@@ -36,6 +36,7 @@ sit there failing to reach an emulator that isn't running.
 | `hr-inventory-stock.test.mjs` | `applyDelta`, plus transfer composed the way `transferStock.ts` composes it. |
 | `milestone-match.test.mjs` | Birthday / anniversary / new-hire / farewell date matching. |
 | `payroll-statutory.test.mjs` | The statutory engine and CSV validator against §3's verified reference slip; every §6.2 hard failure. |
+| `role-ladder.test.mjs` | The org role ladder: the frontend/backend `DEPARTMENT_ROLES` + `OUTLET_ONLY_ROLES` mirrors, `rolesFor`'s bakery/restaurant and Wholefood outlet splits, and that every offered role has a `ROLE_PERMISSIONS` set. |
 | `portal-form-gate.test.mjs` | The F010 save gate against the exact payload `portal/src/pages/FormPage.tsx` posts. |
 | `timestamps.test.mjs` | The WITA (`Asia/Makassar`) date-key helpers. |
 | `training-gate.test.mjs` | The prerequisite gate, department mapping, due-date rule, and seed-data integrity. |

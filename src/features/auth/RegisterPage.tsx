@@ -9,7 +9,7 @@ import {
   OUTLETS,
   DEPARTMENTS,
   OUTLET_DEPARTMENTS,
-  DEPARTMENT_ROLES,
+  rolesFor,
   ROLE_LABELS,
   optionsFor,
 } from '@/constants'
@@ -41,7 +41,7 @@ export function RegisterPage() {
     () => optionsFor(OUTLET_DEPARTMENTS[outletId] ?? [], DEPARTMENTS),
     [outletId],
   )
-  const roleOptions = DEPARTMENT_ROLES[departmentId] ?? []
+  const roleOptions = useMemo(() => rolesFor(outletId, departmentId), [outletId, departmentId])
 
   if (status === 'unauthenticated') {
     return <Navigate to={ROUTES.LOGIN} replace />

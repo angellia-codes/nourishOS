@@ -4,7 +4,7 @@ import { notifyUsersByRole } from '../../shared/notifications'
 import { FONNTE_TOKEN } from '../../lib/secrets'
 import { CLOSED_TASK_STATUSES, DAILY_UPDATE_TAG, todayIso } from './helpers'
 
-const LEADER_ROLES = ['kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader', 'wholefoodLeader', 'outletManager']
+const LEADER_ROLES = ['headChef', 'barManager', 'restaurantSupervisor', 'chiefBaker', 'wholefoodLeader', 'restaurantManager']
 
 /** daily-updates.md §6, M17-F07. Runs at 08:00 — aggregates same-day compliance, escalated tasks, and open issues for GM + HR Manager. */
 export const sendDailyDigest = onSchedule(

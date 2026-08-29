@@ -19,13 +19,13 @@ function departmentLeaderRole(departmentId: string | null | undefined): string |
  *   > 5,000,000  department leader → finance → generalManager → director
  *
  * "Department Manager" in the spec is not a role that exists — a step names one
- * role id, and the person who manages a kitchen is `kitchenLeader` while a bar
- * is `barLeader`. So step 1 is resolved from the requester's own department.
+ * role id, and the person who manages a kitchen is `headChef` while a bar
+ * is `barManager`. So step 1 is resolved from the requester's own department.
  *
  * Three corrections are then applied to the raw chain, in this order:
  *
  * 1. Drop any step naming the requester's own role. approveStep blocks
- *    self-approval by uid, so a lone kitchenLeader filing a kitchen expense
+ *    self-approval by uid, so a lone headChef filing a kitchen expense
  *    would otherwise land on a step nobody can clear.
  * 2. Dedupe — finance_accounting's leader role *is* `finance`, which would
  *    otherwise ask the same role to approve twice.

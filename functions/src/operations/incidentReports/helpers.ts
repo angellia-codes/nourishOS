@@ -16,20 +16,22 @@ export type IncidentStatus = 'reported' | 'underReview' | 'investigating' | 'res
  * incident-report.md §3 routes by TYPE to a ROLE, not a specific person
  * ("Engineering", "Security", "Outlet/Department Leader"). Simplified from
  * the doc's per-department "Department Leader" concept (which would need
- * resolving the reporter's specific kitchenLeader/barLeader/etc. role) down
- * to the single generic `outletManager` role — every outlet has exactly
- * one, so routing is unambiguous. foodSafety additionally CCs hrManager
+ * resolving the reporter's specific headChef/barManager/etc. role) down to a
+ * single role — originally the generic `outletManager` (removed 2026-08-29,
+ * see OUTLET_LEAD_ROLE), now `restaurantManager` since that already covers
+ * the three standard restaurant outlets this table has always been
+ * unscoped-by-outlet for anyway. foodSafety additionally CCs hrManager
  * (handled in createIncidentReport, not in this table).
  */
 export const INCIDENT_ROUTING: Record<IncidentType, string> = {
-  customerComplaint: 'outletManager',
-  foodSafety: 'outletManager',
+  customerComplaint: 'restaurantManager',
+  foodSafety: 'restaurantManager',
   workplaceInjury: 'hrManager',
   equipmentFailure: 'engineering',
   theft: 'security',
   securityIncident: 'security',
   utilityFailure: 'engineering',
-  nearMiss: 'outletManager',
+  nearMiss: 'restaurantManager',
 }
 
 /** Forward transition per incident-report.md §8 updateIncidentStatus. */

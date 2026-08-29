@@ -32,7 +32,7 @@ import { notifyUsersByRole } from '../shared/notifications'
  */
 
 const CLOSED_TASK_STATUSES = ['completed', 'verified', 'closed', 'cancelled', 'archived']
-const LEADER_ROLES = ['kitchenLeader', 'barLeader', 'floorLeader', 'bakeryLeader', 'wholefoodLeader', 'outletManager']
+const LEADER_ROLES = ['headChef', 'barManager', 'restaurantSupervisor', 'chiefBaker', 'wholefoodLeader', 'restaurantManager']
 
 export interface FlashReport {
   generatedFor: string

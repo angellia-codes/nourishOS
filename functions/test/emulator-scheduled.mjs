@@ -52,8 +52,8 @@ async function main() {
   const users = { gm: `gm-${RUN}`, hr: `hr-${RUN}`, om: `om-${RUN}`, kl: `kl-${RUN}` }
   await db.collection('users').doc(users.gm).set({ status: 'active', roleId: 'generalManager', displayName: 'GM', outletId: `o-gm-${RUN}`, departmentId: 'management' })
   await db.collection('users').doc(users.hr).set({ status: 'active', roleId: 'hrManager', displayName: 'HR', outletId: `o-hr-${RUN}`, departmentId: 'hr' })
-  await db.collection('users').doc(users.om).set({ status: 'active', roleId: 'outletManager', displayName: 'OM', outletId: `o-om-${RUN}`, departmentId: 'fnb' })
-  await db.collection('users').doc(users.kl).set({ status: 'active', roleId: 'kitchenLeader', displayName: 'KL', outletId: `o-kl-${RUN}`, departmentId: 'kitchen' })
+  await db.collection('users').doc(users.om).set({ status: 'active', roleId: 'restaurantManager', displayName: 'OM', outletId: `o-om-${RUN}`, departmentId: 'fnb' })
+  await db.collection('users').doc(users.kl).set({ status: 'active', roleId: 'headChef', displayName: 'KL', outletId: `o-kl-${RUN}`, departmentId: 'kitchen' })
 
   // ---------- carryForwardDailyTasks ----------
   console.log('\n=== carryForwardDailyTasks (00:01) ===')
