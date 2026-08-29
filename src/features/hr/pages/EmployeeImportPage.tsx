@@ -12,17 +12,24 @@ import {
   CONTRACT_TYPE_LABELS,
   RELIGION,
   RELIGION_LABELS,
+  DISCIPLINARY_TYPE,
+  DISCIPLINARY_TYPE_LABELS,
   type Gender,
   type EmploymentStatus,
   type ContractType,
   type Religion,
+  type DisciplinaryType,
 } from '@/constants/hr'
 import { POSITION_LABELS, positionsFor, type PositionId } from '@/constants/positions'
 import { useToast } from '@/hooks'
 import * as employeeService from '@/features/hr/services/employeeService'
 import { toCsv, downloadCsv, parseCsv, type CsvColumn } from '@/utils/csv'
 import type { Employee } from '@/types'
-import type { CreateEmployeeInput, ImportEmployeeRowResult } from '@/features/hr/services/employeeService'
+import type {
+  ImportEmployeeRow,
+  ImportEmployeeRowResult,
+  UpdateEmployeeCompensationInput,
+} from '@/features/hr/services/employeeService'
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 
@@ -50,6 +57,18 @@ const TEMPLATE_HEADERS = [
   'Contract Type',
   'Contract Start Date',
   'Contract End Date',
+  'Mother Name',
+  'Disciplinary Action',
+  'Disciplinary Period Start',
+  'Disciplinary Period End',
+  'Recognition',
+  'Recognition Period',
+  'Basic Salary',
+  'Position Allowance',
+  'Phone Allowance',
+  'Transportation Allowance',
+  'Bank Account Name',
+  'Bank Account Number',
 ] as const
 
 const TEMPLATE_EXAMPLE: Record<string, string> = {
@@ -76,6 +95,18 @@ const TEMPLATE_EXAMPLE: Record<string, string> = {
   'Contract Type': CONTRACT_TYPE_LABELS.fixedTerm,
   'Contract Start Date': '2026-08-01',
   'Contract End Date': '2027-08-01',
+  'Mother Name': '',
+  'Disciplinary Action': '',
+  'Disciplinary Period Start': '',
+  'Disciplinary Period End': '',
+  Recognition: '',
+  'Recognition Period': '',
+  'Basic Salary': '5000000',
+  'Position Allowance': '',
+  'Phone Allowance': '',
+  'Transportation Allowance': '',
+  'Bank Account Name': 'Jane Doe',
+  'Bank Account Number': '1234567890',
 }
 
 const TEMPLATE_COLUMNS: CsvColumn<Record<string, string>>[] = TEMPLATE_HEADERS.map((header) => ({
@@ -99,8 +130,18 @@ function resolveEnum<T extends string>(raw: string, values: readonly T[], labels
 interface ParsedRow {
   index: number
   raw: Record<string, string>
-  input: CreateEmployeeInput | null
+  input: ImportEmployeeRow | null
   clientErrors: string[]
+}
+
+function parseOptionalNonNegativeNumber(raw: string, field: string, errors: string[]): number | undefined {
+  if (!raw) return undefined
+  const n = Number(raw)
+  if (Number.isNaN(n) || n < 0) {
+    errors.push(`${field} must be a non-negative number`)
+    return undefined
+  }
+  return n
 }
 
 function buildRow(raw: Record<string, string>, index: number, employeeIdByNumber: Map<string, string>): ParsedRow {
@@ -158,6 +199,52 @@ function buildRow(raw: Record<string, string>, index: number, employeeIdByNumber
   const managerId = managerNumber ? employeeIdByNumber.get(managerNumber) : undefined
   if (managerNumber && !managerId) errors.push('Manager Employee Number not found')
 
+  const disciplinaryTypeRaw = get('Disciplinary Action')
+  const disciplinaryType = disciplinaryTypeRaw
+    ? resolveEnum(disciplinaryTypeRaw, Object.values(DISCIPLINARY_TYPE) as DisciplinaryType[], DISCIPLINARY_TYPE_LABELS)
+    : null
+  if (disciplinaryTypeRaw && !disciplinaryType) errors.push('Disciplinary Action not recognized')
+
+  const disciplinaryStartPeriod = get('Disciplinary Period Start')
+  if (disciplinaryStartPeriod && !ISO_DATE_RE.test(disciplinaryStartPeriod)) {
+    errors.push('Disciplinary Period Start must be YYYY-MM-DD')
+  }
+
+  const disciplinaryEndPeriod = get('Disciplinary Period End')
+  if (disciplinaryEndPeriod && !ISO_DATE_RE.test(disciplinaryEndPeriod)) {
+    errors.push('Disciplinary Period End must be YYYY-MM-DD')
+  }
+
+  const recognitionPeriod = get('Recognition Period')
+  if (recognitionPeriod && !ISO_DATE_RE.test(recognitionPeriod)) errors.push('Recognition Period must be YYYY-MM-DD')
+
+  // Basic Salary is the anchor: a blank cell means "no compensation for this
+  // row" and the other 5 compensation cells are ignored entirely, matching
+  // updateEmployeeCompensation's own contract (basicSalary is its one
+  // required field) — never write a doc with every field null.
+  const basicSalaryRaw = get('Basic Salary')
+  let compensation: UpdateEmployeeCompensationInput | undefined
+  if (basicSalaryRaw) {
+    const basicSalary = parseOptionalNonNegativeNumber(basicSalaryRaw, 'Basic Salary', errors)
+    const positionAllowance = parseOptionalNonNegativeNumber(get('Position Allowance'), 'Position Allowance', errors)
+    const phoneAllowance = parseOptionalNonNegativeNumber(get('Phone Allowance'), 'Phone Allowance', errors)
+    const transportationAllowance = parseOptionalNonNegativeNumber(
+      get('Transportation Allowance'),
+      'Transportation Allowance',
+      errors,
+    )
+    if (basicSalary !== undefined) {
+      compensation = {
+        basicSalary,
+        positionAllowance,
+        phoneAllowance,
+        transportationAllowance,
+        bankAccountName: get('Bank Account Name') || undefined,
+        bankAccountNumber: get('Bank Account Number') || undefined,
+      }
+    }
+  }
+
   if (!gender || !outletId || !departmentId || !position || !employmentStatus || !contractType || errors.length > 0) {
     return { index, raw, input: null, clientErrors: errors }
   }
@@ -167,29 +254,38 @@ function buildRow(raw: Record<string, string>, index: number, employeeIdByNumber
     raw,
     clientErrors: [],
     input: {
-      fullName,
-      gender,
-      birthDate,
-      nationalId: get('National ID') || undefined,
-      taxNumber: get('Tax Number') || undefined,
-      religion: religion ?? undefined,
-      phone,
-      email,
-      address: get('Address') || undefined,
-      permanentAddress: get('Permanent Address') || undefined,
-      domicileAddress: get('Domicile Address') || undefined,
-      emergencyContactName: get('Emergency Contact Name') || undefined,
-      emergencyContactPhone: get('Emergency Contact Phone') || undefined,
-      position,
-      departmentId,
-      outletId,
-      managerId,
-      employmentStatus,
-      joinDate,
-      probationMonths: Number(get('Probation Months')) || 0,
-      contractType,
-      contractStartDate: get('Contract Start Date') || undefined,
-      contractEndDate: get('Contract End Date') || undefined,
+      employee: {
+        fullName,
+        gender,
+        birthDate,
+        nationalId: get('National ID') || undefined,
+        taxNumber: get('Tax Number') || undefined,
+        religion: religion ?? undefined,
+        phone,
+        email,
+        address: get('Address') || undefined,
+        permanentAddress: get('Permanent Address') || undefined,
+        domicileAddress: get('Domicile Address') || undefined,
+        emergencyContactName: get('Emergency Contact Name') || undefined,
+        emergencyContactPhone: get('Emergency Contact Phone') || undefined,
+        motherName: get('Mother Name') || undefined,
+        position,
+        departmentId,
+        outletId,
+        managerId,
+        employmentStatus,
+        joinDate,
+        probationMonths: Number(get('Probation Months')) || 0,
+        contractType,
+        contractStartDate: get('Contract Start Date') || undefined,
+        contractEndDate: get('Contract End Date') || undefined,
+        disciplinaryType: disciplinaryType ?? undefined,
+        disciplinaryStartPeriod: disciplinaryStartPeriod || undefined,
+        disciplinaryEndPeriod: disciplinaryEndPeriod || undefined,
+        recognitionType: get('Recognition') || undefined,
+        recognitionPeriod: recognitionPeriod || undefined,
+      },
+      compensation,
     },
   }
 }
@@ -285,7 +381,14 @@ export function EmployeeImportPage() {
       const position = validRows.findIndex((r) => r.index === row.index)
       const result = results[position]
       return result?.success
-        ? { index: row.index, fullName, status: 'success', message: result.employeeNumber ?? '' }
+        ? {
+            index: row.index,
+            fullName,
+            status: 'success',
+            message: result.compensationError
+              ? `${result.employeeNumber} — employee created, but compensation not saved: ${result.compensationError}`
+              : (result.employeeNumber ?? ''),
+          }
         : { index: row.index, fullName, status: 'failed', message: result?.error ?? '' }
     }
     return { index: row.index, fullName, status: 'ready', message: 'Ready to import' }
@@ -312,7 +415,9 @@ export function EmployeeImportPage() {
         <CardContent className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground">
             Department and Outlet accept either the display name or the id. Employment Status and Contract Type
-            accept either their label or raw value.
+            accept either their label or raw value. Basic Salary, allowances and bank details are only saved if you
+            hold compensation access — if you don't, those columns are ignored and the employee is still created
+            without them.
           </p>
           <Button variant="secondary" onClick={downloadTemplate}>
             <Download className="mr-1.5 h-4 w-4" aria-hidden="true" />
