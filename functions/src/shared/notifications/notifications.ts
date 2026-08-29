@@ -93,11 +93,13 @@ export const markAllNotificationsRead = onCall({ region: REGION }, async (reques
       .where('isRead', '==', false)
       .get()
 
-    const batch = db.batch()
+    // deploy-checklist.md B4: a plain db.batch() throws past 500 writes.
+    // bulkWriter has no such limit — it chunks and retries on its own.
+    const writer = db.bulkWriter()
     unreadSnap.docs.forEach((docSnap) => {
-      batch.update(docSnap.ref, { isRead: true, readAt: FieldValue.serverTimestamp() })
+      writer.update(docSnap.ref, { isRead: true, readAt: FieldValue.serverTimestamp() })
     })
-    await batch.commit()
+    await writer.close()
 
     return successResponse({ count: unreadSnap.size }, 'All notifications marked as read.')
   } catch (error) {
