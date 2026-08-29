@@ -144,9 +144,27 @@ function parseOptionalNonNegativeNumber(raw: string, field: string, errors: stri
   return n
 }
 
+/**
+ * Excel stores a >15-digit number as a float and exports it as "5,32E+15" —
+ * the trailing digits are gone, not merely hidden. A NIK, NPWP or 62… phone
+ * that arrives this way would import as a silently wrong identity number, so
+ * it is a hard error rather than a warning. The fix is in the spreadsheet:
+ * format the column as Text before typing, or prefix the cell with '.
+ */
+const SCIENTIFIC_NOTATION_RE = /^\d+([.,]\d+)?e[+-]?\d+$/i
+
+const DIGIT_STRING_HEADERS = ['Phone', 'National ID', 'Tax Number'] as const
+
 function buildRow(raw: Record<string, string>, index: number, employeeIdByNumber: Map<string, string>): ParsedRow {
   const errors: string[] = []
   const get = (header: string) => (raw[header] ?? '').trim()
+
+  for (const header of DIGIT_STRING_HEADERS) {
+    const value = get(header)
+    if (SCIENTIFIC_NOTATION_RE.test(value)) {
+      errors.push(`${header} lost digits to Excel's number format ("${value}") — format that column as Text and re-enter it`)
+    }
+  }
 
   const fullName = get('Full Name')
   if (!fullName) errors.push('Full Name is required')

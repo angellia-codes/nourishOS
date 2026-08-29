@@ -47,7 +47,7 @@ const RANK_AND_FILE_POSITION_IDS = [
   'waiter',
   'runner',
   'cashier',
-  'wholefoodsCashier',
+  'wholefoodCashier',
   'barista',
   'barBack',
   'cook',

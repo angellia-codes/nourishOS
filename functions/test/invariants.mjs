@@ -716,6 +716,133 @@ check('every department offered by an outlet has a role list', () => {
   if (orphans.length) fail(`registerUser would reject every role for these:\n${orphans.join('\n')}`)
 })
 
+// --- 7. Positions ---------------------------------------------------------
+
+heading('7. Positions — the fourth mirrored pair')
+
+const posFrontendSrc = read('src/constants/positions.ts')
+const posBackendSrc = read('functions/src/lib/positions.ts')
+
+/** { id: { label, rank } } out of the frontend POSITION_CATALOG's object-literal entries. */
+function parseCatalog() {
+  const body = constBody(posFrontendSrc, 'POSITION_CATALOG')
+  const out = new Map()
+  for (const [, id, label, rank] of body.matchAll(
+    /([A-Za-z_][A-Za-z0-9_]*)\s*:\s*\{\s*label:\s*'([^']*)',\s*rank:\s*(\d+)/gs,
+  )) {
+    out.set(id, { label, rank: Number(rank) })
+  }
+  return out
+}
+
+const catalog = parseCatalog()
+
+check('POSITION_CATALOG parsed', () => {
+  if (catalog.size < 50) fail(`parsed only ${catalog.size} positions — parser is stale`)
+  return `${catalog.size} positions`
+})
+
+check('POSITION_LABELS matches the catalog', () => {
+  const be = parseKeyLiteralMap(constBody(posBackendSrc, 'POSITION_LABELS'))
+  const diffs = []
+  for (const [id, label] of be) {
+    const entry = catalog.get(id)
+    if (!entry) diffs.push(`  - ${id}: in the backend labels but not POSITION_CATALOG`)
+    else if (entry.label !== label) diffs.push(`  - ${id}: frontend '${entry.label}' vs backend '${label}'`)
+  }
+  for (const id of catalog.keys()) if (!be.has(id)) diffs.push(`  - ${id}: missing from the backend labels`)
+  if (diffs.length) fail(`POSITION_LABELS differs between packages:\n${diffs.join('\n')}`)
+  return `${be.size} labels`
+})
+
+check('POSITION_RANKS matches the catalog', () => {
+  const be = new Map(
+    [...stripComments(constBody(posBackendSrc, 'POSITION_RANKS')).matchAll(/([A-Za-z_]\w*)\s*:\s*(\d+)/g)].map(
+      (m) => [m[1], Number(m[2])],
+    ),
+  )
+  const diffs = []
+  for (const [id, rank] of be) {
+    const entry = catalog.get(id)
+    if (!entry) diffs.push(`  - ${id}: in POSITION_RANKS but not POSITION_CATALOG`)
+    else if (String(entry.rank) !== String(rank)) diffs.push(`  - ${id}: frontend ${entry.rank} vs backend ${rank}`)
+  }
+  for (const id of catalog.keys()) if (!be.has(id)) diffs.push(`  - ${id}: missing from POSITION_RANKS`)
+  if (diffs.length) fail(`POSITION_RANKS differs between packages:\n${diffs.join('\n')}`)
+  return `${be.size} ranks`
+})
+
+check('DEPARTMENT_POSITION_IDS matches', () =>
+  compareArrayMaps(
+    'DEPARTMENT_POSITION_IDS',
+    constBody(posFrontendSrc, 'DEPARTMENT_POSITION_IDS'),
+    constBody(posBackendSrc, 'DEPARTMENT_POSITION_IDS'),
+  ),
+)
+
+/**
+ * Half these entries are `id: STANDARD_RESTAURANT_OUTLET_IDS`, an identifier
+ * parseKeyArrayMap cannot see — inline the shared const first so the
+ * comparison covers every entry instead of silently half of them.
+ */
+function outletOnlyBody(src) {
+  const shared = constBody(src, 'STANDARD_RESTAURANT_OUTLET_IDS', '[', ']')
+  return constBody(src, 'OUTLET_ONLY_POSITION_IDS').replaceAll('STANDARD_RESTAURANT_OUTLET_IDS', `[${shared}]`)
+}
+
+check('OUTLET_ONLY_POSITION_IDS matches', () => {
+  const result = compareArrayMaps(
+    'OUTLET_ONLY_POSITION_IDS',
+    outletOnlyBody(posFrontendSrc),
+    outletOnlyBody(posBackendSrc),
+  )
+  const entries = parseKeyArrayMap(outletOnlyBody(posFrontendSrc))
+  if (entries.size < 10) fail(`resolved only ${entries.size} entries — the identifier inlining is stale`)
+  if ([...entries.values()].some((v) => v.length === 0)) fail('an entry resolved to an empty outlet list')
+  return result
+})
+
+/**
+ * The check that would have caught 2026-08-30's two live defects: a department
+ * list naming an id that is not in the catalog (the backend's
+ * `wholefoodsManager`, which made createEmployee reject every Wholefood hire
+ * the client's own dropdown offered), and a department key no outlet staffs
+ * (`theBakery`, which stranded the whole baking ladder — the only positions
+ * selectable at The Bakery Kitchen were Steward/Trainee/Daily Worker).
+ */
+check('every position id offered by a department is a real catalog entry', () => {
+  const orphans = []
+  for (const [file, src] of [
+    ['frontend', posFrontendSrc],
+    ['backend', posBackendSrc],
+  ]) {
+    for (const mapName of ['DEPARTMENT_POSITION_IDS', 'OUTLET_ONLY_POSITION_IDS']) {
+      const map = parseKeyArrayMap(
+        mapName === 'OUTLET_ONLY_POSITION_IDS' ? outletOnlyBody(src) : constBody(src, mapName),
+      )
+      const ids = mapName === 'DEPARTMENT_POSITION_IDS' ? [...map.values()].flat() : [...map.keys()]
+      for (const id of new Set(ids)) {
+        if (!catalog.has(id)) orphans.push(`  - ${file} ${mapName} names '${id}', which is not in POSITION_CATALOG`)
+      }
+    }
+  }
+  if (orphans.length) fail(`unselectable or unvalidatable positions:\n${orphans.join('\n')}`)
+})
+
+check('every department offering positions is staffed by some outlet', () => {
+  const staffed = new Set([...parseKeyArrayMap(constBody(orgBackendSrc, 'OUTLET_DEPARTMENTS')).values()].flat())
+  // An empty list strands nothing — `housekeeping` is deliberately empty.
+  const stranded = [...parseKeyArrayMap(constBody(posFrontendSrc, 'DEPARTMENT_POSITION_IDS'))]
+    .filter(([department, ids]) => ids.length > 0 && !staffed.has(department))
+    .map(([department]) => department)
+  if (stranded.length) {
+    fail(
+      `DEPARTMENT_POSITION_IDS keys no outlet staffs, so nothing in them is ever\n` +
+        `selectable: ${stranded.join(', ')}`,
+    )
+  }
+})
+
 // ---------------------------------------------------------------------------
 
 console.log(

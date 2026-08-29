@@ -60,11 +60,17 @@ export const DEPARTMENTS: readonly OrgOption[] = [
  *
  * Admin & General (§2: "HQ / Outlet Management") is HQ-only — it staffs
  * boh_nourish_group and nowhere else, not every outlet.
+ *
+ * Engineering/POMEC is the exception to that HQ-scoped reading (2026-08-30):
+ * the department is managed from BOH, but Public Area Attendants and MEP
+ * engineers are posted at the restaurants, and the employee register has real
+ * staff at Uluwatu and Ungasan. Berawa is included for consistency — same
+ * outlet concept type — rather than waiting for its first hire.
  */
 export const OUTLET_DEPARTMENTS: Record<string, readonly string[]> = {
-  nourish_ungasan: ['cashier', 'fb_service', 'bar', 'kitchen', 'central_kitchen', 'security'],
-  nourish_uluwatu: ['cashier', 'fb_service', 'bar', 'kitchen', 'security'],
-  nourish_berawa: ['cashier', 'fb_service', 'bar', 'kitchen', 'security'],
+  nourish_ungasan: ['cashier', 'fb_service', 'bar', 'kitchen', 'central_kitchen', 'security', 'engineering_pomec'],
+  nourish_uluwatu: ['cashier', 'fb_service', 'bar', 'kitchen', 'security', 'engineering_pomec'],
+  nourish_berawa: ['cashier', 'fb_service', 'bar', 'kitchen', 'security', 'engineering_pomec'],
   the_bakery_uluwatu: ['cashier', 'bar'],
   the_bakery_kitchen: ['kitchen'],
   wholefood_ungasan: ['wholefood_retail'],

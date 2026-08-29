@@ -36,9 +36,9 @@ export const OUTLET_DEPARTMENTS: Record<string, readonly string[]> = {
   // the one outlet carrying central_kitchen. The frontend copy has always had
   // it; this mirror had not, so registerUser rejected every candidate who
   // picked the department its own dropdown offered them.
-  nourish_ungasan: ['cashier', 'fb_service', 'bar', 'kitchen', 'central_kitchen', 'security'],
-  nourish_uluwatu: ['cashier', 'fb_service', 'bar', 'kitchen', 'security'],
-  nourish_berawa: ['cashier', 'fb_service', 'bar', 'kitchen', 'security'],
+  nourish_ungasan: ['cashier', 'fb_service', 'bar', 'kitchen', 'central_kitchen', 'security', 'engineering_pomec'],
+  nourish_uluwatu: ['cashier', 'fb_service', 'bar', 'kitchen', 'security', 'engineering_pomec'],
+  nourish_berawa: ['cashier', 'fb_service', 'bar', 'kitchen', 'security', 'engineering_pomec'],
   the_bakery_uluwatu: ['cashier', 'bar'],
   the_bakery_kitchen: ['kitchen'],
   wholefood_ungasan: ['wholefood_retail'],

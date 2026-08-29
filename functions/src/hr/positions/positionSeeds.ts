@@ -110,8 +110,8 @@ const APPRAISAL_SCORER_MAP: Record<string, string> = {
   barCaptain: 'barManager',
   barista: 'barManager',
   // Wholefood — Wholefood Manager
-  wholefoodsSupervisor: 'wholefoodsManager',
-  wholefoodsCashier: 'wholefoodsManager',
+  wholefoodSupervisor: 'wholefoodManager',
+  wholefoodCashier: 'wholefoodManager',
   // F&B Service — Restaurant Manager
   restaurantSupervisor: 'restaurantManager',
   restaurantCaptain: 'restaurantManager',

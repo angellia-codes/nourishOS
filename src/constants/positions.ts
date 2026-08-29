@@ -67,18 +67,18 @@ export const POSITION_CATALOG = {
 
   // ------------------------------------ Finance, Accounting & Cost Control
   groupFinancialController: { label: 'Group Financial Controller', rank: 1, department: 'finance' },
-  chiefAccounting: { label: 'Chief Accounting', rank: 2, department: 'finance' },
+  chiefAccounting: { label: 'Chief Accountant', rank: 2, department: 'finance' },
   costControl: { label: 'Cost Control', rank: 5, department: 'finance' },
   cashierSupervisor: { label: 'Cashier Supervisor', rank: 5, department: 'finance' },
-  apGeneralCashier: { label: 'AP & GC (Accounts Payable & General Cashier)', rank: 6, department: 'finance' },
-  arIncomeAudit: { label: 'AR & IA (Accounts Receivable & Income Audit)', rank: 6, department: 'finance' },
+  apGeneralCashier: { label: 'GC & AP', rank: 6, department: 'finance' },
+  arIncomeAudit: { label: 'AR & IA', rank: 6, department: 'finance' },
   receivingStorekeeper: { label: 'Receiving & Storekeeper', rank: 7, department: 'finance' },
   accountingAdmin: { label: 'Accounting Admin', rank: 7, department: 'finance' },
   cashier: { label: 'Cashier', rank: 7, department: 'finance' },
 
   // ------------------------------------------------------- Human Resources
   groupHrManager: { label: 'Group HR Manager', rank: 1, department: 'hr' },
-  juniorHrManager: { label: 'Junior HR Manager', rank: 3, department: 'hr' },
+  juniorHrManager: { label: 'Jr. HR Manager', rank: 3, department: 'hr' },
   trainingDevelopmentSupervisor: { label: 'Training & Development Supervisor', rank: 5, department: 'hr' },
   hrGeneralAdmin: { label: 'HR & General Admin', rank: 6, department: 'hr' },
 
@@ -102,10 +102,10 @@ export const POSITION_CATALOG = {
   sousChefBaker: { label: 'Sous Chef Baker', rank: 4, department: 'theBakeryKitchen' },
   chefDePartie: { label: 'Chef de Partie', rank: 5, department: 'kitchen' },
   chefDePartieBaker: { label: 'Chef de Partie Baker / Pastry', rank: 5, department: 'theBakeryKitchen' },
-  demiChefDePartie: { label: 'Demi Chef de Partie', rank: 6, department: 'kitchen' },
+  demiChefDePartie: { label: 'Demi Chef', rank: 6, department: 'kitchen' },
   demiChefBaker: { label: 'Demi Chef Baker', rank: 6, department: 'theBakeryKitchen' },
   cook: { label: 'Cook', rank: 7, department: 'kitchen' },
-  cookBaker: { label: 'Cook / Baker', rank: 7, department: 'theBakeryKitchen' },
+  cookBaker: { label: 'Cook Baker / Pastry', rank: 7, department: 'theBakeryKitchen' },
   cookHelper: { label: 'Cook Helper', rank: 8, department: 'kitchen' },
   steward: { label: 'Steward', rank: 8, department: 'kitchen' },
 
@@ -125,7 +125,7 @@ export const POSITION_CATALOG = {
     department: 'engineering',
   },
   engineerCivil: { label: 'Engineer (Civil)', rank: 7, department: 'engineering' },
-  engineerMep: { label: 'Engineer (MEP)', rank: 7, department: 'engineering' },
+  engineerMep: { label: 'Engineering MEP', rank: 7, department: 'engineering' },
   publicAreaAttendant: { label: 'Public Area Attendant', rank: 8, department: 'engineering' },
 
   // -------------------------------------------------------------- Security
@@ -203,8 +203,10 @@ export const DEPARTMENT_POSITION_IDS: Record<string, readonly PositionId[]> = {
     'trainee',
     'dailyWorker',
   ],
-  bar: ['barManager', 'barSupervisor', 'barCaptain', 'barista', 'trainee', 'dailyWorker'],
+  bar: ['barManager', 'barSupervisor', 'barCaptain', 'barista', 'barBack', 'trainee', 'dailyWorker'],
   kitchen: [
+    // Both ladders live here because `the_bakery_kitchen` staffs `kitchen`
+    // (OUTLET_DEPARTMENTS) — OUTLET_ONLY_POSITION_IDS is what splits them.
     'headChef',
     'sousChef',
     'chefDePartie',
@@ -212,6 +214,11 @@ export const DEPARTMENT_POSITION_IDS: Record<string, readonly PositionId[]> = {
     'cook',
     'cookHelper',
     'steward',
+    'chiefBaker',
+    'sousChefBaker',
+    'chefDePartieBaker',
+    'demiChefBaker',
+    'cookBaker',
     'trainee',
     'dailyWorker',
   ],
@@ -224,7 +231,6 @@ export const DEPARTMENT_POSITION_IDS: Record<string, readonly PositionId[]> = {
     'trainee',
     'dailyWorker',
   ],
-  wholefood: ['wholefoodManager', 'wholefoodSupervisor', 'wholefoodCashier'],
   sales_marketing: ['creativeMarketingManager', 'juniorGraphicDesigner'],
   security: ['securitySupervisor', 'securityGuard'],
   engineering_pomec: ['restaurantMaintenanceManager', 'engineerMep', 'publicAreaAttendant'],
@@ -241,15 +247,6 @@ export const DEPARTMENT_POSITION_IDS: Record<string, readonly PositionId[]> = {
   // Deliberately empty — see the block comment above.
   housekeeping: [],
   wholefood_retail: ['wholefoodManager', 'wholefoodSupervisor', 'wholefoodCashier'],
-theBakery: [
-    'chiefBaker',
-    'chefDePartieBaker',
-    'demiChefDePartie',
-    'cookBaker',
-    'steward',
-    'trainee',
-    'dailyWorker',
-  ],
 }
 
 /** `kitchen`'s three non-bakery restaurant outlets — the mirror image of `the_bakery_kitchen`. */
@@ -264,7 +261,9 @@ const STANDARD_RESTAURANT_OUTLET_IDS = ['nourish_ungasan', 'nourish_uluwatu', 'n
  */
 export const OUTLET_ONLY_POSITION_IDS: Partial<Record<PositionId, readonly string[]>> = {
   chiefBaker: ['the_bakery_kitchen'],
+  sousChefBaker: ['the_bakery_kitchen'],
   chefDePartieBaker: ['the_bakery_kitchen'],
+  demiChefBaker: ['the_bakery_kitchen'],
   cookBaker: ['the_bakery_kitchen'],
   headChef: STANDARD_RESTAURANT_OUTLET_IDS,
   sousChef: STANDARD_RESTAURANT_OUTLET_IDS,
