@@ -18,7 +18,7 @@ import {
   X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { ROUTES, ROLES } from '@/constants'
+import { ROUTES, HR_REPORT_ROLES } from '@/constants'
 import { useUIStore } from '@/store'
 import { useAuth } from '@/hooks'
 
@@ -29,8 +29,13 @@ import { useAuth } from '@/hooks'
  * the nav but keep their own top-level URLs *and* their open access — positions
  * are readable by everyone, and an employee must reach their own communication
  * record. Gating them here would hide pages they are entitled to.
+ *
+ * Reuses HR_REPORT_ROLES rather than a second hand-copied list — the two had
+ * drifted (this one was missing hrGeneralAdmin, added 2026-08-29, until fixed
+ * here), which hid the whole /hr tree from a role granted its permissions
+ * through Settings > Roles & Permissions.
  */
-const HR_ROLES = [ROLES.GENERAL_MANAGER, ROLES.DIRECTOR, ROLES.HR_MANAGER, ROLES.SUPER_ADMIN] as const
+const HR_ROLES = HR_REPORT_ROLES
 
 interface NavChild {
   to: string

@@ -43,6 +43,26 @@ export function returnForRevision(input: { approvalRequestId: string; comments: 
   return callFunction('returnForRevision', input)
 }
 
+/**
+ * Mirrors approveStep.ts's own authorization checks, so a record's detail page
+ * can decide whether to show Approve/Reject at all. This is UX only — the
+ * callable re-checks everything server-side — so a stale or wrong verdict here
+ * just shows or hides a button; it enforces nothing.
+ */
+export function canActOnApprovalRequest(
+  request: Pick<ApprovalRequest, 'approvalStatus' | 'currentStepIndex' | 'steps' | 'requestedBy'>,
+  actor: { uid: string; roleId: string; outletId: string } | null | undefined,
+): boolean {
+  if (!actor || request.approvalStatus !== 'pending') return false
+  const step = request.steps[request.currentStepIndex]
+  if (!step) return false
+  if (actor.roleId === ROLES.SUPER_ADMIN) return true
+  if (actor.roleId !== step.approverRole) return false
+  if (step.approverOutletId && actor.outletId !== step.approverOutletId) return false
+  if (request.requestedBy === actor.uid) return false
+  return true
+}
+
 /** Per approval_engine.md §19 — only the original requester, and only before approval starts. */
 export function cancelApproval(input: { approvalRequestId: string }): Promise<void> {
   return callFunction('cancelApproval', input)

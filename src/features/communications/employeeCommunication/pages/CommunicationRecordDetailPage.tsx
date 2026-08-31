@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Archive, ArrowLeft, BadgeCheck, Lock, Pencil, Printer, Send } from 'lucide-react'
+import { Archive, ArrowLeft, BadgeCheck, Check, Lock, Pencil, Printer, Send, X } from 'lucide-react'
 import {
   Badge,
   Button,
@@ -38,7 +38,7 @@ import {
   describeValidity,
   isEditable,
 } from '../employeeCommunicationFormat'
-import type { AcknowledgementStatus, ApprovalHistoryEntry, DisciplinaryRecord, FileMetadata } from '@/types'
+import type { AcknowledgementStatus, ApprovalHistoryEntry, ApprovalRequest, DisciplinaryRecord, FileMetadata } from '@/types'
 
 const HISTORY_VARIANT: Record<string, 'default' | 'success' | 'warning' | 'error'> = {
   approve: 'success',
@@ -81,14 +81,14 @@ function Field({ label, value }: { label: string; value: string | null | undefin
 /**
  * employee_communication.md §37 — the whole record on one page.
  *
- * Approve and reject are deliberately absent: they belong to the shared Approval
- * Engine and are the approver's action, so the dashboard's Pending Approvals
- * widget is where HR and the GM pick a record up. What lives here is the
- * requester's side (submit, close), the employee's side (statement,
- * acknowledgement), and the read-only approval trail — which is also the
- * "digital signature" (§18): approver identity, role, timestamp and comment,
- * captured by approveStep. There is no signature canvas and no signed-PDF
- * artifact.
+ * Approve/reject live here too, gated by the same role-on-current-step check
+ * approveStep.ts itself enforces — the dashboard's Pending Approvals widget
+ * only links back to this page, it doesn't own the decision itself. What
+ * else lives here: the requester's side (submit, close), the employee's side
+ * (statement, acknowledgement), and the read-only approval trail — which is
+ * also the "digital signature" (§18): approver identity, role, timestamp and
+ * comment, captured by approveStep. There is no signature canvas and no
+ * signed-PDF artifact.
  *
  * §32's PDF is the print stylesheet: `print:` variants hide the chrome and
  * reveal the declaration and signature block, so Ctrl+P produces the official
@@ -98,7 +98,7 @@ export function CommunicationRecordDetailPage() {
   const navigate = useNavigate()
   const toast = useToast()
   const { recordId } = useParams<{ recordId: string }>()
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const { canAny } = usePermissions()
 
   const { data: record, loading, error } = useFirestoreDoc<DisciplinaryRecord>(
@@ -128,7 +128,17 @@ export function CommunicationRecordDetailPage() {
   const [closureReason, setClosureReason] = useState('')
   const [busy, setBusy] = useState(false)
 
+  const [approvalRequest, setApprovalRequest] = useState<ApprovalRequest | null>(null)
+  const [rejecting, setRejecting] = useState(false)
+  const [decisionComment, setDecisionComment] = useState('')
+  const [decisionBusy, setDecisionBusy] = useState(false)
+
   const approvalRequestId = record?.approvalRequestId ?? null
+
+  function loadHistory() {
+    if (!approvalRequestId) return
+    void approvalService.getApprovalHistory(approvalRequestId).then(setHistory).catch(() => undefined)
+  }
 
   useEffect(() => {
     if (!approvalRequestId) return
@@ -143,6 +153,14 @@ export function CommunicationRecordDetailPage() {
       cancelled = true
     }
   }, [approvalRequestId, record?.status])
+
+  useEffect(() => {
+    if (!approvalRequestId) {
+      setApprovalRequest(null)
+      return
+    }
+    return approvalService.subscribeToApprovalRequest(approvalRequestId, setApprovalRequest)
+  }, [approvalRequestId])
 
   useEffect(() => {
     return userService.subscribeToDirectory(
@@ -191,6 +209,45 @@ export function CommunicationRecordDetailPage() {
       toast.error(actionError instanceof Error ? actionError.message : 'That did not work.')
     } finally {
       setBusy(false)
+    }
+  }
+
+  const canDecide =
+    approvalRequest != null &&
+    approvalService.canActOnApprovalRequest(
+      approvalRequest,
+      profile ? { uid: profile.uid, roleId: profile.roleId, outletId: profile.outletId } : null,
+    )
+
+  async function handleApprove() {
+    if (!approvalRequestId) return
+    setDecisionBusy(true)
+    try {
+      await approvalService.approveStep({ approvalRequestId, comments: decisionComment.trim() || undefined })
+      toast.success('Approved.')
+      setDecisionComment('')
+      setRejecting(false)
+      loadHistory()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not approve.')
+    } finally {
+      setDecisionBusy(false)
+    }
+  }
+
+  async function handleReject() {
+    if (!approvalRequestId || !decisionComment.trim()) return
+    setDecisionBusy(true)
+    try {
+      await approvalService.rejectStep({ approvalRequestId, comments: decisionComment.trim() })
+      toast.success('Rejected.')
+      setDecisionComment('')
+      setRejecting(false)
+      loadHistory()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not reject.')
+    } finally {
+      setDecisionBusy(false)
     }
   }
 
@@ -493,6 +550,46 @@ export function CommunicationRecordDetailPage() {
           <SectionTitle section="signatures" />
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
+          {canDecide && (
+            <div className="flex flex-col gap-2 rounded-md border border-border p-3 print:hidden">
+              <p className="text-sm text-foreground">This record is waiting on your decision.</p>
+              <Textarea
+                aria-label="Decision comment"
+                rows={2}
+                placeholder={rejecting ? 'Reason for rejecting (required)' : 'Comment (optional)'}
+                value={decisionComment}
+                onChange={(e) => setDecisionComment(e.target.value)}
+              />
+              <div className="flex flex-wrap gap-2">
+                {rejecting ? (
+                  <>
+                    <Button
+                      variant="danger"
+                      disabled={decisionBusy || !decisionComment.trim()}
+                      onClick={() => void handleReject()}
+                    >
+                      <X className="mr-1 h-4 w-4" aria-hidden="true" />
+                      Confirm reject
+                    </Button>
+                    <Button variant="ghost" disabled={decisionBusy} onClick={() => setRejecting(false)}>
+                      Back
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button disabled={decisionBusy} onClick={() => void handleApprove()}>
+                      <Check className="mr-1 h-4 w-4" aria-hidden="true" />
+                      Approve
+                    </Button>
+                    <Button variant="secondary" disabled={decisionBusy} onClick={() => setRejecting(true)}>
+                      <X className="mr-1 h-4 w-4" aria-hidden="true" />
+                      Reject
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
           {history.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               {record.status === 'draft' ? 'Not yet submitted for signing.' : 'No approval actions recorded yet.'}

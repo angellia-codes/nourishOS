@@ -8,6 +8,8 @@ export interface ApprovalStepDefinition {
   approverRole: Role
   slaHours?: number
   conditions?: Record<string, unknown>
+  /** equipment-master-design.md §5.2 — scopes this step to one outlet's own approver rather than the role everywhere. */
+  approverOutletId?: string
 }
 
 /** Configurable route for a resource type. Source: APPROVAL_ENGINE.md §6. */

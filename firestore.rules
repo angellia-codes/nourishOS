@@ -46,7 +46,7 @@ service cloud.firestore {
       // HR.md §22: HR/GM/Director full read; department leaders limited to
       // their own department. Salary is deliberately NOT stored on this doc
       // (see employee.types.ts) since rules can't hide individual fields.
-      allow read: if hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
+      allow read: if hasAnyRole(['hrManager', 'hrGeneralAdmin', 'generalManager', 'director', 'superAdmin']) ||
         // restaurantManager replaced outletManager on the registration form but
         // was never added here, so its dashboard headcount tile read denied.
         // The /hr module is hidden from these roles (routes.tsx) — this read
@@ -64,7 +64,7 @@ service cloud.firestore {
       // §12.1: salary/allowance/bank data — split out since the rule above
       // can't hide individual fields from GM/Director/department leaders.
       match /compensation/{document=**} {
-        allow read: if hasAnyRole(['hrManager', 'superAdmin']);
+        allow read: if hasAnyRole(['hrManager', 'hrGeneralAdmin', 'superAdmin']);
         allow write: if false; // updateEmployeeCompensation Cloud Function only
       }
     }
@@ -94,7 +94,7 @@ service cloud.firestore {
     //     have no account, in which case employeeUid is null and nothing here
     //     matches, which is correct.
     match /disciplinaryActions/{recordId} {
-      allow read: if hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
+      allow read: if hasAnyRole(['hrManager', 'hrGeneralAdmin', 'generalManager', 'director', 'superAdmin']) ||
         (hasAnyRole(['headChef', 'barManager', 'restaurantSupervisor', 'chiefBaker', 'wholefoodLeader',
           'restaurantManager', 'restaurantMaintenanceManager',
           'finance', 'purchasing', 'security', 'engineering', 'marketing']) &&

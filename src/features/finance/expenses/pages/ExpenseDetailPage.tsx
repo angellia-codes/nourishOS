@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Archive, Banknote, Lock, Pencil, Send } from 'lucide-react'
+import { ArrowLeft, Archive, Banknote, Check, Lock, Pencil, Send, X } from 'lucide-react'
 import {
   Badge,
   Button,
@@ -11,6 +11,7 @@ import {
   Input,
   Spinner,
   StatusPill,
+  Textarea,
   Timeline,
   TimelineItem,
 } from '@/components/ui'
@@ -30,7 +31,7 @@ import {
   formatIdr,
   isEditable,
 } from '../expenseFormat'
-import type { ApprovalHistoryEntry, ExpenseRequest, FileMetadata } from '@/types'
+import type { ApprovalHistoryEntry, ApprovalRequest, ExpenseRequest, FileMetadata } from '@/types'
 
 const HISTORY_VARIANT: Record<string, 'default' | 'success' | 'warning' | 'error'> = {
   approve: 'success',
@@ -47,15 +48,15 @@ const HISTORY_VARIANT: Record<string, 'default' | 'success' | 'warning' | 'error
  * requirement: the Submit button says which requirement is missing instead of
  * going dead.
  *
- * Approve and reject are deliberately absent. They belong to the shared Approval
- * Engine and are the approver's action, not the requester's — the dashboard's
- * Pending Approvals widget is where an approver picks the request up.
+ * Approve/reject live here rather than on a dedicated approval-queue page —
+ * the dashboard's Pending Approvals widget only links back to this page, it
+ * doesn't own the decision itself (approval_engine.md §19).
  */
 export function ExpenseDetailPage() {
   const navigate = useNavigate()
   const toast = useToast()
   const { expenseRequestId } = useParams<{ expenseRequestId: string }>()
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
 
   const { data: expense, loading, error } = useFirestoreDoc<ExpenseRequest>(
     COLLECTIONS.EXPENSE_REQUESTS,
@@ -79,7 +80,17 @@ export function ExpenseDetailPage() {
   const [paymentReference, setPaymentReference] = useState('')
   const [busy, setBusy] = useState(false)
 
+  const [approvalRequest, setApprovalRequest] = useState<ApprovalRequest | null>(null)
+  const [rejecting, setRejecting] = useState(false)
+  const [decisionComment, setDecisionComment] = useState('')
+  const [decisionBusy, setDecisionBusy] = useState(false)
+
   const approvalRequestId = expense?.approvalRequestId ?? null
+
+  function loadHistory() {
+    if (!approvalRequestId) return
+    void approvalService.getApprovalHistory(approvalRequestId).then(setHistory).catch(() => undefined)
+  }
 
   useEffect(() => {
     if (!approvalRequestId) return
@@ -94,6 +105,14 @@ export function ExpenseDetailPage() {
       cancelled = true
     }
   }, [approvalRequestId, expense?.status])
+
+  useEffect(() => {
+    if (!approvalRequestId) {
+      setApprovalRequest(null)
+      return
+    }
+    return approvalService.subscribeToApprovalRequest(approvalRequestId, setApprovalRequest)
+  }, [approvalRequestId])
 
   useEffect(() => {
     return userService.subscribeToDirectory(
@@ -142,6 +161,45 @@ export function ExpenseDetailPage() {
       toast.error(actionError instanceof Error ? actionError.message : 'That did not work.')
     } finally {
       setBusy(false)
+    }
+  }
+
+  const canDecide =
+    approvalRequest != null &&
+    approvalService.canActOnApprovalRequest(
+      approvalRequest,
+      profile ? { uid: profile.uid, roleId: profile.roleId, outletId: profile.outletId } : null,
+    )
+
+  async function handleApprove() {
+    if (!approvalRequestId) return
+    setDecisionBusy(true)
+    try {
+      await approvalService.approveStep({ approvalRequestId, comments: decisionComment.trim() || undefined })
+      toast.success('Approved.')
+      setDecisionComment('')
+      setRejecting(false)
+      loadHistory()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not approve.')
+    } finally {
+      setDecisionBusy(false)
+    }
+  }
+
+  async function handleReject() {
+    if (!approvalRequestId || !decisionComment.trim()) return
+    setDecisionBusy(true)
+    try {
+      await approvalService.rejectStep({ approvalRequestId, comments: decisionComment.trim() })
+      toast.success('Rejected.')
+      setDecisionComment('')
+      setRejecting(false)
+      loadHistory()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not reject.')
+    } finally {
+      setDecisionBusy(false)
     }
   }
 
@@ -307,27 +365,69 @@ export function ExpenseDetailPage() {
         </PermissionGuard>
       )}
 
-      {history.length > 0 && (
+      {(canDecide || history.length > 0) && (
         <Card>
           <CardHeader>
-            <CardTitle>Approval history</CardTitle>
+            <CardTitle>Approval</CardTitle>
           </CardHeader>
-          <CardContent>
-            <Timeline>
-              {history.map((entry) => (
-                <TimelineItem
-                  key={entry.id}
-                  variant={HISTORY_VARIANT[entry.action] ?? 'default'}
-                  title={
-                    <>
-                      <span className="font-medium">{names[entry.approverUid] ?? 'Approver'}</span> — {entry.action}
-                      {entry.comments ? `: "${entry.comments}"` : ''}
-                    </>
-                  }
-                  timestamp={formatDateTime(entry.timestamp)}
+          <CardContent className="flex flex-col gap-4">
+            {canDecide && (
+              <div className="flex flex-col gap-2 rounded-md border border-border p-3">
+                <p className="text-sm text-foreground">This request is waiting on your decision.</p>
+                <Textarea
+                  aria-label="Decision comment"
+                  rows={2}
+                  placeholder={rejecting ? 'Reason for rejecting (required)' : 'Comment (optional)'}
+                  value={decisionComment}
+                  onChange={(e) => setDecisionComment(e.target.value)}
                 />
-              ))}
-            </Timeline>
+                <div className="flex flex-wrap gap-2">
+                  {rejecting ? (
+                    <>
+                      <Button
+                        variant="danger"
+                        disabled={decisionBusy || !decisionComment.trim()}
+                        onClick={() => void handleReject()}
+                      >
+                        <X className="mr-1 h-4 w-4" aria-hidden="true" />
+                        Confirm reject
+                      </Button>
+                      <Button variant="ghost" disabled={decisionBusy} onClick={() => setRejecting(false)}>
+                        Back
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button disabled={decisionBusy} onClick={() => void handleApprove()}>
+                        <Check className="mr-1 h-4 w-4" aria-hidden="true" />
+                        Approve
+                      </Button>
+                      <Button variant="secondary" disabled={decisionBusy} onClick={() => setRejecting(true)}>
+                        <X className="mr-1 h-4 w-4" aria-hidden="true" />
+                        Reject
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+            {history.length > 0 && (
+              <Timeline>
+                {history.map((entry) => (
+                  <TimelineItem
+                    key={entry.id}
+                    variant={HISTORY_VARIANT[entry.action] ?? 'default'}
+                    title={
+                      <>
+                        <span className="font-medium">{names[entry.approverUid] ?? 'Approver'}</span> — {entry.action}
+                        {entry.comments ? `: "${entry.comments}"` : ''}
+                      </>
+                    }
+                    timestamp={formatDateTime(entry.timestamp)}
+                  />
+                ))}
+              </Timeline>
+            )}
           </CardContent>
         </Card>
       )}

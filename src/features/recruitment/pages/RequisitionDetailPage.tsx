@@ -1,13 +1,28 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, UserPlus } from 'lucide-react'
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Spinner, StatusPill } from '@/components/ui'
+import { ArrowLeft, Check, UserPlus, X } from 'lucide-react'
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Input,
+  Label,
+  Spinner,
+  StatusPill,
+  Textarea,
+  Timeline,
+  TimelineItem,
+} from '@/components/ui'
 import { EmptyState, ErrorMessage, FileList, FileUpload, PermissionGuard } from '@/components/shared'
 import { COLLECTIONS, DEPARTMENTS, OUTLETS, PERMISSIONS } from '@/constants'
 import { CONTRACT_TYPE_LABELS } from '@/constants/hr'
 import { useAuth, useFirestoreQuery, usePermissions, useToast } from '@/hooks'
 import { where, orderBy } from '@/services/firestore'
 import { ApiError } from '@/services/api'
+import { approvalService, userService } from '@/services/shared'
+import { formatDateTime } from '@/utils'
 import * as recruitmentService from '../recruitmentService'
 import {
   CANDIDATE_STAGE_ICON,
@@ -18,7 +33,14 @@ import {
   REQUISITION_STATUS_TONE,
   REQUISITION_TYPE_LABELS,
 } from '../recruitmentFormat'
-import { CANDIDATE_STAGE_LABELS, type Candidate, type FileMetadata, type Requisition, type RequisitionCompensation } from '@/types'
+import { CANDIDATE_STAGE_LABELS, type ApprovalHistoryEntry, type ApprovalRequest, type Candidate, type FileMetadata, type Requisition, type RequisitionCompensation } from '@/types'
+
+const HISTORY_VARIANT: Record<string, 'default' | 'success' | 'warning' | 'error'> = {
+  approve: 'success',
+  approve_override: 'success',
+  reject: 'error',
+  returnForRevision: 'warning',
+}
 
 const LIST_ROUTE = '/recruitment/requisitions'
 const OUTLET_NAMES: Record<string, string> = Object.fromEntries(OUTLETS.map((outlet) => [outlet.id, outlet.name]))
@@ -54,6 +76,13 @@ export function RequisitionDetailPage() {
   const [confirmingCancel, setConfirmingCancel] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
 
+  const [approvalRequest, setApprovalRequest] = useState<ApprovalRequest | null>(null)
+  const [approvalHistory, setApprovalHistory] = useState<ApprovalHistoryEntry[]>([])
+  const [names, setNames] = useState<Record<string, string>>({})
+  const [rejecting, setRejecting] = useState(false)
+  const [decisionComment, setDecisionComment] = useState('')
+  const [decisionBusy, setDecisionBusy] = useState(false)
+
   const load = useCallback(async () => {
     if (!requisitionId) return
     const row = await recruitmentService.getRequisition(requisitionId)
@@ -67,6 +96,30 @@ export function RequisitionDetailPage() {
   useEffect(() => {
     load().catch(() => setLoading(false))
   }, [load])
+
+  const approvalRequestId = requisition?.approvalRequestId ?? null
+
+  const loadApprovalHistory = useCallback(() => {
+    if (!approvalRequestId) return
+    approvalService.getApprovalHistory(approvalRequestId).then(setApprovalHistory).catch(() => undefined)
+  }, [approvalRequestId])
+
+  useEffect(() => {
+    if (!approvalRequestId) {
+      setApprovalRequest(null)
+      setApprovalHistory([])
+      return
+    }
+    loadApprovalHistory()
+    return approvalService.subscribeToApprovalRequest(approvalRequestId, setApprovalRequest)
+  }, [approvalRequestId, loadApprovalHistory])
+
+  useEffect(() => {
+    return userService.subscribeToDirectory(
+      (users) => setNames(Object.fromEntries(users.map((entry) => [entry.uid, entry.displayName]))),
+      () => setNames({}),
+    )
+  }, [])
 
   // Compensation — employee-requisition.md §3-C, hrManager/generalManager/director/superAdmin only.
   const [compensation, setCompensation] = useState<RequisitionCompensation | null>(null)
@@ -216,6 +269,47 @@ export function RequisitionDetailPage() {
 
   const canAddCandidates = requisition.status === 'approved' && can(PERMISSIONS.RECRUITMENT_CREATE)
 
+  const canDecide =
+    approvalRequest != null &&
+    approvalService.canActOnApprovalRequest(
+      approvalRequest,
+      profile ? { uid: profile.uid, roleId: profile.roleId, outletId: profile.outletId } : null,
+    )
+
+  async function handleApprove() {
+    if (!approvalRequestId) return
+    setDecisionBusy(true)
+    try {
+      await approvalService.approveStep({ approvalRequestId, comments: decisionComment.trim() || undefined })
+      toast.success('Approved.')
+      setDecisionComment('')
+      setRejecting(false)
+      loadApprovalHistory()
+      await load()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not approve.')
+    } finally {
+      setDecisionBusy(false)
+    }
+  }
+
+  async function handleReject() {
+    if (!approvalRequestId || !decisionComment.trim()) return
+    setDecisionBusy(true)
+    try {
+      await approvalService.rejectStep({ approvalRequestId, comments: decisionComment.trim() })
+      toast.success('Rejected.')
+      setDecisionComment('')
+      setRejecting(false)
+      loadApprovalHistory()
+      await load()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not reject.')
+    } finally {
+      setDecisionBusy(false)
+    }
+  }
+
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -236,6 +330,73 @@ export function RequisitionDetailPage() {
           label={REQUISITION_STATUS_LABELS[requisition.status]}
         />
       </div>
+
+      {approvalRequest && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Approval</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            {canDecide && (
+              <div className="flex flex-col gap-2 rounded-md border border-border p-3">
+                <p className="text-sm text-foreground">This requisition is waiting on your decision.</p>
+                <Textarea
+                  aria-label="Decision comment"
+                  rows={2}
+                  placeholder={rejecting ? 'Reason for rejecting (required)' : 'Comment (optional)'}
+                  value={decisionComment}
+                  onChange={(e) => setDecisionComment(e.target.value)}
+                />
+                <div className="flex flex-wrap gap-2">
+                  {rejecting ? (
+                    <>
+                      <Button
+                        variant="danger"
+                        disabled={decisionBusy || !decisionComment.trim()}
+                        onClick={() => void handleReject()}
+                      >
+                        <X className="mr-1 h-4 w-4" aria-hidden="true" />
+                        Confirm reject
+                      </Button>
+                      <Button variant="ghost" disabled={decisionBusy} onClick={() => setRejecting(false)}>
+                        Back
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button disabled={decisionBusy} onClick={() => void handleApprove()}>
+                        <Check className="mr-1 h-4 w-4" aria-hidden="true" />
+                        Approve
+                      </Button>
+                      <Button variant="secondary" disabled={decisionBusy} onClick={() => setRejecting(true)}>
+                        <X className="mr-1 h-4 w-4" aria-hidden="true" />
+                        Reject
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+            {approvalHistory.length > 0 && (
+              <Timeline>
+                {approvalHistory.map((entry) => (
+                  <TimelineItem
+                    key={entry.id}
+                    variant={HISTORY_VARIANT[entry.action] ?? 'default'}
+                    title={
+                      <>
+                        <span className="font-medium">{names[entry.approverUid] ?? 'Approver'}</span> — {entry.action}
+                        {entry.comments ? `: "${entry.comments}"` : ''}
+                      </>
+                    }
+                    timestamp={formatDateTime(entry.timestamp)}
+                  />
+                ))}
+              </Timeline>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardContent className="grid gap-4 p-4 sm:grid-cols-2">

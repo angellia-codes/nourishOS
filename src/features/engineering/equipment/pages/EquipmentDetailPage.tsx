@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, ArrowRightLeft, Pencil, Wrench } from 'lucide-react'
+import { ArrowLeft, ArrowRightLeft, Check, Pencil, Wrench, X } from 'lucide-react'
 import { Button, Card, CardContent, CardHeader, CardTitle, Label, Select, Spinner, StatusPill, Textarea } from '@/components/ui'
 import { EmptyState, PermissionGuard } from '@/components/shared'
 import { COLLECTIONS, DEPARTMENTS, OUTLETS, OUTLET_AREAS, PERMISSIONS } from '@/constants'
-import { useFirestoreDoc, useToast } from '@/hooks'
+import { useAuth, useFirestoreDoc, useToast } from '@/hooks'
 import { approvalService, userService } from '@/services/shared'
 import { formatDate, formatDateTime } from '@/utils'
 import * as equipmentService from '../equipmentService'
@@ -17,7 +17,7 @@ import {
   formatCriticalityLabel,
   formatStatusLabel,
 } from '../equipmentFormat'
-import type { ApprovalHistoryEntry, Equipment } from '@/types'
+import type { ApprovalHistoryEntry, ApprovalRequest, Equipment } from '@/types'
 
 function Field({ label, value }: { label: string; value: string }) {
   return (
@@ -32,20 +32,25 @@ function Field({ label, value }: { label: string; value: string }) {
  * equipment-master-design.md §8 — read-only summary, edit, status control,
  * outlet transfer, decommission request, and an empty maintenance-history
  * placeholder until Module B exists. Approve/reject the pending decommission
- * request is deliberately absent here — same reasoning ExpenseDetailPage
- * gives: that belongs to the dashboard's Pending Approvals widget, not the
- * requester's own view of the record.
+ * request lives here too (§5.2's outlet-scoped approver) — the dashboard's
+ * Pending Approvals widget only links back to this page, it doesn't own the
+ * decision itself.
  */
 export function EquipmentDetailPage() {
   const { equipmentId } = useParams<{ equipmentId: string }>()
   const navigate = useNavigate()
   const toast = useToast()
+  const { profile } = useAuth()
 
   const { data: equipment, loading } = useFirestoreDoc<Equipment>(COLLECTIONS.EQUIPMENT, equipmentId)
 
   const [history, setHistory] = useState<ApprovalHistoryEntry[]>([])
   const [names, setNames] = useState<Record<string, string>>({})
   const [statusBusy, setStatusBusy] = useState(false)
+  const [approvalRequest, setApprovalRequest] = useState<ApprovalRequest | null>(null)
+  const [rejecting, setRejecting] = useState(false)
+  const [decisionComment, setDecisionComment] = useState('')
+  const [decisionBusy, setDecisionBusy] = useState(false)
 
   const [transferOutletId, setTransferOutletId] = useState('')
   const [transferArea, setTransferArea] = useState('')
@@ -55,6 +60,11 @@ export function EquipmentDetailPage() {
   const [requestingDecommission, setRequestingDecommission] = useState(false)
 
   const approvalRequestId = equipment?.decommissionApprovalRequestId ?? null
+
+  function loadHistory() {
+    if (!approvalRequestId) return
+    void approvalService.getApprovalHistory(approvalRequestId).then(setHistory).catch(() => undefined)
+  }
 
   useEffect(() => {
     if (!approvalRequestId) {
@@ -72,6 +82,14 @@ export function EquipmentDetailPage() {
       cancelled = true
     }
   }, [approvalRequestId, equipment?.status])
+
+  useEffect(() => {
+    if (!approvalRequestId) {
+      setApprovalRequest(null)
+      return
+    }
+    return approvalService.subscribeToApprovalRequest(approvalRequestId, setApprovalRequest)
+  }, [approvalRequestId])
 
   useEffect(() => {
     return userService.subscribeToDirectory((users) =>
@@ -118,6 +136,45 @@ export function EquipmentDetailPage() {
       toast.error(error instanceof Error ? error.message : 'Could not submit the decommission request.')
     } finally {
       setRequestingDecommission(false)
+    }
+  }
+
+  const canDecide =
+    approvalRequest != null &&
+    approvalService.canActOnApprovalRequest(
+      approvalRequest,
+      profile ? { uid: profile.uid, roleId: profile.roleId, outletId: profile.outletId } : null,
+    )
+
+  async function handleApprove() {
+    if (!approvalRequestId) return
+    setDecisionBusy(true)
+    try {
+      await approvalService.approveStep({ approvalRequestId, comments: decisionComment.trim() || undefined })
+      toast.success('Approved.')
+      setDecisionComment('')
+      setRejecting(false)
+      loadHistory()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not approve.')
+    } finally {
+      setDecisionBusy(false)
+    }
+  }
+
+  async function handleReject() {
+    if (!approvalRequestId || !decisionComment.trim()) return
+    setDecisionBusy(true)
+    try {
+      await approvalService.rejectStep({ approvalRequestId, comments: decisionComment.trim() })
+      toast.success('Rejected.')
+      setDecisionComment('')
+      setRejecting(false)
+      loadHistory()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not reject.')
+    } finally {
+      setDecisionBusy(false)
     }
   }
 
@@ -333,19 +390,63 @@ export function EquipmentDetailPage() {
         </>
       )}
 
-      {history.length > 0 && (
+      {(canDecide || history.length > 0) && (
         <Card>
           <CardHeader>
-            <CardTitle>Approval history</CardTitle>
+            <CardTitle>Approval</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col gap-2">
-            {history.map((entry) => (
-              <p key={entry.id} className="text-sm text-foreground">
-                <span className="font-medium">{names[entry.approverUid] ?? 'Approver'}</span> — {entry.action}
-                {entry.comments ? `: ${entry.comments}` : ''}
-                <span className="ml-2 text-xs text-muted-foreground">{formatDateTime(entry.timestamp)}</span>
-              </p>
-            ))}
+          <CardContent className="flex flex-col gap-4">
+            {canDecide && (
+              <div className="flex flex-col gap-2 rounded-md border border-border p-3">
+                <p className="text-sm text-foreground">This decommission request is waiting on your decision.</p>
+                <Textarea
+                  aria-label="Decision comment"
+                  rows={2}
+                  placeholder={rejecting ? 'Reason for rejecting (required)' : 'Comment (optional)'}
+                  value={decisionComment}
+                  onChange={(event) => setDecisionComment(event.target.value)}
+                />
+                <div className="flex flex-wrap gap-2">
+                  {rejecting ? (
+                    <>
+                      <Button
+                        variant="danger"
+                        disabled={decisionBusy || !decisionComment.trim()}
+                        onClick={() => void handleReject()}
+                      >
+                        <X className="mr-1 h-4 w-4" aria-hidden="true" />
+                        Confirm reject
+                      </Button>
+                      <Button variant="ghost" disabled={decisionBusy} onClick={() => setRejecting(false)}>
+                        Back
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button disabled={decisionBusy} onClick={() => void handleApprove()}>
+                        <Check className="mr-1 h-4 w-4" aria-hidden="true" />
+                        Approve
+                      </Button>
+                      <Button variant="secondary" disabled={decisionBusy} onClick={() => setRejecting(true)}>
+                        <X className="mr-1 h-4 w-4" aria-hidden="true" />
+                        Reject
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+            {history.length > 0 && (
+              <div className="flex flex-col gap-2">
+                {history.map((entry) => (
+                  <p key={entry.id} className="text-sm text-foreground">
+                    <span className="font-medium">{names[entry.approverUid] ?? 'Approver'}</span> — {entry.action}
+                    {entry.comments ? `: ${entry.comments}` : ''}
+                    <span className="ml-2 text-xs text-muted-foreground">{formatDateTime(entry.timestamp)}</span>
+                  </p>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
