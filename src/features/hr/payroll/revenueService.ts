@@ -4,6 +4,9 @@ import { COLLECTIONS } from '@/constants'
 import type { Unsubscribe } from '@/services/firestore'
 import type { MonthlyRevenue } from '@/types'
 
+/** Company-wide total, entered as one figure instead of nine per-outlet ones. Not a real outlet id. */
+export const ALL_OUTLETS_ID = 'all'
+
 export interface RecordMonthlyRevenueInput {
   outletId: string
   periodMonth: string

@@ -218,6 +218,7 @@ function CalendarAgendaBody({
                       <span className="flex items-center gap-1.5">
                         <Users className="h-3.5 w-3.5" aria-hidden="true" />
                         {event.participants.length} participant{event.participants.length === 1 ? '' : 's'}
+                        {event.otherParticipants && ` + ${event.otherParticipants}`}
                       </span>
                       {event.location && (
                         <span className="flex items-center gap-1.5">

@@ -119,7 +119,7 @@ service cloud.firestore {
     // outlet comes off the token claim, so a leader who transfers outlets
     // loses the old outlet's rows as soon as the claim syncs.
     function isHrOrAbove() {
-      return hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']);
+      return hasAnyRole(['hrManager', 'hrGeneralAdmin', 'generalManager', 'director', 'superAdmin']);
     }
 
     function isLeader() {
@@ -188,13 +188,14 @@ service cloud.firestore {
       allow write: if false; // written by archiveEmployee; edited via updateOffboardingItem / completeOffboarding
     }
 
-    // exit-interview.md §4: individual records are hrManager/superAdmin only —
-    // deliberately NOT generalManager/director like the rest of HR's sensitive
-    // collections. GM/Director get rollups through getExitInterviewInsights
-    // instead of a direct collection read (the §6 minimum-N safeguard has to
-    // be enforced server-side, which a firestore.rules read rule can't do).
+    // exit-interview.md §4: individual records are hrManager/hrGeneralAdmin/
+    // superAdmin only — deliberately NOT generalManager/director like the rest
+    // of HR's sensitive collections. GM/Director get rollups through
+    // getExitInterviewInsights instead of a direct collection read (the §6
+    // minimum-N safeguard has to be enforced server-side, which a
+    // firestore.rules read rule can't do).
     match /exitInterviews/{interviewId} {
-      allow read: if hasAnyRole(['hrManager', 'superAdmin']);
+      allow read: if hasAnyRole(['hrManager', 'hrGeneralAdmin', 'superAdmin']);
       allow write: if false; // submitExitInterview Cloud Function only
     }
 
@@ -253,7 +254,11 @@ service cloud.firestore {
 
     match /trainingAssignments/{assignmentId} {
       allow read: if isHrOrAbove() ||
-        (isLeader() && resource.data.departmentId == request.auth.token.departmentId) ||
+        // finance/purchasing/sousChef can now assign training (training.assign,
+        // 2026-08-31) but aren't in isLeader() — sousChef is Supervisor tier,
+        // finance/purchasing aren't outlet leaders at all.
+        ((isLeader() || hasAnyRole(['finance', 'purchasing', 'sousChef'])) &&
+          resource.data.departmentId == request.auth.token.departmentId) ||
         // §5's "All staff — own assignments only". Employee.id is not an auth
         // uid, so generateTrainingAssignments resolves and denormalises one
         // (lib/identity.ts) — the same trick disciplinaryActions uses.

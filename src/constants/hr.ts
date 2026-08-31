@@ -150,6 +150,7 @@ export const EMPLOYEE_ACTIVITY_TYPE = {
   HIRED: 'hired',
   UPDATED: 'updated',
   ARCHIVED: 'archived',
+  REACTIVATED: 'reactivated',
   PROMOTED: 'promoted',
   DEPARTMENT_TRANSFER: 'departmentTransfer',
   OUTLET_TRANSFER: 'outletTransfer',
@@ -192,6 +193,57 @@ export const TAX_STATUS = {
 } as const
 
 export type TaxStatus = (typeof TAX_STATUS)[keyof typeof TAX_STATUS]
+
+export const BLOOD_TYPE = {
+  A: 'A',
+  B: 'B',
+  AB: 'AB',
+  O: 'O',
+} as const
+
+export type BloodType = (typeof BLOOD_TYPE)[keyof typeof BLOOD_TYPE]
+
+export const BLOOD_TYPE_LABELS: Record<BloodType, string> = {
+  A: 'A',
+  B: 'B',
+  AB: 'AB',
+  O: 'O',
+}
+
+/** Deliberately 3 values, not employee.types.ts's old speculative 4-value draft — no "divorced" option was asked for. Matches the candidate portal's own MARITAL_STATUSES (functions/src/recruitment/portal/applicationForm.ts). */
+export const MARITAL_STATUS = {
+  SINGLE: 'single',
+  MARRIED: 'married',
+  WIDOWED: 'widowed',
+} as const
+
+export type MaritalStatus = (typeof MARITAL_STATUS)[keyof typeof MARITAL_STATUS]
+
+export const MARITAL_STATUS_LABELS: Record<MaritalStatus, string> = {
+  single: 'Single',
+  married: 'Married',
+  widowed: 'Widowed',
+}
+
+export const TSHIRT_SIZE = {
+  XS: 'XS',
+  S: 'S',
+  M: 'M',
+  L: 'L',
+  XL: 'XL',
+  XXL: 'XXL',
+} as const
+
+export type TshirtSize = (typeof TSHIRT_SIZE)[keyof typeof TSHIRT_SIZE]
+
+export const TSHIRT_SIZE_LABELS: Record<TshirtSize, string> = {
+  XS: 'XS',
+  S: 'S',
+  M: 'M',
+  L: 'L',
+  XL: 'XL',
+  XXL: 'XXL',
+}
 
 export const TAX_STATUS_LABELS: Record<TaxStatus, string> = {
   TK0: 'TK0 — Single, 0 dependents',

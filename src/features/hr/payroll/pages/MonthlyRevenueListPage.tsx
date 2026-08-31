@@ -7,9 +7,13 @@ import { OUTLETS } from '@/constants'
 import { formatCurrency } from '@/utils'
 import { useToast } from '@/hooks'
 import * as revenueService from '../revenueService'
+import { ALL_OUTLETS_ID } from '../revenueService'
 import type { MonthlyRevenue } from '@/types'
 
-const OUTLET_NAMES: Record<string, string> = Object.fromEntries(OUTLETS.map((o) => [o.id, o.name]))
+const OUTLET_NAMES: Record<string, string> = {
+  ...Object.fromEntries(OUTLETS.map((o) => [o.id, o.name])),
+  [ALL_OUTLETS_ID]: 'All Outlets (Total)',
+}
 
 const COLUMNS: ReportTableColumn<MonthlyRevenue>[] = [
   { header: 'Outlet', value: (r) => OUTLET_NAMES[r.outletId] ?? r.outletId },
@@ -105,6 +109,7 @@ export function MonthlyRevenueListPage() {
                   {o.name}
                 </option>
               ))}
+              <option value={ALL_OUTLETS_ID}>All Outlets (Total)</option>
             </Select>
           </div>
           <div className="flex flex-col gap-1.5">

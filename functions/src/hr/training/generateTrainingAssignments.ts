@@ -5,7 +5,7 @@ import {
   COLLECTIONS,
   REGION,
   requireActiveUser,
-  requirePermission,
+  requireAnyPermission,
   recordAuditEvent,
   newDocumentBaseFields,
   AppError,
@@ -171,7 +171,9 @@ async function onboardingTopicIdsFor(bindings: { topicId: string }[]): Promise<s
 export const generateTrainingAssignments = onCall({ region: REGION }, async (request) => {
   try {
     const user = await requireActiveUser(request)
-    requirePermission(user, PERMISSIONS.TRAINING_MANAGE)
+    // training.manage (HR, full catalogue ownership) or the narrower
+    // training.assign (department heads and above, this route only).
+    requireAnyPermission(user, [PERMISSIONS.TRAINING_MANAGE, PERMISSIONS.TRAINING_ASSIGN])
 
     const { employeeId, departmentId } = (request.data ?? {}) as { employeeId?: string; departmentId?: string }
     if (!employeeId && !departmentId) {

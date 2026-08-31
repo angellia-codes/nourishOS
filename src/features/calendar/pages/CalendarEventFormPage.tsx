@@ -37,6 +37,8 @@ export function CalendarEventFormPage() {
   const [location, setLocation] = useState('')
   const [priority, setPriority] = useState<Priority>(PRIORITY.MEDIUM)
   const [participants, setParticipants] = useState<string[]>([])
+  const [includeOthers, setIncludeOthers] = useState(false)
+  const [otherParticipants, setOtherParticipants] = useState('')
   const [options, setOptions] = useState<userService.DirectoryUser[]>([])
   const [conflicts, setConflicts] = useState<CalendarConflict[] | null>(null)
   const [overrideReason, setOverrideReason] = useState('')
@@ -66,6 +68,7 @@ export function CalendarEventFormPage() {
         startAt: toIsoInstant(date, startTime),
         endAt: toIsoInstant(date, endTime),
         participants,
+        otherParticipants: includeOthers && otherParticipants.trim() ? otherParticipants.trim() : undefined,
         location: location || undefined,
         priority,
         overrideReason: conflicts && overrideReason.trim() ? overrideReason.trim() : undefined,
@@ -212,6 +215,24 @@ export function CalendarEventFormPage() {
                 {option.displayName}
               </label>
             ))
+          )}
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
+            <Checkbox
+              checked={includeOthers}
+              onChange={() => {
+                setIncludeOthers((current) => !current)
+                if (includeOthers) setOtherParticipants('')
+              }}
+            />
+            Others
+          </label>
+          {includeOthers && (
+            <Textarea
+              aria-label="Other participants"
+              placeholder="Guests with no NourishOS account — name and, if useful, contact info"
+              value={otherParticipants}
+              onChange={(e) => setOtherParticipants(e.target.value)}
+            />
           )}
         </CardContent>
       </Card>

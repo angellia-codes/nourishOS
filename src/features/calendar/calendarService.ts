@@ -14,6 +14,8 @@ export interface CreateCalendarEventInput {
   endAt: string
   allDay?: boolean
   participants: string[]
+  /** Free text — guests with no NourishOS account. Never notified, no conflict/Google-sync effect. */
+  otherParticipants?: string
   location?: string
   priority: Priority
   recurrenceRule?: string

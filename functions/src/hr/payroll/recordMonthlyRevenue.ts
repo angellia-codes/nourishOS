@@ -15,6 +15,9 @@ import {
 import { OUTLET_DEPARTMENTS } from '../../lib/organization'
 import { requirePeriodMonth, requireNonNegativeNumber } from './helpers'
 
+/** Mirrors src/features/hr/payroll/revenueService.ts's ALL_OUTLETS_ID — a company-wide total entered as one figure instead of nine per-outlet ones, not a real outlet. */
+const ALL_OUTLETS_ID = 'all'
+
 /**
  * Manual monthly revenue entry — no POS integration exists anywhere in this
  * app, so this is the only source. Deterministic doc id
@@ -31,7 +34,7 @@ export const recordMonthlyRevenue = onCall({ region: REGION }, async (request) =
       periodMonth?: string
       amount?: number
     }
-    if (!outletId || !(outletId in OUTLET_DEPARTMENTS)) {
+    if (!outletId || (outletId !== ALL_OUTLETS_ID && !(outletId in OUTLET_DEPARTMENTS))) {
       throw new AppError('invalid-argument', 'outletId is not a recognized outlet.')
     }
     const validPeriodMonth = requirePeriodMonth(periodMonth)

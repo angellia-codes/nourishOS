@@ -102,3 +102,72 @@ export const archiveEmployee = onCall({ region: REGION }, async (request) => {
     handleError(error)
   }
 })
+
+interface UnarchiveEmployeeInput {
+  employeeId: string
+  reason?: string
+}
+
+/**
+ * Undoes archiveEmployee: restores active headcount status. The offboarding
+ * checklist and any exit interview already on file are left exactly as they
+ * are — they're history of what happened, not something reinstating someone
+ * should erase, same "nothing is ever hard-deleted" reasoning archiveEmployee
+ * itself states above. Separation fields are cleared since they no longer
+ * describe this employee's current state; a later archive overwrites them
+ * with fresh values anyway.
+ */
+export const unarchiveEmployee = onCall({ region: REGION }, async (request) => {
+  try {
+    const user = await requireActiveUser(request)
+    requirePermission(user, PERMISSIONS.EMPLOYEES_DELETE)
+
+    const { employeeId, reason } = (request.data ?? {}) as Partial<UnarchiveEmployeeInput>
+    if (!employeeId) {
+      throw new AppError('invalid-argument', 'employeeId is required.')
+    }
+
+    const employeeRef = db.collection(COLLECTIONS.EMPLOYEES).doc(employeeId)
+    const snap = await employeeRef.get()
+    if (!snap.exists) {
+      throw new AppError('not-found', 'Employee not found.')
+    }
+    const employee = snap.data()!
+
+    if (employee.status !== 'inactive') {
+      throw new AppError('failed-precondition', 'This employee is already active.')
+    }
+
+    await employeeRef.update({
+      status: 'active',
+      isArchived: false,
+      resignationDate: null,
+      resignationReason: null,
+      lastWorkingDate: null,
+      ...updatedFields(user.uid),
+    })
+
+    await recordEmployeeActivity(
+      { id: employeeId, departmentId: employee.departmentId, outletId: employee.outletId },
+      'reactivated',
+      reason?.trim() ? `Reinstated: ${reason.trim()}` : 'Reinstated to active headcount.',
+      user,
+    )
+
+    await recordAuditEvent({
+      eventType: 'EmployeeUnarchived',
+      category: 'HR',
+      module: 'hr',
+      resourceType: 'employee',
+      resourceId: employeeId,
+      action: 'update',
+      user,
+      previousValues: { status: 'inactive' },
+      newValues: { status: 'active' },
+    })
+
+    return successResponse({ employeeId }, 'Employee reinstated.')
+  } catch (error) {
+    handleError(error)
+  }
+})

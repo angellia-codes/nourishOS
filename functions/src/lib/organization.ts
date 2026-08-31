@@ -289,6 +289,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'appraisals.readRecommendation',
     'appraisals.reopen',
     'training.read',
+    'training.assign',
     'reports.read',
     'reports.create',
     // payroll-components-payslip-design.md §8 — payroll is a disbursement
@@ -332,6 +333,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'appraisals.scorePrimary',
     'appraisals.readRecommendation',
     'training.read',
+    'training.assign',
     'reports.read',
     'reports.create',
     // §8 — the second signature on a payroll batch.
@@ -473,6 +475,8 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'attendance.export',
     'employees.read',
     'tasks.assign',
+    'training.read',
+    'training.assign',
   ],
   purchasing: [
     ...BASE,
@@ -483,11 +487,13 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'workOrders.update',
     'recruitment.read',
     'recruitment.create',
+    'training.read',
+    'training.assign',
   ],
-  headChef: LEADER,
-  chiefBaker: LEADER,
-  wholefoodLeader: LEADER,
-  barManager: [...LEADER, 'workOrders.update'],
+  headChef: [...LEADER, 'training.assign'],
+  chiefBaker: [...LEADER, 'training.assign'],
+  wholefoodLeader: [...LEADER, 'training.assign'],
+  barManager: [...LEADER, 'workOrders.update', 'training.assign'],
   // §5 gives Restaurant Supervisor ✅ on Incident Reports — they own the guest-facing incidents.
   restaurantSupervisor: [...LEADER, 'incidents.manage', 'lostFound.manage'],
   security: [
@@ -543,6 +549,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'shiftReports.readAll',
     'reports.read',
     'calendar.create',
+    'training.assign',
     // §19 gives Manager "Limited" on Publish — scoped in practice by the
     // audience they can pick, not by a second permission string.
     'announcements.publish',
@@ -583,17 +590,22 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'equipment.decommission',
     'reports.read',
   ],
-  // HR clerical support. Deliberately no employees.read: firestore.rules gates
-  // /employees on a hardcoded role list, so the string alone would grant a page
-  // that reads nothing. Add the role there first if HR wants directory access.
+  // HR clerical support.
   hrGeneralAdmin: [
     ...BASE,
     'recruitment.read',
     'recruitment.create',
     'training.read',
+    'training.assign',
     'hrInventory.record',
     'tasks.assign',
     'calendar.create',
+    // Archives employees, runs the offboarding checklist, and conducts exit
+    // interviews (exit-interview.md §4, same standing as hrManager).
+    'employees.read',
+    'employees.update',
+    'employees.delete',
+    'exitInterviews.view',
   ],
   juniorGraphicDesigner: [...RANK_FILE, 'announcements.create'],
   purchasingSupervisor: [...SUPERVISOR, 'expenseRequests.submit', 'reports.read', 'workOrders.update'],
@@ -610,7 +622,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
   barSupervisor: SUPERVISOR,
   barCaptain: SUPERVISOR,
   barista: RANK_FILE,
-  sousChef: SUPERVISOR,
+  sousChef: [...SUPERVISOR, 'training.assign'],
   chefDePartie: SUPERVISOR,
   demiChef: SUPERVISOR,
   cook: RANK_FILE,

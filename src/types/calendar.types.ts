@@ -41,6 +41,8 @@ export interface CalendarEvent extends BaseDocument {
 
   /** User uids. Drives notifications and conflict detection. */
   participants: string[]
+  /** Free text — guests with no NourishOS account. Informational only: no notification, no conflict check, no Google invite. */
+  otherParticipants?: string | null
   location?: string | null
   priority: Priority
 

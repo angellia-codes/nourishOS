@@ -84,6 +84,18 @@ export type ProbationStatus = (typeof PROBATION_STATUSES)[number]
 export const TAX_STATUSES = ['TK0', 'TK1', 'TK2', 'TK3', 'K0', 'K1', 'K2', 'K3'] as const
 export type TaxStatus = (typeof TAX_STATUSES)[number]
 
+/** Mirrors src/constants/hr.ts BLOOD_TYPE. */
+export const BLOOD_TYPES = ['A', 'B', 'AB', 'O'] as const
+export type BloodType = (typeof BLOOD_TYPES)[number]
+
+/** Mirrors src/constants/hr.ts MARITAL_STATUS — deliberately 3 values, no "divorced". */
+export const MARITAL_STATUSES = ['single', 'married', 'widowed'] as const
+export type MaritalStatus = (typeof MARITAL_STATUSES)[number]
+
+/** Mirrors src/constants/hr.ts TSHIRT_SIZE. */
+export const TSHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const
+export type TshirtSize = (typeof TSHIRT_SIZES)[number]
+
 /** HR_OPERATIONS.md 9.1-F02: N- (PKWT/PKWTT/BOD/Freelance), DW- (Daily Worker), OJT-. */
 const EMPLOYEE_NUMBER_PREFIX: Record<EmploymentStatus, string> = {
   PKWT: 'N',
@@ -160,6 +172,7 @@ export type EmployeeActivityType =
   | 'hired'
   | 'updated'
   | 'archived'
+  | 'reactivated'
   | 'promoted'
   | 'departmentTransfer'
   | 'outletTransfer'

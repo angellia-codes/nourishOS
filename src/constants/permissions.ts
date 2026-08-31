@@ -134,9 +134,12 @@ export const PERMISSIONS = {
 
   TRAINING_READ: permission(PERMISSION_MODULES.TRAINING, ACTIONS.READ),
   /**
-   * Superseded by TRAINING_MANAGE when the canonical catalogue shipped
-   * (training-module-spec-v1.0.md). No callable checks it any more; kept
-   * defined so live roles/{roleId} documents that hold it still resolve.
+   * Was superseded (unused) when the canonical catalogue shipped
+   * (training-module-spec-v1.0.md), then reactivated 2026-08-31: the narrower
+   * companion to TRAINING_MANAGE — lets department heads and above issue the
+   * backfill/manual route on generateTrainingAssignments for their own team
+   * without granting catalogue curation (seedTrainingCatalog/overrideTrainingGate
+   * stay TRAINING_MANAGE-only).
    */
   TRAINING_ASSIGN: permission(PERMISSION_MODULES.TRAINING, ACTIONS.ASSIGN),
   // §5 — MANAGE owns the catalogue, campaigns and the gate override (HR only);

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Archive, Pencil } from 'lucide-react'
+import { ArrowLeft, Archive, GraduationCap, Pencil, RotateCcw } from 'lucide-react'
 import {
   Avatar,
   Badge,
@@ -20,7 +20,19 @@ import {
 import { ErrorMessage, FileList, FileUpload, PermissionGuard } from '@/components/shared'
 import { useFirestoreDoc, useFirestoreQuery, usePermissions, useToast } from '@/hooks'
 import { COLLECTIONS, PERMISSIONS } from '@/constants'
-import { CONTRACT_TYPE_LABELS, DISCIPLINARY_TYPE_LABELS, EMPLOYMENT_STATUS_LABELS } from '@/constants/hr'
+import {
+  BLOOD_TYPE_LABELS,
+  CONTRACT_TYPE_LABELS,
+  DISCIPLINARY_TYPE_LABELS,
+  EMPLOYMENT_STATUS_LABELS,
+  MARITAL_STATUS_LABELS,
+  TAX_STATUS_LABELS,
+  TSHIRT_SIZE_LABELS,
+  type BloodType,
+  type MaritalStatus,
+  type TaxStatus,
+  type TshirtSize,
+} from '@/constants/hr'
 import { POSITION_LABELS } from '@/constants/positions'
 import * as employeeService from '@/features/hr/services/employeeService'
 import * as communicationService from '@/features/communications/employeeCommunication/employeeCommunicationService'
@@ -242,6 +254,13 @@ export function EmployeeProfilePage() {
   const [archiving, setArchiving] = useState(false)
   const [archiveError, setArchiveError] = useState<string | null>(null)
 
+  const [showUnarchiveForm, setShowUnarchiveForm] = useState(false)
+  const [unarchiveReason, setUnarchiveReason] = useState('')
+  const [unarchiving, setUnarchiving] = useState(false)
+  const [unarchiveError, setUnarchiveError] = useState<string | null>(null)
+
+  const [assigningTraining, setAssigningTraining] = useState(false)
+
   const [offboardingChecklistId, setOffboardingChecklistId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -373,6 +392,39 @@ export function EmployeeProfilePage() {
     }
   }
 
+  async function handleUnarchive() {
+    if (!employeeId || unarchiving) return
+    setUnarchiving(true)
+    setUnarchiveError(null)
+    try {
+      await employeeService.unarchiveEmployee(employeeId, unarchiveReason.trim() || undefined)
+      toast.success('Employee reinstated.')
+      setShowUnarchiveForm(false)
+      setUnarchiveReason('')
+    } catch (error) {
+      setUnarchiveError(error instanceof ApiError ? error.message : 'Something went wrong. Please try again.')
+    } finally {
+      setUnarchiving(false)
+    }
+  }
+
+  async function handleAssignTraining() {
+    if (!employeeId || assigningTraining) return
+    setAssigningTraining(true)
+    try {
+      const result = await trainingService.generateTrainingAssignments({ employeeId })
+      toast.success(
+        result.assigned > 0
+          ? `${result.assigned} training topic${result.assigned === 1 ? '' : 's'} assigned.`
+          : 'Already up to date — nothing new to assign.',
+      )
+    } catch (error) {
+      toast.error(error instanceof ApiError ? error.message : 'Could not assign training.')
+    } finally {
+      setAssigningTraining(false)
+    }
+  }
+
   /**
    * §9.14 — sends the most recent uploaded contract PDF into the HR → GM →
    * Director chain. The newest file wins because contractFiles is already
@@ -444,9 +496,29 @@ export function EmployeeProfilePage() {
         <CardContent className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           <Field label="Gender" value={employee.gender === 'male' ? 'Male' : 'Female'} />
           <Field label="Birth date" value={formatIsoDate(employee.birthDate)} />
+          <Field label="Place of birth" value={employee.birthPlace} />
+          <Field label="Mother's name" value={employee.motherName} />
           <Field label="National ID (NIK)" value={employee.nationalId} />
           <Field label="Tax number (NPWP)" value={employee.taxNumber} />
+          <Field
+            label="Tax status (PPh21)"
+            value={employee.personalTaxStatus ? TAX_STATUS_LABELS[employee.personalTaxStatus as TaxStatus] : null}
+          />
           <Field label="Religion" value={employee.religion} />
+          <Field
+            label="Marital status"
+            value={employee.maritalStatus ? MARITAL_STATUS_LABELS[employee.maritalStatus as MaritalStatus] : null}
+          />
+          <Field
+            label="Blood type"
+            value={employee.bloodType ? BLOOD_TYPE_LABELS[employee.bloodType as BloodType] : null}
+          />
+          <Field
+            label="T-shirt size"
+            value={employee.tshirtSize ? TSHIRT_SIZE_LABELS[employee.tshirtSize as TshirtSize] : null}
+          />
+          <Field label="BPJS Ketenagakerjaan" value={employee.bpjsTk} />
+          <Field label="BPJS Kesehatan" value={employee.bpjsKesehatan} />
         </CardContent>
       </Card>
 
@@ -739,10 +811,14 @@ export function EmployeeProfilePage() {
       </PermissionGuard>
 
       {/* Training — HR.md §11 */}
-      <PermissionGuard permission={PERMISSIONS.EMPLOYEES_UPDATE}>
+      <PermissionGuard anyOf={[PERMISSIONS.EMPLOYEES_UPDATE, PERMISSIONS.TRAINING_MANAGE, PERMISSIONS.TRAINING_ASSIGN]}>
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between gap-2">
             <CardTitle>Training</CardTitle>
+            <Button variant="secondary" size="sm" onClick={() => void handleAssignTraining()} loading={assigningTraining}>
+              <GraduationCap className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+              Assign Training
+            </Button>
           </CardHeader>
           <CardContent>
             {trainingAssignments.length === 0 ? (
@@ -805,11 +881,45 @@ export function EmployeeProfilePage() {
               <Field label="Last working date" value={formatIsoDate(employee.lastWorkingDate)} />
               <Field label="Reason" value={employee.resignationReason} />
             </div>
-            {offboardingChecklistId && (
-              <div className="flex justify-end">
-                <Button variant="secondary" size="sm" onClick={() => navigate(`/hr/offboarding/${offboardingChecklistId}`)}>
-                  View offboarding checklist
-                </Button>
+            {showUnarchiveForm ? (
+              <PermissionGuard permission={PERMISSIONS.EMPLOYEES_DELETE}>
+                <div className="flex flex-col gap-3 border-t border-border pt-4">
+                  <p className="text-sm text-muted-foreground">
+                    Restores {employee.fullName} to active headcount. The offboarding checklist and exit interview,
+                    if any, are left as-is.
+                  </p>
+                  <div className="flex flex-col gap-1.5">
+                    <Label htmlFor="unarchiveReason">Reason (optional)</Label>
+                    <Textarea
+                      id="unarchiveReason"
+                      value={unarchiveReason}
+                      onChange={(e) => setUnarchiveReason(e.target.value)}
+                    />
+                  </div>
+                  {unarchiveError && <ErrorMessage message={unarchiveError} />}
+                  <div className="flex justify-end gap-2">
+                    <Button variant="secondary" onClick={() => setShowUnarchiveForm(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleUnarchive} loading={unarchiving}>
+                      Confirm Reinstate
+                    </Button>
+                  </div>
+                </div>
+              </PermissionGuard>
+            ) : (
+              <div className="flex flex-wrap justify-end gap-2">
+                {offboardingChecklistId && (
+                  <Button variant="secondary" size="sm" onClick={() => navigate(`/hr/offboarding/${offboardingChecklistId}`)}>
+                    View offboarding checklist
+                  </Button>
+                )}
+                <PermissionGuard permission={PERMISSIONS.EMPLOYEES_DELETE}>
+                  <Button variant="ghost" size="sm" onClick={() => setShowUnarchiveForm(true)}>
+                    <RotateCcw className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+                    Unarchive employee…
+                  </Button>
+                </PermissionGuard>
               </div>
             )}
           </CardContent>

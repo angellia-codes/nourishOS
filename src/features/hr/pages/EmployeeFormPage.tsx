@@ -7,6 +7,8 @@ import { useToast } from '@/hooks'
 import { OUTLETS, DEPARTMENTS, OUTLET_DEPARTMENTS, optionsFor, type OrgOption } from '@/constants'
 import { POSITION_LABELS, positionsFor, type PositionId } from '@/constants/positions'
 import {
+  BLOOD_TYPE,
+  BLOOD_TYPE_LABELS,
   CONTRACT_TYPE,
   CONTRACT_TYPE_LABELS,
   DISCIPLINARY_TYPE,
@@ -14,19 +16,26 @@ import {
   EMPLOYMENT_STATUS,
   EMPLOYMENT_STATUS_LABELS,
   GENDERS,
+  MARITAL_STATUS,
+  MARITAL_STATUS_LABELS,
   PROBATION_STATUS,
   PROBATION_STATUS_LABELS,
   RELIGION,
   RELIGION_LABELS,
   TAX_STATUS,
   TAX_STATUS_LABELS,
+  TSHIRT_SIZE,
+  TSHIRT_SIZE_LABELS,
+  type BloodType,
   type ContractType,
   type DisciplinaryType,
   type EmploymentStatus,
   type Gender,
+  type MaritalStatus,
   type ProbationStatus,
   type Religion,
   type TaxStatus,
+  type TshirtSize,
 } from '@/constants/hr'
 import * as employeeService from '@/features/hr/services/employeeService'
 import { getCandidate } from '@/features/recruitment/recruitmentService'
@@ -37,12 +46,15 @@ interface EmployeeFormState {
   fullName: string
   gender: Gender
   birthDate: string
+  birthPlace: string
+  bloodType: BloodType | ''
+  maritalStatus: MaritalStatus | ''
+  tshirtSize: TshirtSize | ''
   nationalId: string
   taxNumber: string
   religion: Religion | ''
   phone: string
   email: string
-  address: string
   permanentAddress: string
   domicileAddress: string
   emergencyContactName: string
@@ -73,12 +85,15 @@ const EMPTY_FORM: EmployeeFormState = {
   fullName: '',
   gender: 'male',
   birthDate: '',
+  birthPlace: '',
+  bloodType: '',
+  maritalStatus: '',
+  tshirtSize: '',
   nationalId: '',
   taxNumber: '',
   religion: '',
   phone: '',
   email: '',
-  address: '',
   permanentAddress: '',
   domicileAddress: '',
   emergencyContactName: '',
@@ -109,12 +124,15 @@ function toFormState(employee: Employee): EmployeeFormState {
     fullName: employee.fullName,
     gender: employee.gender,
     birthDate: employee.birthDate,
+    birthPlace: employee.birthPlace ?? '',
+    bloodType: (employee.bloodType as BloodType | undefined) ?? '',
+    maritalStatus: (employee.maritalStatus as MaritalStatus | undefined) ?? '',
+    tshirtSize: (employee.tshirtSize as TshirtSize | undefined) ?? '',
     nationalId: employee.nationalId ?? '',
     taxNumber: employee.taxNumber ?? '',
     religion: (employee.religion as Religion | undefined) ?? '',
     phone: employee.phone,
     email: employee.email,
-    address: employee.address ?? '',
     permanentAddress: employee.permanentAddress ?? '',
     domicileAddress: employee.domicileAddress ?? '',
     emergencyContactName: employee.emergencyContactName ?? '',
@@ -205,7 +223,6 @@ export function EmployeeFormPage() {
         birthDate: personal?.dateOfBirth ?? prev.birthDate,
         permanentAddress: address?.permanentAddress || prev.permanentAddress,
         domicileAddress: address?.domicileAddress || prev.domicileAddress,
-        address: address?.domicileAddress || address?.permanentAddress || prev.address,
       }))
     })
     return () => {
@@ -283,12 +300,15 @@ export function EmployeeFormPage() {
       fullName: form.fullName.trim(),
       gender: form.gender,
       birthDate: form.birthDate,
+      birthPlace: form.birthPlace.trim() || undefined,
+      bloodType: form.bloodType || undefined,
+      maritalStatus: form.maritalStatus || undefined,
+      tshirtSize: form.tshirtSize || undefined,
       nationalId: form.nationalId.trim() || undefined,
       taxNumber: form.taxNumber.trim() || undefined,
       religion: form.religion || undefined,
       phone: form.phone.trim(),
       email: form.email.trim(),
-      address: form.address.trim() || undefined,
       permanentAddress: form.permanentAddress.trim() || undefined,
       domicileAddress: form.domicileAddress.trim() || undefined,
       emergencyContactName: form.emergencyContactName.trim() || undefined,
@@ -385,12 +405,31 @@ export function EmployeeFormPage() {
             <Input id="birthDate" type="date" value={form.birthDate} onChange={set('birthDate')} required />
           </div>
           <div className="flex flex-col gap-1.5">
+            <Label htmlFor="birthPlace">Place of birth</Label>
+            <Input id="birthPlace" value={form.birthPlace} onChange={set('birthPlace')} />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="motherName">Mother's name</Label>
+            <Input id="motherName" value={form.motherName} onChange={set('motherName')} />
+          </div>
+          <div className="flex flex-col gap-1.5">
             <Label htmlFor="nationalId">National ID (NIK)</Label>
             <Input id="nationalId" value={form.nationalId} onChange={set('nationalId')} />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="taxNumber">Tax number (NPWP)</Label>
             <Input id="taxNumber" value={form.taxNumber} onChange={set('taxNumber')} />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="personalTaxStatus">Tax status (PPh21)</Label>
+            <Select id="personalTaxStatus" value={form.personalTaxStatus} onChange={set('personalTaxStatus')}>
+              <option value="">Select a tax status…</option>
+              {Object.values(TAX_STATUS).map((value) => (
+                <option key={value} value={value}>
+                  {TAX_STATUS_LABELS[value]}
+                </option>
+              ))}
+            </Select>
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="religion">Religion</Label>
@@ -402,6 +441,47 @@ export function EmployeeFormPage() {
                 </option>
               ))}
             </Select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="maritalStatus">Marital status</Label>
+            <Select id="maritalStatus" value={form.maritalStatus} onChange={set('maritalStatus')}>
+              <option value="">Select a marital status…</option>
+              {Object.values(MARITAL_STATUS).map((value) => (
+                <option key={value} value={value}>
+                  {MARITAL_STATUS_LABELS[value]}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="bloodType">Blood type</Label>
+            <Select id="bloodType" value={form.bloodType} onChange={set('bloodType')}>
+              <option value="">Select a blood type…</option>
+              {Object.values(BLOOD_TYPE).map((value) => (
+                <option key={value} value={value}>
+                  {BLOOD_TYPE_LABELS[value]}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="tshirtSize">T-shirt size</Label>
+            <Select id="tshirtSize" value={form.tshirtSize} onChange={set('tshirtSize')}>
+              <option value="">Select a size…</option>
+              {Object.values(TSHIRT_SIZE).map((value) => (
+                <option key={value} value={value}>
+                  {TSHIRT_SIZE_LABELS[value]}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="bpjsTk">BPJS Ketenagakerjaan</Label>
+            <Input id="bpjsTk" value={form.bpjsTk} onChange={set('bpjsTk')} />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="bpjsKesehatan">BPJS Kesehatan</Label>
+            <Input id="bpjsKesehatan" value={form.bpjsKesehatan} onChange={set('bpjsKesehatan')} />
           </div>
         </CardContent>
       </Card>
@@ -419,12 +499,10 @@ export function EmployeeFormPage() {
             <Label htmlFor="email">Email *</Label>
             <Input id="email" type="email" value={form.email} onChange={set('email')} required />
           </div>
-          <div className="flex flex-col gap-1.5 sm:col-span-2">
-            <Label htmlFor="address">Address</Label>
-            <Textarea id="address" value={form.address} onChange={set('address')} />
-          </div>
           {/* HR_OPERATIONS.md §12.1 — the KTP address vs. the current residence.
-              `address` above predates this split and is kept as the summary line. */}
+              The old general-purpose `address` field is no longer collected here
+              (2026-08-31) — existing records keep whatever value they had, shown
+              on the profile's Contact card, but the form no longer edits it. */}
           <div className="flex flex-col gap-1.5 sm:col-span-2">
             <Label htmlFor="permanentAddress">Permanent address (KTP)</Label>
             <Textarea id="permanentAddress" value={form.permanentAddress} onChange={set('permanentAddress')} />

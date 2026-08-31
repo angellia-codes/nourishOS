@@ -62,6 +62,8 @@ interface CreateCalendarEventInput {
   endAt: string
   allDay?: boolean
   participants: string[]
+  /** Free text — guests with no NourishOS account. Never notified, never a conflict/Google-sync input. */
+  otherParticipants?: string
   location?: string
   priority: Priority
   recurrenceRule?: string
@@ -195,6 +197,7 @@ export async function createCalendarEventInternal(
     endAt: Timestamp.fromDate(endAt),
     allDay: input.allDay ?? false,
     participants: input.participants,
+    otherParticipants: input.otherParticipants?.trim() || null,
     location: input.location ?? null,
     priority: input.priority,
     eventStatus,

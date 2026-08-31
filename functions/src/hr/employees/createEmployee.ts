@@ -25,11 +25,17 @@ import {
   DISCIPLINARY_TYPES,
   RELIGIONS,
   TAX_STATUSES,
+  BLOOD_TYPES,
+  MARITAL_STATUSES,
+  TSHIRT_SIZES,
   type EmploymentStatus,
   type ContractType,
   type DisciplinaryType,
   type Religion,
   type TaxStatus,
+  type BloodType,
+  type MaritalStatus,
+  type TshirtSize,
   allocateEmployeeNumber,
   assertContactFieldsUnique,
   calculateProbationEndDate,
@@ -43,6 +49,10 @@ export interface CreateEmployeeInput {
   fullName: string
   gender: string
   birthDate: string
+  birthPlace?: string
+  bloodType?: BloodType
+  maritalStatus?: MaritalStatus
+  tshirtSize?: TshirtSize
   nationalId?: string
   taxNumber?: string
   religion?: Religion
@@ -150,6 +160,15 @@ export async function createEmployeeInternal(
   if (input.personalTaxStatus && !TAX_STATUSES.includes(input.personalTaxStatus)) {
     throw new AppError('invalid-argument', `personalTaxStatus must be one of: ${TAX_STATUSES.join(', ')}.`)
   }
+  if (input.bloodType && !BLOOD_TYPES.includes(input.bloodType)) {
+    throw new AppError('invalid-argument', `bloodType must be one of: ${BLOOD_TYPES.join(', ')}.`)
+  }
+  if (input.maritalStatus && !MARITAL_STATUSES.includes(input.maritalStatus)) {
+    throw new AppError('invalid-argument', `maritalStatus must be one of: ${MARITAL_STATUSES.join(', ')}.`)
+  }
+  if (input.tshirtSize && !TSHIRT_SIZES.includes(input.tshirtSize)) {
+    throw new AppError('invalid-argument', `tshirtSize must be one of: ${TSHIRT_SIZES.join(', ')}.`)
+  }
   const disciplinaryStartPeriod = input.disciplinaryStartPeriod
     ? requireIsoDate(input.disciplinaryStartPeriod, 'disciplinaryStartPeriod')
     : null
@@ -176,6 +195,10 @@ export async function createEmployeeInternal(
     fullName: input.fullName.trim(),
     gender: input.gender,
     birthDate,
+    birthPlace: input.birthPlace?.trim() || null,
+    bloodType: input.bloodType ?? null,
+    maritalStatus: input.maritalStatus ?? null,
+    tshirtSize: input.tshirtSize ?? null,
     nationalId: input.nationalId?.trim() || null,
     taxNumber: input.taxNumber?.trim() || null,
     religion: input.religion?.trim() || null,

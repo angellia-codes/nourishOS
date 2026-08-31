@@ -1,13 +1,16 @@
 import type { BaseDocument } from './firestore.types'
 import type {
+  BloodType,
   ContractType,
   DisciplinaryType,
   EmployeeActivityType,
   EmploymentStatus,
   Gender,
+  MaritalStatus,
   ProbationStatus,
   Religion,
   TaxStatus,
+  TshirtSize,
 } from '@/constants/hr'
 
 /**
@@ -41,6 +44,11 @@ export interface Employee extends BaseDocument {
   fullName: string
   gender: Gender
   birthDate: string
+  birthPlace?: string | null
+  bloodType?: BloodType | null
+  maritalStatus?: MaritalStatus | null
+  /** Uniform sizing — not from HR Inventory's own free-text per-item sizes; this is the employee's own size on file. */
+  tshirtSize?: TshirtSize | null
   /** KTP number (NIK). */
   nationalId?: string | null
   /** NPWP. */
@@ -132,15 +140,8 @@ export interface EmployeeActivity extends BaseDocument {
   description: string
 }
 
-// ---------------------------------------------------------------------------
-// PLANNED — HR & Operations PRD §12.1 / BUILD_ROADMAP.md Part B (Employee
-// Master Database). Nothing below is written to Firestore yet. Do NOT use
-// these in shipped code paths yet.
-// ---------------------------------------------------------------------------
-
-// ProbationStatus and TaxStatus were promoted out of this PLANNED section
-// (2026-08-17) into src/constants/hr.ts, and EmployeeCompensation (2026-08-17)
-// up next to Employee above — all three now ship. MaritalStatus stays here:
-// §12.1 never asked for it, it was drafted speculatively for tax-status
-// computation UI that doesn't exist yet.
-export type MaritalStatus = 'single' | 'married' | 'divorced' | 'widowed'
+// ProbationStatus, TaxStatus, EmployeeCompensation and MaritalStatus were all
+// once PLANNED here (HR & Operations PRD §12.1 / BUILD_ROADMAP.md Part B) and
+// have since been promoted into src/constants/hr.ts (or, for
+// EmployeeCompensation, up next to Employee above) — nothing remains unshipped
+// in this file.

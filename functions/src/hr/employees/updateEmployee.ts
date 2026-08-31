@@ -23,6 +23,9 @@ import {
   RELIGIONS,
   TAX_STATUSES,
   PROBATION_STATUSES,
+  BLOOD_TYPES,
+  MARITAL_STATUSES,
+  TSHIRT_SIZES,
   type EmploymentStatus,
   type ContractType,
   assertContactFieldsUnique,
@@ -39,6 +42,7 @@ import { generateAssignmentsForEmployeeInternal } from '../training'
  */
 const STRING_FIELDS = [
   'fullName',
+  'birthPlace',
   'nationalId',
   'taxNumber',
   'phone',
@@ -144,6 +148,24 @@ export const updateEmployee = onCall({ region: REGION }, async (request) => {
         throw new AppError('invalid-argument', `personalTaxStatus must be one of: ${TAX_STATUSES.join(', ')}, or null.`)
       }
       changes.personalTaxStatus = updates.personalTaxStatus
+    }
+    if ('bloodType' in updates) {
+      if (updates.bloodType !== null && !BLOOD_TYPES.includes(updates.bloodType as (typeof BLOOD_TYPES)[number])) {
+        throw new AppError('invalid-argument', `bloodType must be one of: ${BLOOD_TYPES.join(', ')}, or null.`)
+      }
+      changes.bloodType = updates.bloodType
+    }
+    if ('maritalStatus' in updates) {
+      if (updates.maritalStatus !== null && !MARITAL_STATUSES.includes(updates.maritalStatus as (typeof MARITAL_STATUSES)[number])) {
+        throw new AppError('invalid-argument', `maritalStatus must be one of: ${MARITAL_STATUSES.join(', ')}, or null.`)
+      }
+      changes.maritalStatus = updates.maritalStatus
+    }
+    if ('tshirtSize' in updates) {
+      if (updates.tshirtSize !== null && !TSHIRT_SIZES.includes(updates.tshirtSize as (typeof TSHIRT_SIZES)[number])) {
+        throw new AppError('invalid-argument', `tshirtSize must be one of: ${TSHIRT_SIZES.join(', ')}, or null.`)
+      }
+      changes.tshirtSize = updates.tshirtSize
     }
     if ('probationStatus' in updates) {
       if (updates.probationStatus !== null && !PROBATION_STATUSES.includes(updates.probationStatus as (typeof PROBATION_STATUSES)[number])) {

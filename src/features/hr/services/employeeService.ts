@@ -1,7 +1,18 @@
 import { callFunction } from '@/services/api'
 import { getDocument, subscribeToCollection, where, orderBy } from '@/services/firestore'
 import { COLLECTIONS } from '@/constants'
-import type { ContractType, DisciplinaryType, EmploymentStatus, Gender, ProbationStatus, Religion, TaxStatus } from '@/constants/hr'
+import type {
+  BloodType,
+  ContractType,
+  DisciplinaryType,
+  EmploymentStatus,
+  Gender,
+  MaritalStatus,
+  ProbationStatus,
+  Religion,
+  TaxStatus,
+  TshirtSize,
+} from '@/constants/hr'
 import type { Employee, EmployeeActivity, EmployeeCompensation } from '@/types'
 import type { Unsubscribe } from '@/services/firestore'
 
@@ -9,6 +20,10 @@ export interface CreateEmployeeInput {
   fullName: string
   gender: Gender
   birthDate: string
+  birthPlace?: string
+  bloodType?: BloodType
+  maritalStatus?: MaritalStatus
+  tshirtSize?: TshirtSize
   nationalId?: string
   taxNumber?: string
   religion?: Religion
@@ -98,6 +113,11 @@ export function archiveEmployee(
   lastWorkingDate: string,
 ): Promise<{ employeeId: string; offboardingChecklistId: string }> {
   return callFunction('archiveEmployee', { employeeId, resignationDate, resignationReason, lastWorkingDate })
+}
+
+/** Undoes archiveEmployee — restores active headcount status. */
+export function unarchiveEmployee(employeeId: string, reason?: string): Promise<{ employeeId: string }> {
+  return callFunction('unarchiveEmployee', { employeeId, reason })
 }
 
 export function getEmployee(employeeId: string): Promise<Employee | null> {
