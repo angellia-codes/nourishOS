@@ -4,7 +4,8 @@ import { Card, CardContent, Spinner } from '@/components/ui'
 
 interface MetricTileProps {
   label: string
-  value: number | null
+  /** A string is for a pre-formatted figure — a percentage, a currency total. */
+  value: number | string | null
   icon?: LucideIcon
   /** Optional — renders the tile as a link to a breakdown page, with a "View detail" affordance. */
   to?: string

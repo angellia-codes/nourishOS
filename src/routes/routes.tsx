@@ -35,6 +35,7 @@ import { EngagementListPage } from '@/features/hr/engagement/pages/EngagementLis
 import { EngagementFormPage } from '@/features/hr/engagement/pages/EngagementFormPage'
 import { EngagementDetailPage } from '@/features/hr/engagement/pages/EngagementDetailPage'
 import { HrReportsPage } from '@/features/hr/reports/pages/HrReportsPage'
+import { HrOverviewDashboardPage } from '@/features/hr/reports/pages/HrOverviewDashboardPage'
 import { ActiveEmployeeReportPage } from '@/features/hr/reports/pages/ActiveEmployeeReportPage'
 import { ResignedEmployeeReportPage } from '@/features/hr/reports/pages/ResignedEmployeeReportPage'
 import { EmployeeTurnoverReportPage } from '@/features/hr/reports/pages/EmployeeTurnoverReportPage'
@@ -218,6 +219,7 @@ export const router = createBrowserRouter([
               { path: 'attendance/import', element: <AttendanceImportPage /> },
               { path: 'attendance/periods/:periodId', element: <AttendancePeriodDetailPage /> },
               { path: 'reports', element: <HrReportsPage /> },
+              { path: 'reports/overview', element: <HrOverviewDashboardPage /> },
               { path: 'reports/active-employees', element: <ActiveEmployeeReportPage /> },
               { path: 'reports/resigned-employees', element: <ResignedEmployeeReportPage /> },
               { path: 'reports/turnover', element: <EmployeeTurnoverReportPage /> },

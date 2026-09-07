@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import {
+  LayoutDashboard,
   UserCheck,
   UserMinus,
   TrendingDown,
@@ -15,7 +16,7 @@ import {
 import { Button, Card, CardContent } from '@/components/ui'
 
 /**
- * HR Reports hub — hr.md §16. Ten reports over data the HR sub-modules
+ * HR Reports hub — hr.md §16. The overview dashboard plus eleven tabular reports over data the HR sub-modules
  * already collect (employees, requisitions, HR Inventory). No permission
  * gating on the cards, same as HrHomePage: each report reads collections
  * already gated by firestore.rules — except Exit Interview Insights, which
@@ -23,6 +24,12 @@ import { Button, Card, CardContent } from '@/components/ui'
  * page's own comment).
  */
 const REPORTS = [
+  {
+    to: '/hr/reports/overview',
+    icon: LayoutDashboard,
+    title: 'HR Overview',
+    description: 'Headcount, department/gender/age/type composition, six-month trend and key rates.',
+  },
   {
     to: '/hr/reports/active-employees',
     icon: UserCheck,
