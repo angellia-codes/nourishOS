@@ -15,12 +15,31 @@ import { Clock, Check, X, RotateCcw, Ban, FileEdit, Send, CheckCheck, AlarmClock
  */
 export const APPROVAL_RESOURCES: Record<string, { label: string; routeFor?: (resourceId: string) => string }> = {
   'hr/appraisal': { label: 'Appraisal', routeFor: (id) => `/hr/appraisals/${id}` },
+  'hr/appraisalV2': { label: 'Appraisal', routeFor: (id) => `/hr/appraisals/${id}` },
   // Renamed from 'hr/requisition' when Recruitment split out of HR (2026-08-19);
   // approvalRequests raised before then still carry the old key.
   'recruitment/requisition': { label: 'Requisition', routeFor: (id) => `/recruitment/requisitions/${id}` },
   'hr/requisition': { label: 'Requisition', routeFor: (id) => `/recruitment/requisitions/${id}` },
-  // No contracts UI ships yet, so this one renders as a row without a link.
+  // No contracts UI ships yet, so these two render as rows without a link.
   'hr/contract': { label: 'Contract' },
+  'hr/contractSigning': { label: 'Contract Signing' },
+  'people/attendancePeriod': {
+    label: 'Attendance Period',
+    routeFor: (id) => `/hr/attendance/periods/${id}`,
+  },
+  'hr/payrollBatch': { label: 'Payroll Batch', routeFor: (id) => `/hr/payroll/batches/${id}` },
+  'hr/position': { label: 'Position', routeFor: (id) => `/positions/${id}` },
+  'hr/employeeCommunication': {
+    label: 'Employee Communication',
+    routeFor: (id) => `/communications/employee/${id}`,
+  },
+  // The calendar has an agenda but no per-event page, so this one is unlinked.
+  'calendar/companyEvent': { label: 'Company Event' },
+  'operations/project': { label: 'Project', routeFor: (id) => `/operations/projects/${id}` },
+  'operations/equipmentDecommission': {
+    label: 'Equipment Decommission',
+    routeFor: (id) => `/engineering/assets/${id}`,
+  },
   'finance/expenseRequest': { label: 'Expense Request', routeFor: (id) => `/finance/expenses/${id}` },
 }
 

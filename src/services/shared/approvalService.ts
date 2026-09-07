@@ -54,9 +54,12 @@ export function canActOnApprovalRequest(
   actor: { uid: string; roleId: string; outletId: string } | null | undefined,
 ): boolean {
   if (!actor || request.approvalStatus !== 'pending') return false
-  const step = request.steps[request.currentStepIndex]
-  if (!step) return false
+  // superAdmin is checked before the step lookup: OVERRIDE_ROLES in the engine
+  // skips every per-step check, and a legacy request written before the `steps`
+  // array existed would otherwise hide the override behind a missing step.
   if (actor.roleId === ROLES.SUPER_ADMIN) return true
+  const step = request.steps?.[request.currentStepIndex]
+  if (!step) return false
   if (actor.roleId !== step.approverRole) return false
   if (step.approverOutletId && actor.outletId !== step.approverOutletId) return false
   if (request.requestedBy === actor.uid) return false
