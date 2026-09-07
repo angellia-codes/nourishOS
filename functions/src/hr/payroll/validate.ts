@@ -6,12 +6,10 @@ import {
 } from '../../lib/payroll'
 import {
   expandLineItems,
-  recomputeStatutory,
   sumEmployerCost,
   sumSide,
   type DiscretionaryInput,
   type LineItem,
-  type StatutoryRates,
 } from './statutory'
 
 /**
@@ -45,6 +43,8 @@ export interface ResolvedEmployee {
   taxStatus: string | null
   employeeUid: string | null
   status: string
+  /** EMPLOYMENT_STATUS — 'dailyWorker' and 'ojt' are treated differently below. */
+  employmentStatus: string
   bpjsTk: string | null
   bpjsKesehatan: string | null
   /** From employees/{id}/compensation/current, when one exists. */
@@ -64,8 +64,6 @@ export interface ValidateInput {
   /** Raw CSV rows, header-keyed, in file order. */
   rows: Record<string, string>[]
   period: string
-  parametersYear: number
-  rates: StatutoryRates
   /** Active discretionary components, from the payrollComponents registry. */
   components: DiscretionaryComponent[]
   employeesByNumber: Map<string, ResolvedEmployee>
@@ -99,8 +97,21 @@ export interface ValidateResult {
   }
 }
 
-/** See the recompute loop below — Kesehatan is per-enrolment, not universal. */
-const KESEHATAN_COMPONENT_IDS = new Set(['BPJS_KES_COMPANY', 'BPJS_KES_EMPLOYEE', 'BPJS_KES_FAMILY'])
+/**
+ * Neither is enrolled in BPJS: every statutory line but PPh 21 is nil for them.
+ * Nothing enforces that — statutory figures are hand-entered and taken as
+ * supplied — so a non-nil line on one of these rows raises the
+ * `bpjsNotApplicable` warning rather than passing unremarked.
+ */
+const BPJS_EXEMPT_EMPLOYMENT_STATUSES = new Set(['dailyWorker', 'ojt'])
+
+/**
+ * A daily worker's compensation record holds a **per-day rate** (Rp 145.000 at
+ * the time of writing), while the CSV carries what was actually earned in the
+ * period — the rate times the days worked. Comparing the two directly is what
+ * made `basicSalaryDrift` fire on every daily-worker row.
+ */
+const DAILY_RATE_EMPLOYMENT_STATUSES = new Set(['dailyWorker'])
 
 /** §5 — empty cells are zero. The nil / not-applicable distinction is a render concern. */
 function amountOf(row: Record<string, string>, column: string): number {
@@ -255,41 +266,23 @@ export function validatePayrollRows(input: ValidateInput): ValidateResult {
     if (badAmount) return
 
     const basicSalary = discretionary.find((c) => c.code === 'BASIC_SALARY')?.amount ?? 0
-    const lineItems = expandLineItems(discretionary, statutoryAmounts, input.rates, basicSalary)
+    const lineItems = expandLineItems(discretionary, statutoryAmounts)
+    const bpjsExempt = BPJS_EXEMPT_EMPLOYMENT_STATUSES.has(employee.employmentStatus)
 
-    // --- §6.4 statutory recompute ------------------------------------------
+    // --- statutory figures --------------------------------------------------
+    //
+    // Documented reversal of the design doc's §4.2/§6.4: there is no rate
+    // table and nothing is recomputed. Every BPJS line is entered by hand and
+    // taken as supplied — payroll is reconciled against the BPJS statement
+    // itself, not against a rate this app would have to be told about and kept
+    // current with. The row's own arithmetic below is still enforced, so a
+    // typo cannot slip through as an unbalanced slip.
+    //
+    // `statutoryOverrideReason` used to bypass the recompute. With nothing to
+    // bypass it is kept only as an audited free-text note on the row.
     const overrideReason = (row[PAYROLL_CSV_OVERRIDE_COLUMN] ?? '').trim()
     if (overrideReason) {
       overriddenRows.push(employeeNumber)
-    } else {
-      for (const expected of recomputeStatutory(input.rates, basicSalary)) {
-        const supplied = statutoryAmounts[expected.componentId] ?? 0
-
-        // Documented deviation from §6.4's literal "recomputes nine of the ten".
-        //
-        // §3's own reference slip carries NIL BPJS Kesehatan — that employee is
-        // not enrolled — so a flat rate x capped-base recompute would hard-fail
-        // the very slip the spec derives its acceptance data from. Unlike the
-        // Ketenagakerjaan programs (JKK/JKM/JHT/JP), which are mandatory for
-        // every employee and deterministic from basic salary, Kesehatan is
-        // per-enrolment and the family line varies with registered dependents.
-        //
-        // So: a supplied Kesehatan figure is still checked against the
-        // recompute, but a nil one is treated as "not enrolled" and left to
-        // §6.3's `nilBpjsWithMembership` warning, which exists for exactly this
-        // case. Nothing is silently skipped — the warning names it.
-        if (supplied === 0 && KESEHATAN_COMPONENT_IDS.has(expected.componentId)) continue
-
-        const variance = Math.abs(supplied - expected.amount)
-        if (variance > STATUTORY_TOLERANCE_IDR) {
-          fail(
-            'statutoryVariance',
-            `${STATUTORY_COMPONENTS[expected.componentId].label}: CSV has ${supplied}, recompute gives ${expected.amount} ` +
-              `(${expected.rate} x ${expected.base}), variance ${variance} exceeds the Rp ${STATUTORY_TOLERANCE_IDR} tolerance. ` +
-              `Correct the figure, or supply a ${PAYROLL_CSV_OVERRIDE_COLUMN} to bypass this row with an audited reason.`,
-          )
-        }
-      }
     }
 
     // --- §6.2 arithmetic ----------------------------------------------------
@@ -334,12 +327,27 @@ export function validatePayrollRows(input: ValidateInput): ValidateResult {
     }
 
     // --- §6.3 warnings ------------------------------------------------------
-    if (employee.compensationBasicSalary !== null && employee.compensationBasicSalary !== basicSalary) {
-      warn(
-        'basicSalaryDrift',
-        `CSV basic salary ${basicSalary} differs from the compensation record's ${employee.compensationBasicSalary}. ` +
-          'Legitimate after a mid-period raise.',
-      )
+    if (employee.compensationBasicSalary !== null) {
+      const dailyRate = DAILY_RATE_EMPLOYMENT_STATUSES.has(employee.employmentStatus)
+      if (dailyRate) {
+        // The record is a day rate, so the period figure is expected to be a
+        // multiple of it — anything at or above one day's pay is normal. Below
+        // it is the case worth naming: a rate pasted in as a period total, or
+        // a period with no days worked at all.
+        if (basicSalary > 0 && basicSalary < employee.compensationBasicSalary) {
+          warn(
+            'basicSalaryBelowDailyRate',
+            `CSV basic salary ${basicSalary} is less than one day at the compensation record's daily rate of ` +
+              `${employee.compensationBasicSalary}. Expected the rate multiplied by the days worked.`,
+          )
+        }
+      } else if (employee.compensationBasicSalary !== basicSalary) {
+        warn(
+          'basicSalaryDrift',
+          `CSV basic salary ${basicSalary} differs from the compensation record's ${employee.compensationBasicSalary}. ` +
+            'Legitimate after a mid-period raise.',
+        )
+      }
     }
     if (employee.status !== 'active' && takeHomePay > 0) {
       warn('inactiveWithPay', `${employee.fullName} is inactive but has pay — expected only for final settlement.`)
@@ -348,7 +356,14 @@ export function validatePayrollRows(input: ValidateInput): ValidateResult {
     const bpjsPaid = Object.entries(statutoryAmounts).some(
       ([componentId, amount]) => componentId !== 'PPH21' && amount > 0,
     )
-    if (hasBpjsNumbers && !bpjsPaid) {
+    if (bpjsExempt && bpjsPaid) {
+      warn(
+        'bpjsNotApplicable',
+        `${employee.fullName} is ${employee.employmentStatus} and carries no BPJS enrolment, but the row has a ` +
+          'non-nil statutory line. Clear it, or move the employee onto a status that is enrolled.',
+      )
+    }
+    if (hasBpjsNumbers && !bpjsPaid && !bpjsExempt) {
       warn(
         'nilBpjsWithMembership',
         `${employee.fullName} has BPJS membership numbers on file but every statutory line is nil — worth checking for an enrolment gap.`,

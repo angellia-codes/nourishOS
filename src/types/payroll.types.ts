@@ -80,28 +80,6 @@ export interface PayrollComponent extends BaseDocument {
 }
 
 // ---------------------------------------------------------------------------
-// §4.2 — annual statutory values, one document per calendar year
-// ---------------------------------------------------------------------------
-
-export interface PayrollParameters extends BaseDocument {
-  year: number
-  /** Varies by industry risk class — see §14 open item 4 before trusting a default. */
-  jkk: number
-  jkm: number
-  jhtCompany: number
-  jhtEmployee: number
-  jpCompany: number
-  jpEmployee: number
-  bpjsKesCo: number
-  bpjsKesEmp: number
-  bpjsKesFam: number
-  /** §3: Jaminan Pensiun uses a statutory wage ceiling, never basic salary. */
-  jpWageCeiling: number
-  bpjsKesCeiling: number
-  effectiveFrom: string
-}
-
-// ---------------------------------------------------------------------------
 // §6 — validation
 // ---------------------------------------------------------------------------
 
@@ -112,7 +90,7 @@ export interface ValidationIssue {
   /** 1-based CSV data row, matching what the user sees in a spreadsheet. */
   row: number
   employeeNumber: string
-  /** Machine-readable check id, e.g. 'statutoryVariance' — greppable in tests. */
+  /** Machine-readable check id, e.g. 'basicSalaryBelowDailyRate' — greppable in tests. */
   code: string
   message: string
 }
@@ -120,11 +98,10 @@ export interface ValidationIssue {
 /** What `parsePayrollCsv` returns and `createPayrollBatch` re-derives server-side. */
 export interface ReconciliationReport {
   period: string
-  parametersYear: number
   rowCount: number
   hardFailures: ValidationIssue[]
   warnings: ValidationIssue[]
-  /** employeeNumbers whose statutory recompute was bypassed with a reason (§6.4). */
+  /** employeeNumbers carrying a statutoryOverrideReason note. */
   overriddenRows: string[]
   totals: PayrollBatchTotals
 }
@@ -157,7 +134,6 @@ export interface PayrollBatch extends BaseDocument {
    * BaseDocument as `outletId?: string` — the server writes null, which the
    * read layer surfaces as absent.
    */
-  parametersYear: number
   rowCount: number
   sourceFileName: string
   /** SHA-256 of the uploaded file text — rejects a duplicate re-upload (§6.2). */
@@ -221,7 +197,6 @@ export interface Payslip extends BaseDocument {
   takeHomePay: number
   totalEmployerCost: number
 
-  parametersYear: number
   statutoryOverrideReason: string | null
   /**
    * Stamped once, by the approval-resolved handler, on every payslip in an

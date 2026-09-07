@@ -143,12 +143,6 @@ export function PayrollBatchListPage() {
               Components
             </Button>
           </PermissionGuard>
-          <PermissionGuard permission={PERMISSIONS.PAYROLL_MANAGE_PARAMETERS}>
-            <Button variant="secondary" onClick={() => navigate('/hr/payroll/parameters')}>
-              <Settings2 className="mr-1.5 h-4 w-4" aria-hidden="true" />
-              Parameters
-            </Button>
-          </PermissionGuard>
           <PermissionGuard permission={PERMISSIONS.PAYROLL_IMPORT}>
             <Button onClick={() => navigate('/hr/payroll/import')}>
               <Upload className="mr-1.5 h-4 w-4" aria-hidden="true" />

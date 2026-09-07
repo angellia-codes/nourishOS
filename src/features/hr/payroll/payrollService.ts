@@ -5,7 +5,6 @@ import type { Unsubscribe } from '@/services/firestore'
 import type {
   PayrollBatch,
   PayrollComponent,
-  PayrollParameters,
   Payslip,
   ReconciliationReport,
   ValidationIssue,
@@ -86,26 +85,6 @@ export function seedPayrollComponents(): Promise<{ created: number }> {
   return callFunction('seedPayrollComponents')
 }
 
-export interface UpsertPayrollParametersInput {
-  year: number
-  jkk: number
-  jkm: number
-  jhtCompany: number
-  jhtEmployee: number
-  jpCompany: number
-  jpEmployee: number
-  bpjsKesCo: number
-  bpjsKesEmp: number
-  bpjsKesFam: number
-  jpWageCeiling: number
-  bpjsKesCeiling: number
-  effectiveFrom: string
-}
-
-export function upsertPayrollParameters(input: UpsertPayrollParametersInput): Promise<{ year: number }> {
-  return callFunction('upsertPayrollParameters', input)
-}
-
 // ---------------------------------------------------------------------------
 // Reads
 // ---------------------------------------------------------------------------
@@ -183,9 +162,6 @@ export function subscribeToPayrollComponents(
   )
 }
 
-export function getPayrollParameters(year: number): Promise<PayrollParameters | null> {
-  return getDocument<PayrollParameters>(COLLECTIONS.PAYROLL_PARAMETERS, String(year))
-}
 
 // ---------------------------------------------------------------------------
 // Reports

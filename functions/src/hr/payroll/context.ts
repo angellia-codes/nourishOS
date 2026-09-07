@@ -2,7 +2,6 @@ import { db, COLLECTIONS, AppError } from '../../lib'
 import { OUTLET_NAMES } from '../../lib/organization'
 import { POSITION_LABELS } from '../../lib/positions'
 import { PAYROLL_COMPONENT_SEEDS } from '../../lib/payroll'
-import type { StatutoryRates } from './statutory'
 import type { DiscretionaryComponent, ResolvedEmployee } from './validate'
 
 /**
@@ -19,35 +18,6 @@ export function requirePeriod(raw: unknown): string {
     throw new AppError('invalid-argument', 'period must be in YYYY-MM format.')
   }
   return raw
-}
-
-/** §4.2 — one document per calendar year, addressed by the period's own year. */
-export async function loadParameters(period: string): Promise<{ year: number; rates: StatutoryRates }> {
-  const year = Number(period.slice(0, 4))
-  const snap = await db.collection(COLLECTIONS.PAYROLL_PARAMETERS).doc(String(year)).get()
-  if (!snap.exists) {
-    throw new AppError(
-      'failed-precondition',
-      `No payroll parameters are on file for ${year}. Set the year's BPJS rates and wage ceilings before importing.`,
-    )
-  }
-  const data = snap.data()!
-  return {
-    year,
-    rates: {
-      jkk: data.jkk as number,
-      jkm: data.jkm as number,
-      jhtCompany: data.jhtCompany as number,
-      jhtEmployee: data.jhtEmployee as number,
-      jpCompany: data.jpCompany as number,
-      jpEmployee: data.jpEmployee as number,
-      bpjsKesCo: data.bpjsKesCo as number,
-      bpjsKesEmp: data.bpjsKesEmp as number,
-      bpjsKesFam: data.bpjsKesFam as number,
-      jpWageCeiling: data.jpWageCeiling as number,
-      bpjsKesCeiling: data.bpjsKesCeiling as number,
-    },
-  }
 }
 
 /**
@@ -121,6 +91,7 @@ export async function loadEmployees(employeeNumbers: string[]): Promise<Map<stri
       // null so a future ESS rule has the field to key on without a migration.
       employeeUid: null,
       status: (data.status as string | undefined) ?? 'active',
+      employmentStatus: (data.employmentStatus as string | undefined) ?? '',
       bpjsTk: (data.bpjsTk as string | null | undefined) ?? null,
       bpjsKesehatan: (data.bpjsKesehatan as string | null | undefined) ?? null,
       compensationBasicSalary: null,

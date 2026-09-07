@@ -30,7 +30,6 @@ export const COLLECTIONS = {
   // Payroll Components & Payslip (payroll-components-payslip-design.md §4).
   // PAYROLL_RECORDS above is the superseded flat model — historical, read-only.
   PAYROLL_COMPONENTS: 'payrollComponents',
-  PAYROLL_PARAMETERS: 'payrollParameters',
   PAYROLL_BATCHES: 'payrollBatches',
   PAYSLIPS: 'payslips',
   EMPLOYEE_ENGAGEMENTS: 'employeeEngagements',

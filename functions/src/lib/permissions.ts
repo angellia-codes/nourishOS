@@ -89,7 +89,6 @@ export const PERMISSIONS = {
   PAYROLL_IMPORT: 'payroll.import',
   PAYROLL_APPROVE: 'payroll.approve',
   PAYROLL_MANAGE_COMPONENTS: 'payroll.manageComponents',
-  PAYROLL_MANAGE_PARAMETERS: 'payroll.manageParameters',
   EMPLOYEE_ENGAGEMENT_MANAGE: 'employeeEngagement.manage',
   // Attendance (attendance.md §8).
   ATTENDANCE_IMPORT: 'attendance.import',

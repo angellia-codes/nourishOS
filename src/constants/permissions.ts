@@ -285,7 +285,6 @@ export const PERMISSIONS = {
   PAYROLL_MANAGE_COMPONENTS: permission(PERMISSION_MODULES.PAYROLL, 'manageComponents'),
   // Super Admin only — granted to no role in ROLE_PERMISSIONS, since superAdmin
   // bypasses requirePermission entirely (2026-08-15).
-  PAYROLL_MANAGE_PARAMETERS: permission(PERMISSION_MODULES.PAYROLL, 'manageParameters'),
 
   // Employee Engagement — company events/activities, cost and participants.
   // HR-only, no separate read string: read access is rules-gated (hrManager/

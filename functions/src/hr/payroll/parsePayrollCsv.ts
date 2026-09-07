@@ -15,7 +15,6 @@ import {
   loadCompensationEmployeeNumbers,
   loadEmployees,
   loadExistingPayslipKeys,
-  loadParameters,
   requirePeriod,
 } from './context'
 import { validateHeader, validatePayrollRows, type ValidationIssue } from './validate'
@@ -78,7 +77,6 @@ export const parsePayrollCsv = onCall({ region: REGION }, async (request) => {
         ]
       : []
 
-    const { year, rates } = await loadParameters(validPeriod)
     const [components, employeesByNumber, existingPayslipKeys, compensationEmployeeNumbers] = await Promise.all([
       loadComponents(),
       loadEmployees(rows.map((row) => (row.employeeNumber ?? '').trim())),
@@ -89,8 +87,6 @@ export const parsePayrollCsv = onCall({ region: REGION }, async (request) => {
     const result = validatePayrollRows({
       rows,
       period: validPeriod,
-      parametersYear: year,
-      rates,
       components,
       employeesByNumber,
       existingPayslipKeys,
@@ -102,7 +98,6 @@ export const parsePayrollCsv = onCall({ region: REGION }, async (request) => {
     return successResponse(
       {
         period: validPeriod,
-        parametersYear: year,
         rowCount: rows.length,
         sourceFileName: sourceFileName ?? '',
         hardFailures,
@@ -132,7 +127,6 @@ export async function findBatchByHash(sourceFileHash: string): Promise<string | 
 function emptyReport(period: string, rowCount: number, hardFailures: ValidationIssue[]) {
   return {
     period,
-    parametersYear: Number(period.slice(0, 4)),
     rowCount,
     sourceFileName: '',
     hardFailures,

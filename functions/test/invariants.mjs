@@ -391,7 +391,6 @@ const grantedStrings = new Set([
  * it is the standing gotcha every module in CLAUDE.md has hit.
  */
 const UNGRANTED_BY_DESIGN = new Map([
-  ['payroll.manageParameters', 'Super Admin only; superAdmin bypasses requirePermission entirely (2026-08-15)'],
   ['positions.seed', 'Super Admin only — migrateEmployeePositions / seed callables'],
   ['appraisals.create', 'v1 legacy; kept defined so historical roles/{roleId} docs resolve (appraisal-v2 §10)'],
   ['appraisals.submit', 'v1 legacy; superseded by scorePrimary/scoreSecondary (appraisal-v2 §10)'],

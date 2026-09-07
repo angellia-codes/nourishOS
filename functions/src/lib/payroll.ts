@@ -15,10 +15,6 @@
 export type ComponentSide = 'income' | 'deduction' | 'both'
 
 export interface StatutoryComponent {
-  /** Key into PayrollParameters. Null for PPh 21 — CSV-supplied, not recomputable (§4.1). */
-  rateKey: string | null
-  /** 'basicSalary' | 'jpCappedBase' | 'bpjsKesBase'. Null for PPh 21. */
-  baseKey: string | null
   side: ComponentSide
   /** Present only when side === 'both' — links the income row to its deduction twin. */
   pairId?: string
@@ -40,51 +36,47 @@ export interface StatutoryComponent {
 /** §4.1 — ten entries, not editable at runtime. */
 export const STATUTORY_COMPONENTS: Record<string, StatutoryComponent> = {
   JKK_COMPANY: {
-    rateKey: 'jkk', baseKey: 'basicSalary', side: 'both', pairId: 'jkk',
+    side: 'both', pairId: 'jkk',
     sortOrder: 13, csvColumn: 'JKK', label: 'Jaminan Kecelakaan Kerja',
   },
   JKM_COMPANY: {
-    rateKey: 'jkm', baseKey: 'basicSalary', side: 'both', pairId: 'jkm',
+    side: 'both', pairId: 'jkm',
     sortOrder: 14, csvColumn: 'JKM', label: 'Jaminan Kematian',
   },
   BPJS_KES_COMPANY: {
-    rateKey: 'bpjsKesCo', baseKey: 'bpjsKesBase', side: 'both', pairId: 'bpjsKes',
+    side: 'both', pairId: 'bpjsKes',
     sortOrder: 15, csvColumn: 'BPJS_KES_COMPANY', label: 'BPJS Kesehatan (Perusahaan)',
   },
   JHT_COMPANY: {
-    rateKey: 'jhtCompany', baseKey: 'basicSalary', side: 'both', pairId: 'jht',
+    side: 'both', pairId: 'jht',
     sortOrder: 16, csvColumn: 'JHT_COMPANY', label: 'Jaminan Hari Tua (Perusahaan)',
   },
   JP_COMPANY: {
-    rateKey: 'jpCompany', baseKey: 'jpCappedBase', side: 'both', pairId: 'jp',
+    side: 'both', pairId: 'jp',
     sortOrder: 17, csvColumn: 'JP_COMPANY', label: 'Jaminan Pensiun (Perusahaan)',
   },
   BPJS_KES_EMPLOYEE: {
-    rateKey: 'bpjsKesEmp', baseKey: 'bpjsKesBase', side: 'deduction',
+    side: 'deduction',
     sortOrder: 2, csvColumn: 'BPJS_KES_EMPLOYEE', label: 'BPJS Kesehatan',
   },
   BPJS_KES_FAMILY: {
-    rateKey: 'bpjsKesFam', baseKey: 'bpjsKesBase', side: 'deduction',
+    side: 'deduction',
     sortOrder: 3, csvColumn: 'BPJS_KES_FAMILY', label: 'BPJS Kesehatan Keluarga',
   },
   JHT_EMPLOYEE: {
-    rateKey: 'jhtEmployee', baseKey: 'basicSalary', side: 'deduction',
+    side: 'deduction',
     sortOrder: 4, csvColumn: 'JHT_EMPLOYEE', label: 'Jaminan Hari Tua (Karyawan)',
   },
   JP_EMPLOYEE: {
-    rateKey: 'jpEmployee', baseKey: 'jpCappedBase', side: 'deduction',
+    side: 'deduction',
     sortOrder: 5, csvColumn: 'JP_EMPLOYEE', label: 'Jaminan Pensiun (Karyawan)',
   },
   PPH21: {
-    rateKey: null, baseKey: null, side: 'deduction',
+    side: 'deduction',
     sortOrder: 7, csvColumn: 'PPH21', label: 'Tax PPh 21 from Salary',
   },
 }
 
-/** The nine the validator independently recomputes (§6.4) — everything except PPh 21. */
-export const RECOMPUTABLE_COMPONENT_IDS: readonly string[] = Object.entries(STATUTORY_COMPONENTS)
-  .filter(([, component]) => component.rateKey !== null)
-  .map(([id]) => id)
 
 export interface PayrollComponentSeed {
   code: string

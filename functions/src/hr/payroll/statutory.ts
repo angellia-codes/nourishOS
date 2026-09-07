@@ -1,71 +1,19 @@
-import { STATUTORY_COMPONENTS, type StatutoryComponent } from '../../lib/payroll'
+import { STATUTORY_COMPONENTS } from '../../lib/payroll'
 
 /**
- * Statutory recompute and line-item expansion —
+ * Line-item expansion —
  * payroll-components-payslip-design.md §3/§4.1/§4.5.
  *
  * Pure: no Firestore, no auth, no clock. Everything here is pinned by
  * functions/test/payroll-statutory.mjs against §3's verified July-2026 slip.
  */
 
-/** §4.2, narrowed to what the recompute actually reads. */
-export interface StatutoryRates {
-  jkk: number
-  jkm: number
-  jhtCompany: number
-  jhtEmployee: number
-  jpCompany: number
-  jpEmployee: number
-  bpjsKesCo: number
-  bpjsKesEmp: number
-  bpjsKesFam: number
-  jpWageCeiling: number
-  bpjsKesCeiling: number
-}
-
-export interface StatutoryAmount {
-  componentId: string
-  amount: number
-  rate: number
-  base: number
-}
-
 /**
- * §3 — the three bases. Jaminan Pensiun uses a statutory wage ceiling, NOT
- * basic salary: 221,726 / 0.02 = 11,086,300, which is the 2026 ceiling rather
- * than the employee's 18,500,000 basic. Getting this wrong is the single
- * highest-value error this module exists to catch.
+ * Every statutory figure is entered by hand and taken as supplied — there is
+ * no rate table and no recompute (see validate.ts). `rate` and `base` stay
+ * null on the resulting line items for the same reason: nothing in this app
+ * knows the rate a given figure was struck at.
  */
-export function resolveBase(baseKey: string, basicSalary: number, rates: StatutoryRates): number {
-  switch (baseKey) {
-    case 'basicSalary':
-      return basicSalary
-    case 'jpCappedBase':
-      return Math.min(basicSalary, rates.jpWageCeiling)
-    case 'bpjsKesBase':
-      return Math.min(basicSalary, rates.bpjsKesCeiling)
-    default:
-      throw new Error(`Unknown statutory base key: ${baseKey}`)
-  }
-}
-
-/**
- * §6.4 — the nine recomputable components (everything except PPh 21, which has
- * no rate or base until a tax engine exists). Rounded to whole rupiah; the
- * Rp 100 tolerance in validate.ts absorbs the difference against a source that
- * rounds differently.
- */
-export function recomputeStatutory(rates: StatutoryRates, basicSalary: number): StatutoryAmount[] {
-  const results: StatutoryAmount[] = []
-  for (const [componentId, component] of Object.entries(STATUTORY_COMPONENTS)) {
-    if (component.rateKey === null || component.baseKey === null) continue
-    const rate = rates[component.rateKey as keyof StatutoryRates] as number
-    const base = resolveBase(component.baseKey, basicSalary, rates)
-    results.push({ componentId, rate, base, amount: Math.round(rate * base) })
-  }
-  return results
-}
-
 export interface LineItem {
   componentId: string
   labelId: string
@@ -103,8 +51,6 @@ export type StatutoryAmountsByComponent = Record<string, number>
 export function expandLineItems(
   discretionary: DiscretionaryInput[],
   statutoryAmounts: StatutoryAmountsByComponent,
-  rates: StatutoryRates | null,
-  basicSalary: number,
 ): LineItem[] {
   const items: LineItem[] = []
 
@@ -125,7 +71,6 @@ export function expandLineItems(
 
   for (const [componentId, component] of Object.entries(STATUTORY_COMPONENTS)) {
     const amount = statutoryAmounts[componentId] ?? 0
-    const { rate, base } = describeStatutory(component, rates, basicSalary)
 
     if (component.side === 'both') {
       // §3's mirror pair — identical amount on both sides, netting to zero.
@@ -135,8 +80,8 @@ export function expandLineItems(
         labelEn: component.label,
         side: 'income',
         amount,
-        rate,
-        base,
+        rate: null,
+        base: null,
         isEmployerMirror: true,
         pairId: component.pairId ?? null,
         sortOrder: component.sortOrder,
@@ -147,8 +92,8 @@ export function expandLineItems(
         labelEn: component.label,
         side: 'deduction',
         amount,
-        rate,
-        base,
+        rate: null,
+        base: null,
         isEmployerMirror: false,
         pairId: component.pairId ?? null,
         sortOrder: component.sortOrder,
@@ -162,8 +107,8 @@ export function expandLineItems(
       labelEn: component.label,
       side: component.side === 'income' ? 'income' : 'deduction',
       amount,
-      rate,
-      base,
+      rate: null,
+      base: null,
       isEmployerMirror: false,
       pairId: null,
       sortOrder: component.sortOrder,
@@ -171,20 +116,6 @@ export function expandLineItems(
   }
 
   return items.sort((a, b) => a.sortOrder - b.sortOrder)
-}
-
-function describeStatutory(
-  component: StatutoryComponent,
-  rates: StatutoryRates | null,
-  basicSalary: number,
-): { rate: number | null; base: number | null } {
-  if (!rates || component.rateKey === null || component.baseKey === null) {
-    return { rate: null, base: null }
-  }
-  return {
-    rate: rates[component.rateKey as keyof StatutoryRates] as number,
-    base: resolveBase(component.baseKey, basicSalary, rates),
-  }
 }
 
 /** §4.4 — column totals INCLUDE the mirror, exactly as the source Excel does. */

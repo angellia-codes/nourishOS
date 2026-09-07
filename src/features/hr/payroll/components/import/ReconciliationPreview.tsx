@@ -19,7 +19,6 @@ export function ReconciliationPreview({ report }: { report: ReconciliationReport
         <SummaryTile label="Rows" value={String(report.rowCount)} />
         <SummaryTile label="Take home pay" value={formatCurrency(report.totals.totalTakeHomePay)} />
         <SummaryTile label="Employer contributions" value={formatCurrency(report.totals.totalEmployerCost)} />
-        <SummaryTile label="Parameters year" value={String(report.parametersYear)} />
       </div>
 
       <Card>

@@ -19,74 +19,15 @@ import assert from 'node:assert/strict'
 import { createRequire } from 'node:module'
 
 const require = createRequire(import.meta.url)
-const { recomputeStatutory, expandLineItems, sumSide, sumEmployerCost } = require('../lib/hr/payroll/statutory.js')
+const { expandLineItems, sumSide, sumEmployerCost } = require('../lib/hr/payroll/statutory.js')
 const { validatePayrollRows, validateHeader } = require('../lib/hr/payroll/validate.js')
 const { PAYROLL_CSV_COLUMNS, PAYROLL_COMPONENT_SEEDS } = require('../lib/lib/payroll.js')
 
-// --- §4.2 the 2026 parameters --------------------------------------------
-const RATES = {
-  jkk: 0.0054,
-  jkm: 0.003,
-  jhtCompany: 0.037,
-  jhtEmployee: 0.02,
-  jpCompany: 0.02,
-  jpEmployee: 0.01,
-  bpjsKesCo: 0.04,
-  bpjsKesEmp: 0.01,
-  bpjsKesFam: 0.01,
-  jpWageCeiling: 11086300,
-  bpjsKesCeiling: 12000000,
-}
-
 const BASIC = 18500000
 
-const componentAmount = (componentId, basic = BASIC) =>
-  recomputeStatutory(RATES, basic).find((c) => c.componentId === componentId)
-
-// --- §3 verified calculation bases ---------------------------------------
-
-describe('§3 verified calculation bases', () => {
-  test('JKK company: 0.54% of basic salary = 99,900', () => {
-    const jkk = componentAmount('JKK_COMPANY')
-    assert.equal(jkk.amount, 99900)
-    assert.equal(jkk.base, BASIC)
-  })
-
-  test('JKM company: 0.3% of basic salary = 55,500', () => {
-    assert.equal(componentAmount('JKM_COMPANY').amount, 55500)
-  })
-
-  test('JHT company: 3.7% of basic salary = 684,500', () => {
-    assert.equal(componentAmount('JHT_COMPANY').amount, 684500)
-  })
-
-  test('JHT employee: 2% of basic salary = 370,000', () => {
-    assert.equal(componentAmount('JHT_EMPLOYEE').amount, 370000)
-  })
-
-  test('JP company: 2% of the CAPPED base = 221,726, not of basic salary', () => {
-    const jp = componentAmount('JP_COMPANY')
-    assert.equal(jp.base, 11086300, 'JP must use the statutory wage ceiling')
-    assert.equal(jp.amount, 221726)
-    assert.notEqual(jp.amount, Math.round(0.02 * BASIC), 'JP must not be computed off basic salary')
-  })
-
-  test('JP employee: 1% of the capped base = 110,863', () => {
-    assert.equal(componentAmount('JP_EMPLOYEE').amount, 110863)
-  })
-
-  test('a salary below the JP ceiling uses the salary itself, not the ceiling', () => {
-    const jp = componentAmount('JP_EMPLOYEE', 5000000)
-    assert.equal(jp.base, 5000000)
-    assert.equal(jp.amount, 50000)
-  })
-
-  test('§6.4 recomputes exactly nine components — PPh 21 has no rate or base', () => {
-    const ids = recomputeStatutory(RATES, BASIC).map((c) => c.componentId)
-    assert.equal(ids.length, 9)
-    assert.ok(!ids.includes('PPH21'))
-  })
-})
+// The §3 rate/base assertions that used to live here are gone with the rate
+// table: every statutory figure is now hand-entered and taken as supplied
+// (validate.ts), so there is nothing left to recompute or to pin.
 
 // --- the reference slip ----------------------------------------------------
 // §3: 29 line items (17 income, 12 deduction), 5 mirror pairs totalling
@@ -147,6 +88,7 @@ const EMPLOYEE = {
   taxStatus: 'K0',
   employeeUid: null,
   status: 'active',
+  employmentStatus: 'PKWTT',
   bpjsTk: null,
   bpjsKesehatan: null,
   compensationBasicSalary: null,
@@ -165,8 +107,6 @@ function validate(rows, overrides = {}) {
   return validatePayrollRows({
     rows,
     period: '2026-07',
-    parametersYear: 2026,
-    rates: RATES,
     components: COMPONENTS,
     employeesByNumber: new Map([[EMPLOYEE.employeeNumber, { ...EMPLOYEE, ...(overrides.employee ?? {}) }]]),
     existingPayslipKeys: overrides.existingPayslipKeys ?? new Set(),
@@ -265,11 +205,6 @@ const HARD_FAILURE_CASES = [
   ['totalDeduction does not equal the deduction lines', { totalDeduction: '12000000' }, 'deductionTotalMismatch'],
   ['takeHomePay does not equal income minus deductions', { takeHomePay: '9999999' }, 'takeHomeMismatch'],
   ['a non-numeric amount', { BASIC_SALARY: 'eighteen million' }, 'nonNumericAmount'],
-  [
-    'a statutory variance beyond Rp 100',
-    { JHT_EMPLOYEE: '370500', totalDeduction: '12923359', takeHomePay: '7210374' },
-    'statutoryVariance',
-  ],
 ]
 
 describe('§6.2 hard failures', () => {
@@ -313,56 +248,77 @@ describe('§6.2 hard failures', () => {
   })
 })
 
-// --- §6.4 the override escape hatch ---------------------------------------
+// --- hand-entered statutory figures ---------------------------------------
 
-describe('§6.4 the override escape hatch', () => {
-  test('an override reason lets the same variance through, and is recorded', () => {
-    // Totals move with the amount so the only violation is the statutory one:
-    // the override bypasses §6.4's recompute, NOT §6.2's arithmetic checks.
-    const variance = { JHT_EMPLOYEE: '370500', totalDeduction: '12923359', takeHomePay: '7210374' }
-
-    const blocked = validate(rowWith(variance))
-    assert.ok(blocked.hardFailures.some((i) => i.code === 'statutoryVariance'))
-    assert.equal(blocked.drafts.length, 0)
-
-    const allowed = validate(rowWith({ ...variance, statutoryOverrideReason: 'Backdated correction agreed with BPJS.' }))
-    assert.deepEqual(
-      allowed.hardFailures.filter((i) => i.code === 'statutoryVariance'),
-      [],
-    )
-    assert.deepEqual(allowed.overriddenRows, ['N-0273'])
-    assert.equal(allowed.drafts[0].statutoryOverrideReason, 'Backdated correction agreed with BPJS.')
+describe('statutory figures are taken as supplied', () => {
+  test('an off-rate BPJS figure imports, as long as the row still adds up', () => {
+    const result = validate(rowWith({ JHT_EMPLOYEE: '370500', totalDeduction: '12923359', takeHomePay: '7210374' }))
+    assert.deepEqual(result.hardFailures, [])
+    assert.equal(result.drafts.length, 1)
   })
 
-  test('an override does NOT bypass §6.2 arithmetic — only the recompute', () => {
-    const result = validate(
-      rowWith({ JHT_EMPLOYEE: '370500', statutoryOverrideReason: 'Backdated correction agreed with BPJS.' }),
-    )
-    assert.ok(
-      result.hardFailures.some((i) => i.code === 'deductionTotalMismatch'),
-      'source arithmetic must still be checked on an overridden row',
-    )
+  test('the row arithmetic is still enforced', () => {
+    const result = validate(rowWith({ JHT_EMPLOYEE: '370500' }))
+    assert.ok(result.hardFailures.some((i) => i.code === 'deductionTotalMismatch'))
     assert.equal(result.drafts.length, 0)
   })
 
-  test('a variance inside the Rp 100 tolerance is absorbed', () => {
-    // 370,000 -> 370,080 is 80 rupiah of rounding; the totals move with it.
-    const result = validate(rowWith({ JHT_EMPLOYEE: '370080', totalDeduction: '12922939', takeHomePay: '7210794' }))
-    assert.deepEqual(
-      result.hardFailures.filter((i) => i.code === 'statutoryVariance'),
-      [],
-    )
+  test('no line item carries a rate or a base — nothing knows them any more', () => {
+    for (const item of validate(rowWith({})).drafts[0].lineItems) {
+      assert.equal(item.rate, null)
+      assert.equal(item.base, null)
+    }
   })
 
-  test('nil BPJS Kesehatan does not hard-fail — it is per-enrolment (see validate.ts)', () => {
+  test('statutoryOverrideReason is recorded as a note', () => {
+    const result = validate(rowWith({ statutoryOverrideReason: 'Backdated correction agreed with BPJS.' }))
+    assert.deepEqual(result.overriddenRows, ['N-0273'])
+    assert.equal(result.drafts[0].statutoryOverrideReason, 'Backdated correction agreed with BPJS.')
+  })
+})
+
+// --- daily workers and trainees -------------------------------------------
+
+describe('dailyWorker and ojt', () => {
+  const dailyWorker = { employmentStatus: 'dailyWorker', compensationBasicSalary: 145000 }
+
+  test('a period figure above the daily rate is normal — no drift warning', () => {
+    const result = validate(rowWith({}), { employee: dailyWorker })
     assert.deepEqual(
-      validate(rowWith({})).hardFailures.filter((i) => i.code === 'statutoryVariance'),
+      result.warnings.filter((i) => i.code === 'basicSalaryDrift' || i.code === 'basicSalaryBelowDailyRate'),
       [],
     )
+    assert.equal(result.drafts.length, 1)
   })
 
-  test('a supplied BPJS Kesehatan figure IS still checked against the recompute', () => {
-    assert.ok(validate(rowWith({ BPJS_KES_EMPLOYEE: '1' })).hardFailures.some((i) => i.code === 'statutoryVariance'))
+  test('less than one day at the rate is worth naming', () => {
+    const result = validate(
+      rowWith({ BASIC_SALARY: '100000', totalIncome: '1733733', totalDeduction: '12922859', takeHomePay: '-11189126' }),
+      { employee: dailyWorker },
+    )
+    assert.ok(result.warnings.some((i) => i.code === 'basicSalaryBelowDailyRate'))
+  })
+
+  test('a non-daily status still gets the plain drift warning', () => {
+    const result = validate(rowWith({}), { employee: { compensationBasicSalary: 17000000 } })
+    assert.ok(result.warnings.some((i) => i.code === 'basicSalaryDrift'))
+  })
+
+  test('a BPJS line on a daily worker warns — neither status is enrolled', () => {
+    const result = validate(rowWith({}), { employee: dailyWorker })
+    assert.ok(result.warnings.some((i) => i.code === 'bpjsNotApplicable'))
+  })
+
+  test('an ojt row with every statutory line nil raises nothing', () => {
+    const nilStatutory = {
+      JHT_EMPLOYEE: '', JP_EMPLOYEE: '', PPH21: '', JKK: '', JKM: '', JHT_COMPANY: '', JP_COMPANY: '',
+      totalIncome: '9072107', totalDeduction: '11260870', takeHomePay: '-2188763',
+    }
+    const result = validate(rowWith(nilStatutory), { employee: { employmentStatus: 'ojt' } })
+    assert.deepEqual(
+      result.warnings.filter((i) => i.code === 'bpjsNotApplicable' || i.code === 'nilBpjsWithMembership'),
+      [],
+    )
   })
 })
 
@@ -422,7 +378,7 @@ describe('§5 the CSV contract', () => {
   })
 
   test('sumSide includes the mirror on both sides', () => {
-    const items = expandLineItems([], { JKK_COMPANY: 1000 }, RATES, 0)
+    const items = expandLineItems([], { JKK_COMPANY: 1000 })
     assert.equal(sumSide(items, 'income'), 1000)
     assert.equal(sumSide(items, 'deduction'), 1000)
   })

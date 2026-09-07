@@ -10,7 +10,7 @@
  * exercised `importPayroll` and the flat `payrollRecords` collection, both
  * retired.
  *
- * Walks a full month: annual parameters -> component registry -> CSV parse and
+ * Walks a full month: component registry -> CSV parse and
  * reconciliation -> batch creation -> the finance/GM/director approval chain ->
  * payslips becoming readable. The statutory maths itself is pinned separately,
  * without an emulator, by payroll-statutory.mjs; what this covers is the parts
@@ -155,28 +155,10 @@ async function call(idToken, name, data = {}) {
 }
 
 const { PAYROLL_CSV_COLUMNS } = require(path.join(here, '..', 'lib', 'lib', 'payroll.js'))
-const { recomputeStatutory } = require(path.join(here, '..', 'lib', 'hr', 'payroll', 'statutory.js'))
 
 const OUTLET = 'nourish_uluwatu'
 const PERIOD = '2026-09'
 const YEAR = 2026
-
-/** Section 4.2 - the 2026 statutory parameters this run validates against. */
-const PARAMETERS = {
-  year: YEAR,
-  jkk: 0.0054,
-  jkm: 0.003,
-  jhtCompany: 0.037,
-  jhtEmployee: 0.02,
-  jpCompany: 0.02,
-  jpEmployee: 0.01,
-  bpjsKesCo: 0.04,
-  bpjsKesEmp: 0.01,
-  bpjsKesFam: 0.01,
-  jpWageCeiling: 11086300,
-  bpjsKesCeiling: 12000000,
-  effectiveFrom: `${YEAR}-01-01`,
-}
 
 /** Every column section 5 defines, blank unless the row overrides it. */
 function blankRow() {
@@ -184,24 +166,22 @@ function blankRow() {
 }
 
 /**
- * Builds one arithmetically-consistent CSV row, with the statutory figures
- * computed exactly the way the validator will recompute them - so a clean row
- * really is clean and any failure below is a real one.
+ * Builds one arithmetically-consistent CSV row.
  *
- * BPJS Kesehatan is left nil: this employee is not enrolled, the same case the
- * design doc's own reference slip carries, and validate.ts treats a nil
- * Kesehatan line as not-enrolled rather than a variance.
+ * The statutory figures are hand-entered, like every real file since the rate
+ * table was removed - nothing recomputes them, so all that has to hold is the
+ * row's own arithmetic. They are still struck at the real 2026 rates so the
+ * numbers read like a genuine slip.
+ *
+ * BPJS Kesehatan is left nil: this employee is not enrolled.
  */
 function rowFor({ employeeNumber, fullName, basicSalary, legacyEmployeeId = '', extra = {} }) {
-  const statutory = recomputeStatutory(PARAMETERS, basicSalary)
-  const amountOf = (id) => statutory.find((c) => c.componentId === id)?.amount ?? 0
-
-  const jkk = amountOf('JKK_COMPANY')
-  const jkm = amountOf('JKM_COMPANY')
-  const jhtCo = amountOf('JHT_COMPANY')
-  const jpCo = amountOf('JP_COMPANY')
-  const jhtEmp = amountOf('JHT_EMPLOYEE')
-  const jpEmp = amountOf('JP_EMPLOYEE')
+  const jkk = Math.round(0.0054 * basicSalary)
+  const jkm = Math.round(0.003 * basicSalary)
+  const jhtCo = Math.round(0.037 * basicSalary)
+  const jpCo = Math.round(0.02 * Math.min(basicSalary, 11086300))
+  const jhtEmp = Math.round(0.02 * basicSalary)
+  const jpEmp = Math.round(0.01 * Math.min(basicSalary, 11086300))
 
   const mirror = jkk + jkm + jhtCo + jpCo
   const transport = 300000
@@ -311,27 +291,6 @@ async function main() {
   const staff = await seedAccount({ role: 'staff', email: 'flow-staff@nourish.test', outlet: OUTLET, department: 'kitchen', name: 'Flow Staff' })
   check('accounts seeded', [superAdmin, hrManager, finance, generalManager, director, staff].every((a) => a.idToken))
 
-  console.log('\nupsertPayrollParameters - Super Admin only, and the import cannot run without it')
-  let hrDeniedParameters = false
-  try {
-    await call(hrManager.idToken, 'upsertPayrollParameters', PARAMETERS)
-  } catch (e) {
-    hrDeniedParameters = /permission/i.test(e.message)
-  }
-  check('hrManager cannot set annual parameters (payroll.manageParameters)', hrDeniedParameters)
-
-  await call(superAdmin.idToken, 'upsertPayrollParameters', PARAMETERS)
-  const parametersDoc = await getDoc(`payrollParameters/${YEAR}`)
-  check('parameters stored under the year as the doc id', parametersDoc.doc?.jpWageCeiling === 11086300, JSON.stringify(parametersDoc.doc))
-
-  let badRate = false
-  try {
-    await call(superAdmin.idToken, 'upsertPayrollParameters', { ...PARAMETERS, jhtCompany: 3.7 })
-  } catch (e) {
-    badRate = /rate between 0 and 1/i.test(e.message)
-  }
-  check('a rate entered as a percentage rather than a fraction is rejected', badRate)
-
   console.log('\nseedPayrollComponents - the fourteen discretionary entries, idempotent')
   const seeded = await call(hrManager.idToken, 'seedPayrollComponents')
   check('components seeded (14 on a fresh emulator)', seeded.created === 14 || seeded.created === 0, JSON.stringify(seeded))
@@ -383,22 +342,32 @@ async function main() {
   check('preview covers both rows', preview.rowCount === 2 && preview.totals.totalTakeHomePay > 0, JSON.stringify(preview.totals))
   check('employer cost is the mirror total, not zero', preview.totals.totalEmployerCost > 0, JSON.stringify(preview.totals))
 
-  console.log('\nparsePayrollCsv - a statutory variance blocks; an override reason clears it')
-  const tampered = [{ ...cleanRows[0] }]
-  tampered[0].JHT_EMPLOYEE = String(Number(tampered[0].JHT_EMPLOYEE) + 5000)
-  tampered[0].totalDeduction = String(Number(tampered[0].totalDeduction) + 5000)
-  tampered[0].takeHomePay = String(Number(tampered[0].takeHomePay) - 5000)
-  const blockedPreview = await call(hrManager.idToken, 'parsePayrollCsv', {
-    period: PERIOD, sourceFileName: 'tampered.csv', sourceFileHash: await hashRows(tampered), rows: tampered,
+  console.log('\nparsePayrollCsv - statutory figures are taken as supplied; the row arithmetic is not')
+  const offRate = [{ ...cleanRows[0] }]
+  offRate[0].JHT_EMPLOYEE = String(Number(offRate[0].JHT_EMPLOYEE) + 5000)
+  offRate[0].totalDeduction = String(Number(offRate[0].totalDeduction) + 5000)
+  offRate[0].takeHomePay = String(Number(offRate[0].takeHomePay) - 5000)
+  const offRatePreview = await call(hrManager.idToken, 'parsePayrollCsv', {
+    period: PERIOD, sourceFileName: 'off-rate.csv', sourceFileHash: await hashRows(offRate), rows: offRate,
   })
-  check('a Rp 5,000 statutory variance is a hard failure', blockedPreview.hardFailures.some((i) => i.code === 'statutoryVariance'), JSON.stringify(blockedPreview.hardFailures))
+  check('an off-rate BPJS figure imports', offRatePreview.hardFailures.length === 0, JSON.stringify(offRatePreview.hardFailures))
 
-  const overridden = [{ ...tampered[0], statutoryOverrideReason: 'Backdated BPJS correction, agreed with the office.' }]
-  const overriddenPreview = await call(hrManager.idToken, 'parsePayrollCsv', {
-    period: PERIOD, sourceFileName: 'overridden.csv', sourceFileHash: await hashRows(overridden), rows: overridden,
+  const unbalanced = [{ ...cleanRows[0] }]
+  unbalanced[0].JHT_EMPLOYEE = String(Number(unbalanced[0].JHT_EMPLOYEE) + 5000)
+  const unbalancedPreview = await call(hrManager.idToken, 'parsePayrollCsv', {
+    period: PERIOD, sourceFileName: 'unbalanced.csv', sourceFileHash: await hashRows(unbalanced), rows: unbalanced,
   })
-  check('the same row with a reason passes', overriddenPreview.hardFailures.length === 0, JSON.stringify(overriddenPreview.hardFailures))
-  check('and is listed in overriddenRows', overriddenPreview.overriddenRows.includes(emp1Doc.employeeNumber), JSON.stringify(overriddenPreview.overriddenRows))
+  check(
+    'the same change without moving the totals is a hard failure',
+    unbalancedPreview.hardFailures.some((i) => i.code === 'deductionTotalMismatch'),
+    JSON.stringify(unbalancedPreview.hardFailures),
+  )
+
+  const noted = [{ ...cleanRows[0], statutoryOverrideReason: 'Backdated BPJS correction, agreed with the office.' }]
+  const notedPreview = await call(hrManager.idToken, 'parsePayrollCsv', {
+    period: PERIOD, sourceFileName: 'noted.csv', sourceFileHash: await hashRows(noted), rows: noted,
+  })
+  check('a statutoryOverrideReason is recorded as a note', notedPreview.overriddenRows.includes(emp1Doc.employeeNumber), JSON.stringify(notedPreview.overriddenRows))
 
   console.log('\nPermission gating on the import')
   let staffDeniedParse = false

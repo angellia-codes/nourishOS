@@ -52,7 +52,6 @@ import { PayrollBatchDetailPage } from '@/features/hr/payroll/pages/PayrollBatch
 import { PayrollImportPage } from '@/features/hr/payroll/pages/PayrollImportPage'
 import { PayslipViewPage } from '@/features/hr/payroll/pages/PayslipViewPage'
 import { PayrollComponentsPage } from '@/features/hr/payroll/pages/PayrollComponentsPage'
-import { PayrollParametersPage } from '@/features/hr/payroll/pages/PayrollParametersPage'
 import { MonthlyRevenueListPage } from '@/features/hr/payroll/pages/MonthlyRevenueListPage'
 import { AttendancePeriodListPage } from '@/features/hr/attendance/pages/AttendancePeriodListPage'
 import { AttendanceImportPage } from '@/features/hr/attendance/pages/AttendanceImportPage'
@@ -211,7 +210,6 @@ export const router = createBrowserRouter([
               { path: 'payroll/import', element: <PayrollImportPage /> },
               { path: 'payroll/revenue', element: <MonthlyRevenueListPage /> },
               { path: 'payroll/components', element: <PayrollComponentsPage /> },
-              { path: 'payroll/parameters', element: <PayrollParametersPage /> },
               { path: 'payroll/batches/:batchId', element: <PayrollBatchDetailPage /> },
               { path: 'payroll/payslips/:payslipId', element: <PayslipViewPage /> },
               // Static paths before ':periodId', same reason payroll/batches/:batchId sits after its siblings.

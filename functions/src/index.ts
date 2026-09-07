@@ -75,7 +75,6 @@ export {
   supersedePayslip,
   upsertPayrollComponent,
   seedPayrollComponents,
-  upsertPayrollParameters,
   recordMonthlyRevenue,
   getManningCostSummary,
 } from './hr/payroll'

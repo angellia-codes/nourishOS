@@ -14,7 +14,7 @@ import {
   successResponse,
   PERMISSIONS,
 } from '../../lib'
-import { loadComponents, loadParameters } from './context'
+import { loadComponents } from './context'
 import { expandLineItems, sumEmployerCost, sumSide, type DiscretionaryInput } from './statutory'
 import { STATUTORY_COMPONENTS } from '../../lib/payroll'
 
@@ -72,7 +72,6 @@ export const supersedePayslip = onCall({ region: REGION }, async (request) => {
       throw new AppError('failed-precondition', 'This payslip has already been superseded.')
     }
 
-    const { year, rates } = await loadParameters(original.period as string)
     const components = await loadComponents()
 
     const discretionary: DiscretionaryInput[] = components.map((component) => ({
@@ -90,7 +89,7 @@ export const supersedePayslip = onCall({ region: REGION }, async (request) => {
     }
 
     const basicSalary = discretionary.find((c) => c.code === 'BASIC_SALARY')?.amount ?? 0
-    const lineItems = expandLineItems(discretionary, statutoryAmounts, rates, basicSalary)
+    const lineItems = expandLineItems(discretionary, statutoryAmounts)
     const totalIncome = sumSide(lineItems, 'income')
     const totalDeduction = sumSide(lineItems, 'deduction')
     const takeHomePay = totalIncome - totalDeduction
@@ -118,7 +117,6 @@ export const supersedePayslip = onCall({ region: REGION }, async (request) => {
       totalDeduction,
       takeHomePay,
       totalEmployerCost: sumEmployerCost(lineItems),
-      parametersYear: year,
       statutoryOverrideReason: trimmedReason,
       issuedAt: FieldValue.serverTimestamp(),
       isIssued: true,

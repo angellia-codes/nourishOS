@@ -10,7 +10,6 @@ export { createPayrollBatch } from './createPayrollBatch'
 export { submitPayrollBatch } from './submitPayrollBatch'
 export { supersedePayslip } from './supersedePayslip'
 export { upsertPayrollComponent, seedPayrollComponents } from './upsertPayrollComponent'
-export { upsertPayrollParameters } from './upsertPayrollParameters'
 export { recordMonthlyRevenue } from './recordMonthlyRevenue'
 export { getManningCostSummary } from './getManningCostSummary'
 

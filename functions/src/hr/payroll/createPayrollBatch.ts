@@ -20,7 +20,6 @@ import {
   loadCompensationEmployeeNumbers,
   loadEmployees,
   loadExistingPayslipKeys,
-  loadParameters,
   requirePeriod,
 } from './context'
 import { findBatchByHash } from './parsePayrollCsv'
@@ -86,7 +85,6 @@ export const createPayrollBatch = onCall({ region: REGION }, async (request) => 
       )
     }
 
-    const { year, rates } = await loadParameters(validPeriod)
     const [components, employeesByNumber, existingPayslipKeys, compensationEmployeeNumbers] = await Promise.all([
       loadComponents(),
       loadEmployees(rows.map((row) => (row.employeeNumber ?? '').trim())),
@@ -97,8 +95,6 @@ export const createPayrollBatch = onCall({ region: REGION }, async (request) => 
     const result = validatePayrollRows({
       rows,
       period: validPeriod,
-      parametersYear: year,
-      rates,
       components,
       employeesByNumber,
       existingPayslipKeys,
@@ -117,7 +113,6 @@ export const createPayrollBatch = onCall({ region: REGION }, async (request) => 
     await batchRef.set({
       period: validPeriod,
       outletId: outletId ?? null,
-      parametersYear: year,
       rowCount: result.drafts.length,
       sourceFileName,
       sourceFileHash,
@@ -135,7 +130,7 @@ export const createPayrollBatch = onCall({ region: REGION }, async (request) => 
       status: 'draft',
     })
 
-    await writePayslips(batchRef.id, validPeriod, year, result.drafts, user)
+    await writePayslips(batchRef.id, validPeriod, result.drafts, user)
 
     await recordAuditEvent({
       eventType: 'PayrollBatchCreated',
@@ -179,7 +174,6 @@ export const createPayrollBatch = onCall({ region: REGION }, async (request) => 
 export async function writePayslips(
   batchId: string,
   period: string,
-  parametersYear: number,
   drafts: PayslipDraft[],
   user: AuthedUser,
 ): Promise<string[]> {
@@ -209,7 +203,6 @@ export async function writePayslips(
         totalDeduction: draft.totalDeduction,
         takeHomePay: draft.takeHomePay,
         totalEmployerCost: draft.totalEmployerCost,
-        parametersYear,
         statutoryOverrideReason: draft.statutoryOverrideReason,
         // Both stamped only when the batch is approved. `isIssued` is what
         // firestore.rules actually reads: a list query can prove an equality

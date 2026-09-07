@@ -294,10 +294,6 @@ service cloud.firestore {
       allow read: if canReadPayroll();
       allow write: if false; // upsertPayrollComponent / seedPayrollComponents only
     }
-    match /payrollParameters/{year} {
-      allow read: if canReadPayroll();
-      allow write: if false; // upsertPayrollParameters only (Super Admin)
-    }
     // Readable at any status, unlike payslips: the batch holds totals and the
     // reconciliation report, no per-person net pay, and HR has to be able to
     // reload a draft's preview after leaving the page.

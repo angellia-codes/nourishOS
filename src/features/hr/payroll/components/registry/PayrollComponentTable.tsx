@@ -71,8 +71,6 @@ interface StatutoryRow {
   id: string
   label: string
   side: string
-  rateKey: string
-  baseKey: string
 }
 
 const STATUTORY_ROWS: StatutoryRow[] = Object.entries(STATUTORY_COMPONENTS)
@@ -87,14 +85,10 @@ const STATUTORY_ROWS: StatutoryRow[] = Object.entries(STATUTORY_COMPONENTS)
           ? 'Income'
           : 'Deduction',
     // PPh 21 is CSV-supplied and not recomputable until a tax engine exists (§4.1).
-    rateKey: component.rateKey ?? 'CSV-supplied',
-    baseKey: component.baseKey ?? '—',
   }))
 
 const STATUTORY_COLUMNS: ReportTableColumn<StatutoryRow>[] = [
   { header: 'Code', value: (r) => <span className="font-mono text-xs">{r.id}</span> },
   { header: 'Label', value: (r) => r.label },
   { header: 'Prints as', value: (r) => r.side },
-  { header: 'Rate', value: (r) => <span className="font-mono text-xs">{r.rateKey}</span> },
-  { header: 'Base', value: (r) => <span className="font-mono text-xs">{r.baseKey}</span> },
 ]
