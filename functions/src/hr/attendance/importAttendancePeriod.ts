@@ -112,6 +112,7 @@ export const importAttendancePeriod = onCall({ region: REGION }, async (request)
     const result = validateAttendanceRows({
       rows: foldedRows,
       originalRows: rows,
+      period: validPeriod,
       daysInMonth: daysInMonth(validPeriod),
       employeesByNumber,
       outletIdByName: outletIdByDisplayName(),

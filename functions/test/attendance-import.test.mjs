@@ -15,6 +15,7 @@ const require = createRequire(import.meta.url)
 const { foldAliasColumns, ATTENDANCE_CSV_COLUMNS, ATTENDANCE_CODES } = require('../lib/hr/attendance/codes.js')
 const { checkAndFoldHeader, validateAttendanceRows } = require('../lib/hr/attendance/validate.js')
 
+const PERIOD = '2026-07'
 const EMPLOYEE = {
   employeeId: 'emp1',
   employeeNumber: 'N0001',
@@ -22,6 +23,7 @@ const EMPLOYEE = {
   outletId: 'nourish_uluwatu',
   employmentStatus: 'PKWT',
   status: 'active',
+  joinDate: '2026-01-15', // well before PERIOD — not a new hire for this period
 }
 const employeesByNumber = new Map([[EMPLOYEE.employeeNumber, EMPLOYEE]])
 const outletIdByName = { 'nourish uluwatu': 'nourish_uluwatu' }
@@ -51,6 +53,7 @@ function validate(rows, overrides = {}) {
   return validateAttendanceRows({
     rows,
     originalRows: rows,
+    period: PERIOD,
     daysInMonth: DAYS_IN_JULY,
     employeesByNumber,
     outletIdByName,
@@ -103,9 +106,24 @@ describe('§5.1 hard rules', () => {
     assert.ok(validate([baseRow({ WD: '-1' })]).hardFailures.some((f) => f.code === 'invalidDayValue'))
   })
 
-  test('V5 — Σ days must equal daysInMonth', () => {
-    // 20 + 5 DO = 25, not 31.
-    assert.ok(validate([baseRow({ WD: '20' })]).hardFailures.some((f) => f.code === 'daysMismatch'))
+  test('V5 — Σ days may fall below daysInMonth, whatever the employment status', () => {
+    // 20 + 5 DO = 25, not 31: a new hire, a mid-month leaver or a short month
+    // for any other reason. Nothing in a monthly ledger can tell those apart
+    // from a miscount, so the bound is one-sided.
+    const result = validate([baseRow({ WD: '20' })])
+    assert.equal(result.hardFailures.length, 0)
+    assert.equal(result.records[0].totalDays, 25)
+  })
+
+  test('V5 — Σ days above daysInMonth still fails', () => {
+    // 30 + 5 DO = 35, over 31 — impossible however the month went.
+    assert.ok(validate([baseRow({ WD: '30' })]).hardFailures.some((f) => f.code === 'daysMismatch'))
+  })
+
+  test('V5 — a row with no days at all imports, with a warning', () => {
+    const result = validate([baseRow({ WD: '0', DO: '0' })])
+    assert.equal(result.hardFailures.length, 0)
+    assert.ok(result.warnings.some((w) => w.code === 'noDaysRecorded'))
   })
 
   test('V7 — late_count cannot exceed WD', () => {

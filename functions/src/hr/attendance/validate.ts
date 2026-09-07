@@ -26,6 +26,8 @@ export interface ResolvedAttendanceEmployee {
   outletId: string
   employmentStatus: string
   status: string
+  /** ISO date. Used only to detect a mid-period join for the V5 exception below. */
+  joinDate: string
 }
 
 export interface AttendanceRecordDraft {
@@ -99,6 +101,8 @@ export interface ValidateAttendanceInput {
   rows: Record<string, string>[]
   /** Pre-fold rows, same order/count as `rows` — source of rawCodesSeen (§3.2). */
   originalRows: Record<string, string>[]
+  /** 'YYYY-MM'. Used to detect a mid-period join for the V5 exception below. */
+  period: string
   daysInMonth: number
   employeesByNumber: Map<string, ResolvedAttendanceEmployee>
   /** Outlet display name (as the CSV writes it) → OutletId, reversed from OUTLET_NAMES. */
@@ -177,12 +181,18 @@ export function validateAttendanceRows(input: ValidateAttendanceInput): Validate
     const lateCount = Number(row.late_count)
 
     // --- V5 reconciliation checksum ---------------------------------------
+    // Deviation from attendance.md §5 V5, which requires Σ days to equal the
+    // days in the month exactly. It is a one-sided bound here, for every
+    // employment status: a new hire, a mid-month leaver, a daily worker with
+    // no fixed schedule and anyone on unpaid leave all legitimately account
+    // for fewer days than the month holds, and there is nothing in this ledger
+    // that could tell a short month apart from a miscount without a
+    // day-by-day grid the module deliberately does not have (§1.2). An
+    // overcount is still impossible and still fails; a zero-day row is
+    // flagged as a warning below rather than blocking the whole import.
     const totalDays = ATTENDANCE_CODES.reduce((sum, code) => sum + days[code], 0)
-    if (totalDays !== input.daysInMonth) {
-      fail(
-        'daysMismatch',
-        `Σ days = ${totalDays}, expected ${input.daysInMonth} for this period (V5).`,
-      )
+    if (totalDays > input.daysInMonth) {
+      fail('daysMismatch', `Σ days = ${totalDays} exceeds ${input.daysInMonth} for this period (V5).`)
     }
 
     // --- V7 punctuality bound -----------------------------------------------
@@ -212,6 +222,12 @@ export function validateAttendanceRows(input: ValidateAttendanceInput): Validate
     }
     if (lateCount > 0 && days.WD === 0) {
       warn('lateWithNoWorkingDays', `${employee.fullName} has late_count > 0 but WD = 0 (W5).`)
+    }
+    if (totalDays === 0) {
+      warn(
+        'noDaysRecorded',
+        `${employee.fullName} has no days recorded at all — expected only for someone who never worked in this period.`,
+      )
     }
 
     const rawCodesSeen = Object.keys(ATTENDANCE_ALIAS_COLUMNS).filter(

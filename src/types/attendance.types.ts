@@ -106,7 +106,7 @@ export interface AttendanceRecord extends BaseDocument {
   /** Punctuality — incident count, NOT minutes. */
   lateCount: number
 
-  /** Σ days.* — must equal the parent period's daysInMonth (V5). */
+  /** Σ days.* — cannot exceed the parent period's daysInMonth; a short month is legitimate (V5). */
   totalDays: number
 
   /**

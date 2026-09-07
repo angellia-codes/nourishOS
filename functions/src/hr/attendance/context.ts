@@ -53,6 +53,7 @@ export async function loadEmployeesByNumber(
       outletId: (data.outletId as string | undefined) ?? '',
       employmentStatus: (data.employmentStatus as string | undefined) ?? '',
       status: (data.status as string | undefined) ?? 'active',
+      joinDate: (data.joinDate as string | undefined) ?? '',
     })
   }
   return resolved
