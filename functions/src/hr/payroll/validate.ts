@@ -98,12 +98,13 @@ export interface ValidateResult {
 }
 
 /**
- * Neither is enrolled in BPJS: every statutory line but PPh 21 is nil for them.
- * Nothing enforces that — statutory figures are hand-entered and taken as
- * supplied — so a non-nil line on one of these rows raises the
- * `bpjsNotApplicable` warning rather than passing unremarked.
+ * BPJS applies to these statuses like any other — they are simply the ones
+ * where nil lines are routine rather than a sign of an enrolment gap, so the
+ * `nilBpjsWithMembership` warning is suppressed for them. Nothing else about
+ * their statutory figures differs: whatever the CSV supplies is what lands on
+ * the slip.
  */
-const BPJS_EXEMPT_EMPLOYMENT_STATUSES = new Set(['dailyWorker', 'ojt'])
+const NIL_BPJS_EXPECTED_EMPLOYMENT_STATUSES = new Set(['dailyWorker', 'ojt'])
 
 /**
  * A daily worker's compensation record holds a **per-day rate** (Rp 145.000 at
@@ -257,7 +258,7 @@ export function validatePayrollRows(input: ValidateInput): ValidateResult {
 
     const basicSalary = discretionary.find((c) => c.code === 'BASIC_SALARY')?.amount ?? 0
     const lineItems = expandLineItems(discretionary, statutoryAmounts)
-    const bpjsExempt = BPJS_EXEMPT_EMPLOYMENT_STATUSES.has(employee.employmentStatus)
+    const nilBpjsExpected = NIL_BPJS_EXPECTED_EMPLOYMENT_STATUSES.has(employee.employmentStatus)
 
     // --- statutory figures --------------------------------------------------
     //
@@ -346,14 +347,7 @@ export function validatePayrollRows(input: ValidateInput): ValidateResult {
     const bpjsPaid = Object.entries(statutoryAmounts).some(
       ([componentId, amount]) => componentId !== 'PPH21' && amount > 0,
     )
-    if (bpjsExempt && bpjsPaid) {
-      warn(
-        'bpjsNotApplicable',
-        `${employee.fullName} is ${employee.employmentStatus} and carries no BPJS enrolment, but the row has a ` +
-          'non-nil statutory line. Clear it, or move the employee onto a status that is enrolled.',
-      )
-    }
-    if (hasBpjsNumbers && !bpjsPaid && !bpjsExempt) {
+    if (hasBpjsNumbers && !bpjsPaid && !nilBpjsExpected) {
       warn(
         'nilBpjsWithMembership',
         `${employee.fullName} has BPJS membership numbers on file but every statutory line is nil — worth checking for an enrolment gap.`,

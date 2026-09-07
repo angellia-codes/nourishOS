@@ -303,19 +303,20 @@ describe('dailyWorker and ojt', () => {
     assert.ok(result.warnings.some((i) => i.code === 'basicSalaryDrift'))
   })
 
-  test('a BPJS line on a daily worker warns — neither status is enrolled', () => {
+  test('a BPJS line on a daily worker is fine — the status is enrolled like any other', () => {
     const result = validate(rowWith({}), { employee: dailyWorker })
-    assert.ok(result.warnings.some((i) => i.code === 'bpjsNotApplicable'))
+    assert.deepEqual(result.hardFailures, [])
+    assert.equal(result.warnings.filter((i) => i.code === 'bpjsNotApplicable').length, 0)
   })
 
-  test('an ojt row with every statutory line nil raises nothing', () => {
+  test('an ojt row with every statutory line nil raises nothing — nil is routine there', () => {
     const nilStatutory = {
       JHT_EMPLOYEE: '', JP_EMPLOYEE: '', PPH21: '', JKK: '', JKM: '', JHT_COMPANY: '', JP_COMPANY: '',
       totalIncome: '9072107', totalDeduction: '11260870', takeHomePay: '-2188763',
     }
     const result = validate(rowWith(nilStatutory), { employee: { employmentStatus: 'ojt' } })
     assert.deepEqual(
-      result.warnings.filter((i) => i.code === 'bpjsNotApplicable' || i.code === 'nilBpjsWithMembership'),
+      result.warnings.filter((i) => i.code === 'nilBpjsWithMembership'),
       [],
     )
   })
