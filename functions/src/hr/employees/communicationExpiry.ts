@@ -56,7 +56,12 @@ async function expireDueRecords(): Promise<void> {
   const snap = await db
     .collection(COLLECTIONS.DISCIPLINARY_ACTIONS)
     .where('status', '==', 'active')
-    .where('validUntil', '==', today)
+    // `<=`, not `==`: a record's window can start at its incident date rather
+    // than its acknowledgement date (§13), so validUntil can already be in the
+    // past by the time the record goes active. An exact-day match would leave
+    // those active forever — and it also loses anything a missed run skipped.
+    // Indexed as status+validUntil in firestore.indexes.json.
+    .where('validUntil', '<=', today)
     .get()
 
   for (const doc of snap.docs) {
@@ -85,7 +90,7 @@ async function expireDueRecords(): Promise<void> {
         module: 'hr',
         priority: 'medium',
         title: 'Warning Expired',
-        message: `${describe(record)} expired today — ${today}. It no longer counts toward the next disciplinary step.`,
+        message: `${describe(record)} expired on ${(record.validUntil as string | undefined) ?? today}. It no longer counts toward the next disciplinary step.`,
         referenceId: doc.id,
       })
     } catch (error) {

@@ -512,7 +512,12 @@ export const acknowledgeCommunicationRecord = onCall({ region: REGION }, async (
     }
 
     const validityDays = (record.validityDays as number | null) ?? null
-    const validFrom = todayIso()
+    // §13 — the window runs from the incident itself (Communication Details),
+    // not from the day the paperwork was signed: a record acknowledged weeks
+    // after the fact must not extend the employee's clock by those weeks.
+    // Falls back to today for a record whose form carried no incident date.
+    const incidentDate = (record.incident as { date?: string | null } | null | undefined)?.date ?? null
+    const validFrom = incidentDate ?? todayIso()
     const validUntil = validityDays === null ? null : addDaysIso(validityDays, validFrom)
 
     await ref.update({
@@ -528,8 +533,11 @@ export const acknowledgeCommunicationRecord = onCall({ region: REGION }, async (
       validFrom,
       validUntil,
       // A record with no validity window has nothing left to track once it is
-      // acknowledged, so it closes rather than sitting 'active' forever.
-      status: validUntil === null ? 'closed' : 'active',
+      // acknowledged, so it closes rather than sitting 'active' forever. An
+      // old incident whose window has already run out is expired on the spot —
+      // it never was active, and expireCommunicationRecords only sweeps
+      // records that are still active.
+      status: validUntil === null ? 'closed' : validUntil <= todayIso() ? 'expired' : 'active',
       ...updatedFields(user.uid),
     })
 
