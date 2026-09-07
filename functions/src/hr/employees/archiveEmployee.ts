@@ -87,15 +87,21 @@ export const archiveEmployee = onCall({ region: REGION }, async (request) => {
       newValues: { status: 'inactive', resignationDate: parsedResignationDate, resignationReason: resignationReason.trim() },
     })
 
-    const offboardingChecklistId = await createOffboardingChecklistInternal({
-      employeeId,
-      employeeName: employee.fullName as string,
-      departmentId: employee.departmentId as string,
-      outletId: employee.outletId as string,
-      position: employee.position as string,
-      lastWorkingDate: parsedLastWorkingDate,
-      actorUid: user.uid,
-    })
+    // A daily worker or OJT trainee has no assets, no handover, and no exit
+    // interview to run — skip the offboarding checklist and its tasks entirely
+    // rather than generating a checklist nobody will ever act on.
+    const skipsOffboarding = employee.employmentStatus === 'dailyWorker' || employee.employmentStatus === 'ojt'
+    const offboardingChecklistId = skipsOffboarding
+      ? null
+      : await createOffboardingChecklistInternal({
+          employeeId,
+          employeeName: employee.fullName as string,
+          departmentId: employee.departmentId as string,
+          outletId: employee.outletId as string,
+          position: employee.position as string,
+          lastWorkingDate: parsedLastWorkingDate,
+          actorUid: user.uid,
+        })
 
     return successResponse({ employeeId, offboardingChecklistId }, 'Employee archived.')
   } catch (error) {

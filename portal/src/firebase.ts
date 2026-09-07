@@ -19,7 +19,10 @@ const app = initializeApp({
 
 const functions = getFunctions(app, 'asia-southeast2')
 
-if (import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true') {
+// DEV-only: a production build must never be pointed at 127.0.0.1, whatever
+// the deployment's env vars say (this shipped to Vercel once and read as
+// "no open positions" rather than as a failure).
+if (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true') {
   connectFunctionsEmulator(functions, '127.0.0.1', 5001)
 }
 
@@ -37,6 +40,7 @@ export async function callFunction<T>(name: string, payload: Record<string, unkn
     return result.data.data
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Something went wrong. Please try again.'
-    throw new Error(message.replace(/^(FirebaseError|internal|functions\/[a-z-]+):?\s*/i, ''))
+    const clean = message.replace(/^(FirebaseError|internal|functions\/[a-z-]+):?\s*/i, '').trim()
+    throw new Error(clean || 'Something went wrong. Please try again.')
   }
 }
