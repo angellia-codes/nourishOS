@@ -107,14 +107,14 @@ export const PAYROLL_COMPONENT_SEEDS: readonly PayrollComponentSeed[] = [
 ]
 
 /** §5 — the identity block. */
-export const PAYROLL_CSV_IDENTITY_COLUMNS = ['employeeNumber', 'legacyEmployeeId', 'fullName', 'period'] as const
+export const PAYROLL_CSV_IDENTITY_COLUMNS = ['employeeNumber', 'fullName', 'period'] as const
 /** §5 — source arithmetic, cross-checked against the expanded line items (§6.2). */
 export const PAYROLL_CSV_TOTAL_COLUMNS = ['totalIncome', 'totalDeduction', 'takeHomePay'] as const
 /** §6.4 — a non-empty value bypasses the statutory recompute for that row. */
 export const PAYROLL_CSV_OVERRIDE_COLUMN = 'statutoryOverrideReason'
 
 /**
- * §5 — the full 32-column contract, in order. Mirror components appear ONCE;
+ * §5 — the full 31-column contract, in order. Mirror components appear ONCE;
  * the importer expands each into two line items. Supplying them twice would
  * invite the two halves to diverge.
  */

@@ -199,7 +199,6 @@ describe('the §3 reference slip', () => {
 const HARD_FAILURE_CASES = [
   ['employeeNumber not found', { employeeNumber: 'N-9999' }, 'employeeNotFound'],
   ['fullName does not match the record', { fullName: 'Someone Else' }, 'nameMismatch'],
-  ['legacyEmployeeId mismatch', { legacyEmployeeId: '999' }, 'legacyIdMismatch'],
   ['row period does not match the batch', { period: '2026-06' }, 'periodMismatch'],
   ['totalIncome does not equal the income lines', { totalIncome: '20000000' }, 'incomeTotalMismatch'],
   ['totalDeduction does not equal the deduction lines', { totalDeduction: '12000000' }, 'deductionTotalMismatch'],
@@ -346,19 +345,16 @@ describe('§6.3 warnings are non-blocking', () => {
     assert.equal(result.hardFailures.length, 0)
   })
 
-  test('the legacy id cannot be cross-checked, and it still imports', () => {
-    const result = validate(rowWith({}), { employee: { legacyEmployeeId: null } })
-    assert.ok(result.warnings.some((i) => i.code === 'legacyIdUnverified'))
-    assert.equal(result.hardFailures.length, 0)
-    assert.equal(result.drafts.length, 1, 'a partial backfill must not block the import')
+  test('a retired legacyEmployeeId column is ignored, not rejected', () => {
+    assert.deepEqual(validateHeader([...PAYROLL_CSV_COLUMNS, 'legacyEmployeeId']), [])
   })
 })
 
 // --- §5 the CSV contract ---------------------------------------------------
 
 describe('§5 the CSV contract', () => {
-  test('is 32 columns', () => {
-    assert.equal(PAYROLL_CSV_COLUMNS.length, 32)
+  test('is 31 columns', () => {
+    assert.equal(PAYROLL_CSV_COLUMNS.length, 31)
   })
 
   test('each mirror component appears exactly once in the CSV', () => {
@@ -369,6 +365,40 @@ describe('§5 the CSV contract', () => {
         `${column} must appear once — the importer expands it into two line items`,
       )
     }
+  })
+
+  test('every discretionary CSV column resolves to a component', () => {
+    // A column with no component is read off the row and then left out of the
+    // line items, so its value vanishes from the totals and the row fails
+    // arithmetic that was actually correct. loadComponents guarantees this by
+    // always including the seeds; the check is here because the template and
+    // the registry are built from the same list and must not drift.
+    const columns = new Set(COMPONENTS.map((c) => c.csvColumn))
+    for (const seed of PAYROLL_COMPONENT_SEEDS) {
+      assert.ok(columns.has(seed.csvColumn), `${seed.csvColumn} has no component behind it`)
+    }
+  })
+
+  test('LOAN_DEDUCTION lands in the deduction total', () => {
+    const base = validate(rowWith({})).drafts[0].totalDeduction
+    const withLoan = validate(
+      rowWith({ LOAN_DEDUCTION: '500000', totalDeduction: String(12922859 + 500000), takeHomePay: String(7210874 - 500000) }),
+    )
+    assert.deepEqual(withLoan.hardFailures, [])
+    assert.equal(withLoan.drafts[0].totalDeduction, base + 500000)
+  })
+
+  test('INCOME_TAX_ALLOWANCE_21 lands in the income total', () => {
+    const base = validate(rowWith({})).drafts[0].totalIncome
+    const withAllowance = validate(
+      rowWith({
+        INCOME_TAX_ALLOWANCE_21: '250000',
+        totalIncome: String(20133733 + 250000),
+        takeHomePay: String(7210874 + 250000),
+      }),
+    )
+    assert.deepEqual(withAllowance.hardFailures, [])
+    assert.equal(withAllowance.drafts[0].totalIncome, base + 250000)
   })
 
   test('the expansion is stable: same input, same line items', () => {

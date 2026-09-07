@@ -21,35 +21,71 @@ export function requirePeriod(raw: unknown): string {
 }
 
 /**
- * §4.3 — the discretionary registry. Falls back to the code-side seed set when
- * the collection is empty so a fresh environment can import before anyone has
- * opened the Components page; a seeded row always wins over its code twin.
+ * §4.3 — the discretionary registry.
+ *
+ * Every seeded component is ALWAYS included, whatever the collection says. A
+ * Firestore row overrides its labels and sort order, but cannot remove it:
+ * PAYROLL_CSV_COLUMNS is built from the same seed list, so a seeded column
+ * with no component behind it is read off the row, silently left out of the
+ * line items, and then surfaces as an incomeTotalMismatch/deductionTotalMismatch
+ * on exactly the rows that use it — which reads like a broken file rather than
+ * a missing registry row. That is what LOAN_DEDUCTION and
+ * INCOME_TAX_ALLOWANCE_21 did on a registry that predated them.
+ *
+ * `isActive` therefore only governs components HR added themselves, which have
+ * no column in the template and are opt-in by definition.
  */
 export async function loadComponents(): Promise<DiscretionaryComponent[]> {
-  const snap = await db.collection(COLLECTIONS.PAYROLL_COMPONENTS).where('isActive', '==', true).get()
+  const snap = await db.collection(COLLECTIONS.PAYROLL_COMPONENTS).get()
 
-  const components: DiscretionaryComponent[] = snap.docs.map((doc) => {
+  const stored = new Map<string, DiscretionaryComponent & { isActive: boolean }>()
+  for (const doc of snap.docs) {
     const data = doc.data()
-    return {
-      code: data.code as string,
+    const code = data.code as string | undefined
+    if (!code) continue
+    stored.set(code, {
+      code,
       labelId: data.labelId as string,
       labelEn: data.labelEn as string,
       type: data.type as 'earning' | 'deduction',
       sortOrder: data.sortOrder as number,
       csvColumn: data.csvColumn as string,
-    }
-  })
-
-  if (components.length === 0) {
-    return PAYROLL_COMPONENT_SEEDS.map((seed) => ({
-      code: seed.code,
-      labelId: seed.labelId,
-      labelEn: seed.labelEn,
-      type: seed.type,
-      sortOrder: seed.sortOrder,
-      csvColumn: seed.csvColumn,
-    }))
+      isActive: data.isActive !== false,
+    })
   }
+
+  const components: DiscretionaryComponent[] = []
+  const seededCodes = new Set<string>()
+
+  for (const seed of PAYROLL_COMPONENT_SEEDS) {
+    seededCodes.add(seed.code)
+    const row = stored.get(seed.code)
+    components.push(
+      row
+        ? { code: row.code, labelId: row.labelId, labelEn: row.labelEn, type: row.type, sortOrder: row.sortOrder, csvColumn: row.csvColumn }
+        : {
+            code: seed.code,
+            labelId: seed.labelId,
+            labelEn: seed.labelEn,
+            type: seed.type,
+            sortOrder: seed.sortOrder,
+            csvColumn: seed.csvColumn,
+          },
+    )
+  }
+
+  for (const [code, row] of stored) {
+    if (seededCodes.has(code) || !row.isActive) continue
+    components.push({
+      code: row.code,
+      labelId: row.labelId,
+      labelEn: row.labelEn,
+      type: row.type,
+      sortOrder: row.sortOrder,
+      csvColumn: row.csvColumn,
+    })
+  }
+
   return components
 }
 

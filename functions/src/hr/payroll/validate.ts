@@ -129,6 +129,13 @@ function isBadNumber(value: number): boolean {
  * unknown or missing column means the file was built from the wrong template
  * and nothing downstream can be trusted.
  */
+/**
+ * Columns a file may still carry from an older template. They are read by
+ * nothing and rejected by nothing — dropping a column outright would hard-fail
+ * every file built before it went away.
+ */
+const RETIRED_COLUMNS = new Set(['legacyEmployeeId'])
+
 export function validateHeader(header: string[]): ValidationIssue[] {
   const issues: ValidationIssue[] = []
   const expected = new Set(PAYROLL_CSV_COLUMNS)
@@ -146,7 +153,7 @@ export function validateHeader(header: string[]): ValidationIssue[] {
     }
   }
   for (const column of header) {
-    if (column && !expected.has(column)) {
+    if (column && !expected.has(column) && !RETIRED_COLUMNS.has(column)) {
       issues.push({
         severity: 'hardFailure',
         row: 0,
@@ -201,23 +208,6 @@ export function validatePayrollRows(input: ValidateInput): ValidateResult {
     const csvPeriod = (row.period ?? '').trim()
     if (csvPeriod !== input.period) {
       fail('periodMismatch', `Row period "${csvPeriod}" does not match the batch period ${input.period}.`)
-    }
-
-    // Decision 8's cross-check, softened per the confirmed §14 item 6 decision:
-    // enforced only where the employee record actually carries a legacy id.
-    const csvLegacy = (row.legacyEmployeeId ?? '').trim()
-    if (employee.legacyEmployeeId) {
-      if (csvLegacy !== employee.legacyEmployeeId) {
-        fail(
-          'legacyIdMismatch',
-          `legacyEmployeeId "${csvLegacy}" does not match the employee record's "${employee.legacyEmployeeId}".`,
-        )
-      }
-    } else if (csvLegacy) {
-      warn(
-        'legacyIdUnverified',
-        `Employee record has no legacyEmployeeId, so "${csvLegacy}" could not be cross-checked. Backfill it to enable the check.`,
-      )
     }
 
     // §6.2: the only human-readable proof the join landed on the right person.
