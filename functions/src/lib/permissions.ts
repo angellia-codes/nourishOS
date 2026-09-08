@@ -13,6 +13,7 @@ export const PERMISSIONS = {
   RECRUITMENT_CREATE: 'recruitment.create',
   RECRUITMENT_UPDATE: 'recruitment.update',
   RECRUITMENT_APPROVE: 'recruitment.approve',
+  RECRUITMENT_DELETE: 'recruitment.delete',
   RECRUITMENT_VIEW_COMPENSATION: 'recruitment.viewCompensation',
   RECRUITMENT_VIEW_SENSITIVE: 'recruitment.viewSensitive',
   APPRAISALS_CREATE: 'appraisals.create',

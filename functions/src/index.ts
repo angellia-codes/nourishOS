@@ -142,6 +142,7 @@ export {
   createCandidate,
   updateCandidate,
   moveCandidateStage,
+  deleteCandidate,
   scheduleInterview,
   recordInterviewOutcome,
   cancelInterview,
