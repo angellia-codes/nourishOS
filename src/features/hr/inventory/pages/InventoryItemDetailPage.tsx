@@ -39,14 +39,30 @@ export function InventoryItemDetailPage() {
   const [levels, setLevels] = useState<StockLevel[]>([])
   const [movements, setMovements] = useState<StockMovement[]>([])
 
+  const [movementsDenied, setMovementsDenied] = useState(false)
+
   useEffect(() => {
     if (!itemId) return
     return inventoryService.subscribeToStockLevels(itemId, setLevels)
   }, [itemId])
 
+  // hrStockMovements is the one collection in this module with a scoped read
+  // rule, so this subscription really can be denied — without an onError it
+  // fails to an empty array and the whole card silently disappears, which
+  // reads as "this item has no history" rather than "you can't see it".
   useEffect(() => {
     if (!itemId) return
-    return inventoryService.subscribeToStockMovements(itemId, setMovements)
+    return inventoryService.subscribeToStockMovements(
+      itemId,
+      (next) => {
+        setMovementsDenied(false)
+        setMovements(next)
+      },
+      () => {
+        setMovementsDenied(true)
+        setMovements([])
+      },
+    )
   }, [itemId])
 
   const totalOnHand = useMemo(() => levels.reduce((sum, l) => sum + l.quantityOnHand, 0), [levels])
@@ -138,6 +154,20 @@ export function InventoryItemDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      {movementsDenied && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Movement history</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Your role can't read the stock movement ledger. Stock on hand above is still accurate — ask HR if you
+              think that's wrong.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {movements.length > 0 && (
         <Card>
