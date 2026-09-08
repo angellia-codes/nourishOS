@@ -88,6 +88,11 @@ export const PERMISSIONS = {
   RECRUITMENT_CREATE: permission(PERMISSION_MODULES.RECRUITMENT, ACTIONS.CREATE),
   RECRUITMENT_UPDATE: permission(PERMISSION_MODULES.RECRUITMENT, ACTIONS.UPDATE),
   RECRUITMENT_APPROVE: permission(PERMISSION_MODULES.RECRUITMENT, ACTIONS.APPROVE),
+  // Rejected-candidate cleanup — superAdmin and HR Manager only (see
+  // requireRecruitmentPermission's superAdmin bypass); never granted to a
+  // requesting manager, since deleting a record is not the same power as
+  // creating or updating one.
+  RECRUITMENT_DELETE: permission(PERMISSION_MODULES.RECRUITMENT, ACTIONS.DELETE),
   // employee-requisition.md §7's view_compensation, camelCase per this
   // codebase's convention (same as employees.readSensitive) rather than the
   // doc's literal spelling.

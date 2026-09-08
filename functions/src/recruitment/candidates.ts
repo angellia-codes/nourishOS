@@ -47,6 +47,7 @@ import { FONNTE_TOKEN } from '../lib/secrets'
 
 const OFFER_STAGE: CandidateStage = 'ST-05'
 const HIRED_STAGE: CandidateStage = 'ST-06'
+const REJECTED_STAGE: CandidateStage = 'ST-07'
 
 /** Interview stages, whose scores land on distinct candidate fields (§12.3). */
 export const HR_INTERVIEW_STAGE: CandidateStage = 'ST-03'
@@ -196,6 +197,73 @@ export const updateCandidate = onCall({ region: REGION }, async (request) => {
     })
 
     return successResponse({ candidateId }, 'Candidate updated.')
+  } catch (error) {
+    return handleError(error)
+  }
+})
+
+/**
+ * Purges a rejected candidate — a superAdmin/HR-Manager-only cleanup action,
+ * not a status change (moveCandidateStage already handles ST-07 itself).
+ * Scoped to ST-07 only: a live or withdrawn candidate is still a record other
+ * people are relying on (an open pipeline entry, or a paper trail for why an
+ * applicant withdrew), so only the funnel's one true dead end is eligible.
+ * Deletes the candidate's own confidential sub-document, DISC result and any
+ * interviews scheduled against them in the same batch — all of it is data
+ * that exists only in service of this one candidate record. Uploaded
+ * documents (`files/{id}`) are deliberately left alone; they go through the
+ * shared file-storage engine's own soft-delete callable, not this one.
+ */
+export const deleteCandidate = onCall({ region: REGION }, async (request) => {
+  try {
+    const user = await requireActiveUser(request)
+    requireRecruitmentPermission(user, PERMISSIONS.RECRUITMENT_DELETE)
+
+    const data = (request.data ?? {}) as Record<string, unknown>
+    const candidateId = requireText(data.candidateId, 'candidateId', 200)
+
+    const ref = db.collection(COLLECTIONS.CANDIDATES).doc(candidateId)
+    const snap = await ref.get()
+    if (!snap.exists) {
+      throw new AppError('not-found', 'That candidate no longer exists.')
+    }
+    const candidate = snap.data()!
+
+    if (candidate.currentStage !== REJECTED_STAGE) {
+      throw new AppError(
+        'failed-precondition',
+        'Only rejected candidates can be deleted. Move the candidate to Rejected first.',
+      )
+    }
+
+    const interviewsSnap = await db
+      .collection(COLLECTIONS.INTERVIEWS)
+      .where('candidateId', '==', candidateId)
+      .get()
+
+    const batch = db.batch()
+    batch.delete(ref)
+    batch.delete(ref.collection('confidential').doc('application'))
+    batch.delete(db.collection(COLLECTIONS.DISC_RESULTS).doc(candidateId))
+    interviewsSnap.docs.forEach((doc) => batch.delete(doc.ref))
+    await batch.commit()
+
+    await recordAuditEvent({
+      eventType: 'CandidateDeleted',
+      category: 'HR',
+      module: 'hr',
+      resourceType: 'candidate',
+      resourceId: candidateId,
+      action: 'delete',
+      user,
+      previousValues: {
+        candidateNumber: candidate.candidateNumber,
+        fullName: candidate.fullName,
+        currentStage: candidate.currentStage,
+      },
+    })
+
+    return successResponse({ candidateId }, `${candidate.candidateNumber} deleted.`)
   } catch (error) {
     return handleError(error)
   }

@@ -379,6 +379,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'recruitment.create',
     'recruitment.update',
     'recruitment.approve',
+    'recruitment.delete',
     'recruitment.viewCompensation',
     // employment-application-form.md §6: F010's health, criminal-record and
     // previous-salary answers — HR Manager and superAdmin only.

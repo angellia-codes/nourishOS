@@ -7,7 +7,7 @@ import { sendNotificationInternal, notifyUsersByRole } from '../shared/notificat
 
 export { createRequisition, updateRequisition, submitRequisition, cancelRequisition } from './requisitions'
 export { updateRequisitionCompensation } from './requisitionCompensation'
-export { createCandidate, updateCandidate, moveCandidateStage } from './candidates'
+export { createCandidate, updateCandidate, moveCandidateStage, deleteCandidate } from './candidates'
 export { scheduleInterview, recordInterviewOutcome, cancelInterview } from './interviews'
 export { sendInterviewReminders } from './interviewReminders'
 export { updateOnboardingItem, completeOnboarding } from './onboarding'
