@@ -63,6 +63,11 @@ export function normalizeEmail(email: unknown): string | null {
  * inside the window. HR's own `createCandidate` allows an explicit override
  * (`allowDuplicate`); the portal has no such escape hatch on purpose — an
  * unauthenticated caller must not be able to opt out of the check.
+ *
+ * Two equalities plus a range on a third field: needs the
+ * `candidates` (phoneDigits, requisitionId, applicationDate) composite in
+ * `firestore.indexes.json`. Without it every `startApplication` fails with
+ * FAILED_PRECONDITION — which shipped that way from 2026-08-19 to 2026-09-08.
  */
 export async function requireNotDuplicate(phoneDigits: string, requisitionId: string): Promise<void> {
   const since = addDaysIso(-DUPLICATE_WINDOW_DAYS)

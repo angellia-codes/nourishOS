@@ -603,6 +603,24 @@
       ]
     },
     {
+      "collectionGroup": "candidates",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "phoneDigits",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "requisitionId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "applicationDate",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "interviews",
       "queryScope": "COLLECTION",
       "fields": [
