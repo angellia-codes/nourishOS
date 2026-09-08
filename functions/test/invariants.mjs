@@ -19,7 +19,7 @@
  * third time. That gap is the entire subject of this file.
  *
  * Definition of done items covered: #3 (mirrors + rules block) and #6 (an
- * index for every equality+orderBy query).
+ * index for every equality+range/orderBy query).
  */
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
@@ -432,7 +432,7 @@ check('every granted string is a real permission', () => {
 
 // --- 4. Indexes -----------------------------------------------------------
 
-heading('4. Indexes — every equality+orderBy query has an entry (definition of done #6)')
+heading('4. Indexes — every equality+range/orderBy query has an entry (definition of done #6)')
 
 const indexesByCollection = new Map()
 for (const entry of INDEXES.indexes ?? []) {
@@ -554,21 +554,64 @@ for (const file of FRONTEND_FILES) {
   }
 }
 
-// Backend: db.collection(COLLECTIONS.X).where(…).orderBy(…)
+/**
+ * Walk a method chain forward from `pos` (the index just past a
+ * `.collection(...)` call's closing paren), returning the source text of every
+ * `.method(...)` link that follows.
+ *
+ * Anchoring forward from the collection rather than backward from `.orderBy(`
+ * is what lets this see a `where`-only chain. A `.collection(`/`.collectionGroup(`
+ * link ends the walk: constraints after a sub-collection hop belong to the
+ * sub-collection, and its own anchor match picks them up.
+ */
+function readChain(src, pos) {
+  let cursor = pos
+  let chain = ''
+  for (;;) {
+    // Whitespace and comments may sit between links of a wrapped chain.
+    const gap = /^(?:\s|\/\/[^\n]*\n|\/\*[\s\S]*?\*\/)*/.exec(src.slice(cursor))[0]
+    cursor += gap.length
+    if (src[cursor] !== '.') return chain
+    const name = /^\.([A-Za-z_$][\w$]*)\s*\(/.exec(src.slice(cursor))
+    if (!name) return chain
+    if (name[1] === 'collection' || name[1] === 'collectionGroup') return chain
+    const args = sliceDelimited(src, cursor, '(', ')')
+    if (!args) return chain
+    chain += `.${name[1]}(${args.body})`
+    cursor = args.end + 1
+  }
+}
+
+// Backend: db.collection(COLLECTIONS.X).where(…).where(…) — with or without an
+// orderBy. A range `where` needs a composite index exactly as an orderBy does
+// (definition of done #6 says "a range or orderBy"), and anchoring on
+// `.orderBy(` alone saw no chain that had no sort — which is how the Candidate
+// Portal's own duplicate check shipped unindexed and failed every
+// startApplication in production from 2026-08-19 to 2026-09-08.
 for (const file of BACKEND_FILES) {
   const src = read(file)
-  for (const m of src.matchAll(/\.orderBy\(/g)) {
-    const before = src.slice(Math.max(0, m.index - 900), m.index)
-    const refs = [...before.matchAll(/COLLECTIONS\.([A-Z_0-9]+)/g)]
+  for (const m of src.matchAll(/\.(collection|collectionGroup)\s*\(/g)) {
+    const args = sliceDelimited(src, m.index, '(', ')')
+    if (!args) continue
+    const chain = readChain(src, args.end + 1)
+    if (!/where\(|orderBy\(/.test(chain)) continue
     const line = src.slice(0, m.index).split('\n').length
-    if (!refs.length) {
-      skippedSites.push(`${file}:${line} (no COLLECTIONS.* reference in scope)`)
+    const ref = /^\s*COLLECTIONS\.([A-Z_0-9]+)\s*$/.exec(args.body)
+    if (!ref) {
+      // A sub-collection named by string literal ('confidential') has no index
+      // entry of its own to assert; anything else is a computed name this
+      // scanner cannot resolve, and silence there would be a false green.
+      if (!/^\s*'[^']*'\s*$/.test(args.body)) {
+        skippedSites.push(`${file}:${line} (collection is not a COLLECTIONS.* literal)`)
+      }
       continue
     }
-    const collection = beCollections.get(refs[refs.length - 1][1])
-    const chainStart = before.lastIndexOf('.collection(')
-    const chain = (chainStart === -1 ? before : before.slice(chainStart)) + src.slice(m.index, m.index + 200)
-    queryCallSites.push({ file, line, collection, constraints: readConstraints(chain) })
+    queryCallSites.push({
+      file,
+      line,
+      collection: beCollections.get(ref[1]),
+      constraints: readConstraints(chain),
+    })
   }
 }
 
