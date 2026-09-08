@@ -214,9 +214,23 @@ service cloud.firestore {
       allow write: if false; // written only inside receiveStock/issueStock/transferStock transactions
     }
 
+    // HR-only, deliberately narrower than hrInventoryItems/hrStockLevels above
+    // (both isSignedIn()): quantities and unit cost are already open, but the
+    // ledger also carries issuedToEmployeeName/issuedToPosition — who received
+    // which uniform — and that stays with HR.
+    //
+    // The department-head branch this used to carry
+    // (isDepartmentHead() && resource.data.outletId == request.auth.token.outletId)
+    // was dead in both directions and was removed 2026-09-08. No client query
+    // ever constrained outletId, so rules could not prove the clause and denied
+    // the query outright rather than returning a subset — and since the
+    // 2026-08-27 HR Store change every receive/issue/transferOut row is stamped
+    // outletId: 'hr_store', so even a correctly scoped query would have matched
+    // almost nothing. Outlet leaders still hold hrInventory.record and record
+    // movements; they just cannot read the ledger back, and the item detail page
+    // and Inventory Cost report say so instead of rendering an empty list.
     match /hrStockMovements/{movementId} {
-      allow read: if isHrOrAbove() ||
-        (isDepartmentHead() && resource.data.outletId == request.auth.token.outletId);
+      allow read: if isHrOrAbove();
       allow write: if false; // receiveStock / issueStock / transferStock only
     }
 

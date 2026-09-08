@@ -20,6 +20,8 @@ export interface UpdateInventoryItemInput {
   itemId: string
   name?: string
   unitCost?: number
+  /** Only accepted while the item has no stock and no non-voided movements. */
+  hasSizes?: boolean
   sizes?: string[]
   isArchived?: boolean
 }
@@ -66,6 +68,48 @@ export function transferStock(
   input: TransferStockInput,
 ): Promise<{ movementOutId: string; movementInId: string | null }> {
   return callFunction('transferStock', input)
+}
+
+/**
+ * Corrects a mis-keyed movement in place. A full replacement, not a patch —
+ * the callable wire format encodes an omitted key as null, so the server
+ * can't tell "unchanged" from "cleared" and the form submits every field.
+ */
+export interface UpdateStockMovementInput {
+  movementId: string
+  quantity: number
+  sizeVariant: string | null
+  reason: string
+  employeeId?: string | null
+}
+
+export function updateStockMovement(input: UpdateStockMovementInput): Promise<{ movementId: string }> {
+  return callFunction('updateStockMovement', input)
+}
+
+/** Reverses a movement's stock effect and flags the row voided — never deletes it. */
+export function voidStockMovement(input: {
+  movementId: string
+  reason: string
+}): Promise<{ voidedMovementIds: string[] }> {
+  return callFunction('voidStockMovement', input)
+}
+
+/**
+ * Corrects one stock-on-hand line to a counted figure (a stock opname). The
+ * difference is booked as a real `adjustment` movement server-side, so the
+ * ledger and the level can never drift; counting to zero removes the line.
+ */
+export interface AdjustStockLevelInput {
+  itemId: string
+  outletId: string
+  sizeVariant: string | null
+  countedQuantity: number
+  reason: string
+}
+
+export function adjustStockLevel(input: AdjustStockLevelInput): Promise<{ movementId: string; delta: number }> {
+  return callFunction('adjustStockLevel', input)
 }
 
 export function getInventoryItem(itemId: string): Promise<InventoryItem | null> {

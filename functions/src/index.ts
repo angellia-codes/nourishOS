@@ -118,7 +118,16 @@ export {
 } from './hr/employees'
 
 // ---- HR: Inventory (uniforms & assets) ----
-export { createInventoryItem, updateInventoryItem, receiveStock, issueStock, transferStock } from './hr/inventory'
+export {
+  createInventoryItem,
+  updateInventoryItem,
+  receiveStock,
+  issueStock,
+  transferStock,
+  updateStockMovement,
+  voidStockMovement,
+  adjustStockLevel,
+} from './hr/inventory'
 
 // ---- HR: Employment Contracts ----
 export { renewContract, terminateContract, submitContractForSigning } from './hr/contracts'

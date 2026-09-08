@@ -271,6 +271,24 @@ before(async () => {
     // --- Offboarding -------------------------------------------------------
     seed('exitInterviews/x1', { employeeId: 'emp-cook', reasonForLeaving: 'relocation' }),
 
+    // --- HR Inventory ------------------------------------------------------
+    seed('hrInventoryItems/tshirt', { name: 'T-shirt Nourish White', hasSizes: true, unitCost: 127680 }),
+    seed('hrStockLevels/tshirt__hr_store__XS', { itemId: 'tshirt', outletId: 'hr_store', quantityOnHand: 99 }),
+    seed('hrStockMovements/m-hr-store', {
+      itemId: 'tshirt',
+      outletId: 'hr_store',
+      quantityDelta: 34,
+      issuedToEmployeeName: null,
+      createdAt: '2026-09-08T08:00:00Z',
+    }),
+    seed('hrStockMovements/m-transfer-in-ulu', {
+      itemId: 'tshirt',
+      outletId: 'nourish_uluwatu',
+      quantityDelta: 5,
+      issuedToEmployeeName: 'A Cook',
+      createdAt: '2026-09-08T09:00:00Z',
+    }),
+
     // --- Equipment ---------------------------------------------------------
     seed('equipment/at-uluwatu', { outletId: 'nourish_uluwatu', assetCode: 'NUL-REF-001' }),
     seed('equipment/at-ungasan', { outletId: 'nourish_ungasan', assetCode: 'NUN-REF-001' }),
@@ -297,6 +315,9 @@ describe('every collection is write-denied (ARCHITECTURE.md — clients read, ac
     'disciplinaryActions/released',
     'employees/emp-cook',
     'employees/emp-cook/compensation/current',
+    'hrInventoryItems/tshirt',
+    'hrStockLevels/tshirt__hr_store__XS',
+    'hrStockMovements/m-hr-store',
     'candidates/c1',
     'candidates/c1/confidential/application',
     'discResults/c1',
@@ -546,6 +567,53 @@ describe('employees — department-scoped, with compensation split out', () => {
 // ---------------------------------------------------------------------------
 // Outlet scoping
 // ---------------------------------------------------------------------------
+
+describe('HR Inventory — open catalog and levels, HR-only movement ledger', () => {
+  test('the item master and stock levels are readable by any signed-in user', async () => {
+    // Deliberately open: an outlet leader has to see what stock exists before
+    // asking for it. Unit cost lives on the item, so cost is already public.
+    await assertAllowed(STAFF, 'hrInventoryItems/tshirt')
+    await assertAllowed(KITCHEN_ULU, 'hrStockLevels/tshirt__hr_store__XS')
+  })
+
+  test('the movement ledger is HR/GM/Director/superAdmin only', async () => {
+    await assertAllowed(HR, 'hrStockMovements/m-hr-store')
+    await assertAllowed(GM, 'hrStockMovements/m-hr-store')
+    await assertAllowed(DIRECTOR, 'hrStockMovements/m-hr-store')
+    await assertAllowed(SUPER, 'hrStockMovements/m-hr-store')
+  })
+
+  test('an outlet leader who CAN record a movement still cannot read one back', async () => {
+    // headChef/barManager hold hrInventory.record via the LEADER tier, so they
+    // receive and issue stock daily — the ledger carries issuedToEmployeeName,
+    // which is the half that stays with HR. Confirmed product decision
+    // 2026-09-08, not an oversight; the UI says so rather than rendering empty.
+    await assertDenied(KITCHEN_ULU, 'hrStockMovements/m-hr-store')
+    await assertDenied(BAR_ULU, 'hrStockMovements/m-hr-store')
+    await assertDenied(STAFF, 'hrStockMovements/m-hr-store')
+  })
+
+  test('a leader cannot read even a row stamped with their own outlet', async () => {
+    // This is what the removed department-head branch used to allow, and only
+    // ever on a `get`. Pinning it stops the branch being reintroduced by
+    // reflex the next time someone reads the rule and assumes it is a bug.
+    await assertDenied(KITCHEN_ULU, 'hrStockMovements/m-transfer-in-ulu')
+  })
+
+  test('the ledger query src/ actually sends is allowed for HR and denied for a leader', async () => {
+    // subscribeToStockMovements: where(itemId) + orderBy(createdAt desc).
+    // It carries no outlet constraint, which is exactly why the old
+    // department-head clause could never be proven and denied the whole query.
+    const byItem = { filters: [eq('itemId', 'tshirt')], orderBy: [['createdAt', 'DESCENDING']] }
+    await assertListAllowed(HR, 'hrStockMovements', byItem)
+    await assertListDenied(KITCHEN_ULU, 'hrStockMovements', byItem)
+  })
+
+  test('the unfiltered ledger sweep behind the Inventory Cost report is HR-only too', async () => {
+    await assertListAllowed(HR, 'hrStockMovements', {})
+    await assertListDenied(KITCHEN_ULU, 'hrStockMovements', {})
+  })
+})
 
 describe('equipment — outlet-scoped for everyone but the elevated set (§6.2 D9)', () => {
   test('Engineering and the executives see every outlet', async () => {

@@ -37,7 +37,25 @@ export function InventoryCostReportPage() {
   const [periodMonth, setPeriodMonth] = useState('')
   const [rankBy, setRankBy] = useState<RankBy>('item')
 
-  useEffect(() => inventoryService.subscribeToAllStockMovements(setMovements), [])
+  const [denied, setDenied] = useState(false)
+
+  // The ledger's read rule is role-scoped, so this is denied outright for any
+  // role outside HR/GM/Director — surface that instead of rendering a report
+  // full of zeroes that looks like "no spend this period".
+  useEffect(
+    () =>
+      inventoryService.subscribeToAllStockMovements(
+        (next) => {
+          setDenied(false)
+          setMovements(next)
+        },
+        () => {
+          setDenied(true)
+          setMovements([])
+        },
+      ),
+    [],
+  )
   useEffect(() => inventoryService.subscribeToInventoryItems(setItems), [])
 
   const rows = useMemo(() => {
@@ -116,7 +134,12 @@ export function InventoryCostReportPage() {
         />
       </div>
 
-      {rows.length === 0 ? (
+      {denied ? (
+        <EmptyState
+          title="Access restricted"
+          description="Your role can't read the stock movement ledger, so cost can't be reported. Ask HR if you think that's wrong."
+        />
+      ) : rows.length === 0 ? (
         <EmptyState title="No movements match these filters" />
       ) : (
         <>

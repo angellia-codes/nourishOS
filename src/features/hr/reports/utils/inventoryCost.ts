@@ -36,6 +36,8 @@ export function buildInventoryCostRows(
   const groups = new Map<string, InventoryCostRow>()
 
   for (const movement of movements) {
+    // A voided entry's stock effect has been reversed, so its cost never landed.
+    if (movement.isVoided) continue
     if (opts?.movementType && movement.movementType !== opts.movementType) continue
     if (opts?.outletId && movement.outletId !== opts.outletId) continue
     if (opts?.itemId && movement.itemId !== opts.itemId) continue

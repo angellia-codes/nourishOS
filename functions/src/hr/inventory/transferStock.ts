@@ -12,6 +12,7 @@ import {
   successResponse,
   PERMISSIONS,
 } from '../../lib'
+import { OUTLET_DEPARTMENTS } from '../../lib/organization'
 import {
   HR_STORE_ID,
   loadItemInTransaction,
@@ -22,6 +23,9 @@ import {
   writeStockLevel,
   applyDelta,
 } from './helpers'
+
+/** Every department id any outlet staffs — the department half of destinationId's allow-list. */
+const ALL_DEPARTMENT_IDS = new Set(Object.values(OUTLET_DEPARTMENTS).flatMap((ids) => [...ids]))
 
 const DESTINATION_TYPES = ['outlet', 'department'] as const
 type DestinationType = (typeof DESTINATION_TYPES)[number]
@@ -57,6 +61,26 @@ export const transferStock = onCall({ region: REGION }, async (request) => {
     }
     const destinationType = input.destinationType as DestinationType
     const destinationId = validateOutletId(input.destinationId, 'destinationId')
+
+    // validateOutletId only proves the string is non-empty. Without this, a
+    // caller could name any destination at all: an 'outlet' transfer would
+    // create a stock level at an outlet that does not exist, and a
+    // 'department' one would stamp a junk issuedToDepartmentId that then shows
+    // up as its own row in the Inventory Cost report. Same check
+    // createEmployee/recordMonthlyRevenue already make against this map.
+    //
+    // It also closes a self-transfer: HR_STORE_ID is deliberately not in
+    // OUTLETS, and destinationId === HR_STORE_ID would make sourceLevel and
+    // destLevel the same document — both reads return the same quantity, both
+    // writes land on the same ref, and the +quantity write wins, inflating
+    // stock out of nothing.
+    if (destinationType === 'outlet') {
+      if (!(destinationId in OUTLET_DEPARTMENTS)) {
+        throw new AppError('invalid-argument', 'destinationId must be a real outlet.')
+      }
+    } else if (!ALL_DEPARTMENT_IDS.has(destinationId)) {
+      throw new AppError('invalid-argument', 'destinationId must be a real department.')
+    }
     const sourceOutletId = HR_STORE_ID
     const quantity = validateQuantity(input.quantity)
     const notes = typeof input.notes === 'string' ? input.notes.trim() : ''

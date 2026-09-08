@@ -31,6 +31,8 @@ import { InventoryItemListPage } from '@/features/hr/inventory/pages/InventoryIt
 import { InventoryItemFormPage } from '@/features/hr/inventory/pages/InventoryItemFormPage'
 import { InventoryItemDetailPage } from '@/features/hr/inventory/pages/InventoryItemDetailPage'
 import { StockMovementFormPage } from '@/features/hr/inventory/pages/StockMovementFormPage'
+import { StockMovementEditPage } from '@/features/hr/inventory/pages/StockMovementEditPage'
+import { StockLevelAdjustPage } from '@/features/hr/inventory/pages/StockLevelAdjustPage'
 import { EngagementListPage } from '@/features/hr/engagement/pages/EngagementListPage'
 import { EngagementFormPage } from '@/features/hr/engagement/pages/EngagementFormPage'
 import { EngagementDetailPage } from '@/features/hr/engagement/pages/EngagementDetailPage'
@@ -196,6 +198,8 @@ export const router = createBrowserRouter([
               { path: 'inventory/:itemId/receive', element: <StockMovementFormPage /> },
               { path: 'inventory/:itemId/issue', element: <StockMovementFormPage /> },
               { path: 'inventory/:itemId/transfer', element: <StockMovementFormPage /> },
+              { path: 'inventory/:itemId/movements/:movementId/edit', element: <StockMovementEditPage /> },
+              { path: 'inventory/:itemId/adjust', element: <StockLevelAdjustPage /> },
               // training-module-spec-v1.0.md §9 — the HR-facing catalogue. The
               // trainee queue and the verification queue are mounted at
               // /training, outside this RoleRoute (see below). The flat
