@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, CalendarPlus } from 'lucide-react'
+import { ArrowLeft, CalendarPlus, Trash2 } from 'lucide-react'
 import {
   Button,
   Card,
@@ -160,8 +160,23 @@ export function CandidateDetailPage() {
   // Plain locals so the guard's narrowing survives into the handlers below.
   const id = candidateId
   const current = candidate.currentStage
+  const candidateLabel = `${candidate.fullName} (${candidate.candidateNumber})`
   const canManage = can(PERMISSIONS.RECRUITMENT_UPDATE)
+  const canDelete = can(PERMISSIONS.RECRUITMENT_DELETE) && current === 'ST-07'
   const nextStages = NEXT_STAGES[current]
+
+  async function handleDelete() {
+    if (!window.confirm(`Delete ${candidateLabel}? This cannot be undone.`)) return
+    setBusy(true)
+    try {
+      await recruitmentService.deleteCandidate(id)
+      toast.success('Candidate deleted.')
+      navigate(LIST_ROUTE)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not delete the candidate.')
+      setBusy(false)
+    }
+  }
 
   async function handleMove() {
     if (!targetStage) return
@@ -228,11 +243,18 @@ export function CandidateDetailPage() {
             <h1 className="text-xl font-semibold text-foreground">{candidate.fullName}</h1>
           </div>
         </div>
-        <StatusPill
-          tone={CANDIDATE_STAGE_TONE[current]}
-          icon={CANDIDATE_STAGE_ICON[current]}
-          label={CANDIDATE_STAGE_LABELS[current]}
-        />
+        <div className="flex items-center gap-2">
+          <StatusPill
+            tone={CANDIDATE_STAGE_TONE[current]}
+            icon={CANDIDATE_STAGE_ICON[current]}
+            label={CANDIDATE_STAGE_LABELS[current]}
+          />
+          {canDelete && (
+            <Button variant="ghost" size="sm" onClick={handleDelete} disabled={busy} aria-label="Delete candidate">
+              <Trash2 className="h-4 w-4 text-destructive" aria-hidden="true" />
+            </Button>
+          )}
+        </div>
       </div>
 
       <Card>

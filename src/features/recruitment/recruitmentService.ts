@@ -156,6 +156,11 @@ export function moveCandidateStage(input: {
   return callFunction('moveCandidateStage', input)
 }
 
+/** superAdmin / HR Manager only, and only once the candidate is at ST-07 (Rejected) — enforced server-side. */
+export function deleteCandidate(candidateId: string): Promise<{ candidateId: string }> {
+  return callFunction('deleteCandidate', { candidateId })
+}
+
 export function getCandidate(candidateId: string): Promise<Candidate | null> {
   return getDocument<Candidate>(COLLECTIONS.CANDIDATES, candidateId)
 }
