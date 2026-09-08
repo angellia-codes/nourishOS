@@ -1,0 +1,62 @@
+name: Deploy Firebase backend
+
+# Firebase Hosting is not in play here (see firebase.json — no "hosting" key;
+# the frontend deploys elsewhere). This deploys only what firebase.json
+# configures: Cloud Functions, Firestore rules/indexes, Storage rules.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'functions/**'
+      - 'firestore.rules'
+      - 'firestore.indexes.json'
+      - 'storage.rules'
+      - 'firebase.json'
+      - '.firebaserc'
+      - '.github/workflows/deploy-firebase.yml'
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-firebase-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install functions dependencies
+        run: npm --prefix functions ci
+
+      # Builds functions/ and runs the pure-logic test tier (152+ tests,
+      # no emulator) — same command as `npm test` locally. A red test suite
+      # must never reach a deploy.
+      - name: Run functions tests
+        run: npm test
+
+      # Static invariant checks (collections/permissions mirrors, rules
+      # blocks, indexes, region) — no emulator, no build. See CLAUDE.md
+      # "Definition of done".
+      - name: Run static invariant checks
+        run: npm run check
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      # firebase.json's functions.predeploy hook rebuilds functions/ again
+      # right before deploying it — redundant with the test step above, but
+      # that's what keeps a manual `firebase deploy` run from a clean clone
+      # correct too, so it's left as-is rather than special-cased here.
+      - name: Deploy to Firebase
+        run: npx firebase-tools@13 deploy --only functions,firestore:rules,firestore:indexes,storage --project nourishos-prod --non-interactive
