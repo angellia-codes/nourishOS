@@ -126,6 +126,7 @@ export {
   transferStock,
   updateStockMovement,
   voidStockMovement,
+  adjustStockLevel,
 } from './hr/inventory'
 
 // ---- HR: Employment Contracts ----

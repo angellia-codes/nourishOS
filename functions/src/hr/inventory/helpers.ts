@@ -240,3 +240,19 @@ export async function applyLevelDeltas(tx: Transaction, deltas: LevelDelta[], ui
     )
   }
 }
+
+/**
+ * The signed movement a stock count implies. Validates the counted figure the
+ * same way validateQuantity does, except zero is allowed — counting a bin
+ * empty is the whole point of "remove this line".
+ */
+export function stockCountDelta(currentQuantity: number, countedQuantity: unknown): number {
+  if (typeof countedQuantity !== 'number' || !Number.isInteger(countedQuantity) || countedQuantity < 0) {
+    throw new AppError('invalid-argument', 'countedQuantity must be a whole number of zero or more.')
+  }
+  const delta = countedQuantity - currentQuantity
+  if (delta === 0) {
+    throw new AppError('failed-precondition', `Stock on hand is already ${currentQuantity}.`)
+  }
+  return delta
+}

@@ -148,7 +148,19 @@ export function InventoryItemDetailPage() {
                     {locationName(level.outletId)}
                     {level.sizeVariant && ` · ${level.sizeVariant}`}
                   </span>
-                  <span className="font-mono tabular-nums text-muted-foreground">{level.quantityOnHand}</span>
+                  <span className="flex items-baseline gap-3">
+                    <span className="font-mono tabular-nums text-muted-foreground">{level.quantityOnHand}</span>
+                    <PermissionGuard permission={PERMISSIONS.HR_INVENTORY_MANAGE}>
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1 text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                        onClick={() => navigate(`/hr/inventory/${itemId}/adjust?level=${encodeURIComponent(level.id)}`)}
+                      >
+                        <SquarePen className="h-3.5 w-3.5" aria-hidden="true" />
+                        Adjust
+                      </button>
+                    </PermissionGuard>
+                  </span>
                 </div>
               ))
           )}

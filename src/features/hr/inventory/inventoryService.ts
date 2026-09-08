@@ -95,6 +95,23 @@ export function voidStockMovement(input: {
   return callFunction('voidStockMovement', input)
 }
 
+/**
+ * Corrects one stock-on-hand line to a counted figure (a stock opname). The
+ * difference is booked as a real `adjustment` movement server-side, so the
+ * ledger and the level can never drift; counting to zero removes the line.
+ */
+export interface AdjustStockLevelInput {
+  itemId: string
+  outletId: string
+  sizeVariant: string | null
+  countedQuantity: number
+  reason: string
+}
+
+export function adjustStockLevel(input: AdjustStockLevelInput): Promise<{ movementId: string; delta: number }> {
+  return callFunction('adjustStockLevel', input)
+}
+
 export function getInventoryItem(itemId: string): Promise<InventoryItem | null> {
   return getDocument<InventoryItem>(COLLECTIONS.HR_INVENTORY_ITEMS, itemId)
 }

@@ -13,7 +13,7 @@ import assert from 'node:assert/strict'
 import { createRequire } from 'node:module'
 
 const require = createRequire(import.meta.url)
-const { applyDelta, mergeLevelDeltas } = require('../lib/hr/inventory/helpers.js')
+const { applyDelta, mergeLevelDeltas, stockCountDelta } = require('../lib/hr/inventory/helpers.js')
 
 const isFailedPrecondition = (error) => error.code === 'failed-precondition'
 
@@ -112,5 +112,44 @@ describe('void, composed the way voidStockMovement.ts composes it', () => {
   test('reversing a transferIn whose stock was issued onward throws', () => {
     // 5 transferred in, 3 issued out at the destination, then the transfer voided.
     assert.throws(() => applyDelta(2, -5), isFailedPrecondition)
+  })
+})
+
+// stockCountDelta backs adjustStockLevel: a stock opname sets an absolute
+// counted figure, and the difference is what gets booked as an adjustment
+// movement so the ledger still explains the balance.
+describe('stockCountDelta', () => {
+  const isInvalidArgument = (error) => error.code === 'invalid-argument'
+
+  test('counting short books a negative adjustment', () => {
+    assert.equal(stockCountDelta(99, 95), -4)
+  })
+
+  test('counting over books a positive adjustment', () => {
+    assert.equal(stockCountDelta(99, 104), 5)
+  })
+
+  test('counting a line to zero is allowed — that is the remove path', () => {
+    assert.equal(stockCountDelta(12, 0), -12)
+  })
+
+  test('an unchanged count is refused rather than writing an empty movement', () => {
+    assert.throws(() => stockCountDelta(99, 99), (e) => e.code === 'failed-precondition')
+  })
+
+  test('a negative count is refused', () => {
+    assert.throws(() => stockCountDelta(10, -1), isInvalidArgument)
+  })
+
+  test('a fractional or non-numeric count is refused', () => {
+    assert.throws(() => stockCountDelta(10, 2.5), isInvalidArgument)
+    assert.throws(() => stockCountDelta(10, '5'), isInvalidArgument)
+    assert.throws(() => stockCountDelta(10, undefined), isInvalidArgument)
+  })
+
+  test('the booked delta always reconciles the level to the counted figure', () => {
+    for (const [current, counted] of [[0, 7], [50, 1], [3, 300]]) {
+      assert.equal(current + stockCountDelta(current, counted), counted)
+    }
   })
 })
