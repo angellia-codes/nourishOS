@@ -26,9 +26,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 22, not 20 — deliberately ahead of functions/package.json's
+      # engines.node (20, which matches the deployed Cloud Functions
+      # runtime in firebase.json and is unaffected by this). `npm test`
+      # runs `node --test "functions/test/*.test.mjs"`, a quoted glob that
+      # only Node's test runner itself expands — support Node 20 lacks.
+      # This is the CI toolchain's Node version, not the runtime the
+      # deployed code executes on, so bumping it here changes nothing
+      # about what ships.
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install root dependencies
