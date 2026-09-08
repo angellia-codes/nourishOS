@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Lock, Plus } from 'lucide-react'
+import { Lock, Plus, Trash2 } from 'lucide-react'
 import { Button, Card, CardContent, Spinner, StatusPill } from '@/components/ui'
 import { EmptyState } from '@/components/shared'
 import { PERMISSIONS } from '@/constants'
-import { usePermissions } from '@/hooks'
+import { usePermissions, useToast } from '@/hooks'
 import * as recruitmentService from '../recruitmentService'
 import {
   ACTIVE_STAGES,
@@ -26,11 +26,48 @@ import { CANDIDATE_STAGE_LABELS, type Candidate, type CandidateStage } from '@/t
  */
 export function CandidatePipelinePage() {
   const navigate = useNavigate()
+  const toast = useToast()
   const { can } = usePermissions()
 
   const [rows, setRows] = useState<Candidate[] | null>(null)
   const [denied, setDenied] = useState(false)
   const [showClosed, setShowClosed] = useState(false)
+  const [deletingRejected, setDeletingRejected] = useState(false)
+
+  const canDelete = can(PERMISSIONS.RECRUITMENT_DELETE)
+
+  /**
+   * One click, N calls to the same deleteCandidate callable the candidate
+   * detail page uses — no new backend endpoint, since the callable already
+   * enforces the ST-07-only + permission rules per candidate. A partial
+   * failure (a candidate someone else just moved out of Rejected mid-loop)
+   * is reported rather than silently swallowed; the live subscription below
+   * reflects whatever actually got deleted either way.
+   */
+  async function handleDeleteAllRejected(candidates: Candidate[]) {
+    if (
+      !window.confirm(
+        `Delete all ${candidates.length} rejected candidate${candidates.length === 1 ? '' : 's'}? This cannot be undone.`,
+      )
+    ) {
+      return
+    }
+    setDeletingRejected(true)
+    let failed = 0
+    for (const candidate of candidates) {
+      try {
+        await recruitmentService.deleteCandidate(candidate.id)
+      } catch {
+        failed += 1
+      }
+    }
+    setDeletingRejected(false)
+    if (failed > 0) {
+      toast.error(`${failed} of ${candidates.length} candidates could not be deleted.`)
+    } else {
+      toast.success(`${candidates.length} rejected candidate${candidates.length === 1 ? '' : 's'} deleted.`)
+    }
+  }
 
   useEffect(() => {
     return recruitmentService.subscribeToCandidates(
@@ -120,7 +157,21 @@ export function CandidatePipelinePage() {
                       icon={CANDIDATE_STAGE_ICON[stage]}
                       label={CANDIDATE_STAGE_LABELS[stage]}
                     />
-                    <span className="text-xs text-muted-foreground">{column.length}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs text-muted-foreground">{column.length}</span>
+                      {stage === 'ST-07' && canDelete && column.length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-1.5"
+                          disabled={deletingRejected}
+                          onClick={() => handleDeleteAllRejected(column)}
+                          aria-label="Delete all rejected candidates"
+                        >
+                          <Trash2 className="h-3.5 w-3.5 text-destructive" aria-hidden="true" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
 
                   {column.length === 0 ? (
