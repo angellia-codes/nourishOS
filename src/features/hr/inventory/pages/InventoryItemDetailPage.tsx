@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, ArrowRightLeft, Lock, Pencil, PackageMinus, PackagePlus } from 'lucide-react'
+import { ArrowLeft, ArrowRightLeft, Lock, Pencil, PackageMinus, PackagePlus, SquarePen } from 'lucide-react'
 import {
   Badge,
   Button,
@@ -30,7 +30,7 @@ import {
 } from '../inventoryFormat'
 import type { InventoryItem, StockLevel, StockMovement } from '@/types'
 
-/** Item info, stock levels by outlet/size, and the append-only movement ledger. */
+/** Item info, stock levels by outlet/size, and the movement ledger. Voided entries stay listed, struck through, with their stock effect already reversed. */
 export function InventoryItemDetailPage() {
   const navigate = useNavigate()
   const { itemId } = useParams<{ itemId: string }>()
@@ -50,6 +50,9 @@ export function InventoryItemDetailPage() {
   }, [itemId])
 
   const totalOnHand = useMemo(() => levels.reduce((sum, l) => sum + l.quantityOnHand, 0), [levels])
+  // A voided entry's stock effect is already reversed on the levels above, so
+  // it stays in the ledger for audit but never counts toward a total.
+  const activeMovements = useMemo(() => movements.filter((m) => !m.isVoided), [movements])
 
   if (loading) {
     return (
@@ -138,8 +141,13 @@ export function InventoryItemDetailPage() {
 
       {movements.length > 0 && (
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-baseline justify-between gap-2">
             <CardTitle>Movement history</CardTitle>
+            {activeMovements.length !== movements.length && (
+              <span className="text-xs text-muted-foreground">
+                {movements.length - activeMovements.length} voided
+              </span>
+            )}
           </CardHeader>
           <CardContent>
             <Timeline>
@@ -149,14 +157,16 @@ export function InventoryItemDetailPage() {
                   <TimelineItem
                     key={movement.id}
                     title={
-                      <span className="flex flex-col gap-1">
+                      <span className={`flex flex-col gap-1 ${movement.isVoided ? 'opacity-60' : ''}`}>
                         <span className="inline-flex flex-wrap items-center gap-2">
                           <StatusPill
-                            tone={MOVEMENT_TYPE_TONE[movement.movementType]}
+                            tone={movement.isVoided ? 'neutral' : MOVEMENT_TYPE_TONE[movement.movementType]}
                             icon={MOVEMENT_TYPE_ICON[movement.movementType]}
                             label={MOVEMENT_TYPE_LABELS[movement.movementType]}
                           />
-                          <span className="font-mono tabular-nums text-foreground">
+                          <span
+                            className={`font-mono tabular-nums text-foreground ${movement.isVoided ? 'line-through' : ''}`}
+                          >
                             {movement.quantityDelta > 0 ? '+' : ''}
                             {movement.quantityDelta}
                             {movement.sizeVariant && ` (${movement.sizeVariant})`}
@@ -164,7 +174,22 @@ export function InventoryItemDetailPage() {
                           <span className="text-xs text-muted-foreground">
                             {locationName(movement.outletId)} · {movement.reason}
                           </span>
+                          <PermissionGuard permission={PERMISSIONS.HR_INVENTORY_MANAGE}>
+                            <button
+                              type="button"
+                              className="inline-flex items-center gap-1 text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                              onClick={() => navigate(`/hr/inventory/${itemId}/movements/${movement.id}/edit`)}
+                            >
+                              <SquarePen className="h-3.5 w-3.5" aria-hidden="true" />
+                              {movement.isVoided ? 'View' : 'Correct'}
+                            </button>
+                          </PermissionGuard>
                         </span>
+                        {movement.isVoided && (
+                          <span className="text-xs text-muted-foreground">
+                            Voided{movement.voidReason ? ` — ${movement.voidReason}` : ''} · stock reversed
+                          </span>
+                        )}
                         {issuedTo && <span className="text-xs text-muted-foreground">{issuedTo}</span>}
                         <span className="font-mono text-xs tabular-nums text-muted-foreground">
                           {formatMovementCost(movement)}

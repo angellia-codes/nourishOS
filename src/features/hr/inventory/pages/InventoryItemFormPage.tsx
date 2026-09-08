@@ -5,14 +5,16 @@ import { Button, Card, CardContent, CardHeader, CardTitle, Checkbox, Input, Labe
 import { useToast } from '@/hooks'
 import * as inventoryService from '../inventoryService'
 import { INVENTORY_CATEGORY_LABELS } from '../inventoryFormat'
-import type { InventoryCategory } from '@/types'
+import type { InventoryCategory, StockLevel, StockMovement } from '@/types'
 
 const CATEGORIES = Object.keys(INVENTORY_CATEGORY_LABELS) as InventoryCategory[]
 
 /**
- * Create and edit. category and hasSizes are immutable after creation —
- * changing either would orphan hrStockLevels docs keyed by the old size set —
- * so both are disabled (not hidden) on edit, with a note why.
+ * Create and edit. category is immutable after creation. hasSizes is editable
+ * only while the item is untouched — no stock on hand and no non-voided
+ * movements — which is exactly when no hrStockLevels doc keyed by the old size
+ * set can be orphaned; past that it is disabled (not hidden), with a note why.
+ * The server re-checks the same condition inside its transaction.
  */
 export function InventoryItemFormPage() {
   const navigate = useNavigate()
@@ -26,7 +28,10 @@ export function InventoryItemFormPage() {
   const [category, setCategory] = useState<InventoryCategory>('uniform')
   const [unitCost, setUnitCost] = useState('')
   const [hasSizes, setHasSizes] = useState(false)
+  const [originalHasSizes, setOriginalHasSizes] = useState(false)
   const [sizes, setSizes] = useState<string[]>([''])
+  const [levels, setLevels] = useState<StockLevel[] | null>(null)
+  const [movements, setMovements] = useState<StockMovement[] | null>(null)
 
   useEffect(() => {
     if (!itemId) return
@@ -45,6 +50,7 @@ export function InventoryItemFormPage() {
         setCategory(row.category)
         setUnitCost(String(row.unitCost))
         setHasSizes(row.hasSizes)
+        setOriginalHasSizes(row.hasSizes)
         setSizes(row.sizes.length > 0 ? row.sizes : [''])
       })
       .catch(() => {
@@ -58,6 +64,24 @@ export function InventoryItemFormPage() {
       cancelled = true
     }
   }, [itemId, navigate, toast])
+
+  // Only needed on edit, to decide whether size tracking is still switchable.
+  useEffect(() => {
+    if (!itemId) return
+    return inventoryService.subscribeToStockLevels(itemId, setLevels)
+  }, [itemId])
+
+  useEffect(() => {
+    if (!itemId) return
+    return inventoryService.subscribeToStockMovements(itemId, setMovements)
+  }, [itemId])
+
+  const isUntouched =
+    levels !== null &&
+    movements !== null &&
+    levels.every((level) => level.quantityOnHand === 0) &&
+    movements.every((movement) => movement.isVoided)
+  const sizeModeLocked = isEdit && !isUntouched
 
   const parsedSizes = sizes.map((s) => s.trim()).filter(Boolean)
   const parsedUnitCost = Number(unitCost)
@@ -80,6 +104,10 @@ export function InventoryItemFormPage() {
           itemId,
           name: name.trim(),
           unitCost: parsedUnitCost,
+          // Sent only when it actually changed — the callable rejects a flip
+          // outright once the item has stock, so an unchanged value must not
+          // look like one.
+          ...(hasSizes !== originalHasSizes ? { hasSizes } : {}),
           ...(hasSizes ? { sizes: parsedSizes } : {}),
         })
         toast.success('Item updated.')
@@ -157,10 +185,15 @@ export function InventoryItemFormPage() {
           </div>
 
           <label className="flex items-center gap-2 text-sm text-foreground">
-            <Checkbox checked={hasSizes} disabled={isEdit} onChange={(e) => setHasSizes(e.target.checked)} />
+            <Checkbox checked={hasSizes} disabled={sizeModeLocked} onChange={(e) => setHasSizes(e.target.checked)} />
             Tracks stock by size
           </label>
-          {isEdit && <p className="-mt-2 text-xs text-muted-foreground">Whether this item tracks sizes can't change after creation.</p>}
+          {sizeModeLocked && (
+            <p className="-mt-2 text-xs text-muted-foreground">
+              This item already has stock or movement history, so size tracking can't be switched. Void its movements
+              first, or create a new item.
+            </p>
+          )}
 
           {hasSizes && (
             <div className="flex flex-col gap-2">

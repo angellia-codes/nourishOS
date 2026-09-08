@@ -100,7 +100,7 @@ export function stockLevelDocId(itemId: string, outletId: string, sizeVariant: s
   return `${itemId}__${outletId}__${sizeVariant ?? 'none'}`
 }
 
-interface StockLevelHandle {
+export interface StockLevelHandle {
   ref: DocumentReference
   exists: boolean
   quantityOnHand: number
@@ -150,4 +150,93 @@ export function applyDelta(current: number, delta: number): number {
     throw new AppError('failed-precondition', `Not enough stock on hand (${current} available).`)
   }
   return next
+}
+
+export interface MovementLeg {
+  ref: DocumentReference
+  data: DocumentData
+}
+
+/**
+ * Loads a movement plus its linked transfer counterpart, so voiding one leg of
+ * a paired transfer can never leave the other half standing. Throws if the
+ * movement is already voided — voiding twice would reverse the stock twice.
+ */
+export async function loadMovementLegsInTransaction(tx: Transaction, movementId: unknown): Promise<MovementLeg[]> {
+  if (typeof movementId !== 'string' || !movementId) {
+    throw new AppError('invalid-argument', 'movementId is required.')
+  }
+  const ref = db.collection(COLLECTIONS.HR_STOCK_MOVEMENTS).doc(movementId)
+  const snap = await tx.get(ref)
+  if (!snap.exists) {
+    throw new AppError('not-found', 'That stock movement no longer exists.')
+  }
+  const data = snap.data() as DocumentData
+  if (data.isVoided) {
+    throw new AppError('failed-precondition', 'That movement has already been voided.')
+  }
+
+  const legs: MovementLeg[] = [{ ref, data }]
+  const linkedId = data.linkedMovementId
+  if (typeof linkedId === 'string' && linkedId) {
+    const linkedRef = db.collection(COLLECTIONS.HR_STOCK_MOVEMENTS).doc(linkedId)
+    const linkedSnap = await tx.get(linkedRef)
+    const linkedData = linkedSnap.data()
+    // A leg already voided on its own is skipped rather than reversed twice.
+    if (linkedSnap.exists && linkedData && !linkedData.isVoided) {
+      legs.push({ ref: linkedRef, data: linkedData })
+    }
+  }
+  return legs
+}
+
+export interface LevelDelta {
+  itemId: string
+  outletId: string
+  sizeVariant: string | null
+  delta: number
+}
+
+/**
+ * Collapses deltas landing on the same stock-level doc into one entry. An edit
+ * that only changes quantity reverses and re-applies against the same
+ * (item, outlet, size), and Firestore forbids reading a doc twice in one
+ * transaction after writing it — merging first keeps it to one read, one write.
+ */
+export function mergeLevelDeltas(deltas: LevelDelta[]): LevelDelta[] {
+  const merged = new Map<string, LevelDelta>()
+  for (const entry of deltas) {
+    const key = stockLevelDocId(entry.itemId, entry.outletId, entry.sizeVariant)
+    const current = merged.get(key)
+    if (current) current.delta += entry.delta
+    else merged.set(key, { ...entry })
+  }
+  return [...merged.values()]
+}
+
+/**
+ * Reads every distinct stock level the deltas touch, then applies them — all
+ * reads before any write, as Firestore transactions require. Throws
+ * failed-precondition (via applyDelta) if any level would go negative, which
+ * aborts the whole transaction before a single write lands.
+ */
+export async function applyLevelDeltas(tx: Transaction, deltas: LevelDelta[], uid: string): Promise<void> {
+  const merged = mergeLevelDeltas(deltas)
+
+  const handles: Array<{ level: StockLevelHandle; entry: LevelDelta }> = []
+  for (const entry of merged) {
+    handles.push({ level: await readStockLevel(tx, entry.itemId, entry.outletId, entry.sizeVariant), entry })
+  }
+
+  for (const { level, entry } of handles) {
+    if (entry.delta === 0) continue
+    const next = applyDelta(level.quantityOnHand, entry.delta)
+    writeStockLevel(
+      tx,
+      level,
+      { itemId: entry.itemId, outletId: entry.outletId, sizeVariant: entry.sizeVariant },
+      next,
+      uid,
+    )
+  }
 }

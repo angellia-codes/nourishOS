@@ -31,9 +31,10 @@ export const INVENTORY_CATEGORIES: InventoryCategory[] = [
 /**
  * HR Inventory catalog item — uniforms and simple assets (ID cards, keys,
  * equipment) as a quantity ledger, not per-serial asset tracking (see
- * CLAUDE.md "Current state of the tree"). `category`/`hasSizes` are
- * immutable after creation — changing them would orphan existing
- * `StockLevel` docs keyed by the old size set.
+ * CLAUDE.md "Current state of the tree"). `category` is immutable after
+ * creation; `hasSizes` can only be switched while the item is untouched (no
+ * stock on hand, no non-voided movements), past which flipping it would
+ * orphan existing `StockLevel` docs keyed by the old size set.
  */
 export interface InventoryItem extends BaseDocument {
   name: string
@@ -60,8 +61,11 @@ export type IssueReason = 'employeeIssue' | 'writeOff' | 'adjustment'
 export type MovementReason = ReceiveReason | IssueReason
 
 /**
- * Append-only ledger entry — never updated or deleted. A correction is a new
- * movement, the same way an accounting ledger is corrected.
+ * Ledger entry. Corrections go through `updateStockMovement`/`voidStockMovement`
+ * (hrInventory.manage only) rather than a compensating entry — a void reverses
+ * the stock effect but keeps the row, flagged `isVoided`, so the audit trail
+ * still shows what was entered and who withdrew it. Every reader filters
+ * voided rows out; nothing is ever hard-deleted.
  */
 export interface StockMovement extends BaseDocument {
   itemId: string
@@ -82,4 +86,9 @@ export interface StockMovement extends BaseDocument {
   /** Pairs a transferOut movement with its transferIn counterpart. */
   linkedMovementId: string | null
   performedBy: string
+  /** Absent on every movement recorded before voiding shipped — read it as false. */
+  isVoided?: boolean
+  voidedAt?: string
+  voidedBy?: string
+  voidReason?: string
 }
