@@ -10,24 +10,37 @@ import {
   GraduationCap,
   TrendingUp,
   Filter,
+  Lock,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, Select, Spinner } from '@/components/ui'
-import { BarDiagram, DonutChart, MetricTile, TrendLine } from '@/components/shared'
+import { BarDiagram, DonutChart, EmptyState, MetricTile, TrendLine } from '@/components/shared'
 import { OUTLETS } from '@/constants'
+import { formatCompactCurrency } from '@/utils'
 import * as employeeService from '@/features/hr/services/employeeService'
 import * as attendanceService from '@/features/hr/attendance/attendanceService'
 import * as trainingService from '@/features/hr/training/trainingService'
+import * as payrollService from '@/features/hr/payroll/payrollService'
+import * as revenueService from '@/features/hr/payroll/revenueService'
 import { buildAttendanceReportRows } from '@/features/hr/reports/utils/attendance'
+import { buildCostRevenueTrend } from '@/features/hr/reports/utils/manningBudget'
 import {
   ageBands,
   buildWorkforceSummary,
   departmentSlices,
+  disciplinarySlices,
   employmentTypeSlices,
   genderSlices,
   headcountTrend,
   outletSlices,
 } from '@/features/hr/reports/utils/workforceOverview'
-import type { AttendancePeriod, AttendanceRecord, Employee, TrainingAssignment } from '@/types'
+import type {
+  AttendancePeriod,
+  AttendanceRecord,
+  Employee,
+  MonthlyRevenue,
+  TrainingAssignment,
+} from '@/types'
+import type { ManningCostSummaryRow } from '@/features/hr/payroll/payrollService'
 
 /**
  * HR Overview — the visual half of hr.md §16, sitting above the eleven
@@ -60,6 +73,10 @@ export function HrOverviewDashboardPage() {
   const [attendance, setAttendance] = useState<AttendanceRecord[] | null>(null)
   const [assignments, setAssignments] = useState<TrainingAssignment[] | null>(null)
 
+  const [costSummary, setCostSummary] = useState<ManningCostSummaryRow[]>([])
+  const [revenue, setRevenue] = useState<MonthlyRevenue[]>([])
+  const [costDenied, setCostDenied] = useState(false)
+
   useEffect(() => {
     return employeeService.subscribeToEmployees(setEmployees)
   }, [])
@@ -89,6 +106,24 @@ export function HrOverviewDashboardPage() {
     return trainingService.subscribeToAllTrainingAssignments(setAssignments, () => setAssignments([]))
   }, [])
 
+  /**
+   * Manning cost and revenue are narrower than this page: the callable gates on
+   * hrManager/finance/GM/director/superAdmin and `monthlyRevenue`'s read rule on
+   * the same set minus finance, while `/hr` also admits hrGeneralAdmin. So a
+   * denial here is a real path, not a theoretical one — one flag covers both
+   * sources and only that card degrades.
+   */
+  useEffect(() => {
+    payrollService
+      .getManningCostSummary()
+      .then(setCostSummary)
+      .catch(() => setCostDenied(true))
+  }, [])
+
+  useEffect(() => {
+    return revenueService.subscribeToMonthlyRevenue(setRevenue, () => setCostDenied(true))
+  }, [])
+
   const today = new Date().toISOString().slice(0, 10)
 
   const scoped = useMemo(
@@ -104,6 +139,12 @@ export function HrOverviewDashboardPage() {
   const types = useMemo(() => employmentTypeSlices(active), [active])
   const ages = useMemo(() => ageBands(active, today), [active, today])
   const trend = useMemo(() => headcountTrend(scoped, today), [scoped, today])
+  const disciplinary = useMemo(() => disciplinarySlices(active), [active])
+
+  const costTrend = useMemo(
+    () => buildCostRevenueTrend(costSummary, revenue, outletFilter, today),
+    [costSummary, revenue, outletFilter, today],
+  )
 
   /** Attendance is company-wide: the outlet filter only scopes the register. */
   const attendanceRate = useMemo(() => {
@@ -232,12 +273,55 @@ export function HrOverviewDashboardPage() {
         </Card>
       </div>
 
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Headcount by Outlet</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <BarDiagram items={outlets.map((slice) => ({ label: slice.label, value: slice.value }))} maxBars={12} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Active Employees by Disciplinary Action</CardTitle>
+            <p className="text-xs text-muted-foreground">
+              {disciplinary.none} of {active.length} active with nothing on file. This is the standing flag on the
+              employee record, which HR sets by hand — not a count of filed communication records.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <BarDiagram items={disciplinary.slices.map((slice) => ({ label: slice.label, value: slice.value }))} />
+          </CardContent>
+        </Card>
+      </div>
+
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Headcount by Outlet</CardTitle>
+          <CardTitle className="text-base">Manning Cost vs Revenue</CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Payroll net against recorded monthly revenue, last six months
+            {outletFilter ? ', for the selected outlet' : ''}. A month with no payroll imported or no revenue entered
+            reads as zero.
+          </p>
         </CardHeader>
         <CardContent>
-          <BarDiagram items={outlets.map((slice) => ({ label: slice.label, value: slice.value }))} maxBars={12} />
+          {costDenied ? (
+            <EmptyState
+              icon={<Lock className="h-8 w-8" aria-hidden="true" />}
+              title="Access restricted"
+              description="Manning cost and revenue are limited to HR Manager, Finance, General Manager, Director and Super Admin."
+            />
+          ) : (
+            <TrendLine
+              series={[
+                { label: 'Manning Cost (Net)', points: costTrend.map((p) => ({ label: p.label, value: p.manningCost })) },
+                { label: 'Revenue', points: costTrend.map((p) => ({ label: p.label, value: p.revenue })) },
+              ]}
+              valueFormatter={formatCompactCurrency}
+            />
+          )}
         </CardContent>
       </Card>
 

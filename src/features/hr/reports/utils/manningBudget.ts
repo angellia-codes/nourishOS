@@ -1,7 +1,10 @@
 import { OUTLETS, DEPARTMENTS, type OrgOption } from '@/constants/organization'
+import { ALL_OUTLETS_ID } from '@/features/hr/payroll/revenueService'
 import { employedAsOf } from './turnover'
 import { seasonForPeriod, type Season } from './season'
-import type { Employee, Requisition } from '@/types'
+import { MONTH_LABELS } from './workforceOverview'
+import type { Employee, MonthlyRevenue, Requisition } from '@/types'
+import type { ManningCostSummaryRow } from '@/features/hr/payroll/payrollService'
 
 export interface ManningBudgetRow {
   outletId: string
@@ -67,6 +70,64 @@ export function buildManningBudgetRows(requisitions: Requisition[], employees: E
   return Array.from(groups.values()).sort(
     (a, b) => a.outletName.localeCompare(b.outletName) || a.departmentName.localeCompare(b.departmentName),
   )
+}
+
+export interface CostRevenueTrendPoint {
+  /** 'YYYY-MM'. */
+  month: string
+  label: string
+  manningCost: number
+  revenue: number
+}
+
+/**
+ * Total manning cost (payroll net) against total revenue, month by month —
+ * the trend view the Manning Budget & Cost report's own per-outlet table
+ * can't give. Both sides are pre-aggregated elsewhere: cost by
+ * `getManningCostSummary` (aggregate-only callable — raw payslips stay gated),
+ * revenue by the hand-entered `monthlyRevenue` records.
+ *
+ * The axis is a fixed trailing `months` window ending at `asOfIso`, not the
+ * months that happen to have data, so a month nobody has entered yet reads as
+ * a dip to zero rather than silently shortening the series.
+ *
+ * Revenue is the half that can double-count: `ALL_OUTLETS_ID` is a sentinel
+ * row holding one company-wide figure (revenueService.ts), and per-outlet rows
+ * may exist for the same month. So the company-wide row WINS for a month when
+ * it exists, and the per-outlet rows are summed only in its absence — adding
+ * both would report revenue twice. Scoped to one outlet, the sentinel row is
+ * unusable (it can't be split) and is dropped.
+ */
+export function buildCostRevenueTrend(
+  cost: ManningCostSummaryRow[],
+  revenue: MonthlyRevenue[],
+  outletId: string,
+  asOfIso: string,
+  months = 6,
+): CostRevenueTrendPoint[] {
+  const [asOfYear, asOfMonth] = asOfIso.split('-').map(Number)
+  const points: CostRevenueTrendPoint[] = []
+
+  for (let offset = months - 1; offset >= 0; offset -= 1) {
+    const date = new Date(asOfYear, asOfMonth - 1 - offset, 1)
+    const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+
+    const manningCost = cost
+      .filter((row) => row.periodMonth === month && (!outletId || row.outletId === outletId))
+      .reduce((sum, row) => sum + row.totalNet, 0)
+
+    const monthRevenue = revenue.filter((row) => row.periodMonth === month)
+    const companyWide = outletId ? undefined : monthRevenue.find((row) => row.outletId === ALL_OUTLETS_ID)
+    const revenueTotal = companyWide
+      ? companyWide.amount
+      : monthRevenue
+          .filter((row) => row.outletId !== ALL_OUTLETS_ID && (!outletId || row.outletId === outletId))
+          .reduce((sum, row) => sum + row.amount, 0)
+
+    points.push({ month, label: MONTH_LABELS[date.getMonth()], manningCost, revenue: revenueTotal })
+  }
+
+  return points
 }
 
 export interface SeasonalActualRow {

@@ -1,5 +1,5 @@
 import { DEPARTMENTS, OUTLETS, type OrgOption } from '@/constants/organization'
-import { EMPLOYMENT_STATUS_LABELS } from '@/constants/hr'
+import { DISCIPLINARY_TYPE_LABELS, EMPLOYMENT_STATUS_LABELS, type DisciplinaryType } from '@/constants/hr'
 import { employedAsOf } from './turnover'
 import type { Employee } from '@/types'
 
@@ -72,6 +72,36 @@ export function employmentTypeSlices(employees: Employee[]): Slice[] {
     .sort((a, b) => b.value - a.value)
 }
 
+/**
+ * Headcount per disciplinary action in force, from `Employee.disciplinaryType`
+ * (§12.1's escalation ladder).
+ *
+ * That field is HR's own current-standing flag, set by hand on the employee
+ * record — nothing syncs it from the `disciplinaryActions` records the Employee
+ * Communication workflow files (see src/features/hr/CLAUDE.md, which states the
+ * no-auto-sync deliberately). So this counts PEOPLE currently carrying a
+ * sanction, not records ever filed, and the two numbers will differ.
+ *
+ * Employees with nothing on file are returned as `none` rather than as a slice:
+ * they are almost always the bulk of the register and would flatten every real
+ * bar next to them.
+ */
+export function disciplinarySlices(employees: Employee[]): { slices: Slice[]; none: number } {
+  const counts = tally(employees, (employee) => employee.disciplinaryType ?? '')
+  const none = counts.get('') ?? 0
+  counts.delete('')
+
+  const slices = Array.from(counts.entries())
+    .map(([key, value]) => ({
+      key,
+      label: DISCIPLINARY_TYPE_LABELS[key as DisciplinaryType] ?? key,
+      value,
+    }))
+    .sort((a, b) => b.value - a.value)
+
+  return { slices, none }
+}
+
 const AGE_BANDS: { label: string; min: number; max: number }[] = [
   { label: 'Below 25', min: 0, max: 24 },
   { label: '25 - 35', min: 25, max: 35 },
@@ -134,7 +164,7 @@ export interface TrendPoint {
   value: number
 }
 
-const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+export const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 /**
  * Headcount at the end of each of the last `months` months, reconstructed from
