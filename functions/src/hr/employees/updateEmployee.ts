@@ -37,8 +37,9 @@ import { generateAssignmentsForEmployeeInternal } from '../training'
 
 /**
  * Whitelisted updatable fields. employeeNumber, status, isArchived, and the
- * resignation pair are deliberately excluded — the number is immutable and
- * separation state only changes through archiveEmployee.
+ * resignation pair are deliberately excluded — separation state only changes
+ * through archiveEmployee, and the number goes through changeEmployeeNumber,
+ * which is gated on a narrower role set than employees.update.
  */
 const STRING_FIELDS = [
   'fullName',
@@ -56,7 +57,8 @@ const STRING_FIELDS = [
   'bpjsTk',
   'bpjsKesehatan',
   // payroll-components-payslip-design.md §4.6 — backfillable from the profile
-  // and the bulk importer. employeeNumber stays immutable; this is the old one.
+  // and the bulk importer. This is the pre-NourishOS number, not the
+  // NourishOS one (that is changeEmployeeNumber.ts).
   'legacyEmployeeId',
   'position',
   'departmentId',

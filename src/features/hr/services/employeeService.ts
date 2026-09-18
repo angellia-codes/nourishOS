@@ -92,7 +92,7 @@ export function importEmployees(rows: ImportEmployeeRow[]): Promise<{ results: I
   return callFunction('importEmployees', { rows })
 }
 
-/** Server whitelists updatable fields; employeeNumber and separation state are rejected. */
+/** Server whitelists updatable fields; employeeNumber (see changeEmployeeNumber) and separation state are rejected. */
 export function updateEmployee(
   employeeId: string,
   updates: Partial<CreateEmployeeInput> & { managerId?: string | null; probationStatus?: ProbationStatus | null },
@@ -113,6 +113,29 @@ export function archiveEmployee(
   lastWorkingDate: string,
 ): Promise<{ employeeId: string; offboardingChecklistId: string }> {
   return callFunction('archiveEmployee', { employeeId, resignationDate, resignationReason, lastWorkingDate })
+}
+
+export interface ChangeEmployeeNumberInput {
+  employeeId: string
+  /**
+   * The new number, e.g. 'N-0087'. Omit it and the server allocates the next
+   * free number for the employee's current employment status — the promotion
+   * case, where a Daily Worker's DW- number has to become an N- one.
+   */
+  employeeNumber?: string
+  reason?: string
+}
+
+/**
+ * HR_OPERATIONS.md 9.1-F02 — the number is allocated from the employment
+ * status at hire, so a promotion/demotion between statuses (or a migration
+ * typo) leaves it wrong. Super Admin / Jr. HR Manager / HR & General Admin
+ * only; the server re-checks the role and the uniqueness of the new number.
+ */
+export function changeEmployeeNumber(
+  input: ChangeEmployeeNumberInput,
+): Promise<{ employeeId: string; employeeNumber: string }> {
+  return callFunction('changeEmployeeNumber', input)
 }
 
 /** Undoes archiveEmployee — restores active headcount status. */

@@ -14,6 +14,7 @@ const ACTIVITY_TYPE_LABELS: Record<EmployeeActivityType, string> = {
   archived: 'Archived',
   reactivated: 'Reactivated',
   promoted: 'Promoted',
+  employeeNumberChanged: 'Employee Number Changed',
   departmentTransfer: 'Department Transfer',
   outletTransfer: 'Outlet Transfer',
   disciplinaryWarning: 'Disciplinary Warning',

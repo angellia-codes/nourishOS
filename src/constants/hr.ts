@@ -152,6 +152,8 @@ export const EMPLOYEE_ACTIVITY_TYPE = {
   ARCHIVED: 'archived',
   REACTIVATED: 'reactivated',
   PROMOTED: 'promoted',
+  /** HR_OPERATIONS.md 9.1-F02 — the hire-time number no longer matches the person (promotion, demotion, or a migration typo). */
+  EMPLOYEE_NUMBER_CHANGED: 'employeeNumberChanged',
   DEPARTMENT_TRANSFER: 'departmentTransfer',
   OUTLET_TRANSFER: 'outletTransfer',
   DISCIPLINARY_WARNING: 'disciplinaryWarning',

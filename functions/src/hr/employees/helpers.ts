@@ -97,7 +97,12 @@ export const TSHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const
 export type TshirtSize = (typeof TSHIRT_SIZES)[number]
 
 /** HR_OPERATIONS.md 9.1-F02: N- (PKWT/PKWTT/BOD/Freelance), DW- (Daily Worker), OJT-. */
-const EMPLOYEE_NUMBER_PREFIX: Record<EmploymentStatus, string> = {
+/**
+ * The prefix half of an employee number — HR_OPERATIONS.md 9.1-F02. Exported
+ * because changeEmployeeNumber.ts validates a hand-entered number against the
+ * same set that allocation draws from.
+ */
+export const EMPLOYEE_NUMBER_PREFIX: Record<EmploymentStatus, string> = {
   PKWT: 'N',
   PKWTT: 'N',
   freelance: 'N',
@@ -145,6 +150,73 @@ export async function allocateEmployeeNumber(employmentStatus: EmploymentStatus)
 }
 
 /**
+ * Who may change an employee number after hire — mirrors
+ * src/constants/roles.ts EMPLOYEE_NUMBER_EDITOR_ROLES (known
+ * frontend/functions duplication — keep in sync). Deliberately narrower than
+ * `employees.update`, which department-level HR flows also rely on.
+ */
+export const EMPLOYEE_NUMBER_EDITOR_ROLES: readonly string[] = ['superAdmin', 'hrManager', 'hrGeneralAdmin']
+
+/** Every prefix allocation can produce, e.g. ['N', 'DW', 'OJT']. */
+export const EMPLOYEE_NUMBER_PREFIXES: readonly string[] = Array.from(new Set(Object.values(EMPLOYEE_NUMBER_PREFIX)))
+
+/** The shape allocateEmployeeNumber emits: PREFIX-NNNN, at least four digits. */
+export const EMPLOYEE_NUMBER_PATTERN = new RegExp(`^(${EMPLOYEE_NUMBER_PREFIXES.join('|')})-\\d{4,}$`)
+
+/**
+ * Splits 'DW-0004' into its prefix and numeric half, or throws. The number is
+ * parsed rather than kept as a string so the sequence high-water mark below
+ * can compare it against the counter.
+ */
+export function parseEmployeeNumber(value: string): { prefix: string; sequence: number } {
+  if (!EMPLOYEE_NUMBER_PATTERN.test(value)) {
+    throw new AppError(
+      'invalid-argument',
+      `employeeNumber must look like ${EMPLOYEE_NUMBER_PREFIXES.join('-0001, ')}-0001.`,
+    )
+  }
+  const [prefix, digits] = value.split('-')
+  return { prefix, sequence: Number(digits) }
+}
+
+/**
+ * Raises a prefix's counter so a hand-entered number can never be handed out
+ * again by allocateEmployeeNumber. Without this, setting someone to N-0100
+ * while the counter sits at 42 guarantees a duplicate 58 hires later.
+ */
+export async function raiseEmployeeNumberSequence(prefix: string, sequence: number): Promise<void> {
+  const counterRef = db.collection(COLLECTIONS.SYSTEM_SETTINGS).doc('employeeNumberSequences')
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(counterRef)
+    const current = (snap.data()?.[prefix] as number | undefined) ?? 0
+    if (sequence > current) {
+      tx.set(counterRef, { [prefix]: sequence }, { merge: true })
+    }
+  })
+}
+
+/**
+ * HR.md §21 uniqueness, for the employee number specifically — an employee
+ * number identifies a person on payslips, contracts and attendance imports,
+ * so two records must never share one. Archived records count: their payslips
+ * still exist.
+ */
+export async function assertEmployeeNumberUnique(employeeNumber: string, excludeId: string): Promise<void> {
+  const snap = await db
+    .collection(COLLECTIONS.EMPLOYEES)
+    .where('employeeNumber', '==', employeeNumber)
+    .limit(2)
+    .get()
+  const conflict = snap.docs.find((doc) => doc.id !== excludeId)
+  if (conflict) {
+    throw new AppError(
+      'already-exists',
+      `Employee number ${employeeNumber} is already used by ${(conflict.data().fullName as string | undefined) ?? conflict.id}.`,
+    )
+  }
+}
+
+/**
  * Enforces the HR.md §21 uniqueness rules (email, phone) against active and
  * archived employees alike — a rehire gets a fresh record, but two live
  * records must never share contact identity. `excludeId` skips the record
@@ -174,6 +246,7 @@ export type EmployeeActivityType =
   | 'archived'
   | 'reactivated'
   | 'promoted'
+  | 'employeeNumberChanged'
   | 'departmentTransfer'
   | 'outletTransfer'
   | 'disciplinaryWarning'

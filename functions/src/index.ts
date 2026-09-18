@@ -100,6 +100,7 @@ export {
   updateEmployeeCompensation,
   archiveEmployee,
   unarchiveEmployee,
+  changeEmployeeNumber,
   importEmployees,
   getEmployeeAuditLog,
   contractAlerts,
