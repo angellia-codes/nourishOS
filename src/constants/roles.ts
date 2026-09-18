@@ -71,6 +71,17 @@ export const HR_REPORT_ROLES: readonly Role[] = [
   ROLES.SUPER_ADMIN,
 ]
 
+/**
+ * Who may change an employee number after hire — mirrors
+ * functions/src/hr/employees/helpers.ts EMPLOYEE_NUMBER_EDITOR_ROLES.
+ * UX only: changeEmployeeNumber re-checks the same list server-side.
+ */
+export const EMPLOYEE_NUMBER_EDITOR_ROLES: readonly Role[] = [
+  ROLES.SUPER_ADMIN,
+  ROLES.HR_MANAGER,
+  ROLES.HR_GENERAL_ADMIN,
+]
+
 /** Who may be picked as a recruitment interviewer (leader/manager roles) — mirrored in functions/src/recruitment/helpers.ts. */
 export const INTERVIEWER_ROLES: readonly Role[] = [
   ROLES.HEAD_CHEF,

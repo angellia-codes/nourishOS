@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Archive, GraduationCap, Pencil, RotateCcw } from 'lucide-react'
+import { ArrowLeft, Archive, GraduationCap, Hash, Pencil, RotateCcw } from 'lucide-react'
 import {
   Avatar,
   Badge,
@@ -18,7 +18,7 @@ import {
   TimelineItem,
 } from '@/components/ui'
 import { ErrorMessage, FileList, FileUpload, PermissionGuard } from '@/components/shared'
-import { useFirestoreDoc, useFirestoreQuery, usePermissions, useToast } from '@/hooks'
+import { useFirestoreDoc, useFirestoreQuery, usePermissions, useRole, useToast } from '@/hooks'
 import { COLLECTIONS, PERMISSIONS } from '@/constants'
 import {
   BLOOD_TYPE_LABELS,
@@ -33,6 +33,7 @@ import {
   type TaxStatus,
   type TshirtSize,
 } from '@/constants/hr'
+import { EMPLOYEE_NUMBER_EDITOR_ROLES } from '@/constants/roles'
 import { POSITION_LABELS } from '@/constants/positions'
 import * as employeeService from '@/features/hr/services/employeeService'
 import * as communicationService from '@/features/communications/employeeCommunication/employeeCommunicationService'
@@ -170,6 +171,7 @@ export function EmployeeProfilePage() {
   const toast = useToast()
 
   const { can } = usePermissions()
+  const { isAnyRole } = useRole()
   const { data: employee, loading } = useFirestoreDoc<Employee>(COLLECTIONS.EMPLOYEES, employeeId)
   const [activities, setActivities] = useState<EmployeeActivity[]>([])
   const [auditEntries, setAuditEntries] = useState<EmployeeAuditLogEntry[] | null>(null)
@@ -258,6 +260,15 @@ export function EmployeeProfilePage() {
   const [unarchiveReason, setUnarchiveReason] = useState('')
   const [unarchiving, setUnarchiving] = useState(false)
   const [unarchiveError, setUnarchiveError] = useState<string | null>(null)
+
+  // 9.1-F02 — the number is allocated from employment status at hire, so a
+  // promotion/demotion between statuses leaves it wrong. Blank input = let the
+  // server allocate the next free number for the current status.
+  const [showNumberForm, setShowNumberForm] = useState(false)
+  const [numberInput, setNumberInput] = useState('')
+  const [numberReason, setNumberReason] = useState('')
+  const [changingNumber, setChangingNumber] = useState(false)
+  const [numberError, setNumberError] = useState<string | null>(null)
 
   const [assigningTraining, setAssigningTraining] = useState(false)
 
@@ -408,6 +419,27 @@ export function EmployeeProfilePage() {
     }
   }
 
+  async function handleChangeEmployeeNumber() {
+    if (!employeeId || changingNumber) return
+    setChangingNumber(true)
+    setNumberError(null)
+    try {
+      const result = await employeeService.changeEmployeeNumber({
+        employeeId,
+        employeeNumber: numberInput.trim() || undefined,
+        reason: numberReason.trim() || undefined,
+      })
+      toast.success(`Employee number changed to ${result.employeeNumber}.`)
+      setShowNumberForm(false)
+      setNumberInput('')
+      setNumberReason('')
+    } catch (error) {
+      setNumberError(error instanceof ApiError ? error.message : 'Something went wrong. Please try again.')
+    } finally {
+      setChangingNumber(false)
+    }
+  }
+
   async function handleAssignTraining() {
     if (!employeeId || assigningTraining) return
     setAssigningTraining(true)
@@ -541,10 +573,77 @@ export function EmployeeProfilePage() {
 
       {/* Employment & contract */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between gap-2">
           <CardTitle>Employment</CardTitle>
+          {/* 9.1-F02 — Super Admin / Jr. HR Manager / HR & General Admin only;
+              changeEmployeeNumber re-checks the same role list server-side. */}
+          {!showNumberForm && isAnyRole([...EMPLOYEE_NUMBER_EDITOR_ROLES]) && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                // Starts blank on purpose: the empty input is the
+                // auto-allocate path, which is the common case.
+                setNumberInput('')
+                setNumberReason('')
+                setNumberError(null)
+                setShowNumberForm(true)
+              }}
+            >
+              <Hash className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+              Change number
+            </Button>
+          )}
         </CardHeader>
+        {showNumberForm && (
+          <CardContent className="flex flex-col gap-4 border-b border-border pb-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="employeeNumber">New employee number</Label>
+                <Input
+                  id="employeeNumber"
+                  value={numberInput}
+                  onChange={(e) => setNumberInput(e.target.value)}
+                  placeholder="N-0087"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Currently <span className="font-mono">{employee.employeeNumber}</span>. Leave blank to let the system
+                  issue the next free number for this employee&rsquo;s current employment status &mdash; the usual
+                  choice after a promotion from Daily Worker or OJT to staff.
+                </p>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="employeeNumberReason">Reason</Label>
+                <Input
+                  id="employeeNumberReason"
+                  value={numberReason}
+                  onChange={(e) => setNumberReason(e.target.value)}
+                  placeholder="Promoted to staff"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Recorded on the activity timeline and in the audit log.
+                </p>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Payslips, attendance records and communication records already issued keep the old number &mdash; they are
+              a record of what was issued. Payroll and attendance CSV files must use the new number from the next
+              period onward.
+            </p>
+            {numberError && <ErrorMessage message={numberError} />}
+            <div className="flex justify-end gap-2">
+              <Button variant="secondary" onClick={() => setShowNumberForm(false)} disabled={changingNumber}>
+                Cancel
+              </Button>
+              <Button onClick={handleChangeEmployeeNumber} disabled={changingNumber}>
+                {changingNumber ? 'Saving…' : 'Change number'}
+              </Button>
+            </div>
+          </CardContent>
+        )}
         <CardContent className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+          <Field label="Employee number" value={employee.employeeNumber} />
+          <Field label="Previous payroll ID" value={employee.legacyEmployeeId} />
           <Field label="Employment status" value={EMPLOYMENT_STATUS_LABELS[employee.employmentStatus]} />
           <Field label="Department" value={employee.departmentId} />
           <Field label="Outlet" value={employee.outletId} />
