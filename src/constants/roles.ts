@@ -51,6 +51,10 @@ export const ROLES = {
   CHEF_DE_PARTIE_BAKER: 'chefDePartieBaker',
   COOK_BAKER: 'cookBaker',
   WHOLEFOOD_SUPERVISOR: 'wholefoodSupervisor',
+  /** POSITIONS.md §4 Level I — group-wide F&B operations, seated at BOH Nourish Group. */
+  GROUP_OPERATIONAL_MANAGER: 'groupOperationalManager',
+  /** POSITIONS.md §4 Level II — the Bar & Beverage group head (POSITIONS.md still calls the position "Group Bar Manager"), seated at Nourish Ungasan. */
+  GROUP_BEVERAGE_MANAGER: 'groupBeverageManager',
 } as const
 
 export type Role = (typeof ROLES)[keyof typeof ROLES]

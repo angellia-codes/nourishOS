@@ -110,7 +110,7 @@ export const POSITION_CATALOG = {
   steward: { label: 'Steward', rank: 8, department: 'kitchen' },
 
   // --------------------------------------------------------- Bar
-  groupBarManager: { label: 'Group Bar Manager', rank: 2, department: 'bar' },
+  groupBarManager: { label: 'Group Beverage Manager', rank: 2, department: 'bar' },
   barManager: { label: 'Bar Manager', rank: 3, department: 'bar' },
   assistantBarManager: { label: 'Assistant Bar Manager', rank: 4, department: 'bar' },
   barSupervisor: { label: 'Bar Supervisor', rank: 5, department: 'bar' },
@@ -170,15 +170,21 @@ export const POSITION_LABELS = Object.fromEntries(
  *    Housekeeping section and the policy didn't add trainee/dailyWorker back
  *    for it, so no position is currently selectable for that department
  *    (confirmed; not an oversight).
- *  - Several catalog ids (e.g. `ceo`, `groupOperationalManager`, `runner`,
- *    `groupBarManager`, `barBack`, `assistantBarManager`,
- *    `directorOfSalesMarketing`, `socialMediaSpecialist`, `engineerCivil`,
- *    `groupHrManager`, `trainingDevelopmentSupervisor`,
- *    `groupFinancialController`, `costControl`, `arIncomeAudit`) are no
- *    longer selectable from *any* department after this revision — left in
+ *  - Several catalog ids (e.g. `ceo`, `runner`, `barBack`,
+ *    `assistantBarManager`, `directorOfSalesMarketing`,
+ *    `socialMediaSpecialist`, `engineerCivil`, `groupHrManager`,
+ *    `trainingDevelopmentSupervisor`, `groupFinancialController`,
+ *    `costControl`, `arIncomeAudit`) are no longer selectable from *any*
+ *    department after this revision — left in
  *    `POSITION_CATALOG`/`POSITION_LABELS` rather than deleted, since a legacy
  *    employee record may still carry one and needs it to keep resolving to a
  *    label.
+ *
+ * Two of that list came back on 2026-09-11: `groupOperationalManager` under
+ * `admin_general` (HQ-only, so no outlet entry is needed) and
+ * `groupBarManager` — relabelled "Group Beverage Manager" — under `bar`,
+ * restricted to `nourish_ungasan` below. Both are HQ/group titles HR now
+ * issues against a specific outlet.
  *
  * Revised again the same day: three baking titles are further restricted to
  * one specific *outlet* within the `kitchen` department, not the whole
@@ -192,7 +198,7 @@ export const POSITION_LABELS = Object.fromEntries(
  * departmentId wherever positions are offered or validated.
  */
 export const DEPARTMENT_POSITION_IDS: Record<string, readonly PositionId[]> = {
-  admin_general: ['director', 'groupGeneralManager'],
+  admin_general: ['director', 'groupGeneralManager', 'groupOperationalManager'],
   cashier: ['cashierSupervisor', 'cashier'],
   fb_service: [
     'restaurantManager',
@@ -203,7 +209,7 @@ export const DEPARTMENT_POSITION_IDS: Record<string, readonly PositionId[]> = {
     'trainee',
     'dailyWorker',
   ],
-  bar: ['barManager', 'barSupervisor', 'barCaptain', 'barista', 'barBack', 'trainee', 'dailyWorker'],
+  bar: ['groupBarManager', 'barManager', 'barSupervisor', 'barCaptain', 'barista', 'barBack', 'trainee', 'dailyWorker'],
   kitchen: [
     // Both ladders live here because `the_bakery_kitchen` staffs `kitchen`
     // (OUTLET_DEPARTMENTS) — OUTLET_ONLY_POSITION_IDS is what splits them.
@@ -258,8 +264,11 @@ const STANDARD_RESTAURANT_OUTLET_IDS = ['nourish_ungasan', 'nourish_uluwatu', 'n
  * bakery/restaurant line: the baking titles only at `the_bakery_kitchen`,
  * the line-cook titles everywhere else in the department. `steward`/
  * `trainee`/`dailyWorker` are deliberately absent here — common to both.
+ * `bar` needs it for one entry only: Group Beverage Manager sits at Ungasan.
  */
 export const OUTLET_ONLY_POSITION_IDS: Partial<Record<PositionId, readonly string[]>> = {
+  // Group Beverage Manager is a single group-wide seat, held at Ungasan.
+  groupBarManager: ['nourish_ungasan'],
   chiefBaker: ['the_bakery_kitchen'],
   sousChefBaker: ['the_bakery_kitchen'],
   chefDePartieBaker: ['the_bakery_kitchen'],

@@ -67,7 +67,7 @@ Level VI: Demi Chef de Partie | Demi Chef Baker
 Level VII: Cook | Cook/Baker
 Level VIII: Cook Helper | Steward | Trainee | Daily Worker (DW)
 ☕ Bar & Beverage
-Level II: Group Bar Manager
+Level II: Group Bar Manager (renamed **Group Beverage Manager** 2026-09-11 — same Level II seat, and the app keeps the `groupBarManager` id)
 Level III: Bar Manager
 Level IV: Assistant Bar Manager
 Level V: Bar Supervisor
@@ -87,7 +87,7 @@ Level VIII: Security Guard
 👥 4. Full Rank Hierarchy Reference Matrix
 Rank Positions Included
 Level I: Group Operational Manager • Group Financial Controller • Director of Sales & Marketing • Group HR Manager
-Level II: Operational Manager • Chief Accounting • Group Executive Chef • Group Bar Manager • Purchasing Manager • Creative Digital & Marketing Manager
+Level II: Operational Manager • Chief Accounting • Group Executive Chef • Group Beverage Manager (formerly Group Bar Manager) • Purchasing Manager • Creative Digital & Marketing Manager
 Level III: Wholefoods Manager • Head Chef • Restaurant Manager • Chief Baker • Bar Manager • Restaurant & Maintenance Manager • Junior HR Manager
 Level IV: Sous Chef • Sous Chef Baker • Assistant Bar Manager
 Level V: Cost Control • Purchasing Supervisor • Training & Development Supervisor • Security Supervisor • Restaurant Supervisor • Wholefoods Supervisor • Chef de Partie • Chef de Partie Baker • Bar Supervisor • Cashier Supervisor

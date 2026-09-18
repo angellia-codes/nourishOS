@@ -106,10 +106,14 @@ export const OUTLET_DEPARTMENTS: Record<string, readonly string[]> = {
  * something a stranger with a Google account can pick out of a dropdown.
  */
 export const DEPARTMENT_ROLES: Record<string, readonly Role[]> = {
-  admin_general: [ROLES.GENERAL_MANAGER, ROLES.DIRECTOR],
+  // Appended, never prepended: index 0 is the department's approval step 1
+  // (functions/src/finance/expenseSteps.ts) and KpiCardsRow's "is a department
+  // manager" test — both must stay on the General Manager here.
+  admin_general: [ROLES.GENERAL_MANAGER, ROLES.DIRECTOR, ROLES.GROUP_OPERATIONAL_MANAGER],
   cashier: [ROLES.CASHIER_SUPERVISOR, ROLES.CASHIER],
   fb_service: [ROLES.RESTAURANT_MANAGER, ROLES.RESTAURANT_SUPERVISOR, ROLES.RESTAURANT_CAPTAIN, ROLES.WAITER],
-  bar: [ROLES.BAR_MANAGER, ROLES.BAR_SUPERVISOR, ROLES.BAR_CAPTAIN, ROLES.BARISTA],
+  // Same index-0 rule as admin_general above — barManager stays first.
+  bar: [ROLES.BAR_MANAGER, ROLES.BAR_SUPERVISOR, ROLES.BAR_CAPTAIN, ROLES.BARISTA, ROLES.GROUP_BEVERAGE_MANAGER],
   // Both ladders live here because The Bakery Kitchen staffs the `kitchen`
   // department (OUTLET_DEPARTMENTS) — OUTLET_ONLY_ROLES below is what keeps a
   // Chief Baker off a restaurant's form and a Head Chef off the bakery's.
@@ -163,6 +167,9 @@ const STANDARD_RESTAURANT_OUTLET_IDS = ['nourish_ungasan', 'nourish_uluwatu', 'n
  * input wherever roles are offered or validated (`rolesFor`).
  */
 export const OUTLET_ONLY_ROLES: Partial<Record<Role, readonly string[]>> = {
+  // One group-wide beverage seat, held at Ungasan — mirrors the position of the
+  // same name in positions.ts's OUTLET_ONLY_POSITION_IDS.
+  groupBeverageManager: ['nourish_ungasan'],
   chiefBaker: ['the_bakery_kitchen'],
   chefDePartieBaker: ['the_bakery_kitchen'],
   cookBaker: ['the_bakery_kitchen'],
@@ -228,6 +235,8 @@ export const ROLE_LABELS: Record<Role, string> = {
   [ROLES.WHOLEFOOD_LEADER]: 'Wholefood Manager',
   [ROLES.WHOLEFOOD_SUPERVISOR]: 'Wholefood Supervisor',
   [ROLES.WHOLEFOOD_CASHIER]: 'Wholefood Cashier',
+  [ROLES.GROUP_OPERATIONAL_MANAGER]: 'Group Operational Manager',
+  [ROLES.GROUP_BEVERAGE_MANAGER]: 'Group Beverage Manager',
 }
 
 /** Options for a dropdown, resolved from an id list — keeps the pages declarative. */

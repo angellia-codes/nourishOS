@@ -57,6 +57,7 @@ service cloud.firestore {
         // here their headcount tile read denies.
         (hasAnyRole(['headChef', 'barManager', 'restaurantSupervisor', 'chiefBaker', 'wholefoodLeader',
           'restaurantManager', 'restaurantMaintenanceManager',
+          'groupOperationalManager', 'groupBeverageManager',
           'finance', 'purchasing', 'security', 'engineering', 'marketing']) &&
           resource.data.departmentId == request.auth.token.departmentId);
       allow write: if false; // createEmployee / updateEmployee / archiveEmployee Cloud Functions only
@@ -97,6 +98,7 @@ service cloud.firestore {
       allow read: if hasAnyRole(['hrManager', 'hrGeneralAdmin', 'generalManager', 'director', 'superAdmin']) ||
         (hasAnyRole(['headChef', 'barManager', 'restaurantSupervisor', 'chiefBaker', 'wholefoodLeader',
           'restaurantManager', 'restaurantMaintenanceManager',
+          'groupOperationalManager', 'groupBeverageManager',
           'finance', 'purchasing', 'security', 'engineering', 'marketing']) &&
           resource.data.departmentId == request.auth.token.departmentId) ||
         (resource.data.employeeUid == request.auth.uid && resource.data.releasedToEmployee == true);
@@ -124,7 +126,8 @@ service cloud.firestore {
 
     function isLeader() {
       return hasAnyRole(['headChef', 'barManager', 'restaurantSupervisor', 'chiefBaker',
-        'wholefoodLeader', 'restaurantManager', 'restaurantMaintenanceManager']);
+        'wholefoodLeader', 'restaurantManager', 'restaurantMaintenanceManager',
+        'groupOperationalManager', 'groupBeverageManager']);
     }
 
     // Requisitions are raised by every department head, not only the
@@ -393,6 +396,7 @@ service cloud.firestore {
         hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
         (hasAnyRole(['headChef', 'barManager', 'restaurantSupervisor', 'chiefBaker', 'wholefoodLeader',
           'restaurantManager', 'restaurantMaintenanceManager',
+          'groupOperationalManager', 'groupBeverageManager',
           'finance', 'purchasing', 'security', 'engineering', 'marketing']) &&
           resource.data.employeeDepartmentId == request.auth.token.departmentId)
       );
@@ -554,7 +558,7 @@ service cloud.firestore {
     // while Engineering, GM, Director and superAdmin see every outlet (§6.2 D9).
     match /equipment/{equipmentId} {
       allow read: if isSignedIn() && (
-        hasAnyRole(['superAdmin', 'director', 'generalManager', 'engineering']) ||
+        hasAnyRole(['superAdmin', 'director', 'generalManager', 'engineering', 'groupOperationalManager', 'groupBeverageManager']) ||
         resource.data.outletId == request.auth.token.outletId
       );
       allow write: if false; // createEquipment / updateEquipment / updateEquipmentStatus / transferEquipmentOutlet / previewEquipmentImport / commitEquipmentImport / onEquipmentDecommissionResolved Cloud Functions only
@@ -580,7 +584,7 @@ service cloud.firestore {
       allow read: if isSignedIn() && (
         resource.data.reportedBy == request.auth.uid ||
         resource.data.assignedToRole == role() ||
-        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
+        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin', 'groupOperationalManager', 'groupBeverageManager']) ||
         (resource.data.incidentType != 'workplaceInjury' &&
           hasAnyRole(['headChef', 'barManager', 'restaurantSupervisor', 'chiefBaker', 'wholefoodLeader',
             'restaurantManager', 'restaurantMaintenanceManager', 'security', 'engineering']) &&
@@ -597,7 +601,7 @@ service cloud.firestore {
         resource.data.createdBy == request.auth.uid ||
         resource.data.assignedTo == request.auth.uid ||
         resource.data.assignedToRole == role() ||
-        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
+        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin', 'groupOperationalManager', 'groupBeverageManager']) ||
         hasAnyRole([
           'headChef', 'barManager', 'restaurantSupervisor', 'chiefBaker', 'wholefoodLeader',
           'restaurantManager', 'restaurantMaintenanceManager', 'engineering',
@@ -618,7 +622,7 @@ service cloud.firestore {
     match /shiftHandovers/{reportId} {
       allow read: if isSignedIn() && (
         resource.data.picUid == request.auth.uid ||
-        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
+        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin', 'groupOperationalManager', 'groupBeverageManager']) ||
         resource.data.outletId == request.auth.token.outletId
       );
       allow write: if false; // submitShiftReport Cloud Function only
@@ -628,7 +632,7 @@ service cloud.firestore {
     match /dailyReports/{reportId} {
       allow read: if isSignedIn() && (
         resource.data.submittedBy == request.auth.uid ||
-        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
+        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin', 'groupOperationalManager', 'groupBeverageManager']) ||
         resource.data.outletId == request.auth.token.outletId
       );
       allow write: if false; // submitDailyReport Cloud Function only
@@ -643,7 +647,7 @@ service cloud.firestore {
         resource.data.ownerUid == request.auth.uid ||
         resource.data.createdBy == request.auth.uid ||
         resource.data.outletId == request.auth.token.outletId ||
-        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin'])
+        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin', 'groupOperationalManager', 'groupBeverageManager'])
       );
       allow write: if false; // createProject / updateProject / submitProject / moveProjectColumn only
     }
@@ -656,7 +660,7 @@ service cloud.firestore {
       allow read: if isSignedIn() && (
         request.auth.uid in resource.data.participants ||
         resource.data.createdBy == request.auth.uid ||
-        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin']) ||
+        hasAnyRole(['hrManager', 'generalManager', 'director', 'superAdmin', 'groupOperationalManager', 'groupBeverageManager']) ||
         (hasAnyRole(['restaurantManager', 'headChef', 'barManager', 'restaurantSupervisor', 'chiefBaker', 'wholefoodLeader']) &&
           resource.data.outletId == request.auth.token.outletId)
       );

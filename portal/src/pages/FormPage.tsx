@@ -172,7 +172,7 @@ export function FormPage() {
         languages,
         workExperience: workExperience.map((row) => ({
           ...row,
-          salary: row.salary ? Number(row.salary) : undefined,
+          salary: row.salary && !Number.isNaN(Number(row.salary)) ? Number(row.salary) : undefined,
         })),
         references,
         additionalQuestions: additional,

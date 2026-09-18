@@ -127,7 +127,7 @@ export const POSITION_LABELS: Record<string, string> = {
   cookBaker: 'Cook Baker / Pastry',
   cookHelper: 'Cook Helper',
   steward: 'Steward',
-  groupBarManager: 'Group Bar Manager',
+  groupBarManager: 'Group Beverage Manager',
   barManager: 'Bar Manager',
   assistantBarManager: 'Assistant Bar Manager',
   barSupervisor: 'Bar Supervisor',
@@ -154,7 +154,7 @@ export const POSITION_LABELS: Record<string, string> = {
  * restaurant outlets). Keep both copies in step.
  */
 export const DEPARTMENT_POSITION_IDS: Record<string, readonly string[]> = {
-  admin_general: ['director', 'groupGeneralManager'],
+  admin_general: ['director', 'groupGeneralManager', 'groupOperationalManager'],
   cashier: ['cashierSupervisor', 'cashier'],
   fb_service: [
     'restaurantManager',
@@ -165,7 +165,7 @@ export const DEPARTMENT_POSITION_IDS: Record<string, readonly string[]> = {
     'trainee',
     'dailyWorker',
   ],
-  bar: ['barManager', 'barSupervisor', 'barCaptain', 'barista', 'barBack', 'trainee', 'dailyWorker'],
+  bar: ['groupBarManager', 'barManager', 'barSupervisor', 'barCaptain', 'barista', 'barBack', 'trainee', 'dailyWorker'],
   kitchen: [
     'headChef',
     'sousChef',
@@ -212,6 +212,7 @@ const STANDARD_RESTAURANT_OUTLET_IDS = ['nourish_ungasan', 'nourish_uluwatu', 'n
 
 /** Positions restricted to specific outlets, on top of their department scoping — see the client mirror's comment. */
 export const OUTLET_ONLY_POSITION_IDS: Record<string, readonly string[]> = {
+  groupBarManager: ['nourish_ungasan'],
   chiefBaker: ['the_bakery_kitchen'],
   sousChefBaker: ['the_bakery_kitchen'],
   chefDePartieBaker: ['the_bakery_kitchen'],

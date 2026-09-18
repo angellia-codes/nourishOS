@@ -94,10 +94,12 @@ export const OUTLET_CODES: Record<string, string> = {
  * role per job title). superAdmin is deliberately absent — bootstrap-only.
  */
 export const DEPARTMENT_ROLES: Record<string, readonly string[]> = {
-  admin_general: ['generalManager', 'director'],
+  // Appended, never prepended — index 0 is the department's approval step 1
+  // (expenseSteps.ts) and the client's "is a department manager" test.
+  admin_general: ['generalManager', 'director', 'groupOperationalManager'],
   cashier: ['cashierSupervisor', 'cashier'],
   fb_service: ['restaurantManager', 'restaurantSupervisor', 'restaurantCaptain', 'waiter'],
-  bar: ['barManager', 'barSupervisor', 'barCaptain', 'barista'],
+  bar: ['barManager', 'barSupervisor', 'barCaptain', 'barista', 'groupBeverageManager'],
   kitchen: [
     'headChef',
     'sousChef',
@@ -133,6 +135,7 @@ export const DEPARTMENT_ROLES: Record<string, readonly string[]> = {
 const STANDARD_RESTAURANT_OUTLET_IDS = ['nourish_ungasan', 'nourish_uluwatu', 'nourish_berawa']
 
 export const OUTLET_ONLY_ROLES: Record<string, readonly string[]> = {
+  groupBeverageManager: ['nourish_ungasan'],
   chiefBaker: ['the_bakery_kitchen'],
   chefDePartieBaker: ['the_bakery_kitchen'],
   cookBaker: ['the_bakery_kitchen'],
@@ -267,6 +270,26 @@ const SUPERVISOR = [
 
 /** Rank & file (Level VII-VIII) — the set `staff` carried before its 2026-08-29 removal. */
 const RANK_FILE = [...BASE, 'dailyUpdates.submit', 'dailyUpdates.read', 'incidents.create', 'lostFound.create']
+
+/**
+ * The set that runs one outlet end to end — LEADER plus the cross-team
+ * management and read-all strings. Shared by restaurantManager and the Group
+ * Operational Manager above it; a named const because two roles hold it
+ * verbatim and an object literal cannot reference its own sibling.
+ */
+const OUTLET_LEAD = [
+  ...LEADER,
+  'incidents.manage',
+  'lostFound.manage',
+  'dailyUpdates.readAll',
+  'shiftReports.readAll',
+  'reports.read',
+  'calendar.create',
+  'training.assign',
+  // communications.md §19 gives Manager "Limited" on Publish — scoped in
+  // practice by the audience they can pick, not by a second permission string.
+  'announcements.publish',
+]
 
 /**
  * Permission set per role, read off the RBAC.md §5 matrix (✅ = full, 👁 = read)
@@ -542,18 +565,21 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
   ],
   // POSITIONS.md §3 Level III — runs one restaurant outlet end to end.
   // outletManager (removed 2026-08-29) carried this identical set.
-  restaurantManager: [
+  restaurantManager: OUTLET_LEAD,
+  // POSITIONS.md §4 Level I — group-wide F&B operations from BOH. Same
+  // permission strings as the outlet lead it sits above; what makes it
+  // group-wide is firestore.rules, where it reads every outlet's operational
+  // collections rather than only its own.
+  groupOperationalManager: OUTLET_LEAD,
+  // POSITIONS.md §4 Level II — the Bar & Beverage group head. barManager's set
+  // plus the read-all strings its cross-outlet visibility implies.
+  groupBeverageManager: [
     ...LEADER,
-    'incidents.manage',
-    'lostFound.manage',
+    'workOrders.update',
+    'training.assign',
     'dailyUpdates.readAll',
     'shiftReports.readAll',
     'reports.read',
-    'calendar.create',
-    'training.assign',
-    // §19 gives Manager "Limited" on Publish — scoped in practice by the
-    // audience they can pick, not by a second permission string.
-    'announcements.publish',
   ],
   // POSITIONS.md §3 Level VIII — rank & file, so the baseline staff set.
   wholefoodCashier: [

@@ -54,7 +54,7 @@ const DEPARTMENT_PRIORITY = [
 ]
 
 /**
- * The ~15 catalog ids `DEPARTMENT_POSITION_IDS`'s own header comment names as
+ * The catalog ids `DEPARTMENT_POSITION_IDS`'s own header comment names as
  * "unreachable from any department" after the 2026-08-17 revision (kept in
  * the catalog only so legacy employee records keep resolving to a label).
  * Positions Master is department-and-catalog independent of that
@@ -63,10 +63,8 @@ const DEPARTMENT_PRIORITY = [
  */
 const ORPHAN_DEPARTMENT_FALLBACK: Record<string, string> = {
   ceo: 'admin_general',
-  groupOperationalManager: 'fb_service',
   operationalManager: 'fb_service',
   runner: 'fb_service',
-  groupBarManager: 'bar',
   barBack: 'bar',
   assistantBarManager: 'bar',
   directorOfSalesMarketing: 'sales_marketing',
