@@ -31,13 +31,14 @@ interface GenerationOutput {
   criteria: GeneratedCriterion[]
 }
 
+// Structured outputs reject array-length constraints beyond 0/1, so a
+// `minItems: 6`/`maxItems: 8` here made every request a 400. The 6-8 range
+// lives in the prompt and is enforced after parsing (MIN_CRITERIA/MAX_CRITERIA).
 const GENERATION_SCHEMA = {
   type: 'object',
   properties: {
     criteria: {
       type: 'array',
-      minItems: MIN_CRITERIA,
-      maxItems: MAX_CRITERIA,
       items: {
         type: 'object',
         properties: {
@@ -57,7 +58,6 @@ const GENERATION_SCHEMA = {
           sourceResponsibilityIds: {
             type: 'array',
             items: { type: 'string' },
-            minItems: 1,
             description: 'Must be drawn only from the provided responsibilityId list.',
           },
           isLeadershipCriterion: { type: 'boolean' },
@@ -121,28 +121,41 @@ export const generateAppraisalTemplate = onCall(
       // identical comment on cold-start / deploy-time discovery cost.
       const { default: Anthropic } = await import('@anthropic-ai/sdk')
       const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY.value() })
-      const response = await client.messages.create({
-        model: 'claude-opus-4-8',
-        max_tokens: 4096,
-        system:
-          'You write performance appraisal criteria for an Indonesian multi-outlet F&B company. ' +
-          'Generate criteria ONLY from the Key Responsibilities provided — never invent duties. ' +
-          'Each description must describe OBSERVABLE BEHAVIOUR, not restate the task ' +
-          '(e.g. "Prepare monthly COGS reports" -> "Accuracy and timeliness of monthly COGS reporting"). ' +
-          'Indonesian text must be genuinely written in Indonesian, not translated word-for-word. ' +
-          'At most ONE criterion may have isLeadershipCriterion: true, and only if the position supervises others.',
-        output_config: { format: { type: 'json_schema', schema: GENERATION_SCHEMA } },
-        messages: [
-          {
-            role: 'user',
-            content:
-              `Position: ${(position.title as { en: string }).en} (Level ${position.level as string}, department ${position.departmentId as string})\n` +
-              `Supervises other positions: ${supervises.length > 0 ? 'yes' : 'no'}\n\n` +
-              `Key Responsibilities (use the bracketed id as sourceResponsibilityIds — never invent one):\n${responsibilityLines}\n\n` +
-              'Generate 6 to 8 appraisal criteria.',
-          },
-        ],
-      })
+      const response = await client.messages
+        .create({
+          model: 'claude-opus-4-8',
+          max_tokens: 4096,
+          system:
+            'You write performance appraisal criteria for an Indonesian multi-outlet F&B company. ' +
+            'Generate criteria ONLY from the Key Responsibilities provided — never invent duties. ' +
+            'Each description must describe OBSERVABLE BEHAVIOUR, not restate the task ' +
+            '(e.g. "Prepare monthly COGS reports" -> "Accuracy and timeliness of monthly COGS reporting"). ' +
+            'Indonesian text must be genuinely written in Indonesian, not translated word-for-word. ' +
+            'At most ONE criterion may have isLeadershipCriterion: true, and only if the position supervises others.',
+          output_config: { format: { type: 'json_schema', schema: GENERATION_SCHEMA } },
+          messages: [
+            {
+              role: 'user',
+              content:
+                `Position: ${(position.title as { en: string }).en} (Level ${position.level as string}, department ${position.departmentId as string})\n` +
+                `Supervises other positions: ${supervises.length > 0 ? 'yes' : 'no'}\n\n` +
+                `Key Responsibilities (use the bracketed id as sourceResponsibilityIds — never invent one):\n${responsibilityLines}\n\n` +
+                'Generate 6 to 8 appraisal criteria.',
+            },
+          ],
+        })
+        .catch((error: unknown) => {
+          // Surface the API's own reason (bad key, bad request, overload)
+          // instead of handleError's generic "Something went wrong".
+          if (error instanceof Anthropic.APIError) {
+            throw new AppError('unavailable', `AI request failed (${error.status ?? 'network'}): ${error.message}`)
+          }
+          throw error
+        })
+
+      if (response.stop_reason !== 'end_turn') {
+        throw new AppError('internal', `The AI response ended early (${response.stop_reason ?? 'unknown'}). Try again.`)
+      }
 
       const textBlock = response.content.find((block) => block.type === 'text')
       if (!textBlock || textBlock.type !== 'text') {
