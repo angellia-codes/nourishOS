@@ -40,9 +40,13 @@ export interface AppraisalTemplate extends BaseDocument {
   scoringModelVersion: 2
   generationMethod: 'ai' | 'manual'
   generatedAt: string | null
-  templateStatus: 'draft' | 'approved' | 'stale' | 'archived'
+  /** pendingGm (2026-09-24): HR-approved, awaiting the GM's sign-off before it goes live. */
+  templateStatus: 'draft' | 'pendingGm' | 'approved' | 'stale' | 'archived'
+  /** The HR approver. */
   approvedByUid: string | null
   approvedAt: string | null
+  approvalRequestId?: string | null
+  gmApprovedAt?: string | null
   version: number
 }
 
@@ -67,6 +71,8 @@ export type AppraisalReviewType = 'probation' | 'quarterly' | 'annual'
 
 export interface Appraisal extends BaseDocument {
   employeeId: string
+  /** Denormalized at creation (2026-09-24); absent on older appraisals. */
+  employeeName?: string | null
   positionId: PositionId
   employeeDepartmentId: string | null
   templateId: string
@@ -80,8 +86,18 @@ export interface Appraisal extends BaseDocument {
 
   scorerModel: ScorerModel
   approvalModel: ApprovalModel
-  primaryScorerUid: string
+  /** A hint before scoring (null when no one held the role at creation); whoever submitted, after. */
+  primaryScorerUid: string | null
   primaryScorerRole: 'departmentHead' | 'generalManager'
+  /** Role-based scorer (2026-09-24) — any holder of this role may score. Absent on older appraisals. */
+  primaryScorerRoleId?: string
+  /** null = any outlet's holder of primaryScorerRoleId. */
+  primaryScorerOutletId?: string | null
+  /** No active user held primaryScorerRoleId when the appraisal was created. */
+  scorerMissing?: boolean
+  /** 'YYYY-MM-DD' — the D-day reminders count down to. Absent on older appraisals. */
+  dueDate?: string
+  remindersSent?: string[]
   secondaryScorerUid: string | null
   secondaryScorerRole: 'hrManager' | null
 

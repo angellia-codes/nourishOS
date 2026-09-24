@@ -17,7 +17,7 @@ interface CriterionScoreInput {
  * subscribeToSecondaryScores here, only submitSecondaryScores.
  */
 export function useAppraisalReview(appraisalId: string | undefined) {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const { data: appraisal, loading } = useFirestoreDoc<Appraisal>(COLLECTIONS.APPRAISALS, appraisalId)
 
   const [template, setTemplate] = useState<AppraisalTemplate | null>(null)
@@ -70,7 +70,16 @@ export function useAppraisalReview(appraisalId: string | undefined) {
     return generateInsightsAsync.execute(appraisalId)
   }, [appraisalId, generateInsightsAsync])
 
-  const isPrimaryScorer = Boolean(appraisal && user && appraisal.primaryScorerUid === user.uid)
+  const isPrimaryScorer = Boolean(
+    appraisal &&
+      user &&
+      profile &&
+      appraisalService.canActAsPrimaryScorer(appraisal, {
+        uid: user.uid,
+        roleId: profile.roleId,
+        outletId: profile.outletId ?? null,
+      }),
+  )
   const isSecondaryScorer = Boolean(appraisal && user && appraisal.secondaryScorerUid === user.uid)
 
   return {

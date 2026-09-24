@@ -1,5 +1,12 @@
 import { callFunction } from '@/services/api'
-import { getDocument, queryDocuments, subscribeToDocument, where, orderBy } from '@/services/firestore'
+import {
+  getDocument,
+  queryDocuments,
+  subscribeToCollection,
+  subscribeToDocument,
+  where,
+  orderBy,
+} from '@/services/firestore'
 import { COLLECTIONS } from '@/constants'
 import type {
   Appraisal,
@@ -48,6 +55,8 @@ export interface CreateAppraisalInput {
   periodLabel: string
   periodStart: string
   periodEnd: string
+  /** 'YYYY-MM-DD'; defaults server-side to periodEnd. */
+  dueDate?: string
 }
 
 export function createAppraisal(input: CreateAppraisalInput): Promise<{ appraisalId: string }> {
@@ -110,6 +119,47 @@ export function subscribeToAppraisal(
   onChange: (appraisal: Appraisal | null) => void,
 ): Unsubscribe {
   return subscribeToDocument<Appraisal>(COLLECTIONS.APPRAISALS, appraisalId, onChange)
+}
+
+/**
+ * Mirrors functions/src/hr/appraisal/scorers.ts canActAsPrimaryScorer — keep
+ * in step. UX only: submitPrimaryScores re-checks server-side.
+ */
+export function canActAsPrimaryScorer(
+  appraisal: Pick<Appraisal, 'primaryScorerUid' | 'primaryScorerRoleId' | 'primaryScorerOutletId'>,
+  actor: { uid: string; roleId: string; outletId: string | null },
+): boolean {
+  if (appraisal.primaryScorerUid && appraisal.primaryScorerUid === actor.uid) return true
+  if (!appraisal.primaryScorerRoleId || appraisal.primaryScorerRoleId !== actor.roleId) return false
+  return !appraisal.primaryScorerOutletId || appraisal.primaryScorerOutletId === actor.outletId
+}
+
+/**
+ * Draft appraisals by due date, for the dashboard. HR/GM see all; a scorer
+ * role sees the ones assigned to its role — the query carries that filter
+ * because the rule is evaluated against the query (root CLAUDE.md § RBAC).
+ */
+export function subscribeToDueAppraisals(
+  scope: { kind: 'all' } | { kind: 'scorerRole'; roleId: string },
+  onChange: (appraisals: Appraisal[]) => void,
+  onError?: (error: Error) => void,
+): Unsubscribe {
+  // Two literal calls rather than one built array, so `npm run check` can
+  // match each query shape to its firestore.indexes.json entry.
+  if (scope.kind === 'all') {
+    return subscribeToCollection<Appraisal>(
+      COLLECTIONS.APPRAISALS,
+      [where('status', '==', 'draft'), orderBy('dueDate', 'asc')],
+      onChange,
+      onError,
+    )
+  }
+  return subscribeToCollection<Appraisal>(
+    COLLECTIONS.APPRAISALS,
+    [where('primaryScorerRoleId', '==', scope.roleId), where('status', '==', 'draft'), orderBy('dueDate', 'asc')],
+    onChange,
+    onError,
+  )
 }
 
 export function getMyAppraisalsAsPrimaryScorer(uid: string): Promise<Appraisal[]> {

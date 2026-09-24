@@ -16,6 +16,7 @@ import { Clock, Check, X, RotateCcw, Ban, FileEdit, Send, CheckCheck, AlarmClock
 export const APPROVAL_RESOURCES: Record<string, { label: string; routeFor?: (resourceId: string) => string }> = {
   'hr/appraisal': { label: 'Appraisal', routeFor: (id) => `/hr/appraisals/${id}` },
   'hr/appraisalV2': { label: 'Appraisal', routeFor: (id) => `/hr/appraisals/${id}` },
+  'hr/appraisalTemplate': { label: 'Appraisal Template', routeFor: (id) => `/hr/appraisal-templates/${id}` },
   // Renamed from 'hr/requisition' when Recruitment split out of HR (2026-08-19);
   // approvalRequests raised before then still carry the old key.
   'recruitment/requisition': { label: 'Requisition', routeFor: (id) => `/recruitment/requisitions/${id}` },

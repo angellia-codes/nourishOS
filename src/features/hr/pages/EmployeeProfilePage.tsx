@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Archive, GraduationCap, Hash, Pencil, RotateCcw } from 'lucide-react'
+import { ArrowLeft, Archive, ClipboardCheck, GraduationCap, Hash, Pencil, RotateCcw } from 'lucide-react'
 import {
   Avatar,
   Badge,
@@ -512,12 +512,21 @@ export function EmployeeProfilePage() {
             {employee.employeeNumber} &middot; {POSITION_LABELS[employee.position as keyof typeof POSITION_LABELS] ?? employee.position} &middot; Tenure {formatTenure(employee.joinDate)}
           </p>
         </div>
-        <PermissionGuard permission={PERMISSIONS.EMPLOYEES_UPDATE}>
-          <Button size="sm" variant="secondary" onClick={() => navigate(`/hr/employees/${employee.id}/edit`)}>
-            <Pencil className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
-            Edit
-          </Button>
-        </PermissionGuard>
+        <div className="flex flex-wrap gap-2">
+          {/* createAppraisal is gated server-side on appraisals.scoreSecondary — the HR Manager's permission. */}
+          <PermissionGuard permission={PERMISSIONS.APPRAISALS_SCORE_SECONDARY}>
+            <Button size="sm" variant="secondary" onClick={() => navigate(`/hr/employees/${employee.id}/appraisals/new`)}>
+              <ClipboardCheck className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+              New appraisal
+            </Button>
+          </PermissionGuard>
+          <PermissionGuard permission={PERMISSIONS.EMPLOYEES_UPDATE}>
+            <Button size="sm" variant="secondary" onClick={() => navigate(`/hr/employees/${employee.id}/edit`)}>
+              <Pencil className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+              Edit
+            </Button>
+          </PermissionGuard>
+        </div>
       </div>
 
       {/* Personal */}

@@ -8,13 +8,8 @@ import { PERMISSIONS } from '@/constants'
 import * as appraisalService from '@/features/hr/services/appraisalService'
 import * as positionService from '@/features/hr/positions/positionService'
 import type { AppraisalTemplate, Position } from '@/types'
+import { TEMPLATE_STATUS_LABELS, TEMPLATE_STATUS_VARIANT } from '../templateStatus'
 
-const STATUS_VARIANT: Record<AppraisalTemplate['templateStatus'], 'success' | 'warning' | 'neutral'> = {
-  approved: 'success',
-  draft: 'warning',
-  stale: 'warning',
-  archived: 'neutral',
-}
 
 /** §6 — one row per position: its latest template's status, and a Generate action when appraisable with no approved instrument yet. */
 export function AppraisalTemplateListPage() {
@@ -97,7 +92,7 @@ export function AppraisalTemplateListPage() {
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  {latest && <Badge variant={STATUS_VARIANT[latest.templateStatus]}>{latest.templateStatus}</Badge>}
+                  {latest && <Badge variant={TEMPLATE_STATUS_VARIANT[latest.templateStatus]}>{TEMPLATE_STATUS_LABELS[latest.templateStatus]}</Badge>}
                   <PermissionGuard permission={PERMISSIONS.APPRAISAL_TEMPLATES_GENERATE}>
                     <Button
                       variant="secondary"

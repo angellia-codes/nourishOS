@@ -937,6 +937,38 @@
       ]
     },
     {
+      "collectionGroup": "appraisals",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "dueDate",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "appraisals",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "primaryScorerRoleId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "dueDate",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "offboardingChecklists",
       "queryScope": "COLLECTION",
       "fields": [

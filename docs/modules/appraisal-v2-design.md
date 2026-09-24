@@ -6,6 +6,8 @@
 **Depends on:** Positions Master (fully shipped, including employee migration); Phase 0 `firestore.rules` conflict resolved
 **Supersedes:** the shipped 1–5 single-reviewer Appraisal module; `HR_OPERATIONS.md` §6.4 Option A/B; `HR_OPERATIONS.md` §9.6 weightedComponents
 
+> **Revised 2026-09-24 (requested by HR, deviations recorded inline):** §2.3 the primary scorer resolves by RBAC role + outlet, not a linked employee account; §6.2 a template needs HR **then GM** approval before it is live; §8 cycles run every 90 days from each employee's join date with D-30 creation and D-14/D-7/overdue escalation; §11 notifications updated to match.
+
 ---
 
 ## 1. Purpose
@@ -51,6 +53,8 @@ Rationale: 37 positions × 3 review types = 111 templates, none hand-authorable.
 Trainee, DW, OJT, and Level 0 all carry `isAppraisable: false`.
 
 Primary scorer resolves from `position.appraisalScorerPositionId` (explicit, never inferred — Positions Master §2.5).
+
+> **2026-09-24 deviation:** resolving that seat to a person needed `users/{uid}.employeeId`, which nothing populates, so every `dualScorer` appraisal failed as "scorer seat vacant". The scorer position now maps to an RBAC role (`functions/src/hr/appraisal/scorers.ts`, e.g. `headChef` → `headChef`, `chiefAccounting` → `finance`), and **any active holder of that role at the subject's outlet may score** (`primaryScorerRoleId` + `primaryScorerOutletId`; falls back to any outlet when the outlet has no holder). If no one holds the role the appraisal is still created with `scorerMissing: true` for HR to resolve. `primaryScorerUid` becomes whoever submits.
 
 **Recorded as deliberate, with the trade-off stated plainly:** Levels I–III carry the largest compensation consequences and have both the least scoring input (no HR 40% calibration) and no approval oversight. `approvalModel: 'none'` and `approvalRequestId: null` are stored so nothing in the audit trail implies a GM signed off on a review they authored. For `soloScorer`, `approved` means "scoring closed," not "approved by a second party."
 
@@ -272,6 +276,8 @@ Three properties enforced in Cloud Functions, not the UI:
 2. Regeneration on an approved template creates version *n+1* as a new `draft`; the approved version stays live until the new one is approved. No silent swap of a live scoring instrument.
 3. Approval audits as `AppraisalTemplateApproved` **with the full criteria snapshot**, so a disputed appraisal traces to exactly which instrument was approved, by whom, when.
 
+> **2026-09-24 deviation:** HR's approval no longer makes a new template live. It moves the template to `pendingGm` and raises an `hr/appraisalTemplate` approval (GM, single step); the GM's approval makes it `approved`, a rejection returns it to `draft`. Re-approving a `stale` template stays HR-only, since its criteria have not changed.
+
 ### 6.3 Staleness
 
 `PositionRevised` → handler marks affected templates `stale: true`, notifies HR Manager.
@@ -314,6 +320,8 @@ Plus an extension to the existing `registerApprovalResolvedHandler('appraisal', 
 ## 8. Scheduled cycles
 
 One function, 06:00 daily, matching the Contract Tracker pattern.
+
+> **2026-09-24 deviation — join-date cycles (supersedes the three bullets below):** every 90 days from `employee.joinDate` — day 90 probation (or `probationEndDate` when set), 180 and 270 quarterly, 360 annual, then repeating (450/540/630 quarterly, 720 annual…). Each appraisal is created **30 days before** its due date (`dueDate`) and notifies the scorer role, HR Manager and GM; while the primary score is outstanding, reminders go to all three at **D-14 and D-7**, and GM gets one **overdue** notice after D-day (`remindersSent` prevents repeats). Existing staff get only their next cycle — missed past cycles are not back-filled. HR can also create an off-cycle appraisal from the employee profile. Pure logic: `functions/src/hr/appraisal/cycles.ts`, pinned by `functions/test/appraisal-cycles.test.mjs`.
 
 - **Probation** — day 75 of probation (15 days before the decision), from `employee.probationEndDate`
 - **Quarterly** — quarter-end, all active appraisable employees past probation
@@ -380,6 +388,10 @@ Via Notification Engine. No WhatsApp — consistent with the manual-share patter
 | Scoring stage unstarted 14 days | Escalate to GM |
 | Template stale | HR Manager |
 | Template awaiting approval | HR Manager |
+| Template awaiting GM sign-off (2026-09-24) | General Manager (Pending Approvals) |
+| Appraisal created at D-30 (2026-09-24) | Scorer role, HR Manager, GM |
+| D-14 / D-7, primary score outstanding (2026-09-24) | Scorer role, HR Manager, GM |
+| Overdue (2026-09-24) | General Manager |
 
 ---
 

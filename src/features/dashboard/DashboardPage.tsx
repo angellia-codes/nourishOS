@@ -13,6 +13,7 @@ import { ContractRenewalsDueWidget } from './widgets/ContractRenewalsDueWidget'
 import { InterviewsTodayWidget } from './widgets/InterviewsTodayWidget'
 import { EscalationCenterWidget } from './widgets/EscalationCenterWidget'
 import { ActiveProjectsWidget } from './widgets/ActiveProjectsWidget'
+import { AppraisalsDueWidget } from './widgets/AppraisalsDueWidget'
 import { KpiCardsRow } from './widgets/KpiCardsRow'
 
 const OUTLET_NAMES: Record<string, string> = Object.fromEntries(OUTLETS.map((o) => [o.id, o.name]))
@@ -37,10 +38,11 @@ function greeting(hour: number): string {
  * aggregation of the same data. Roles not listed fall back to DEFAULT_EXTRAS.
  */
 const ROLE_WIDGETS: Record<string, ComponentType[]> = {
-  hrManager: [ContractRenewalsDueWidget, InterviewsTodayWidget, OpenPositionsWidget, EscalationCenterWidget],
-  generalManager: [EscalationCenterWidget, ActiveProjectsWidget, OpenPositionsWidget, InterviewsTodayWidget],
+  hrManager: [AppraisalsDueWidget, ContractRenewalsDueWidget, InterviewsTodayWidget, OpenPositionsWidget, EscalationCenterWidget],
+  generalManager: [AppraisalsDueWidget, EscalationCenterWidget, ActiveProjectsWidget, OpenPositionsWidget, InterviewsTodayWidget],
   director: [EscalationCenterWidget, ActiveProjectsWidget],
   superAdmin: [
+    AppraisalsDueWidget,
     ContractRenewalsDueWidget,
     InterviewsTodayWidget,
     OpenPositionsWidget,
@@ -51,6 +53,24 @@ const ROLE_WIDGETS: Record<string, ComponentType[]> = {
 
 /** Outlet leaders and everyone else: their own team's activity, not company-wide rollups. */
 const DEFAULT_EXTRAS: ComponentType[] = [TeamActivityWidget, RecentlyCompletedTasksWidget]
+
+/**
+ * Roles that score appraisals as Department Head — the values of
+ * functions/src/hr/appraisal/scorers.ts's scorer-position → role mapping
+ * (hrManager already has the widget above). They get Appraisals Due on top of
+ * the default set.
+ */
+const APPRAISAL_SCORER_ROLES = new Set([
+  'headChef',
+  'chiefBaker',
+  'barManager',
+  'restaurantManager',
+  'restaurantMaintenanceManager',
+  'wholefoodLeader',
+  'finance',
+  'purchasing',
+  'marketing',
+])
 
 /**
  * The landing page — dashboard.md §4. Seven widgets: §9 approvals, §10 tasks,
@@ -73,7 +93,9 @@ const DEFAULT_EXTRAS: ComponentType[] = [TeamActivityWidget, RecentlyCompletedTa
 export function DashboardPage() {
   const { profile } = useAuth()
   const firstName = profile?.displayName?.split(' ')[0] ?? 'there'
-  const extras = (profile && ROLE_WIDGETS[profile.roleId]) ?? DEFAULT_EXTRAS
+  const extras =
+    (profile && ROLE_WIDGETS[profile.roleId]) ??
+    (profile && APPRAISAL_SCORER_ROLES.has(profile.roleId) ? [AppraisalsDueWidget, ...DEFAULT_EXTRAS] : DEFAULT_EXTRAS)
 
   const meta = profile
     ? [
