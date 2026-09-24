@@ -471,17 +471,22 @@ function needsComposite({ equality, range, order }) {
 }
 
 /**
- * Set containment, not full order/direction validation: the failure this
- * catches is "no index at all", which is the one that actually reaches
- * production. A wrong field ORDER within an existing index still surfaces at
- * runtime with a create-index URL — matching loosely keeps this check free of
- * false alarms that would train you to ignore it.
+ * Shape match, not plain set containment: Firestore serves a query only from an
+ * index whose leading fields are exactly the equality fields (any order),
+ * followed directly by the range/orderBy fields. Set containment passed
+ * generateAppraisalTemplate's `positionId ==` + `orderBy('version')` against
+ * the v1 (positionId, reviewType, isArchived, version) index, and every
+ * Generate click failed with FAILED_PRECONDITION until 2026-09-24. Direction
+ * and the order *within* each group are still not checked — those surface at
+ * runtime with a create-index URL, and matching them loosely keeps this free
+ * of false alarms.
  */
 function hasIndex(collection, { equality, range, order }) {
-  const needed = new Set([...equality, ...range, ...order])
+  const tail = new Set([...range, ...order].filter((f) => !equality.has(f)))
   return (indexesByCollection.get(collection) ?? []).some((fields) => {
-    const present = new Set(fields)
-    return [...needed].every((f) => present.has(f))
+    const head = fields.slice(0, equality.size)
+    const next = fields.slice(equality.size, equality.size + tail.size)
+    return head.every((f) => equality.has(f)) && next.every((f) => tail.has(f)) && next.length === tail.size
   })
 }
 
