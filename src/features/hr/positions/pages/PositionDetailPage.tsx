@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Lock, Pencil } from 'lucide-react'
+import { ArrowLeft, Lock, Pencil, RotateCcw } from 'lucide-react'
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Select, Spinner } from '@/components/ui'
 import { EmptyState, PermissionGuard } from '@/components/shared'
 import { COLLECTIONS, PERMISSIONS } from '@/constants'
@@ -44,6 +44,13 @@ export function PositionDetailPage() {
 
   async function handleArchive() {
     if (!positionId) return
+    if (
+      !window.confirm(
+        'Archive this position? Its appraisal templates are archived too, so no new appraisals can be created for it. You can restore it later from the Archived tab.',
+      )
+    ) {
+      return
+    }
     setArchiving(true)
     try {
       await positionService.archivePosition(positionId)
@@ -51,6 +58,19 @@ export function PositionDetailPage() {
       navigate('/positions')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Could not archive that position.')
+    } finally {
+      setArchiving(false)
+    }
+  }
+
+  async function handleRestore() {
+    if (!positionId) return
+    setArchiving(true)
+    try {
+      await positionService.restorePosition(positionId)
+      toast.success('Position restored. Its appraisal templates stay archived until you restore one.')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not restore that position.')
     } finally {
       setArchiving(false)
     }
@@ -91,6 +111,7 @@ export function PositionDetailPage() {
             <Badge variant="neutral">{POSITION_LEVEL_LABELS[position.level]}</Badge>
             <Badge variant="neutral">{position.departmentId}</Badge>
             <Badge variant={positionStatusVariant(position.positionStatus)}>{position.positionStatus}</Badge>
+            {!position.isActive && <Badge variant="error">Archived</Badge>}
             {!position.isAppraisable && <Badge variant="neutral">Not appraisable</Badge>}
             {isScorerUnassigned(position) && <Badge variant="warning">Scorer Unassigned</Badge>}
           </div>
@@ -98,17 +119,34 @@ export function PositionDetailPage() {
           {position.jobOverview.en && <p className="text-sm text-muted-foreground">{position.jobOverview.en}</p>}
         </CardHeader>
         <CardContent className="flex flex-wrap justify-end gap-2">
-          <PermissionGuard permission={PERMISSIONS.POSITIONS_UPDATE}>
-            <Button variant="secondary" onClick={() => navigate(`/positions/${positionId}/edit`)}>
-              <Pencil className="mr-1 h-4 w-4" aria-hidden="true" />
-              Edit
-            </Button>
-          </PermissionGuard>
-          <PermissionGuard permission={PERMISSIONS.POSITIONS_ARCHIVE}>
-            <Button variant="secondary" disabled={archiving} onClick={() => void handleArchive()}>
-              {archiving ? <Spinner className="h-4 w-4" /> : 'Archive'}
-            </Button>
-          </PermissionGuard>
+          {position.isActive ? (
+            <>
+              <PermissionGuard permission={PERMISSIONS.POSITIONS_UPDATE}>
+                <Button variant="secondary" onClick={() => navigate(`/positions/${positionId}/edit`)}>
+                  <Pencil className="mr-1 h-4 w-4" aria-hidden="true" />
+                  Edit
+                </Button>
+              </PermissionGuard>
+              <PermissionGuard permission={PERMISSIONS.POSITIONS_ARCHIVE}>
+                <Button variant="secondary" disabled={archiving} onClick={() => void handleArchive()}>
+                  {archiving ? <Spinner className="h-4 w-4" /> : 'Archive'}
+                </Button>
+              </PermissionGuard>
+            </>
+          ) : (
+            <PermissionGuard permission={PERMISSIONS.POSITIONS_ARCHIVE}>
+              <Button variant="secondary" disabled={archiving} onClick={() => void handleRestore()}>
+                {archiving ? (
+                  <Spinner className="h-4 w-4" />
+                ) : (
+                  <>
+                    <RotateCcw className="mr-1 h-4 w-4" aria-hidden="true" />
+                    Restore
+                  </>
+                )}
+              </Button>
+            </PermissionGuard>
+          )}
         </CardContent>
       </Card>
 
