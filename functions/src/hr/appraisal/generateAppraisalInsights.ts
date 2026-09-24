@@ -112,27 +112,39 @@ export const generateAppraisalInsights = onCall(
       // CLI's discovery timeout. Only this one callable needs it.
       const { default: Anthropic } = await import('@anthropic-ai/sdk')
       const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY.value() })
-      const response = await client.messages.create({
-        model: 'claude-opus-4-8',
-        max_tokens: 2048,
-        system:
-          'You are an HR development advisor for an Indonesian multi-outlet F&B company. ' +
-          'You receive one employee performance appraisal. Respond with practical, respectful, specific ' +
-          'development guidance. Do not mention names or invent facts.',
-        output_config: { format: { type: 'json_schema', schema: INSIGHTS_SCHEMA } },
-        messages: [
-          {
-            role: 'user',
-            content:
-              `Position: ${appraisal.positionId}\n` +
-              `Review type: ${appraisal.reviewType} (${appraisal.periodLabel})\n` +
-              `${overallLine}\n` +
-              `Reviewer's overall comment: ${appraisal.overallComment ?? '(none)'}\n\n` +
-              `Scores:\n${scoreLines}\n\n` +
-              'Generate training suggestions and a development comment for this employee.',
-          },
-        ],
-      })
+      const response = await client.messages
+        .create({
+          // See generateAppraisalTemplate.ts — thinking shares max_tokens.
+          model: 'claude-sonnet-5',
+          max_tokens: 16000,
+          system:
+            'You are an HR development advisor for an Indonesian multi-outlet F&B company. ' +
+            'You receive one employee performance appraisal. Respond with practical, respectful, specific ' +
+            'development guidance. Do not mention names or invent facts.',
+          output_config: { effort: 'low', format: { type: 'json_schema', schema: INSIGHTS_SCHEMA } },
+          messages: [
+            {
+              role: 'user',
+              content:
+                `Position: ${appraisal.positionId}\n` +
+                `Review type: ${appraisal.reviewType} (${appraisal.periodLabel})\n` +
+                `${overallLine}\n` +
+                `Reviewer's overall comment: ${appraisal.overallComment ?? '(none)'}\n\n` +
+                `Scores:\n${scoreLines}\n\n` +
+                'Generate training suggestions and a development comment for this employee.',
+            },
+          ],
+        })
+        .catch((error: unknown) => {
+          if (error instanceof Anthropic.APIError) {
+            throw new AppError('unavailable', `AI request failed (${error.status ?? 'network'}): ${error.message}`)
+          }
+          throw error
+        })
+
+      if (response.stop_reason !== 'end_turn') {
+        throw new AppError('internal', `The AI response ended early (${response.stop_reason ?? 'unknown'}). Try again.`)
+      }
 
       const textBlock = response.content.find((block) => block.type === 'text')
       if (!textBlock || textBlock.type !== 'text') {

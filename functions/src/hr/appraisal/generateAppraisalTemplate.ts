@@ -123,8 +123,10 @@ export const generateAppraisalTemplate = onCall(
       const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY.value() })
       const response = await client.messages
         .create({
-          model: 'claude-opus-4-8',
-          max_tokens: 4096,
+          // Sonnet 5 thinks by default and thinking shares max_tokens with the
+          // answer, so leave headroom; low effort suits a short drafting task.
+          model: 'claude-sonnet-5',
+          max_tokens: 16000,
           system:
             'You write performance appraisal criteria for an Indonesian multi-outlet F&B company. ' +
             'Generate criteria ONLY from the Key Responsibilities provided — never invent duties. ' +
@@ -132,7 +134,7 @@ export const generateAppraisalTemplate = onCall(
             '(e.g. "Prepare monthly COGS reports" -> "Accuracy and timeliness of monthly COGS reporting"). ' +
             'Indonesian text must be genuinely written in Indonesian, not translated word-for-word. ' +
             'At most ONE criterion may have isLeadershipCriterion: true, and only if the position supervises others.',
-          output_config: { format: { type: 'json_schema', schema: GENERATION_SCHEMA } },
+          output_config: { effort: 'low', format: { type: 'json_schema', schema: GENERATION_SCHEMA } },
           messages: [
             {
               role: 'user',
