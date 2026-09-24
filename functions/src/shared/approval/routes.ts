@@ -26,6 +26,9 @@ const APPROVAL_ROUTES: Record<string, ApprovalRoute> = {
   // 'hr/appraisal' route, which the v1 module (now frozen/historical) no
   // longer has any live caller for.
   'hr/appraisalV2': [{ sequence: 1, approverRole: 'generalManager' }],
+  // appraisal-v2-design.md §6.2 as revised 2026-09-24 — HR approves a
+  // generated template, then GM signs off before it becomes live.
+  'hr/appraisalTemplate': [{ sequence: 1, approverRole: 'generalManager' }],
   // employee-requisition.md §5 defines a conditional chain (Director joins when
   // the request is unbudgeted) — confirmed with the user this is NOT being
   // built: a permanent product decision, not an open TODO. Director keeps

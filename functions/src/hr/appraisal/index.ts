@@ -1,4 +1,5 @@
 import { logger } from 'firebase-functions/v2'
+import { FieldValue } from 'firebase-admin/firestore'
 import { db, COLLECTIONS, updatedFields, type AuthedUser } from '../../lib'
 import { registerApprovalResolvedHandler } from '../../shared/approval'
 import { registerEventHandler } from '../../shared/events'
@@ -79,6 +80,44 @@ registerApprovalResolvedHandler('appraisalV2', async (event) => {
     referenceModule: 'hr',
     referenceId: event.resourceId,
   })
+})
+
+/**
+ * §6.2 as revised 2026-09-24 — the GM's sign-off on an HR-approved template
+ * (approveAppraisalTemplate.ts raises it). Approved: the template goes live.
+ * Rejected: back to draft for HR to edit or regenerate; the GM's comment is
+ * in the approval history.
+ */
+registerApprovalResolvedHandler('appraisalTemplate', async (event) => {
+  const ref = db.collection(COLLECTIONS.APPRAISAL_TEMPLATES).doc(event.resourceId)
+  const snap = await ref.get()
+  if (!snap.exists) {
+    logger.warn(`Approval ${event.approvalRequestId} resolved for missing appraisal template ${event.resourceId}`)
+    return
+  }
+  const template = snap.data()!
+  const approved = event.newStatus === 'approved'
+
+  await ref.update({
+    templateStatus: approved ? 'approved' : 'draft',
+    gmApprovedAt: approved ? FieldValue.serverTimestamp() : null,
+    ...updatedFields('system:approvalEngine'),
+  })
+
+  if (template.approvedByUid) {
+    await sendNotificationInternal({
+      type: 'alert',
+      title: approved ? 'Appraisal Template Live' : 'Appraisal Template Rejected by GM',
+      message: approved
+        ? `The GM approved the ${template.positionId as string} template (v${template.version as number}). It is now live for new appraisals.`
+        : `The GM rejected the ${template.positionId as string} template (v${template.version as number}). It is back in draft — see the approval history for the reason.`,
+      module: 'hr',
+      priority: 'medium',
+      recipientUid: template.approvedByUid as string,
+      referenceModule: 'hr',
+      referenceId: event.resourceId,
+    })
+  }
 })
 
 /**

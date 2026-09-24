@@ -157,10 +157,11 @@ export function AppraisalReviewPage() {
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">{appraisal.employeeId}</h1>
+          <h1 className="text-xl font-semibold text-foreground">{appraisal.employeeName ?? appraisal.employeeId}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {template.positionId} &middot; {appraisal.reviewType} &middot; {appraisal.periodLabel} &middot;{' '}
             {appraisal.scorerModel === 'dualScorer' ? 'Dept Head 60% + HR 40%' : 'GM 100%'}
+            {appraisal.dueDate && <> &middot; Due {appraisal.dueDate}</>}
           </p>
         </div>
         <AppraisalStatusBadge status={appraisal.status} />

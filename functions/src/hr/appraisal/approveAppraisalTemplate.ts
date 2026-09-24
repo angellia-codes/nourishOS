@@ -13,9 +13,17 @@ import {
   successResponse,
   PERMISSIONS,
 } from '../../lib'
+import { submitApprovalInternal } from '../../shared/approval'
 
 /**
- * §6.2 — the mandatory HR gate. `createAppraisal` rejects any template not
+ * §6.2 — the mandatory HR gate. Revised 2026-09-24: HR's approval of a new
+ * draft no longer makes it live — it moves to `pendingGm` and raises an
+ * 'hr/appraisalTemplate' approval for the GM; the resolved handler in
+ * index.ts is what flips it to `approved`. A `stale` template (already live,
+ * flagged only because its JD changed) is re-affirmed by HR alone, since its
+ * criteria have not changed.
+ *
+ * Original note: `createAppraisal` rejects any template not
  * `approved`, so this is what actually turns a generated draft into a live
  * scoring instrument. Audits the full criteria snapshot so a disputed
  * appraisal traces to exactly which instrument was approved, by whom, when.
@@ -43,12 +51,28 @@ export const approveAppraisalTemplate = onCall({ region: REGION }, async (reques
       throw new AppError('failed-precondition', 'This template has no criteria.')
     }
 
-    await ref.update({
-      templateStatus: 'approved',
-      approvedByUid: user.uid,
-      approvedAt: FieldValue.serverTimestamp(),
-      ...updatedFields(user.uid),
-    })
+    if (template.templateStatus === 'stale') {
+      await ref.update({
+        templateStatus: 'approved',
+        approvedByUid: user.uid,
+        approvedAt: FieldValue.serverTimestamp(),
+        ...updatedFields(user.uid),
+      })
+    } else {
+      const approvalRequestId = await submitApprovalInternal({
+        module: 'hr',
+        resourceType: 'appraisalTemplate',
+        resourceId: templateId,
+        requestedBy: user.uid,
+      })
+      await ref.update({
+        templateStatus: 'pendingGm',
+        approvedByUid: user.uid,
+        approvedAt: FieldValue.serverTimestamp(),
+        approvalRequestId,
+        ...updatedFields(user.uid),
+      })
+    }
 
     await recordAuditEvent({
       eventType: 'AppraisalTemplateApproved',
@@ -58,10 +82,15 @@ export const approveAppraisalTemplate = onCall({ region: REGION }, async (reques
       resourceId: templateId,
       action: 'approve',
       user,
-      newValues: { criteria: template.criteria },
+      newValues: { criteria: template.criteria, stage: template.templateStatus === 'stale' ? 'reaffirmed' : 'hr' },
     })
 
-    return successResponse(undefined, 'Template approved. It is now live for new appraisals.')
+    return successResponse(
+      undefined,
+      template.templateStatus === 'stale'
+        ? 'Template re-approved. It stays live for new appraisals.'
+        : 'Approved by HR — sent to the GM for sign-off.',
+    )
   } catch (error) {
     handleError(error)
   }

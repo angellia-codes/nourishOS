@@ -126,6 +126,7 @@ import { PositionDetailPage } from '@/features/hr/positions/pages/PositionDetail
 import { PositionFormPage } from '@/features/hr/positions/pages/PositionFormPage'
 import { AppraisalTemplateListPage } from '@/features/hr/appraisal/pages/AppraisalTemplateListPage'
 import { AppraisalTemplateReviewPage } from '@/features/hr/appraisal/pages/AppraisalTemplateReviewPage'
+import { NewAppraisalPage } from '@/features/hr/appraisal/pages/NewAppraisalPage'
 import { TrainingCataloguePage } from '@/features/hr/training/pages/TrainingCataloguePage'
 import { MyTrainingPage } from '@/features/hr/training/pages/MyTrainingPage'
 import { TeamTrainingPage } from '@/features/hr/training/pages/TeamTrainingPage'
@@ -182,9 +183,9 @@ export const router = createBrowserRouter([
               { path: 'employees/import', element: <EmployeeImportPage /> },
               { path: 'employees/:employeeId', element: <EmployeeProfilePage /> },
               { path: 'employees/:employeeId/edit', element: <EmployeeFormPage /> },
-              { path: 'appraisals/:appraisalId', element: <AppraisalReviewPage /> },
               { path: 'appraisal-templates', element: <AppraisalTemplateListPage /> },
               { path: 'appraisal-templates/:templateId', element: <AppraisalTemplateReviewPage /> },
+              { path: 'employees/:employeeId/appraisals/new', element: <NewAppraisalPage /> },
               { path: 'employees/:employeeId/contracts/renew', element: <ContractRenewPage /> },
               { path: 'employees/:employeeId/contracts/terminate', element: <ContractTerminatePage /> },
               { path: 'offboarding', element: <OffboardingListPage /> },
@@ -248,6 +249,14 @@ export const router = createBrowserRouter([
               { path: 'me', element: <MyTrainingPage /> },
               { path: 'team', element: <TeamTrainingPage /> },
             ],
+          },
+          {
+            // Outside the HR_MODULE_ROLES gate (2026-09-24): the Department
+            // Head scores here, and scorers are not HR roles. Same URL as
+            // before so existing notification links keep working; the
+            // appraisals read rule is what actually scopes access.
+            path: 'hr/appraisals/:appraisalId',
+            element: <AppraisalReviewPage />,
           },
           {
             // Positions Master is org-wide infrastructure (positions.read = all

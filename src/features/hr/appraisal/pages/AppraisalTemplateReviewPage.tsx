@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Check } from 'lucide-react'
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Spinner } from '@/components/ui'
 import { PermissionGuard, EmptyState } from '@/components/shared'
+import { TEMPLATE_STATUS_LABELS, TEMPLATE_STATUS_VARIANT } from '../templateStatus'
 import { AppraisalTemplateReviewPanel } from '@/features/hr/components/appraisal'
 import { useToast } from '@/hooks'
 import { COLLECTIONS, PERMISSIONS } from '@/constants'
@@ -29,8 +30,9 @@ export function AppraisalTemplateReviewPage() {
     if (!templateId) return
     setApproving(true)
     try {
+      const wasStale = template?.templateStatus === 'stale'
       await appraisalService.approveAppraisalTemplate(templateId)
-      toast.success('Template approved. It is now live for new appraisals.')
+      toast.success(wasStale ? 'Template re-approved. It stays live.' : 'Approved — sent to the GM for sign-off.')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Could not approve that template.')
     } finally {
@@ -67,18 +69,23 @@ export function AppraisalTemplateReviewPage() {
         <CardHeader className="flex flex-col gap-2">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="neutral">v{template.version}</Badge>
-            <Badge variant={template.templateStatus === 'approved' ? 'success' : 'warning'}>
-              {template.templateStatus}
+            <Badge variant={TEMPLATE_STATUS_VARIANT[template.templateStatus]}>
+              {TEMPLATE_STATUS_LABELS[template.templateStatus]}
             </Badge>
             <Badge variant="neutral">{template.generationMethod}</Badge>
           </div>
           <CardTitle>{position?.title.en ?? template.positionId}</CardTitle>
         </CardHeader>
+        {template.templateStatus === 'pendingGm' && (
+          <CardContent className="text-sm text-muted-foreground">
+            HR-approved. Waiting for the GM to approve it from the dashboard's Pending Approvals before it goes live.
+          </CardContent>
+        )}
         {canApprove && (
           <CardContent className="flex justify-end">
             <PermissionGuard permission={PERMISSIONS.APPRAISAL_TEMPLATES_APPROVE}>
               <Button disabled={approving} onClick={() => void handleApprove()}>
-                {approving ? <Spinner className="h-4 w-4" /> : <><Check className="mr-1 h-4 w-4" aria-hidden="true" />Approve</>}
+                {approving ? <Spinner className="h-4 w-4" /> : <><Check className="mr-1 h-4 w-4" aria-hidden="true" />{template.templateStatus === 'stale' ? 'Re-approve' : 'Approve & send to GM'}</>}
               </Button>
             </PermissionGuard>
           </CardContent>

@@ -237,6 +237,13 @@ before(async () => {
 
     // --- Appraisal v2 ------------------------------------------------------
     seed('appraisals/on-a-cook', { employeeId: 'emp-cook', employeeDepartmentId: 'kitchen' }),
+    seed('appraisals/on-a-cashier', {
+      employeeId: 'emp-cashier',
+      employeeDepartmentId: 'cashier',
+      primaryScorerRoleId: 'finance',
+      status: 'draft',
+      dueDate: '2026-12-23',
+    }),
     seed('appraisals/on-a-cook/confidential/recommendation', { employeeId: 'emp-cook', finalScore: 52 }),
     seed('appraisals/on-the-hr-manager', { employeeId: 'emp-hr-manager', employeeDepartmentId: 'human_resources' }),
     seed('appraisals/on-the-hr-manager/confidential/recommendation', { employeeId: 'emp-hr-manager', finalScore: 48 }),
@@ -434,6 +441,32 @@ describe('appraisals — HR, or a department head over their own department', ()
 
   test('the subject has no self-read branch (§10 excludes them)', async () => {
     await assertDenied(STAFF, 'appraisals/on-a-cook')
+  })
+})
+
+describe('appraisals — the role-based primary scorer (2026-09-24)', () => {
+  test('the scoring role reads it from outside the subject department', async () => {
+    // Chief Accountant (finance) scores Cashier staff, a different department.
+    await assertAllowed(FINANCE, 'appraisals/on-a-cashier')
+    await assertDenied(BAR_ULU, 'appraisals/on-a-cashier')
+  })
+
+  test("the dashboard's scorer query is allowed only when scoped to the caller's own role", async () => {
+    const due = { orderBy: [['dueDate']] }
+    await assertListAllowed(FINANCE, 'appraisals', {
+      filters: [eq('primaryScorerRoleId', 'finance'), eq('status', 'draft')],
+      ...due,
+    })
+    await assertListDenied(FINANCE, 'appraisals', { filters: [eq('status', 'draft')], ...due }, 'no role scope')
+    await assertListDenied(BAR_ULU, 'appraisals', {
+      filters: [eq('primaryScorerRoleId', 'finance'), eq('status', 'draft')],
+      ...due,
+    })
+  })
+
+  test("HR's and GM's unscoped due-list query is allowed", async () => {
+    await assertListAllowed(HR, 'appraisals', { filters: [eq('status', 'draft')], orderBy: [['dueDate']] })
+    await assertListAllowed(GM, 'appraisals', { filters: [eq('status', 'draft')], orderBy: [['dueDate']] })
   })
 })
 

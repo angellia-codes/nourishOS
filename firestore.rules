@@ -398,7 +398,13 @@ service cloud.firestore {
           'restaurantManager', 'restaurantMaintenanceManager',
           'groupOperationalManager', 'groupBeverageManager',
           'finance', 'purchasing', 'security', 'engineering', 'marketing']) &&
-          resource.data.employeeDepartmentId == request.auth.token.departmentId)
+          resource.data.employeeDepartmentId == request.auth.token.departmentId) ||
+        // 2026-09-24 — role-based primary scorer (hr/appraisal/scorers.ts). A
+        // scorer can sit outside the subject's department (Chief Accountant →
+        // Cashier), so the department branch above does not cover them.
+        // Outlet is not checked here, matching the department branch; the
+        // callable enforces the outlet pin on submit.
+        resource.data.primaryScorerRoleId == request.auth.token.role
       );
       allow write: if false; // createAppraisal / submitPrimaryScores / submitSecondaryScores / acknowledgeAppraisal / reopenAppraisal / approval flow only
 

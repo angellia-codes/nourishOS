@@ -16,6 +16,7 @@ import {
 import { sendNotificationInternal } from '../../shared/notifications'
 import { computeFinalScore } from './scoring'
 import { fireAppraisalConsequences } from './consequences'
+import { canActAsPrimaryScorer } from './scorers'
 
 interface CriterionScoreInputPayload {
   criterionId: string
@@ -53,8 +54,10 @@ export const submitPrimaryScores = onCall({ region: REGION }, async (request) =>
     }
     const appraisal = snap.data()!
 
-    if (appraisal.primaryScorerUid !== user.uid) {
-      throw new AppError('permission-denied', 'Only the assigned primary scorer can submit this appraisal.')
+    // Role + outlet, not a single uid (scorers.ts) — any Dept Head holding the
+    // scoring role at the employee's outlet may score.
+    if (!canActAsPrimaryScorer(appraisal, { uid: user.uid, roleId: user.roleId, outletId: user.outletId })) {
+      throw new AppError('permission-denied', 'Only the scoring Department Head (or GM) can submit this appraisal.')
     }
     if (appraisal.status !== 'draft') {
       throw new AppError('failed-precondition', `This appraisal is already ${appraisal.status as string}.`)
@@ -81,6 +84,7 @@ export const submitPrimaryScores = onCall({ region: REGION }, async (request) =>
       criterionScores: mergedCriterionScores,
       primarySubmittedAt: FieldValue.serverTimestamp(),
       primarySubmittedBy: user.uid,
+      primaryScorerUid: user.uid,
       overallComment: overallComment?.trim() || null,
       ...updatedFields(user.uid),
     }
