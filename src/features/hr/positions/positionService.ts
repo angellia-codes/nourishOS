@@ -41,6 +41,11 @@ export function archivePosition(positionId: string): Promise<void> {
   return callFunction('archivePosition', { positionId })
 }
 
+/** Undo of archivePosition. Its appraisal templates stay archived. */
+export function restorePosition(positionId: string): Promise<void> {
+  return callFunction('restorePosition', { positionId })
+}
+
 export function setAppraisalScorer(positionId: string, appraisalScorerPositionId: string | null): Promise<void> {
   return callFunction('setAppraisalScorer', { positionId, appraisalScorerPositionId })
 }

@@ -9,6 +9,7 @@ import { fireAppraisalConsequences } from './consequences'
 
 export { generateAppraisalTemplate } from './generateAppraisalTemplate'
 export { approveAppraisalTemplate } from './approveAppraisalTemplate'
+export { archiveAppraisalTemplate, restoreAppraisalTemplate } from './archiveAppraisalTemplate'
 export { createAppraisal } from './createAppraisal'
 export { submitPrimaryScores } from './submitPrimaryScores'
 export { submitSecondaryScores } from './submitSecondaryScores'
@@ -96,6 +97,9 @@ registerApprovalResolvedHandler('appraisalTemplate', async (event) => {
     return
   }
   const template = snap.data()!
+  // Only a template still waiting on the GM moves — never one archived or
+  // re-edited in the meantime.
+  if (template.templateStatus !== 'pendingGm') return
   const approved = event.newStatus === 'approved'
 
   await ref.update({

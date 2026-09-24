@@ -29,6 +29,15 @@ export function approveAppraisalTemplate(templateId: string): Promise<void> {
   return callFunction('approveAppraisalTemplate', { templateId })
 }
 
+/** Soft delete — superAdmin/HR Manager. Blocked server-side while the template awaits the GM. */
+export function archiveAppraisalTemplate(templateId: string): Promise<void> {
+  return callFunction('archiveAppraisalTemplate', { templateId })
+}
+
+export function restoreAppraisalTemplate(templateId: string): Promise<{ templateStatus: string }> {
+  return callFunction('restoreAppraisalTemplate', { templateId })
+}
+
 export function getAppraisalTemplate(templateId: string): Promise<AppraisalTemplate | null> {
   return getDocument<AppraisalTemplate>(COLLECTIONS.APPRAISAL_TEMPLATES, templateId)
 }

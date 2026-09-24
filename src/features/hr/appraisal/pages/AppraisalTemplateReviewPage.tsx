@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Check } from 'lucide-react'
+import { Archive, ArrowLeft, Check, RotateCcw } from 'lucide-react'
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Spinner } from '@/components/ui'
 import { PermissionGuard, EmptyState } from '@/components/shared'
 import { TEMPLATE_STATUS_LABELS, TEMPLATE_STATUS_VARIANT } from '../templateStatus'
@@ -20,6 +20,7 @@ export function AppraisalTemplateReviewPage() {
   const { data: template, loading, error } = useFirestoreDoc<AppraisalTemplate>(COLLECTIONS.APPRAISAL_TEMPLATES, templateId)
   const [position, setPosition] = useState<Position | null>(null)
   const [approving, setApproving] = useState(false)
+  const [archiving, setArchiving] = useState(false)
 
   useEffect(() => {
     if (!template) return
@@ -37,6 +38,38 @@ export function AppraisalTemplateReviewPage() {
       toast.error(err instanceof Error ? err.message : 'Could not approve that template.')
     } finally {
       setApproving(false)
+    }
+  }
+
+  // Archive (2026-09-24) — soft delete, restorable from the Archived templates tab.
+  async function handleArchive() {
+    if (!templateId || !template) return
+    const warning =
+      template.templateStatus === 'approved' || template.templateStatus === 'stale'
+        ? 'Archive this LIVE template? No new appraisals can be created for this position until another template is approved. Appraisals already in progress are not affected.'
+        : 'Archive this template? You can restore it later from the Archived templates tab.'
+    if (!window.confirm(warning)) return
+    setArchiving(true)
+    try {
+      await appraisalService.archiveAppraisalTemplate(templateId)
+      toast.success('Template archived.')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not archive that template.')
+    } finally {
+      setArchiving(false)
+    }
+  }
+
+  async function handleRestore() {
+    if (!templateId) return
+    setArchiving(true)
+    try {
+      const { templateStatus } = await appraisalService.restoreAppraisalTemplate(templateId)
+      toast.success(`Template restored (${templateStatus}).`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not restore that template.')
+    } finally {
+      setArchiving(false)
     }
   }
 
@@ -81,13 +114,40 @@ export function AppraisalTemplateReviewPage() {
             HR-approved. Waiting for the GM to approve it from the dashboard's Pending Approvals before it goes live.
           </CardContent>
         )}
-        {canApprove && (
-          <CardContent className="flex justify-end">
+        {template.templateStatus !== 'pendingGm' && (
+          <CardContent className="flex flex-wrap justify-end gap-2">
             <PermissionGuard permission={PERMISSIONS.APPRAISAL_TEMPLATES_APPROVE}>
-              <Button disabled={approving} onClick={() => void handleApprove()}>
-                {approving ? <Spinner className="h-4 w-4" /> : <><Check className="mr-1 h-4 w-4" aria-hidden="true" />{template.templateStatus === 'stale' ? 'Re-approve' : 'Approve & send to GM'}</>}
-              </Button>
+              {template.templateStatus === 'archived' ? (
+                <Button variant="secondary" disabled={archiving} onClick={() => void handleRestore()}>
+                  {archiving ? (
+                    <Spinner className="h-4 w-4" />
+                  ) : (
+                    <>
+                      <RotateCcw className="mr-1 h-4 w-4" aria-hidden="true" />
+                      Restore
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <Button variant="secondary" disabled={archiving} onClick={() => void handleArchive()}>
+                  {archiving ? (
+                    <Spinner className="h-4 w-4" />
+                  ) : (
+                    <>
+                      <Archive className="mr-1 h-4 w-4" aria-hidden="true" />
+                      Archive
+                    </>
+                  )}
+                </Button>
+              )}
             </PermissionGuard>
+            {canApprove && (
+              <PermissionGuard permission={PERMISSIONS.APPRAISAL_TEMPLATES_APPROVE}>
+                <Button disabled={approving} onClick={() => void handleApprove()}>
+                  {approving ? <Spinner className="h-4 w-4" /> : <><Check className="mr-1 h-4 w-4" aria-hidden="true" />{template.templateStatus === 'stale' ? 'Re-approve' : 'Approve & send to GM'}</>}
+                </Button>
+              </PermissionGuard>
+            )}
           </CardContent>
         )}
       </Card>

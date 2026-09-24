@@ -47,6 +47,10 @@ export interface AppraisalTemplate extends BaseDocument {
   approvedAt: string | null
   approvalRequestId?: string | null
   gmApprovedAt?: string | null
+  /** Archive (2026-09-24): the status restoreAppraisalTemplate puts back. */
+  archivedFromStatus?: 'draft' | 'approved' | 'stale' | null
+  archivedAt?: string | null
+  archivedBy?: string | null
   version: number
 }
 

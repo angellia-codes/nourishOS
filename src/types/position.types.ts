@@ -66,6 +66,9 @@ export interface Position extends BaseDocument {
   effectiveDate: string | null
   sourceFileId: string | null
   isActive: boolean
+  /** Set by archivePosition, cleared by restorePosition (2026-09-24). */
+  archivedAt?: string | null
+  archivedBy?: string | null
 }
 
 /** Appraisal v2 §2.3 — mirrors functions/src/hr/positions/tierLadder.ts's LEVEL_TO_SCORER_MODEL. Keep in step. */

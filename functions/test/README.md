@@ -124,6 +124,7 @@ not in `npm test` and have no shared runner.
 | `emulator-callables.mjs` | Lost & Found, Incident Reports (routing, auto work order, investigation task), Daily Updates (carry-forward, duplicate-day guard). |
 | `emulator-scheduled.mjs` | `carryForwardDailyTasks`, `checkDailyTaskEscalations`, `checkLostFoundRetention`, `sendComplianceAlerts`, `sendDailyDigest`. |
 | `appraisal-v2-flow.mjs` | Appraisal v2 template generation, dual scoring, acknowledgement. |
+| `archive-restore-flow.mjs` | Archive / restore of positions and appraisal templates, including the pendingGm blocks and restore order. |
 | `checkpoint-flow.mjs` | Security patrol checkpoints. |
 | `communication-flow.mjs` | Employee Communication end to end. |
 | `payroll-flow.mjs` | Payroll batch import and the approval chain. |

@@ -6,7 +6,7 @@ import { emitEvent } from '../../shared/events'
 export { seedPositions } from './seedPositions'
 export { createPosition } from './createPosition'
 export { updatePosition } from './updatePosition'
-export { archivePosition } from './archivePosition'
+export { archivePosition, restorePosition } from './archivePosition'
 export { setAppraisalScorer } from './setAppraisalScorer'
 export { migrateEmployeePositions } from './migrateEmployeePositions'
 

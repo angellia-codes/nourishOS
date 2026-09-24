@@ -44,6 +44,8 @@ export {
 export {
   generateAppraisalTemplate,
   approveAppraisalTemplate,
+  archiveAppraisalTemplate,
+  restoreAppraisalTemplate,
   createAppraisal,
   submitPrimaryScores,
   submitSecondaryScores,
@@ -60,6 +62,7 @@ export {
   createPosition,
   updatePosition,
   archivePosition,
+  restorePosition,
   setAppraisalScorer,
   migrateEmployeePositions,
 } from './hr/positions'
