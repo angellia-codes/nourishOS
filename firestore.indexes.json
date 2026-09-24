@@ -395,6 +395,20 @@
       ]
     },
     {
+      "collectionGroup": "appraisalTemplates",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "positionId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "version",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "files",
       "queryScope": "COLLECTION",
       "fields": [
