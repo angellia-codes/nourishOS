@@ -14,7 +14,10 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "dev:portal": "vite --config vite.portal.config.ts",
     "build:portal": "tsc -p portal/tsconfig.json && vite build --config vite.portal.config.ts",
-    "dev:portal:emulator": "vite --config vite.portal.config.ts --mode emulator"
+    "dev:portal:emulator": "vite --config vite.portal.config.ts --mode emulator",
+    "dev:welcome": "vite --config vite.welcome.config.ts",
+    "build:welcome": "tsc -p welcome/tsconfig.json && vite build --config vite.welcome.config.ts",
+    "dev:welcome:emulator": "vite --config vite.welcome.config.ts --mode emulator"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.0",

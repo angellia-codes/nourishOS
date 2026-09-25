@@ -3,10 +3,12 @@ import type {
   BloodType,
   ContractType,
   DisciplinaryType,
+  EmergencyContactRelationship,
   EmployeeActivityType,
   EmploymentStatus,
   Gender,
   MaritalStatus,
+  OnboardingStatus,
   ProbationStatus,
   Religion,
   TaxStatus,
@@ -64,6 +66,11 @@ export interface Employee extends BaseDocument {
   domicileAddress?: string | null
   emergencyContactName?: string | null
   emergencyContactPhone?: string | null
+  /** welcome-portal.md §4.2 — collected by the hire, not by HR. */
+  emergencyContactAddress?: string | null
+  emergencyContactRelationship?: EmergencyContactRelationship | null
+  /** Free text, required only when emergencyContactRelationship === 'other'. */
+  emergencyContactRelationshipOther?: string | null
   motherName?: string | null
   /** BPJS Ketenagakerjaan membership number. */
   bpjsTk?: string | null
@@ -104,6 +111,22 @@ export interface Employee extends BaseDocument {
   resignationReason?: string | null
   /** Actual final working day — distinct from resignationDate (when the resignation was recorded). employee-onboarding-exit-checklist.md §3. */
   lastWorkingDate?: string | null
+
+  // Welcome Portal — welcome-portal.md §4.1/§4.2. Files the hire uploaded of
+  // themselves; `files/{id}` ids from the shared File Storage engine, not
+  // Storage paths. Read-only to the hire once submitted.
+  photoFileId?: string | null
+  ktpFileId?: string | null
+  kkFileId?: string | null
+  supportingFileIds?: string[] | null
+
+  // Welcome Portal status — welcome-portal.md §3.4. Every one of these is
+  // read-only to the hire and rejected by the submit whitelist.
+  onboardingStatus?: OnboardingStatus | null
+  onboardingSubmittedAt?: string | null
+  onboardingVerifiedAt?: string | null
+  onboardingVerifiedBy?: string | null
+  onboardingRejectionReason?: string | null
 
   /** Overrides BaseDocument's generic status: 'active' | 'inactive'. */
   status: 'active' | 'inactive'

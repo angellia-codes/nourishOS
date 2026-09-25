@@ -24,8 +24,10 @@ import {
   BLOOD_TYPE_LABELS,
   CONTRACT_TYPE_LABELS,
   DISCIPLINARY_TYPE_LABELS,
+  EMERGENCY_CONTACT_RELATIONSHIP_LABELS,
   EMPLOYMENT_STATUS_LABELS,
   MARITAL_STATUS_LABELS,
+  ONBOARDING_STATUS_LABELS,
   TAX_STATUS_LABELS,
   TSHIRT_SIZE_LABELS,
   type BloodType,
@@ -529,6 +531,29 @@ export function EmployeeProfilePage() {
         </div>
       </div>
 
+      {/*
+        welcome-portal.md §3.4 — only rendered once a welcome link has been
+        sent, so it stays invisible for everyone hired before this module and
+        for anyone HR onboards on paper.
+      */}
+      {employee.onboardingStatus ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Onboarding</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+            <Field label="Status" value={ONBOARDING_STATUS_LABELS[employee.onboardingStatus]} />
+            <Field label="Submitted" value={formatIsoDate(employee.onboardingSubmittedAt?.slice(0, 10))} />
+            <Field label="Verified" value={formatIsoDate(employee.onboardingVerifiedAt?.slice(0, 10))} />
+            {employee.onboardingRejectionReason ? (
+              <div className="col-span-2 sm:col-span-3">
+                <Field label="Sent back for correction" value={employee.onboardingRejectionReason} />
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+      ) : null}
+
       {/* Personal */}
       <Card>
         <CardHeader>
@@ -577,6 +602,18 @@ export function EmployeeProfilePage() {
           <Field label="Domicile address" value={employee.domicileAddress} />
           <Field label="Emergency contact" value={employee.emergencyContactName} />
           <Field label="Emergency phone" value={employee.emergencyContactPhone} />
+          {/* welcome-portal.md §4.2 — collected through the welcome link. */}
+          <Field
+            label="Emergency relationship"
+            value={
+              employee.emergencyContactRelationship === 'other'
+                ? employee.emergencyContactRelationshipOther || 'Other'
+                : employee.emergencyContactRelationship
+                  ? EMERGENCY_CONTACT_RELATIONSHIP_LABELS[employee.emergencyContactRelationship]
+                  : null
+            }
+          />
+          <Field label="Emergency address" value={employee.emergencyContactAddress} />
         </CardContent>
       </Card>
 

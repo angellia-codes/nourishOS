@@ -44,6 +44,9 @@ export const COLLECTIONS = {
   DISC_RESULTS: 'discResults',
   ONBOARDING_CHECKLISTS: 'onboardingChecklists',
   OFFBOARDING_CHECKLISTS: 'offboardingChecklists',
+  // welcome-portal.md §4.4 — the New-Hire Welcome Portal's two collections.
+  ONBOARDING_INVITES: 'onboardingInvites',
+  WELCOME_CONTENT: 'welcomeContent',
   EXIT_INTERVIEWS: 'exitInterviews',
 
   APPROVAL_WORKFLOWS: 'approvalWorkflows',

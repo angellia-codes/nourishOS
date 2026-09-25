@@ -5,6 +5,7 @@ import type {
   BloodType,
   ContractType,
   DisciplinaryType,
+  EmergencyContactRelationship,
   EmploymentStatus,
   Gender,
   MaritalStatus,
@@ -34,6 +35,9 @@ export interface CreateEmployeeInput {
   domicileAddress?: string
   emergencyContactName?: string
   emergencyContactPhone?: string
+  emergencyContactAddress?: string
+  emergencyContactRelationship?: EmergencyContactRelationship
+  emergencyContactRelationshipOther?: string
   motherName?: string
   bpjsTk?: string
   bpjsKesehatan?: string

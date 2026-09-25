@@ -1,0 +1,492 @@
+/*
+ * welcome-portal.md §9 — the scoped Basalt exception.
+ *
+ * Recorded as v1.2 in docs/2026-08-11-nourishos-design-system.md's change log
+ * so this reads as a deliberate, versioned departure rather than drift. It
+ * applies to welcome/ and nowhere else: a new hire sees these screens a
+ * handful of times, not fifty times a shift, which is the whole argument for
+ * spending motion and translucency here and rationing both everywhere else.
+ *
+ * Every token lives in this file. Components reference var(--w-*) and never a
+ * hex value, so re-tinting the app is one edit here.
+ *
+ * Held constraints, not negotiable (§9):
+ *  - WCAG AA on all text over glass — every glass surface carrying text uses a
+ *    dark tint at >=55% opacity, which is what --w-glass and --w-glass-strong
+ *    are set to.
+ *  - prefers-reduced-motion replaces all movement with opacity fades.
+ *  - prefers-reduced-transparency, and browsers without backdrop-filter, fall
+ *    back to a solid tint.
+ *  - Blur 12-16px on mobile, at most three blurred layers in any viewport.
+ *  - Animate only transform and opacity; pause the drift when the tab hides.
+ */
+
+:root {
+  /* Pandan, the Basalt primary, extended with the brand deck's deep teal,
+     amber and olive. This app is dark-first: it is read on a phone, often in
+     the evening, and the glass needs something to sit over. */
+  --w-pandan: #0e4f47;
+  --w-teal: #0b332f;
+  --w-teal-deep: #082420;
+  --w-amber: #ffc98a;
+  --w-amber-dim: #e0a968;
+  --w-olive: #3a4a22;
+  --w-cream: #f4efe4;
+  --w-cream-soft: rgba(244, 239, 228, 0.72);
+  --w-cream-faint: rgba(244, 239, 228, 0.45);
+  --w-ink: #14201d;
+
+  /* 0.6 alpha over the gradient keeps cream text above 4.5:1 everywhere the
+     background drifts. Do not lower it without re-checking contrast. */
+  --w-glass: rgba(11, 40, 36, 0.6);
+  --w-glass-strong: rgba(9, 42, 38, 0.82);
+  --w-glass-border: rgba(255, 255, 255, 0.16);
+  --w-glass-blur: 14px;
+
+  --w-focus: #ffc98a;
+  --w-error: #ffb4a8;
+  --w-radius: 16px;
+  --w-radius-lg: 20px;
+
+  /* 48px touch targets and 16px inputs are Basalt constraints this app keeps. */
+  --w-control-height: 48px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Archivo', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  color: var(--w-cream);
+  background:
+    radial-gradient(ellipse at 18% -8%, rgba(255, 201, 138, 0.14), transparent 55%),
+    radial-gradient(ellipse at 88% 112%, rgba(58, 74, 34, 0.28), transparent 52%),
+    linear-gradient(160deg, var(--w-pandan) 0%, var(--w-teal) 55%, var(--w-teal-deep) 100%);
+  background-size: 220% 220%, 220% 220%, 100% 100%;
+  background-position: 0% 0%, 100% 100%, 0 0;
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* The slow drift. Applied by a class the app removes when the tab is hidden —
+   an animation nobody is looking at is pure battery. */
+body.w-drift {
+  animation: w-drift 28s ease-in-out infinite alternate;
+}
+
+@keyframes w-drift {
+  0% {
+    background-position: 0% 0%, 100% 100%, 0 0;
+  }
+  100% {
+    background-position: 28% 18%, 72% 82%, 0 0;
+  }
+}
+
+/* ---- Surfaces ---- */
+
+.w-glass {
+  background: var(--w-glass);
+  border: 1px solid var(--w-glass-border);
+  border-radius: var(--w-radius);
+  backdrop-filter: blur(var(--w-glass-blur)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--w-glass-blur)) saturate(140%);
+  box-shadow: 0 24px 48px -24px rgba(0, 0, 0, 0.55);
+}
+
+/* No backdrop-filter (older Firefox, some Android webviews): a translucent
+   panel with no blur behind it is unreadable over a gradient, so go solid. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .w-glass {
+    background: var(--w-glass-strong);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .w-glass {
+    background: var(--w-glass-strong);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* ---- Controls ---- */
+
+.w-control {
+  width: 100%;
+  min-height: var(--w-control-height);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--w-cream);
+  padding: 12px 14px;
+  /* 16px exactly: anything smaller and iOS Safari zooms the page on focus. */
+  font-size: 16px;
+  font-family: inherit;
+}
+
+.w-control::placeholder {
+  color: var(--w-cream-faint);
+}
+
+.w-control:focus-visible,
+.w-focusable:focus-visible {
+  outline: 2px solid var(--w-focus);
+  outline-offset: 2px;
+}
+
+/* Numeric identity fields — tabular figures so a 16-digit NIK is checkable
+   digit by digit against the card in the hire's hand (§7.1). */
+.w-mono {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+/* Native select needs its own arrow once the UA appearance is dropped. */
+.w-select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--w-cream-soft) 50%),
+    linear-gradient(135deg, var(--w-cream-soft) 50%, transparent 50%);
+  background-position:
+    calc(100% - 20px) calc(50% + 2px),
+    calc(100% - 14px) calc(50% + 2px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 40px;
+}
+
+/* A native <option> inherits the OS popup, not the page — force a readable
+   pair or the list is cream-on-white on most Android builds. */
+.w-select option {
+  background: var(--w-teal-deep);
+  color: var(--w-cream);
+}
+
+/* ---- Motion ---- */
+
+.w-rise {
+  opacity: 0;
+  transform: translateY(10px);
+  animation: w-rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  /* Set --i on each child for the staggered section reveal (§9). */
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+
+@keyframes w-rise {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* One switch for every movement in the app. Anything animated must degrade to
+   an opacity fade here, not merely run faster. */
+@media (prefers-reduced-motion: reduce) {
+  body.w-drift {
+    animation: none;
+  }
+
+  .w-rise {
+    animation: w-fade 0.22s ease forwards;
+    transform: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.22s !important;
+    animation-delay: 0s !important;
+    transition-duration: 0.22s !important;
+    transition-delay: 0s !important;
+    transition-property: opacity !important;
+  }
+}
+
+@keyframes w-fade {
+  to {
+    opacity: 1;
+  }
+}
+
+/* ---- Envelope reveal (§7.2) ---- */
+
+.w-stage {
+  position: relative;
+  width: min(88vw, 340px);
+  aspect-ratio: 3 / 2;
+  perspective: 1400px;
+  margin: 12px auto 0;
+}
+
+.w-envelope {
+  all: unset;
+  cursor: pointer;
+  position: absolute;
+  inset: 0;
+  display: block;
+  border-radius: var(--w-radius);
+  transform-style: preserve-3d;
+}
+
+.w-envelope:focus-visible {
+  outline: 3px solid var(--w-focus);
+  outline-offset: 5px;
+  border-radius: 18px;
+}
+
+.w-env-shadow {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -14px;
+  height: 22px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.4), transparent 70%);
+  filter: blur(3px);
+  transition: opacity 0.5s ease;
+}
+
+.w-env-back {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--w-radius);
+  overflow: hidden;
+  background: linear-gradient(155deg, #c79a5e 0%, #b7864a 55%, #9c6f39 100%);
+  box-shadow: 0 20px 34px -16px rgba(0, 0, 0, 0.6);
+}
+
+.w-env-pocket {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 28%;
+  background: linear-gradient(160deg, #d8ae73, #b7864a);
+  clip-path: polygon(0 0, 50% 64%, 100% 0, 100% 100%, 0 100%);
+  border-radius: 0 0 var(--w-radius) var(--w-radius);
+  z-index: 3;
+  transition: opacity 0.35s ease 0.25s;
+}
+
+.w-env-flap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 60%;
+  background: linear-gradient(200deg, #e2b87f, #c0894a);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  transform-origin: top center;
+  transition:
+    transform 0.6s cubic-bezier(0.5, 0, 0.2, 1),
+    opacity 0.5s ease 0.1s;
+  z-index: 4;
+  border-radius: var(--w-radius) var(--w-radius) 0 0;
+}
+
+.w-env-seal {
+  position: absolute;
+  top: 32%;
+  left: 50%;
+  translate: -50% -50%;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--w-pandan);
+  color: var(--w-amber);
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  z-index: 5;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+  transition:
+    transform 0.5s cubic-bezier(0.5, 0, 0.2, 1),
+    opacity 0.4s ease;
+}
+
+.w-stage.is-open .w-env-flap {
+  transform: rotateX(-172deg);
+  opacity: 0;
+}
+
+.w-stage.is-open .w-env-seal {
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+}
+
+.w-stage.is-open .w-env-back,
+.w-stage.is-open .w-env-pocket {
+  opacity: 0;
+}
+
+.w-stage.is-open .w-env-shadow {
+  opacity: 0.18;
+}
+
+/* The ticket. Notches and a perforation line, so it reads as something torn
+   from a book rather than as another card. */
+.w-ticket {
+  position: absolute;
+  left: 50%;
+  bottom: 4%;
+  width: 94%;
+  max-width: 340px;
+  translate: -50% 16%;
+  scale: 0.7;
+  opacity: 0;
+  z-index: 1;
+  pointer-events: none;
+  transition:
+    translate 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) 0.32s,
+    scale 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) 0.32s,
+    opacity 0.4s ease 0.32s;
+  border-radius: var(--w-radius-lg);
+  padding: 30px 26px 24px 30px;
+  background: var(--w-glass);
+  border: 1px solid var(--w-glass-border);
+  backdrop-filter: blur(var(--w-glass-blur)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--w-glass-blur)) saturate(140%);
+  box-shadow: 0 32px 64px -22px rgba(0, 0, 0, 0.6);
+  isolation: isolate;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .w-ticket {
+    background: var(--w-glass-strong);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .w-ticket {
+    background: var(--w-glass-strong);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+.w-stage.is-open .w-ticket {
+  translate: -50% -8%;
+  scale: 1;
+  opacity: 1;
+  z-index: 6;
+  pointer-events: auto;
+}
+
+.w-ticket::before,
+.w-ticket::after {
+  content: '';
+  position: absolute;
+  left: -1px;
+  width: 18px;
+  height: 18px;
+  background: var(--w-teal-deep);
+  border-radius: 50%;
+}
+
+.w-ticket::before {
+  top: -9px;
+}
+
+.w-ticket::after {
+  bottom: -9px;
+}
+
+.w-ticket-teeth {
+  position: absolute;
+  left: 9px;
+  top: 12px;
+  bottom: 12px;
+  border-left: 1.5px dashed rgba(255, 255, 255, 0.28);
+}
+
+/* Word-by-word headline. --i is the word index. */
+.w-word {
+  display: inline-block;
+  opacity: 0;
+  translate: 0 10px;
+  animation: w-word-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation-delay: calc(var(--i) * 70ms + 460ms);
+}
+
+@keyframes w-word-in {
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+.w-chip-in {
+  opacity: 0;
+  translate: 0 8px;
+  animation: w-word-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation-delay: 720ms;
+}
+
+.w-note-in {
+  opacity: 0;
+  translate: 0 8px;
+  animation: w-word-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation-delay: 840ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .w-stage.is-open .w-env-flap,
+  .w-stage.is-open .w-env-seal,
+  .w-stage.is-open .w-ticket {
+    transform: none !important;
+    translate: none !important;
+    scale: 1 !important;
+  }
+
+  .w-word,
+  .w-chip-in,
+  .w-note-in {
+    animation: none !important;
+    opacity: 1 !important;
+    translate: none !important;
+  }
+}
+
+/* ---- Drawn checkmark (§9 motion inventory) ---- */
+
+.w-check path {
+  stroke-dasharray: 32;
+  stroke-dashoffset: 32;
+  animation: w-draw 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) 0.15s forwards;
+}
+
+@keyframes w-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .w-check path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ---- Utilities ---- */
+
+.w-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

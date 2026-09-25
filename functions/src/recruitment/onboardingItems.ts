@@ -48,4 +48,10 @@ export const ONBOARDING_DOCUMENT_ITEMS: readonly OnboardingItemTemplate[] = [
   { itemNumber: 28, label: 'Surat Peringatan (if any)', tier: 'process', treatment: 'notDigitized' },
   { itemNumber: 29, label: 'SK Mutasi (if any)', tier: 'process', treatment: 'notDigitized' },
   { itemNumber: 30, label: 'Source of Recruitment', tier: 'process', treatment: 'verify', linkedRecordType: 'candidate' },
+  // Not on the paper F01 — welcome-portal.md §3.3 (v1.5) makes sending the
+  // welcome link a required onboarding step. Marked `received` by
+  // issueWelcomeInvite, never by hand. 31 because 9 and 16 are retired
+  // numbers, not free slots: reusing one would make a historical checklist
+  // ambiguous.
+  { itemNumber: 31, label: 'Welcome link sent to new hire', tier: 'mandatory', treatment: 'generate', linkedRecordType: 'employee' },
 ]

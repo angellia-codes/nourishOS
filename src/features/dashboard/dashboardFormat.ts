@@ -28,6 +28,12 @@ export const APPROVAL_RESOURCES: Record<string, { label: string; routeFor?: (res
     label: 'Attendance Period',
     routeFor: (id) => `/hr/attendance/periods/${id}`,
   },
+  // welcome-portal.md §3.3 step 7 — the resourceId is the employee, so the
+  // row links straight to the profile HR is checking the submission against.
+  'hr/onboardingVerification': {
+    label: 'Onboarding Verification',
+    routeFor: (id) => `/hr/employees/${id}`,
+  },
   'hr/payrollBatch': { label: 'Payroll Batch', routeFor: (id) => `/hr/payroll/batches/${id}` },
   'hr/position': { label: 'Position', routeFor: (id) => `/positions/${id}` },
   'hr/employeeCommunication': {

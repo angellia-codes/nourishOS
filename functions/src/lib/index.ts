@@ -20,6 +20,13 @@ export {
   currentBusinessYear,
 } from './timestamps'
 export { allocateYearlyNumber } from './sequences'
+export {
+  issueMagicLink,
+  hashMagicToken,
+  magicTokensMatch,
+  isMagicTokenShape,
+  type IssuedMagicLink,
+} from './magicLink'
 export { ANTHROPIC_API_KEY } from './secrets'
 export { PERMISSIONS } from './permissions'
 export { haversineDistanceMeters } from './geo'

@@ -28,6 +28,7 @@ import {
   BLOOD_TYPES,
   MARITAL_STATUSES,
   TSHIRT_SIZES,
+  EMERGENCY_CONTACT_RELATIONSHIPS,
   type EmploymentStatus,
   type ContractType,
   type DisciplinaryType,
@@ -36,6 +37,7 @@ import {
   type BloodType,
   type MaritalStatus,
   type TshirtSize,
+  type EmergencyContactRelationship,
   allocateEmployeeNumber,
   assertContactFieldsUnique,
   calculateProbationEndDate,
@@ -63,6 +65,10 @@ export interface CreateEmployeeInput {
   domicileAddress?: string
   emergencyContactName?: string
   emergencyContactPhone?: string
+  /** welcome-portal.md §4.2 — normally filled by the hire, editable by HR. */
+  emergencyContactAddress?: string
+  emergencyContactRelationship?: EmergencyContactRelationship
+  emergencyContactRelationshipOther?: string
   motherName?: string
   bpjsTk?: string
   bpjsKesehatan?: string
@@ -169,6 +175,12 @@ export async function createEmployeeInternal(
   if (input.tshirtSize && !TSHIRT_SIZES.includes(input.tshirtSize)) {
     throw new AppError('invalid-argument', `tshirtSize must be one of: ${TSHIRT_SIZES.join(', ')}.`)
   }
+  if (input.emergencyContactRelationship && !EMERGENCY_CONTACT_RELATIONSHIPS.includes(input.emergencyContactRelationship)) {
+    throw new AppError(
+      'invalid-argument',
+      `emergencyContactRelationship must be one of: ${EMERGENCY_CONTACT_RELATIONSHIPS.join(', ')}.`,
+    )
+  }
   const disciplinaryStartPeriod = input.disciplinaryStartPeriod
     ? requireIsoDate(input.disciplinaryStartPeriod, 'disciplinaryStartPeriod')
     : null
@@ -209,6 +221,9 @@ export async function createEmployeeInternal(
     domicileAddress: input.domicileAddress?.trim() || null,
     emergencyContactName: input.emergencyContactName?.trim() || null,
     emergencyContactPhone: input.emergencyContactPhone?.trim() || null,
+    emergencyContactAddress: input.emergencyContactAddress?.trim() || null,
+    emergencyContactRelationship: input.emergencyContactRelationship ?? null,
+    emergencyContactRelationshipOther: input.emergencyContactRelationshipOther?.trim() || null,
     motherName: input.motherName?.trim() || null,
     bpjsTk: input.bpjsTk?.trim() || null,
     bpjsKesehatan: input.bpjsKesehatan?.trim() || null,
@@ -235,6 +250,16 @@ export async function createEmployeeInternal(
     recognitionPeriod,
     resignationDate: null,
     resignationReason: null,
+    // welcome-portal.md §4.1 — the hire fills these in from the magic link.
+    photoFileId: null,
+    ktpFileId: null,
+    kkFileId: null,
+    supportingFileIds: [],
+    onboardingStatus: null,
+    onboardingSubmittedAt: null,
+    onboardingVerifiedAt: null,
+    onboardingVerifiedBy: null,
+    onboardingRejectionReason: null,
     ...newDocumentBaseFields(user.uid, 'active'),
   })
 

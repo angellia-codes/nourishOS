@@ -93,6 +93,24 @@ export {
   remindAttendanceImport,
 } from './hr/attendance'
 
+// ---- HR: New-Hire Welcome Portal ----
+// welcome-portal.md — a magic-link app the hire opens from WhatsApp. The
+// second block is unauthenticated and token-authenticated, like the Candidate
+// Portal below: resolveWelcomeInvite is what requireActiveUser is elsewhere.
+export {
+  issueWelcomeInvite,
+  reissueWelcomeInvite,
+  revokeWelcomeInvite,
+  updateWelcomeContent,
+  publishWelcomeContent,
+  // Welcome Portal — unauthenticated, token-authenticated.
+  getWelcomeSession,
+  saveWelcomeDraft,
+  uploadWelcomeDocument,
+  submitWelcomeForm,
+  getWelcomeContent,
+} from './hr/welcome'
+
 // ---- HR: Employee Engagement ----
 export { createEngagement, updateEngagement } from './hr/engagement'
 

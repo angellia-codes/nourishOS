@@ -16,6 +16,6 @@ export default defineConfig({
     // only ignores node_modules and .git by default). A temp file that vanishes
     // between readdir and lstat makes chokidar emit an unhandled error event,
     // which takes the whole dev server down with UNKNOWN: lstat '.gstack/...'.
-    watch: { ignored: ['**/.gstack/**'] },
+    watch: { ignored: ['**/.gstack/**', '**/graphify-out/**'] },
   },
 })

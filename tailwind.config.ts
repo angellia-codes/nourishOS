@@ -2,7 +2,16 @@ import type { Config } from 'tailwindcss'
 
 export default {
   darkMode: ['class'],
-  content: ['./index.html', './src/**/*.{ts,tsx}', './portal/index.html', './portal/src/**/*.{ts,tsx}'],
+  // Three apps share this config: the internal SPA, the Candidate Portal, and
+  // the New-Hire Welcome Portal (welcome-portal.md §3.1).
+  content: [
+    './index.html',
+    './src/**/*.{ts,tsx}',
+    './portal/index.html',
+    './portal/src/**/*.{ts,tsx}',
+    './welcome/index.html',
+    './welcome/src/**/*.{ts,tsx}',
+  ],
   theme: {
     container: {
       center: true,

@@ -51,6 +51,13 @@ Deviates from `employment-application-form.md` §4 on HR's explicit request, not
 
 Also: a candidate can no longer see recruitment-pipeline progress once their application (employment form + DISC) is submitted. The portal's "My application" header link and the Done page's "Track my application" button are both gone — `/status` is reachable only via a candidate's own WhatsApp resume link (`ApplyPage.tsx`'s pre-existing token redirect), which is also the resume-a-draft flow and had to stay. `getApplicationStatus` now omits `stage`/`stageLabel`/`stageIndex`/`stages`/`closed` from its response entirely once `submittedAt` is set — enforced server-side, not just hidden in the UI, since the callable is unauthenticated and its JSON is inspectable. `StatusPage.tsx` shows a plain "submitted, thank you" message in that case instead of the stage list; the pre-submission "Still to do" / Continue Application card is unchanged.
 
+## Onboarding tab gained "Send welcome link" (2026-09-25)
+
+The New-Hire Welcome Portal (`docs/modules/welcome-portal.md`, module detail in `src/features/hr/CLAUDE.md`) hangs off this module's Onboarding tab. Two things changed here:
+
+- **`ONBOARDING_DOCUMENT_ITEMS` gained item 31**, "Welcome link sent to new hire", tier `mandatory`, treatment `generate` — not on the paper F01, added because welcome-portal.md §3.3 (v1.5) makes sending the link a required onboarding step. **31, not 9 or 16**: those are retired numbers, and reusing one would make a historical checklist ambiguous. `issueWelcomeInvite` marks it received using the array-rewrite pattern `createEmployeeInternal` already uses for item 19; `reissueWelcomeInvite` deliberately does not touch it again. **A checklist created before this shipped has no row 31**, because each document holds a frozen copy of the array — so an in-progress hire can still close without it. That is correct, not a gap.
+- **`OnboardingListPage.tsx` gained a Send / Resend welcome link button** beside the existing Open, gated on `employees.invite`. It is **disabled until `row.employeeId` exists** — reaching ST-06 creates this checklist but deliberately *not* the employee record (`candidates.ts:279-284`), and the welcome link writes into that record, so HR has to click "Create employee record" on the checklist first. `issueWelcomeInvite` enforces the same precondition server-side. The button's label switches on a new denormalised `welcomeInviteSentAt` on the checklist document — `onboardingInvites` is `allow read: if false` for every client, so there is nothing to read otherwise.
+
 ## Running it
 
 ```

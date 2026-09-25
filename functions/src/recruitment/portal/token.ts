@@ -1,5 +1,14 @@
-import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
-import { db, COLLECTIONS, AppError, addDaysIso, todayIso, type AuthedUser } from '../../lib'
+import {
+  db,
+  COLLECTIONS,
+  AppError,
+  todayIso,
+  issueMagicLink,
+  hashMagicToken,
+  magicTokensMatch,
+  isMagicTokenShape,
+  type AuthedUser,
+} from '../../lib'
 import type { CandidateStage } from '../helpers'
 
 /**
@@ -7,6 +16,11 @@ import type { CandidateStage } from '../helpers'
  * candidates get NO Firebase Auth account. The application link is the whole
  * credential (a magic link), so this module is the only thing standing between
  * the public internet and a candidate's own record.
+ *
+ * The crypto itself now lives in lib/magicLink.ts, shared with the New-Hire
+ * Welcome Portal (welcome-portal.md §3.2). The field names below
+ * (`portalTokenHash`, `portalTokenExpiresAt`) stay exactly as they were —
+ * candidate documents already carry them, so this refactor moves code, not data.
  *
  * Rules therefore:
  *  - the raw token is returned exactly once, at startApplication, and never
@@ -29,23 +43,8 @@ export interface IssuedToken {
 }
 
 export function issueToken(): IssuedToken {
-  const token = randomBytes(32).toString('base64url')
-  return {
-    token,
-    portalTokenHash: hashToken(token),
-    portalTokenExpiresAt: addDaysIso(TOKEN_TTL_DAYS),
-  }
-}
-
-function hashToken(token: string): string {
-  return createHash('sha256').update(token).digest('hex')
-}
-
-/** Constant-time compare of two hex digests of equal length. */
-function hashesMatch(a: string, b: string): boolean {
-  const left = Buffer.from(a, 'hex')
-  const right = Buffer.from(b, 'hex')
-  return left.length === right.length && timingSafeEqual(left, right)
+  const { token, tokenHash, expiresAt } = issueMagicLink(TOKEN_TTL_DAYS)
+  return { token, portalTokenHash: tokenHash, portalTokenExpiresAt: expiresAt }
 }
 
 export interface ResolvedCandidate {
@@ -61,15 +60,15 @@ export interface ResolvedCandidate {
  * whether a given token exists, only that theirs does not work.
  */
 export async function resolveCandidateByToken(rawToken: unknown): Promise<ResolvedCandidate> {
-  const token = typeof rawToken === 'string' ? rawToken.trim() : ''
   // 32 bytes base64url is 43 chars; anything else cannot be one of ours.
-  if (token.length !== 43 || !/^[A-Za-z0-9_-]+$/.test(token)) {
+  if (!isMagicTokenShape(rawToken)) {
     throw new AppError('permission-denied', 'That application link is not valid. Ask HR for a new one.')
   }
+  const token = rawToken.trim()
 
   const snap = await db
     .collection(COLLECTIONS.CANDIDATES)
-    .where('portalTokenHash', '==', hashToken(token))
+    .where('portalTokenHash', '==', hashMagicToken(token))
     .limit(1)
     .get()
 
@@ -83,7 +82,7 @@ export async function resolveCandidateByToken(rawToken: unknown): Promise<Resolv
   // Belt and braces: the query already matched on the hash, but comparing it
   // again in constant time keeps the check in one place if the lookup ever
   // changes shape (e.g. token id in the URL plus a secret).
-  if (!hashesMatch(candidate.portalTokenHash as string, hashToken(token))) {
+  if (!magicTokensMatch(candidate.portalTokenHash as string, hashMagicToken(token))) {
     throw new AppError('permission-denied', 'That application link is not valid. Ask HR for a new one.')
   }
 

@@ -50,6 +50,8 @@ export const PERMISSION_MODULES = {
   EMPLOYEE_ENGAGEMENT: 'employeeEngagement',
   ATTENDANCE: 'attendance',
   EQUIPMENT: 'equipment',
+  /** welcome-portal.md §5.1 — curating the new-hire welcome content. */
+  WELCOME: 'welcome',
 } as const
 
 export type PermissionModule = (typeof PERMISSION_MODULES)[keyof typeof PERMISSION_MODULES]
@@ -78,6 +80,11 @@ export const PERMISSIONS = {
   // requireAnyPermission alongside EMPLOYEES_UPDATE, so hrManager and superAdmin
   // keep working with no change to their existing roles/{roleId} docs.
   EMPLOYEES_COMMUNICATE: permission(PERMISSION_MODULES.EMPLOYEES, 'communicate'),
+  // welcome-portal.md §5.1 — sending a new hire their welcome magic link.
+  // Deliberately its own string rather than employees.update: the link is a
+  // credential that lets an unauthenticated person write to an employee
+  // record, which is a narrower power than editing one from inside the app.
+  EMPLOYEES_INVITE: permission(PERMISSION_MODULES.EMPLOYEES, 'invite'),
 
   // exit-interview.md §4: same string gates both reading a record and
   // conducting/submitting one — HR Manager/Super Admin only, a harder wall
@@ -306,6 +313,11 @@ export const PERMISSIONS = {
   ATTENDANCE_VIEW_ALL_OUTLETS: permission(PERMISSION_MODULES.ATTENDANCE, 'viewAllOutlets'),
   ATTENDANCE_VIEW_OWN_OUTLET: permission(PERMISSION_MODULES.ATTENDANCE, 'viewOwnOutlet'),
   ATTENDANCE_EXPORT: permission(PERMISSION_MODULES.ATTENDANCE, ACTIONS.EXPORT),
+
+  // New-Hire Welcome Portal (welcome-portal.md §5.1). One string covers both
+  // editing a draft section and publishing it — the audience is the same
+  // person, and a draft nobody can publish is not a separable power.
+  WELCOME_MANAGE_CONTENT: permission(PERMISSION_MODULES.WELCOME, 'manageContent'),
 } as const
 
 export type PermissionString = (typeof PERMISSIONS)[keyof typeof PERMISSIONS]

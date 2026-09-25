@@ -13,6 +13,7 @@ import {
   CONTRACT_TYPE_LABELS,
   DISCIPLINARY_TYPE,
   DISCIPLINARY_TYPE_LABELS,
+  EMERGENCY_CONTACT_RELATIONSHIP_LABELS,
   EMPLOYMENT_STATUS,
   EMPLOYMENT_STATUS_LABELS,
   GENDERS,
@@ -29,6 +30,7 @@ import {
   type BloodType,
   type ContractType,
   type DisciplinaryType,
+  type EmergencyContactRelationship,
   type EmploymentStatus,
   type Gender,
   type MaritalStatus,
@@ -59,6 +61,9 @@ interface EmployeeFormState {
   domicileAddress: string
   emergencyContactName: string
   emergencyContactPhone: string
+  emergencyContactAddress: string
+  emergencyContactRelationship: EmergencyContactRelationship | ''
+  emergencyContactRelationshipOther: string
   motherName: string
   bpjsTk: string
   bpjsKesehatan: string
@@ -98,6 +103,9 @@ const EMPTY_FORM: EmployeeFormState = {
   domicileAddress: '',
   emergencyContactName: '',
   emergencyContactPhone: '',
+  emergencyContactAddress: '',
+  emergencyContactRelationship: '',
+  emergencyContactRelationshipOther: '',
   motherName: '',
   bpjsTk: '',
   bpjsKesehatan: '',
@@ -137,6 +145,9 @@ function toFormState(employee: Employee): EmployeeFormState {
     domicileAddress: employee.domicileAddress ?? '',
     emergencyContactName: employee.emergencyContactName ?? '',
     emergencyContactPhone: employee.emergencyContactPhone ?? '',
+    emergencyContactAddress: employee.emergencyContactAddress ?? '',
+    emergencyContactRelationship: (employee.emergencyContactRelationship as EmergencyContactRelationship | undefined) ?? '',
+    emergencyContactRelationshipOther: employee.emergencyContactRelationshipOther ?? '',
     motherName: employee.motherName ?? '',
     bpjsTk: employee.bpjsTk ?? '',
     bpjsKesehatan: employee.bpjsKesehatan ?? '',
@@ -313,6 +324,14 @@ export function EmployeeFormPage() {
       domicileAddress: form.domicileAddress.trim() || undefined,
       emergencyContactName: form.emergencyContactName.trim() || undefined,
       emergencyContactPhone: form.emergencyContactPhone.trim() || undefined,
+      emergencyContactAddress: form.emergencyContactAddress.trim() || undefined,
+      emergencyContactRelationship: form.emergencyContactRelationship || undefined,
+      // Only meaningful alongside "other"; sending it otherwise would leave a
+      // stale note on a record whose relationship has since been named.
+      emergencyContactRelationshipOther:
+        form.emergencyContactRelationship === 'other'
+          ? form.emergencyContactRelationshipOther.trim() || undefined
+          : undefined,
       motherName: form.motherName.trim() || undefined,
       bpjsTk: form.bpjsTk.trim() || undefined,
       bpjsKesehatan: form.bpjsKesehatan.trim() || undefined,
@@ -522,6 +541,43 @@ export function EmployeeFormPage() {
               type="tel"
               value={form.emergencyContactPhone}
               onChange={set('emergencyContactPhone')}
+            />
+          </div>
+          {/* welcome-portal.md §4.2 — normally filled in by the hire themselves
+              through the welcome link; editable here so HR can correct it at
+              verification, and so a hire who predates the portal is not stuck. */}
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="emergencyContactRelationship">Emergency contact relationship</Label>
+            <Select
+              id="emergencyContactRelationship"
+              value={form.emergencyContactRelationship}
+              onChange={set('emergencyContactRelationship')}
+            >
+              <option value="">Not set</option>
+              {Object.entries(EMERGENCY_CONTACT_RELATIONSHIP_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </Select>
+          </div>
+          {form.emergencyContactRelationship === 'other' ? (
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="emergencyContactRelationshipOther">Relationship (please specify)</Label>
+              <Input
+                id="emergencyContactRelationshipOther"
+                value={form.emergencyContactRelationshipOther}
+                onChange={set('emergencyContactRelationshipOther')}
+              />
+            </div>
+          ) : null}
+          <div className="flex flex-col gap-1.5 sm:col-span-2">
+            <Label htmlFor="emergencyContactAddress">Emergency contact address</Label>
+            <Textarea
+              id="emergencyContactAddress"
+              rows={2}
+              value={form.emergencyContactAddress}
+              onChange={set('emergencyContactAddress')}
             />
           </div>
         </CardContent>

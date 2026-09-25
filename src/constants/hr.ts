@@ -247,6 +247,50 @@ export const TSHIRT_SIZE_LABELS: Record<TshirtSize, string> = {
   XXL: 'XXL',
 }
 
+/** welcome-portal.md §4.2 — the emergency-contact relationship dropdown. */
+export const EMERGENCY_CONTACT_RELATIONSHIP = {
+  SPOUSE: 'spouse',
+  PARENTS: 'parents',
+  SIBLINGS: 'siblings',
+  CHILDREN: 'children',
+  FRIENDS: 'friends',
+  OTHER: 'other',
+} as const
+
+export type EmergencyContactRelationship =
+  (typeof EMERGENCY_CONTACT_RELATIONSHIP)[keyof typeof EMERGENCY_CONTACT_RELATIONSHIP]
+
+export const EMERGENCY_CONTACT_RELATIONSHIP_LABELS: Record<EmergencyContactRelationship, string> = {
+  spouse: 'Spouse',
+  parents: 'Parents',
+  siblings: 'Siblings',
+  children: 'Children',
+  friends: 'Friends',
+  other: 'Other',
+}
+
+/**
+ * welcome-portal.md §3.4 — where a new hire is in the welcome-link flow.
+ * `pendingVerification` is set by the Approval Engine the moment the
+ * verification request is created, so it is distinguishable from a submit
+ * that has not yet reached HR.
+ */
+export const ONBOARDING_STATUS = {
+  INVITED: 'invited',
+  SUBMITTED: 'submitted',
+  PENDING_VERIFICATION: 'pendingVerification',
+  VERIFIED: 'verified',
+} as const
+
+export type OnboardingStatus = (typeof ONBOARDING_STATUS)[keyof typeof ONBOARDING_STATUS]
+
+export const ONBOARDING_STATUS_LABELS: Record<OnboardingStatus, string> = {
+  invited: 'Link sent',
+  submitted: 'Submitted',
+  pendingVerification: 'Awaiting HR check',
+  verified: 'Verified',
+}
+
 export const TAX_STATUS_LABELS: Record<TaxStatus, string> = {
   TK0: 'TK0 — Single, 0 dependents',
   TK1: 'TK1 — Single, 1 dependent',

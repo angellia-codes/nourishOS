@@ -25,6 +25,13 @@ export const COLLECTIONS = {
   DISC_RESULTS: 'discResults',
   ONBOARDING_CHECKLISTS: 'onboardingChecklists',
   OFFBOARDING_CHECKLISTS: 'offboardingChecklists',
+  /**
+   * welcome-portal.md §4.4 — one magic-link invite per new hire. Holds the
+   * token hash and the hire's autosaved draft; never read by a client.
+   */
+  ONBOARDING_INVITES: 'onboardingInvites',
+  /** welcome-portal.md §4.4 / §7.4 — the four HR-editable welcome sections. */
+  WELCOME_CONTENT: 'welcomeContent',
   EXIT_INTERVIEWS: 'exitInterviews',
   CONTRACTS: 'contracts',
   // NOTE: 'performances' (DATABASE.md §13 / FIRESTORE_SCHEMA.md §13) is a loose

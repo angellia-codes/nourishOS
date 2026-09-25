@@ -398,6 +398,9 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'employees.delete',
     'employees.export',
     'employees.readSensitive',
+    // welcome-portal.md §5.1 — sending/re-sending a new hire's welcome link.
+    'employees.invite',
+    'welcome.manageContent',
     'recruitment.read',
     'recruitment.create',
     'recruitment.update',

@@ -26,7 +26,7 @@ export default defineConfig({
   server: {
     port: 5174,
     fs: { allow: [__dirname] },
-    watch: { ignored: ['**/.gstack/**'] },
+    watch: { ignored: ['**/.gstack/**', '**/graphify-out/**'] },
   },
   build: {
     outDir: path.resolve(__dirname, 'dist-portal'),

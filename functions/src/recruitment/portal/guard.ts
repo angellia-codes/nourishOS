@@ -36,14 +36,11 @@ export function requirePayloadUnderLimit(data: unknown): void {
 /**
  * Same canonicalisation candidates.ts uses for HR's duplicate check — 0811…,
  * +62811… and 62811… are one line, and an applicant who applies twice with
- * two spellings of their own number is not two applicants.
+ * two spellings of their own number is not two applicants. Definition moved to
+ * lib/phone.ts when the Welcome Portal needed it too; re-exported here so
+ * every existing import of this module keeps working.
  */
-export function normalizePhone(phone: string): string {
-  const digits = phone.replace(/\D/g, '')
-  if (digits.startsWith('00')) return digits.slice(2)
-  if (digits.startsWith('0')) return `62${digits.slice(1)}`
-  return digits
-}
+export { normalizePhone } from '../../lib/phone'
 
 export function normalizeEmail(email: unknown): string | null {
   if (typeof email !== 'string') return null

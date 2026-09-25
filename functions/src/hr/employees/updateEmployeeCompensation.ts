@@ -91,6 +91,55 @@ export async function setEmployeeCompensationInternal(
 }
 
 /**
+ * Bank details only — welcome-portal.md §4.3's "confidential/compensation",
+ * which resolves to the sub-collection that already exists here rather than a
+ * new one. Deliberately NOT setEmployeeCompensationInternal: that one requires
+ * `basicSalary` and writes the whole document, so a new hire submitting their
+ * BCA number through the welcome portal would wipe salary and every allowance.
+ *
+ * `merge: true` is the whole point of this function. The caller is responsible
+ * for authorization — submitWelcomeForm's magic-link token is what stands in
+ * for EMPLOYEES_READ_SENSITIVE there, and the hire can only ever reach their
+ * own record.
+ */
+export async function setEmployeeBankDetailsInternal(
+  actor: AuthedUser,
+  employeeId: string,
+  input: { bankAccountName: string; bankAccountNumber: string },
+): Promise<void> {
+  const compensationRef = db
+    .collection(COLLECTIONS.EMPLOYEES)
+    .doc(employeeId)
+    .collection('compensation')
+    .doc('current')
+
+  const newValues = {
+    // §4.2 — the server uppercases the account name; banks print it that way
+    // and HR should not have to normalise it by hand at verification.
+    bankAccountName: input.bankAccountName.trim().toUpperCase(),
+    bankAccountNumber: input.bankAccountNumber.trim(),
+  }
+
+  await compensationRef.set({ ...newValues, ...updatedFields(actor.uid) }, { merge: true })
+
+  // Same deliberate resourceType as setEmployeeCompensationInternal — keeps it
+  // out of getEmployeeAuditLog's Change History card.
+  await recordAuditEvent({
+    eventType: 'EmployeeBankDetailsUpdated',
+    category: 'HR',
+    module: 'hr',
+    resourceType: 'employeeCompensation',
+    resourceId: employeeId,
+    action: 'update',
+    user: actor,
+    // Deliberately no previousValues and no account number in newValues: this
+    // audit trail is readable by a wider set than the compensation document
+    // itself, so it records that the number changed, not what it is.
+    newValues: { bankAccountName: newValues.bankAccountName, bankAccountNumber: '[redacted]' },
+  })
+}
+
+/**
  * §12.1: salary/allowance/bank data, split into its own restricted
  * sub-collection (employees/{employeeId}/compensation/current) rather than
  * fields on the employee doc — firestore.rules can't hide individual fields,

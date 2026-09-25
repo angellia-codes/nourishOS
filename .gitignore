@@ -49,5 +49,8 @@ graphify-out/
 
 # Career portal bundle (vite.portal.config.ts)
 dist-portal
+
+# New-hire welcome portal bundle (vite.welcome.config.ts)
+dist-welcome
 .vercel
 .env*

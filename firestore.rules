@@ -184,6 +184,24 @@ service cloud.firestore {
       allow write: if false; // written by moveCandidateStage; edited via updateOnboardingItem / completeOnboarding
     }
 
+    // ---- HR: New-Hire Welcome Portal (welcome-portal.md §4.4) ----
+    // An invite document holds the SHA-256 of a live credential and the
+    // hire's unverified draft. No client has any business reading it — the
+    // main app learns "a link was sent" from welcomeInviteSentAt on the
+    // checklist above, and the welcome app itself has no Firestore session at
+    // all. Deny both halves rather than scoping the read.
+    match /onboardingInvites/{inviteId} {
+      allow read: if false;  // getWelcomeSession only, behind resolveWelcomeInvite
+      allow write: if false; // issueWelcomeInvite / saveWelcomeDraft / submitWelcomeForm
+    }
+
+    // The HR content editor at /documents/welcome reads drafts live; new hires
+    // get the published half through getWelcomeContent, never from here.
+    match /welcomeContent/{sectionId} {
+      allow read: if isHrOrAbove();
+      allow write: if false; // updateWelcomeContent / publishWelcomeContent
+    }
+
     // ---- HR: Offboarding & Exit ----
     // employee-onboarding-exit-checklist.md §5.
     match /offboardingChecklists/{checklistId} {

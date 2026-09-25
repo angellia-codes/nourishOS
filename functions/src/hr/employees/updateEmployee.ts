@@ -26,6 +26,7 @@ import {
   BLOOD_TYPES,
   MARITAL_STATUSES,
   TSHIRT_SIZES,
+  EMERGENCY_CONTACT_RELATIONSHIPS,
   type EmploymentStatus,
   type ContractType,
   assertContactFieldsUnique,
@@ -53,6 +54,11 @@ const STRING_FIELDS = [
   'domicileAddress',
   'emergencyContactName',
   'emergencyContactPhone',
+  // welcome-portal.md §4.2 — collected by the hire, corrected by HR at
+  // verification. The onboarding* status fields are deliberately NOT here:
+  // they move only through the welcome callables and the approval handler.
+  'emergencyContactAddress',
+  'emergencyContactRelationshipOther',
   'motherName',
   'bpjsTk',
   'bpjsKesehatan',
@@ -168,6 +174,20 @@ export const updateEmployee = onCall({ region: REGION }, async (request) => {
         throw new AppError('invalid-argument', `tshirtSize must be one of: ${TSHIRT_SIZES.join(', ')}, or null.`)
       }
       changes.tshirtSize = updates.tshirtSize
+    }
+    if ('emergencyContactRelationship' in updates) {
+      if (
+        updates.emergencyContactRelationship !== null &&
+        !EMERGENCY_CONTACT_RELATIONSHIPS.includes(
+          updates.emergencyContactRelationship as (typeof EMERGENCY_CONTACT_RELATIONSHIPS)[number],
+        )
+      ) {
+        throw new AppError(
+          'invalid-argument',
+          `emergencyContactRelationship must be one of: ${EMERGENCY_CONTACT_RELATIONSHIPS.join(', ')}, or null.`,
+        )
+      }
+      changes.emergencyContactRelationship = updates.emergencyContactRelationship
     }
     if ('probationStatus' in updates) {
       if (updates.probationStatus !== null && !PROBATION_STATUSES.includes(updates.probationStatus as (typeof PROBATION_STATUSES)[number])) {

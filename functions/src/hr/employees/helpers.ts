@@ -96,6 +96,21 @@ export type MaritalStatus = (typeof MARITAL_STATUSES)[number]
 export const TSHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const
 export type TshirtSize = (typeof TSHIRT_SIZES)[number]
 
+/** Mirrors src/constants/hr.ts EMERGENCY_CONTACT_RELATIONSHIP (welcome-portal.md §4.2). */
+export const EMERGENCY_CONTACT_RELATIONSHIPS = [
+  'spouse',
+  'parents',
+  'siblings',
+  'children',
+  'friends',
+  'other',
+] as const
+export type EmergencyContactRelationship = (typeof EMERGENCY_CONTACT_RELATIONSHIPS)[number]
+
+/** Mirrors src/constants/hr.ts ONBOARDING_STATUS (welcome-portal.md §3.4). */
+export const ONBOARDING_STATUSES = ['invited', 'submitted', 'pendingVerification', 'verified'] as const
+export type OnboardingStatus = (typeof ONBOARDING_STATUSES)[number]
+
 /** HR_OPERATIONS.md 9.1-F02: N- (PKWT/PKWTT/BOD/Freelance), DW- (Daily Worker), OJT-. */
 /**
  * The prefix half of an employee number — HR_OPERATIONS.md 9.1-F02. Exported

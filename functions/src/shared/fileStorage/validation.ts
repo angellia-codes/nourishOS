@@ -1,6 +1,9 @@
 import { AppError } from '../../lib'
 
-const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp']
+// heic/heif added for the Welcome Portal (welcome-portal.md §6): an iPhone
+// camera roll is HEIC by default, and a new hire photographing their KTP has
+// no idea their phone chose a format this list did not know about.
+const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif']
 const DOCUMENT_EXTENSIONS = ['pdf', 'docx', 'xlsx', 'pptx', 'txt', 'csv']
 
 const MAX_SIZE_BYTES = {

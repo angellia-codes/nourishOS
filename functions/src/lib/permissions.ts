@@ -8,6 +8,9 @@ export const PERMISSIONS = {
   EMPLOYEES_DELETE: 'employees.delete',
   EMPLOYEES_READ_SENSITIVE: 'employees.readSensitive',
   EMPLOYEES_COMMUNICATE: 'employees.communicate',
+  // welcome-portal.md §5.1 — issuing a new hire's welcome magic link.
+  EMPLOYEES_INVITE: 'employees.invite',
+  WELCOME_MANAGE_CONTENT: 'welcome.manageContent',
   EXIT_INTERVIEWS_VIEW: 'exitInterviews.view',
   RECRUITMENT_READ: 'recruitment.read',
   RECRUITMENT_CREATE: 'recruitment.create',

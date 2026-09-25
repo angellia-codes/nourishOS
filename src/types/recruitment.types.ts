@@ -344,4 +344,10 @@ export interface OnboardingChecklist extends BaseDocument {
   documentChecklist: DocumentChecklistItem[]
   taskIds: string[]
   completedAt?: string | null
+  /**
+   * welcome-portal.md §3.3 — denormalised from `onboardingInvites`, which no
+   * client may read. It is what lets the Onboarding tab label its button
+   * "Resend welcome link" without a second collection and a second rules block.
+   */
+  welcomeInviteSentAt?: string | null
 }

@@ -41,6 +41,11 @@ const APPROVAL_ROUTES: Record<string, ApprovalRoute> = {
     { sequence: 1, approverRole: 'hrManager' },
     { sequence: 2, approverRole: 'generalManager' },
   ],
+  // welcome-portal.md §3.3 step 7 — HR checks what the new hire typed against
+  // their contract and their KTP/KK scans. Single step by design: this is a
+  // data-quality check, not a decision anyone above HR has an opinion on, and
+  // a second step would leave the hire's record half-verified for days.
+  'hr/onboardingVerification': [{ sequence: 1, approverRole: 'hrManager', slaHours: 48 }],
   // attendance.md §6.1 — HR Manager reviews aggregates/warnings, GM signs off.
   // Fixed chain, same shape as 'hr/contract' — no per-record department to
   // resolve, unlike employeeCommunication/position.
