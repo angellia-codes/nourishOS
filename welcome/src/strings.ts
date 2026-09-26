@@ -189,6 +189,10 @@ export const STRINGS = {
   // Company Profile (§7.4, replaced 2026-09-26)
   photoComingSoon: p('Foto segera hadir', 'Photo coming soon'),
   openInMaps: p('Buka di Google Maps', 'Open in Google Maps'),
+
+  // Grooming Standard (§7.4, replaced 2026-09-26) — the notes-accordion toggle
+  showNotes: p('Lihat Catatan ▼', 'Show Notes ▼'),
+  hideNotes: p('Sembunyikan Catatan ▲', 'Hide Notes ▲'),
 } as const
 
 /** "Step {n} of {total}" and friends. */
