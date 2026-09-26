@@ -100,8 +100,8 @@ export const ATTENDANCE_GUIDE_SEED: SeedGuide = {
     {
       heading: p('Libur nasional', 'Public holidays'),
       body: p(
-        'Libur nasional (PH) dibayar dan tidak mengurangi hak cutimu. Karena kita bekerja di industri yang tetap buka di hari libur, sebagian dari kita justru masuk di hari itu dan mendapat hari libur pengganti — supervisormu yang mengaturnya di jadwal.\nDaftar tanggalnya mengikuti SKB pemerintah dan kalender hari raya di Bali, dan diedarkan HR setiap awal tahun. Minta daftar tahun ini ke HR atau supervisormu.',
-        'Public holidays (PH) are paid and do not come out of your leave entitlement. Because we work in an industry that stays open on holidays, some of us do work them and take a replacement day instead — your supervisor arranges that in the roster.\nThe dates follow the government’s joint decree and the Balinese religious calendar, and HR circulates the list at the start of each year. Ask HR or your supervisor for this year’s list.',
+        'Libur nasional (PH) dibayar dan tidak mengurangi hak cutimu. Karena kita bekerja di industri yang tetap buka di hari libur, sebagian dari kita justru masuk di hari itu dan mendapat hari libur pengganti — supervisormu yang mengaturnya di jadwal.\nDaftar tanggalnya mengikuti SKB pemerintah dan kalender hari raya di Bali. Lihat kalender lengkapnya (Hindu / Non-Hindu) di bagian "Kalender Libur Nasional" pada halaman utama aplikasi ini.',
+        'Public holidays (PH) are paid and do not come out of your leave entitlement. Because we work in an industry that stays open on holidays, some of us do work them and take a replacement day instead — your supervisor arranges that in the roster.\nThe dates follow the government’s joint decree and the Balinese religious calendar. See the full calendar (Hindu / Non-Hindu) in the "Public Holiday Calendar" section on this app’s Home screen.',
       ),
     },
   ],
