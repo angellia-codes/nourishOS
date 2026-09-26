@@ -1,30 +1,4 @@
-/*
- * welcome-portal.md §9 — the scoped Basalt exception.
- *
- * Recorded as v1.2 in docs/2026-08-11-nourishos-design-system.md's change log
- * so this reads as a deliberate, versioned departure rather than drift. It
- * applies to welcome/ and nowhere else: a new hire sees these screens a
- * handful of times, not fifty times a shift, which is the whole argument for
- * spending motion and translucency here and rationing both everywhere else.
- *
- * Every token lives in this file. Components reference var(--w-*) and never a
- * hex value, so re-tinting the app is one edit here.
- *
- * Held constraints, not negotiable (§9):
- *  - WCAG AA on all text over glass — every glass surface carrying text uses a
- *    dark tint at >=55% opacity, which is what --w-glass and --w-glass-strong
- *    are set to.
- *  - prefers-reduced-motion replaces all movement with opacity fades.
- *  - prefers-reduced-transparency, and browsers without backdrop-filter, fall
- *    back to a solid tint.
- *  - Blur 12-16px on mobile, at most three blurred layers in any viewport.
- *  - Animate only transform and opacity; pause the drift when the tab hides.
- */
-
 :root {
-  /* Pandan, the Basalt primary, extended with the brand deck's deep teal,
-     amber and olive. This app is dark-first: it is read on a phone, often in
-     the evening, and the glass needs something to sit over. */
   --w-pandan: #0e4f47;
   --w-teal: #0b332f;
   --w-teal-deep: #082420;
@@ -35,9 +9,6 @@
   --w-cream-soft: rgba(244, 239, 228, 0.72);
   --w-cream-faint: rgba(244, 239, 228, 0.45);
   --w-ink: #14201d;
-
-  /* 0.6 alpha over the gradient keeps cream text above 4.5:1 everywhere the
-     background drifts. Do not lower it without re-checking contrast. */
   --w-glass: rgba(11, 40, 36, 0.6);
   --w-glass-strong: rgba(9, 42, 38, 0.82);
   --w-glass-border: rgba(255, 255, 255, 0.16);
@@ -128,7 +99,6 @@ body.w-drift {
   background: rgba(255, 255, 255, 0.06);
   color: var(--w-cream);
   padding: 12px 14px;
-  /* 16px exactly: anything smaller and iOS Safari zooms the page on focus. */
   font-size: 16px;
   font-family: inherit;
 }
@@ -143,15 +113,12 @@ body.w-drift {
   outline-offset: 2px;
 }
 
-/* Numeric identity fields — tabular figures so a 16-digit NIK is checkable
-   digit by digit against the card in the hire's hand (§7.1). */
 .w-mono {
   font-family: 'IBM Plex Mono', ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
 }
 
-/* Native select needs its own arrow once the UA appearance is dropped. */
 .w-select {
   appearance: none;
   background-image: linear-gradient(45deg, transparent 50%, var(--w-cream-soft) 50%),
@@ -164,8 +131,6 @@ body.w-drift {
   padding-right: 40px;
 }
 
-/* A native <option> inherits the OS popup, not the page — force a readable
-   pair or the list is cream-on-white on most Android builds. */
 .w-select option {
   background: var(--w-teal-deep);
   color: var(--w-cream);
@@ -177,7 +142,6 @@ body.w-drift {
   opacity: 0;
   transform: translateY(10px);
   animation: w-rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-  /* Set --i on each child for the staggered section reveal (§9). */
   animation-delay: calc(var(--i, 0) * 70ms);
 }
 
@@ -188,8 +152,6 @@ body.w-drift {
   }
 }
 
-/* One switch for every movement in the app. Anything animated must degrade to
-   an opacity fade here, not merely run faster. */
 @media (prefers-reduced-motion: reduce) {
   body.w-drift {
     animation: none;
@@ -217,7 +179,7 @@ body.w-drift {
   }
 }
 
-/* ---- Envelope reveal (§7.2) ---- */
+/* ---- Envelope reveal ---- */
 
 .w-stage {
   position: relative;
@@ -332,8 +294,6 @@ body.w-drift {
   opacity: 0.18;
 }
 
-/* The ticket. Notches and a perforation line, so it reads as something torn
-   from a book rather than as another card. */
 .w-ticket {
   position: absolute;
   left: 50%;
@@ -408,7 +368,6 @@ body.w-drift {
   border-left: 1.5px dashed rgba(255, 255, 255, 0.28);
 }
 
-/* Word-by-word headline. --i is the word index. */
 .w-word {
   display: inline-block;
   opacity: 0;
@@ -455,8 +414,6 @@ body.w-drift {
     translate: none !important;
   }
 }
-
-/* ---- Drawn checkmark (§9 motion inventory) ---- */
 
 .w-check path {
   stroke-dasharray: 32;
