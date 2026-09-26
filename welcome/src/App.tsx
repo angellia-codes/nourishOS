@@ -96,7 +96,6 @@ export function App() {
       { key: 'profile', title: t(STRINGS.secProfile, lang), blurb: t(STRINGS.appName, lang) },
       { key: 'values', title: t(STRINGS.secValues, lang), blurb: 'INSPIRE' },
       { key: 'grooming', title: t(STRINGS.secGrooming, lang), blurb: t(STRINGS.navStandards, lang) },
-      { key: 'dosDonts', title: t(STRINGS.secDosDonts, lang), blurb: t(STRINGS.navStandards, lang) },
       { key: 'attendance', title: t(STRINGS.secAttendance, lang), blurb: t(STRINGS.navStandards, lang) },
       { key: 'orgChart', title: t(STRINGS.secOrgChart, lang), blurb: t(STRINGS.navAbout, lang) },
       { key: 'menu', title: t(STRINGS.secMenu, lang), blurb: t(STRINGS.navMenu, lang) },

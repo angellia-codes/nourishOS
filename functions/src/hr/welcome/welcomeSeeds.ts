@@ -1,11 +1,13 @@
 /**
- * welcome-portal.md §7.4 — the first-pass content for the four HR-editable
- * welcome sections, in the shapes `welcome/src/api.ts` renders.
+ * welcome-portal.md §7.4 — the first-pass content for the three HR-editable
+ * welcome sections, in the shapes `welcome/src/api.ts` renders. (§7.4 named a
+ * fourth, Do's & Don'ts; it shipped 2026-09-25 and was removed 2026-09-26 —
+ * see root CLAUDE.md.)
  *
  * This is content, not engineering, and it carries the same standing caveat
  * `welcome/src/content/static.ts` does for the three static sections: the copy
  * below is a first pass and needs an owner read-through (open item M7 names
- * these two guides specifically). Nothing branches on any of it.
+ * this guide specifically). Nothing branches on any of it.
  *
  * Which is why `seedWelcomeContent` writes it to `draft` and never to
  * `published`: a new hire sees nothing from this file until HR has read it and
@@ -106,59 +108,6 @@ export const ATTENDANCE_GUIDE_SEED: SeedGuide = {
 }
 
 /**
- * Drafted from the Grooming Standard, Core Values (INSPIRE) and the attendance
- * rules above, exactly as §7.4 specifies. The static sections state the
- * standard; this one is the short, blunt version a hire can re-read in a
- * minute before a shift.
- */
-export const DOS_AND_DONTS_SEED: SeedGuide = {
-  blocks: [
-    {
-      heading: p('Sebelum shift', 'Before your shift'),
-      body: p(
-        'Lakukan: datang 15 menit lebih awal, seragam bersih dan disetrika, name tag di dada kiri, sepatu tertutup anti-slip.\nJangan: datang tepat di menit shift dimulai, memakai seragam kotor atau kusut, datang tanpa name tag, memakai sandal atau sepatu terbuka.',
-        'Do: arrive 15 minutes early, uniform clean and pressed, name tag on your left chest, closed non-slip shoes.\nDon’t: arrive on the minute, wear a dirty or creased uniform, turn up without your name tag, wear sandals or open shoes.',
-      ),
-    },
-    {
-      heading: p('Di depan tamu', 'In front of guests'),
-      body: p(
-        'Lakukan: sapa setiap tamu, tatap matanya, dan katakan terus terang kalau kamu tidak tahu sesuatu — lalu cari yang tahu. Perhatikan apa yang tamu butuhkan sebelum diminta.\nJangan: berkerumun dan mengobrol di area tamu, membicarakan tamu atau rekan kerja di tempat yang bisa terdengar, berdebat dengan tamu, atau mengarang jawaban soal makanan.',
-        'Do: greet every guest, meet their eye, and say honestly when you don’t know something — then find whoever does. Notice what a guest needs before they ask.\nDon’t: cluster and chat in the guest area, discuss guests or colleagues anywhere you can be overheard, argue with a guest, or invent an answer about the food.',
-      ),
-    },
-    {
-      heading: p('Makanan, alergi dan kebersihan', 'Food, allergies and hygiene'),
-      body: p(
-        'Lakukan: cuci tangan saat tiba, setiap ganti tugas, setelah dari toilet dan setelah memegang bahan mentah. Kuku pendek dan bersih. Tutup luka dengan plester berwarna tahan air dan sarung tangan. Tanyakan ke chef setiap kali tamu menyebut alergi.\nJangan: menebak soal bahan atau alergen, memakai perhiasan di dapur selain cincin kawin polos, menyentuh makanan siap saji dengan tangan kosong, atau tetap bekerja saat kamu sakit perut atau ada infeksi kulit — kabari supervisormu.',
-        'Do: wash your hands on arrival, between tasks, after the toilet and after raw ingredients. Keep nails short and clean. Cover any cut with a coloured waterproof plaster and a glove. Ask the chef every time a guest mentions an allergy.\nDon’t: guess about ingredients or allergens, wear jewellery in the kitchen beyond a plain wedding band, handle ready-to-eat food with bare hands, or work through a stomach illness or a skin infection — tell your supervisor instead.',
-      ),
-    },
-    {
-      heading: p('Telepon dan media sosial', 'Phone and social media'),
-      body: p(
-        'Lakukan: simpan teleponmu selama shift dan pakai saat istirahat. Kalau ada urusan keluarga yang mendesak, bilang ke supervisormu.\nJangan: memegang telepon di area tamu atau di area persiapan makanan, memotret tamu, atau memposting apa pun tentang tamu, insiden, atau area belakang outlet ke media sosial.',
-        'Do: keep your phone away during your shift and use it on your break. If something urgent is happening at home, tell your supervisor.\nDon’t: hold your phone in the guest area or in food prep, photograph guests, or post anything about a guest, an incident or the back of house on social media.',
-      ),
-    },
-    {
-      heading: p('Kejujuran dan barang perusahaan', 'Honesty and company property'),
-      body: p(
-        'Lakukan: catat setiap penjualan dan setiap void sesuai prosedur, laporkan barang rusak atau hilang begitu kamu tahu, dan serahkan barang yang tertinggal milik tamu ke Lost & Found di hari yang sama.\nJangan: mengambil makanan, minuman atau bahan tanpa izin, memberi diskon atau makanan gratis atas keputusan sendiri, atau memakai barang perusahaan untuk keperluan pribadi.',
-        'Do: ring up every sale and every void the way the procedure says, report damage or a missing item as soon as you know, and hand anything a guest left behind to Lost & Found the same day.\nDon’t: take food, drink or ingredients without permission, give a discount or a free item on your own judgement, or use company property for personal purposes.',
-      ),
-    },
-    {
-      heading: p('Kalau ada yang salah', 'When something goes wrong'),
-      body: p(
-        'Lakukan: bicarakan lebih awal. Piring yang salah, tamu yang marah, kecelakaan kecil, alat yang rusak — semuanya lebih murah kalau diketahui di awal shift daripada ditemukan besok. Laporkan ke supervisormu; untuk cedera dan insiden keamanan, dibuat juga Incident Report.\nJangan: menyembunyikan kesalahan, menyalahkan rekan kerja, atau berharap tidak ada yang menyadarinya.',
-        'Do: raise it early. A wrong plate, an angry guest, a small accident, broken equipment — all of it is cheaper known at the start of a shift than discovered tomorrow. Tell your supervisor; for injuries and security incidents an Incident Report goes in as well.\nDon’t: hide a mistake, blame a colleague, or hope nobody notices.',
-      ),
-    },
-  ],
-}
-
-/**
  * Structure only — see this file's header for why no item carries a name or a
  * price. The categories are the ones common across the group's outlets; HR
  * adds, renames or removes them in the editor as each menu requires.
@@ -189,5 +138,4 @@ export const WELCOME_CONTENT_SEEDS = {
   menu: MENU_SEED,
   orgChart: ORG_CHART_SEED,
   attendanceGuide: ATTENDANCE_GUIDE_SEED,
-  dosAndDonts: DOS_AND_DONTS_SEED,
 } as const

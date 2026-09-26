@@ -19,15 +19,16 @@ import {
  *
  * Company Profile, Core Values and Grooming Standard are static in the welcome
  * bundle: they change when the company changes, which is a deploy either way.
- * The four below change without one, so they live in Firestore and HR edits
- * them at /documents/welcome.
+ * The three below change without one, so they live in Firestore and HR edits
+ * them at /documents/welcome. (Do's & Don'ts was a fourth, removed 2026-09-26 —
+ * see root CLAUDE.md.)
  *
  * Draft and published are two fields on one document rather than two
  * documents: a section is never partly published, and a single doc read is
  * what the portal callable needs anyway.
  */
 
-export const WELCOME_SECTIONS = ['menu', 'orgChart', 'attendanceGuide', 'dosAndDonts'] as const
+export const WELCOME_SECTIONS = ['menu', 'orgChart', 'attendanceGuide'] as const
 export type WelcomeSection = (typeof WELCOME_SECTIONS)[number]
 
 /** Generous, but bounded — this is an authenticated write, not a public one. */

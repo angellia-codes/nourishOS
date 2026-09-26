@@ -34,7 +34,7 @@ import { GroomingSection } from './GroomingSection'
  * Firestore document: the hire cannot tell, and should not be able to.
  */
 
-export type SectionKey = 'profile' | 'values' | 'grooming' | 'menu' | 'orgChart' | 'attendance' | 'dosDonts'
+export type SectionKey = 'profile' | 'values' | 'grooming' | 'menu' | 'orgChart' | 'attendance'
 
 export function SectionPage({
   section,
@@ -70,7 +70,6 @@ export function SectionPage({
       {section === 'menu' ? <Menu content={content?.sections.menu ?? null} lang={lang} /> : null}
       {section === 'orgChart' ? <OrgChart content={content?.sections.orgChart ?? null} lang={lang} /> : null}
       {section === 'attendance' ? <Guide content={content?.sections.attendanceGuide ?? null} lang={lang} /> : null}
-      {section === 'dosDonts' ? <Guide content={content?.sections.dosAndDonts ?? null} lang={lang} /> : null}
     </div>
   )
 }
@@ -82,7 +81,6 @@ const TITLES = {
   menu: STRINGS.secMenu,
   orgChart: STRINGS.secOrgChart,
   attendance: STRINGS.secAttendance,
-  dosDonts: STRINGS.secDosDonts,
 } as const
 
 function Blocks({ blocks, lang }: { blocks: StaticBlock[]; lang: Lang }) {

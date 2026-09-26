@@ -24,19 +24,17 @@ const bilingual = (pair, where) => {
 }
 
 describe('WELCOME_CONTENT_SEEDS', () => {
-  test('covers exactly the four HR-editable sections', () => {
+  test('covers exactly the three HR-editable sections', () => {
     assert.deepEqual(Object.keys(WELCOME_CONTENT_SEEDS).sort(), [...WELCOME_SECTIONS].sort())
   })
 
   test('every guide block is bilingual', () => {
-    for (const section of ['attendanceGuide', 'dosAndDonts']) {
-      const { blocks } = WELCOME_CONTENT_SEEDS[section]
-      assert.ok(blocks.length > 0, `${section} has no blocks`)
-      blocks.forEach((block, index) => {
-        bilingual(block.heading, `${section}.blocks[${index}].heading`)
-        bilingual(block.body, `${section}.blocks[${index}].body`)
-      })
-    }
+    const { blocks } = WELCOME_CONTENT_SEEDS.attendanceGuide
+    assert.ok(blocks.length > 0, 'attendanceGuide has no blocks')
+    blocks.forEach((block, index) => {
+      bilingual(block.heading, `attendanceGuide.blocks[${index}].heading`)
+      bilingual(block.body, `attendanceGuide.blocks[${index}].body`)
+    })
   })
 
   test('every attendance code in the taxonomy is explained', () => {

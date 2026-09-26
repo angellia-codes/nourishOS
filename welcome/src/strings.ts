@@ -170,7 +170,6 @@ export const STRINGS = {
   secValues: p('Nilai Inti', 'Core Values'),
   secOrgChart: p('Struktur Organisasi', 'Organization Chart'),
   secGrooming: p('Standar Penampilan', 'Grooming Standard'),
-  secDosDonts: p('Boleh & Tidak Boleh', "Do's & Don'ts"),
   secAttendance: p('Panduan Absensi', 'Attendance Guide'),
   secMenu: p('Menu', 'Menu'),
 
