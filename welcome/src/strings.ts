@@ -185,6 +185,10 @@ export const STRINGS = {
   ),
   menuLegend: p('GF bebas gluten · V vegetarian · VO bisa vegan · VG vegan', 'GF gluten free · V vegetarian · VO vegan option · VG vegan'),
   orgChartZoom: p('Cubit untuk memperbesar.', 'Pinch to zoom.'),
+
+  // Company Profile (§7.4, replaced 2026-09-26)
+  photoComingSoon: p('Foto segera hadir', 'Photo coming soon'),
+  openInMaps: p('Buka di Google Maps', 'Open in Google Maps'),
 } as const
 
 /** "Step {n} of {total}" and friends. */
