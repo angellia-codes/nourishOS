@@ -143,8 +143,15 @@ export async function findLatestInvite(
  * §3.3 step 2 — the link that goes into the WhatsApp message. `WELCOME_BASE_URL`
  * is a plain env var, not a secret: it is a public URL. Mirrors
  * recruitment/whatsappTemplates.ts's portalApplicationUrl exactly.
+ *
+ * The fallback was `https://welcome.nourishgroup.id`, a custom domain never
+ * actually attached to anything — the deployed app has no `WELCOME_BASE_URL`
+ * set anywhere, so every link this produced was broken. `welcome/` deployed
+ * to Vercel 2026-09-26 as `ngi-welcome-portal`; its real, live URL is now the
+ * fallback. Point this at a custom domain instead once one exists, by setting
+ * `WELCOME_BASE_URL` at deploy time — the fallback is what ships without it.
  */
 export function welcomeLinkUrl(token: string): string {
-  const base = (process.env.WELCOME_BASE_URL ?? 'https://welcome.nourishgroup.id').replace(/\/+$/, '')
+  const base = (process.env.WELCOME_BASE_URL ?? 'https://ngi-welcome-portal.vercel.app').replace(/\/+$/, '')
   return `${base}/?t=${token}`
 }
