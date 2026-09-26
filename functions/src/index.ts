@@ -103,6 +103,7 @@ export {
   revokeWelcomeInvite,
   updateWelcomeContent,
   publishWelcomeContent,
+  seedWelcomeContent,
   // Welcome Portal — unauthenticated, token-authenticated.
   getWelcomeSession,
   saveWelcomeDraft,
