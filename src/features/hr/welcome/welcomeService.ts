@@ -101,6 +101,17 @@ export function publishWelcomeContent(sectionId: WelcomeSection): Promise<{ sect
   return callFunction('publishWelcomeContent', { sectionId })
 }
 
+/**
+ * Fills any section that has neither a draft nor a published version with the
+ * first-pass copy in `functions/src/hr/welcome/welcomeSeeds.ts`. A section
+ * that already holds content is skipped, never overwritten, so this is safe to
+ * press twice — and it only ever writes drafts, so nothing reaches a new hire
+ * until HR publishes it.
+ */
+export function seedWelcomeContent(): Promise<{ seeded: WelcomeSection[]; skipped: WelcomeSection[] }> {
+  return callFunction('seedWelcomeContent', {})
+}
+
 /** An empty draft of the right shape, so the editor never starts from nothing. */
 export function emptySection(section: WelcomeSection): WelcomeSectionContent {
   const blank: Bilingual = { id: '', en: '' }

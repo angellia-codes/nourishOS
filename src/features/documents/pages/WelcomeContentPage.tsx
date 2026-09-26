@@ -11,6 +11,7 @@ import {
   WELCOME_SECTION_LABELS,
   emptySection,
   publishWelcomeContent,
+  seedWelcomeContent,
   updateWelcomeContent,
   type Bilingual,
   type GuideContent,
@@ -300,6 +301,29 @@ export function WelcomeContentPage() {
     }
   }
 
+  /**
+   * §7.4 — the one-time starter content. The callable skips any section that
+   * already holds a draft or a published version, so this cannot overwrite
+   * HR's own work, and it writes drafts only: a hire sees nothing until the
+   * section is published.
+   */
+  async function seed() {
+    setBusy(true)
+    try {
+      const result = await seedWelcomeContent()
+      await load()
+      toast.success(
+        result.seeded.length > 0
+          ? `Starter content loaded into ${result.seeded.length} section(s). Read it through, then publish.`
+          : 'Every section already has content — nothing was changed.',
+      )
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not load the starter content.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function publish() {
     if (!current) return
     setBusy(true)
@@ -340,13 +364,23 @@ export function WelcomeContentPage() {
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
-      <div>
-        <h1 className="text-xl font-semibold text-foreground">Welcome content</h1>
-        <p className="text-sm text-muted-foreground">
-          What a new hire reads in the welcome portal. Company Profile, Core Values and Grooming Standard are fixed in
-          the app itself — these four are yours.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold text-foreground">Welcome content</h1>
+          <p className="text-sm text-muted-foreground">
+            What a new hire reads in the welcome portal. Company Profile, Core Values and Grooming Standard are fixed in
+            the app itself — these four are yours.
+          </p>
+        </div>
+        <Button variant="secondary" disabled={busy} onClick={() => void seed()}>
+          Load starter content
+        </Button>
       </div>
+      <p className="text-xs text-muted-foreground">
+        &ldquo;Load starter content&rdquo; fills only the sections that are still empty, as unpublished drafts — it never
+        overwrites what you have written, and nothing reaches a new hire until you publish it. The Menu arrives as
+        categories with no items, and the Org Chart without its image: both need source material HR holds.
+      </p>
 
       <Tabs items={tabs} value={section} onValueChange={(next) => setSection(next as WelcomeSection)} />
 

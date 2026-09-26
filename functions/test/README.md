@@ -41,6 +41,8 @@ sit there failing to reach an emulator that isn't running.
 | `portal-form-gate.test.mjs` | The F010 save gate against the exact payload `portal/src/pages/FormPage.tsx` posts. |
 | `timestamps.test.mjs` | The WITA (`Asia/Makassar`) date-key helpers. |
 | `training-gate.test.mjs` | The prerequisite gate, department mapping, due-date rule, and seed-data integrity. |
+| `welcome-validate.test.mjs` | The welcome-portal submission gate — §11 field rules and the age helper. |
+| `welcome-seeds.test.mjs` | The welcome-portal starter content: every seeded label bilingual, all nine attendance codes explained, and the Menu/Org Chart sections shipping structure only. |
 
 Everything in this tier is pure by construction: each module under test takes
 its lookups (employees, rosters, existing records) as arguments, so the same
@@ -130,6 +132,8 @@ not in `npm test` and have no shared runner.
 | `payroll-flow.mjs` | Payroll batch import and the approval chain. |
 | `portal-flow.mjs` | The candidate portal's unauthenticated callables. |
 | `shift-report-flow.mjs` | Opening/closing shift reports. |
+| `welcome-seed-flow.mjs` | `seedWelcomeContent`: the permission gate, four drafts with nothing published, idempotency, that an HR edit survives a re-run, and what `getWelcomeContent` serves before and after Publish. 21 assertions. |
+| `welcome-flow.mjs` | The welcome portal end to end — issue, session, draft, upload, submit, lock, verify, plus the token-probing cases. |
 | `hr-reports-seed.mjs`, `portal-seed.mjs`, `seed-accounts.mjs`, `seed-demo-data.mjs`, `seed-emulator-user.mjs` | Seeding, not assertions. |
 
 ### Running them
