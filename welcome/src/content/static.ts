@@ -84,6 +84,7 @@ export interface CompanyProfileContent {
 }
 
 export const COMPANY_PROFILE: CompanyProfileContent = {
+  heroImageUrl: '/hero-nourish.png',
   slogan: p('Lebih dari Sekadar Makanan, Ini Gaya Hidup', "More Than a Meal, It's a Lifestyle"),
   aboutUsHeading: p('Tentang Kami', 'About Us'),
   aboutUs: p(
