@@ -9,11 +9,14 @@
  * documents are written straight through firebase-admin rather than by driving
  * registerUser. What is under test is the seed callable, not HR's own.
  *
- * Asserts, in order: the seed writes four drafts and publishes nothing; a
- * second run skips all four rather than overwriting; an HR edit survives a
- * third run; and publishing is what finally exposes a section. `welcome/`'s own
- * `getWelcomeContent` is asserted last, through the real published/draft split,
- * so the portal's view of a seeded-but-unpublished section is pinned too.
+ * Asserts, in order: the seed writes four drafts, auto-publishing `orgChart`
+ * (real HR-supplied content) but leaving the other three unpublished
+ * first-pass copy; a second run skips all four rather than overwriting; an HR
+ * edit survives a third run; and publishing is what finally exposes a section
+ * the seed itself didn't. `welcome/`'s own `getWelcomeContent` is asserted
+ * last, through the real published/draft split, so the portal's view of a
+ * seeded-but-unpublished section — and of the one seeded-and-published one —
+ * is pinned too.
  */
 import { createRequire } from 'module'
 const require = createRequire(import.meta.url) // firebase-admin lives in functions/node_modules
@@ -126,8 +129,13 @@ async function main() {
     JSON.stringify(Object.keys(seeded).map((id) => [id, !!seeded[id]?.draft])),
   )
   check(
-    'and nothing is published — a hire sees none of it yet',
-    SECTIONS.every((id) => seeded[id].published === null && seeded[id].publishedAt === null),
+    'orgChart auto-publishes — it is real content, not first-pass copy',
+    Boolean(seeded.orgChart.published) && typeof seeded.orgChart.publishedAt === 'string',
+    JSON.stringify({ published: seeded.orgChart.published, publishedAt: seeded.orgChart.publishedAt }),
+  )
+  check(
+    'and the other three stay unpublished — a hire sees none of that yet',
+    ['menu', 'attendanceGuide', 'dosAndDonts'].every((id) => seeded[id].published === null && seeded[id].publishedAt === null),
   )
   check(
     'the attendance guide explains all nine codes',
@@ -145,7 +153,7 @@ async function main() {
     'the menu ships categories with no invented items',
     seeded.menu.draft.categories.length > 0 && seeded.menu.draft.categories.every((c) => c.items.length === 0),
   )
-  check('the org chart ships no image url', seeded.orgChart.draft.imageUrl === '')
+  check('the org chart ships a real image url', seeded.orgChart.draft.imageUrl.trim().length > 0)
 
   console.log('\n=== Idempotency ===')
   const second = await callFn('seedWelcomeContent', {}, hr.idToken)
@@ -171,9 +179,10 @@ async function main() {
   const afterPublish = await readSections()
   check('the published copy equals the seeded draft', Boolean(afterPublish.attendanceGuide.published))
   check(
-    'and the other three are still unpublished',
-    ['menu', 'orgChart', 'dosAndDonts'].every((id) => afterPublish[id].published === null),
+    'and the two still-unreviewed sections are still unpublished',
+    ['menu', 'dosAndDonts'].every((id) => afterPublish[id].published === null),
   )
+  check('orgChart is unaffected — still published from the seed itself', Boolean(afterPublish.orgChart.published))
 
   console.log('\n=== What the portal actually serves (getWelcomeContent) ===')
   // The portal is unauthenticated and token-gated, so it needs a live invite.
@@ -213,8 +222,13 @@ async function main() {
     JSON.stringify(served && Object.keys(served)),
   )
   check(
-    'and serves null for the three seeded-but-unpublished sections',
-    served !== null && ['menu', 'orgChart', 'dosAndDonts'].every((id) => served[id] === null),
+    'it also serves the auto-published org chart',
+    typeof served?.orgChart?.imageUrl === 'string' && served.orgChart.imageUrl.trim().length > 0,
+    JSON.stringify(served?.orgChart),
+  )
+  check(
+    'and serves null for the two still seeded-but-unpublished sections',
+    served !== null && ['menu', 'dosAndDonts'].every((id) => served[id] === null),
     JSON.stringify(served),
   )
 
