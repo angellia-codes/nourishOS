@@ -28,15 +28,14 @@ export function revokeWelcomeInvite(checklistId: string): Promise<{ inviteId: st
   return callFunction('revokeWelcomeInvite', { checklistId })
 }
 
-/** §7.4's HR-editable four. Must match WELCOME_SECTIONS in functions/src/hr/welcome/content.ts. */
-export const WELCOME_SECTIONS = ['menu', 'orgChart', 'attendanceGuide', 'dosAndDonts'] as const
+/** §7.4's HR-editable set. Must match WELCOME_SECTIONS in functions/src/hr/welcome/content.ts. */
+export const WELCOME_SECTIONS = ['menu', 'orgChart', 'attendanceGuide'] as const
 export type WelcomeSection = (typeof WELCOME_SECTIONS)[number]
 
 export const WELCOME_SECTION_LABELS: Record<WelcomeSection, string> = {
   menu: 'Menu',
   orgChart: 'Organization Chart',
   attendanceGuide: 'Attendance Guide',
-  dosAndDonts: "Do's & Don'ts",
 }
 
 export const WELCOME_SECTION_HINTS: Record<WelcomeSection, string> = {
@@ -44,7 +43,6 @@ export const WELCOME_SECTION_HINTS: Record<WelcomeSection, string> = {
   orgChart:
     'A public image URL. New hires have no NourishOS account, so a link into this app’s own storage will not load for them — host the chart somewhere publicly readable. They can pinch to zoom, so a wide chart is fine.',
   attendanceGuide: 'Working hours, how attendance is recorded, and the public-holiday calendar.',
-  dosAndDonts: 'The short version of grooming, conduct and attendance — what to do, what not to.',
 }
 
 /** Every label the portal renders is an {id, en} pair (§7.4). */

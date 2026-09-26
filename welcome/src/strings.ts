@@ -170,7 +170,6 @@ export const STRINGS = {
   secValues: p('Nilai Inti', 'Core Values'),
   secOrgChart: p('Struktur Organisasi', 'Organization Chart'),
   secGrooming: p('Standar Penampilan', 'Grooming Standard'),
-  secDosDonts: p('Boleh & Tidak Boleh', "Do's & Don'ts"),
   secAttendance: p('Panduan Absensi', 'Attendance Guide'),
   secMenu: p('Menu', 'Menu'),
 
@@ -193,6 +192,13 @@ export const STRINGS = {
   // Grooming Standard (§7.4, replaced 2026-09-26) — the notes-accordion toggle
   showNotes: p('Lihat Catatan ▼', 'Show Notes ▼'),
   hideNotes: p('Sembunyikan Catatan ▲', 'Hide Notes ▲'),
+
+  // Public Holiday 2026 (§7.4, added 2026-09-26)
+  secPublicHoliday: p('Kalender Libur Nasional', 'Public Holiday Calendar'),
+  holidayHindu: p('Hindu', 'Hindu'),
+  holidayNonHindu: p('Non-Hindu', 'Non-Hindu'),
+  holidayThisMonth: p('Libur bulan ini', "This month's holidays"),
+  holidayNoneThisMonth: p('Tidak ada libur nasional bulan ini.', 'No public holidays this month.'),
 } as const
 
 /** "Step {n} of {total}" and friends. */

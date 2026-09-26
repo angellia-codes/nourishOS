@@ -9,9 +9,9 @@
  * documents are written straight through firebase-admin rather than by driving
  * registerUser. What is under test is the seed callable, not HR's own.
  *
- * Asserts, in order: the seed writes four drafts, auto-publishing `orgChart`
- * (real HR-supplied content) but leaving the other three unpublished
- * first-pass copy; a second run skips all four rather than overwriting; an HR
+ * Asserts, in order: the seed writes three drafts, auto-publishing `orgChart`
+ * (real HR-supplied content) but leaving the other two unpublished
+ * first-pass copy; a second run skips all three rather than overwriting; an HR
  * edit survives a third run; and publishing is what finally exposes a section
  * the seed itself didn't. `welcome/`'s own `getWelcomeContent` is asserted
  * last, through the real published/draft split, so the portal's view of a
@@ -27,7 +27,7 @@ process.env.FIREBASE_AUTH_EMULATOR_HOST = '127.0.0.1:9099'
 const PROJECT = 'demo-nourishos'
 const REGION = 'asia-southeast2'
 const FN = (name) => `http://127.0.0.1:5001/${PROJECT}/${REGION}/${name}`
-const SECTIONS = ['menu', 'orgChart', 'attendanceGuide', 'dosAndDonts']
+const SECTIONS = ['menu', 'orgChart', 'attendanceGuide']
 
 admin.initializeApp({ projectId: PROJECT })
 const db = admin.firestore()
@@ -116,7 +116,7 @@ async function main() {
   check('returns 200', first.status === 200, JSON.stringify(first.json))
   const firstData = first.json?.result?.data ?? {}
   check(
-    'seeds all four sections',
+    'seeds all three sections',
     [...(firstData.seeded ?? [])].sort().join(',') === [...SECTIONS].sort().join(','),
     JSON.stringify(firstData),
   )
@@ -134,8 +134,8 @@ async function main() {
     JSON.stringify({ published: seeded.orgChart.published, publishedAt: seeded.orgChart.publishedAt }),
   )
   check(
-    'and the other three stay unpublished — a hire sees none of that yet',
-    ['menu', 'attendanceGuide', 'dosAndDonts'].every((id) => seeded[id].published === null && seeded[id].publishedAt === null),
+    'and the other two stay unpublished — a hire sees none of that yet',
+    ['menu', 'attendanceGuide'].every((id) => seeded[id].published === null && seeded[id].publishedAt === null),
   )
   check(
     'the attendance guide explains all nine codes',
@@ -145,7 +145,7 @@ async function main() {
   )
   check(
     'every seeded label carries both languages',
-    seeded.dosAndDonts.draft.blocks.every(
+    seeded.attendanceGuide.draft.blocks.every(
       (block) => block.heading.id && block.heading.en && block.body.id && block.body.en,
     ),
   )
@@ -159,18 +159,18 @@ async function main() {
   const second = await callFn('seedWelcomeContent', {}, hr.idToken)
   const secondData = second.json?.result?.data ?? {}
   check('a second run seeds nothing', (secondData.seeded ?? []).length === 0, JSON.stringify(secondData))
-  check('and skips all four', (secondData.skipped ?? []).length === 4, JSON.stringify(secondData))
+  check('and skips all three', (secondData.skipped ?? []).length === 3, JSON.stringify(secondData))
 
   console.log('\n=== An HR edit is never overwritten ===')
   const edited = { blocks: [{ heading: { id: 'Punya HR', en: 'HR wrote this' }, body: { id: 'Isi', en: 'Body' } }] }
-  const update = await callFn('updateWelcomeContent', { sectionId: 'dosAndDonts', content: edited }, hr.idToken)
+  const update = await callFn('updateWelcomeContent', { sectionId: 'attendanceGuide', content: edited }, hr.idToken)
   check('updateWelcomeContent returns 200', update.status === 200, JSON.stringify(update.json))
   await callFn('seedWelcomeContent', {}, hr.idToken)
   const afterEdit = await readSections()
   check(
     "HR's own draft survives a later seed run",
-    afterEdit.dosAndDonts.draft.blocks[0]?.heading.en === 'HR wrote this',
-    JSON.stringify(afterEdit.dosAndDonts.draft.blocks[0]),
+    afterEdit.attendanceGuide.draft.blocks[0]?.heading.en === 'HR wrote this',
+    JSON.stringify(afterEdit.attendanceGuide.draft.blocks[0]),
   )
 
   console.log('\n=== Publishing is what exposes a section ===')
@@ -179,8 +179,8 @@ async function main() {
   const afterPublish = await readSections()
   check('the published copy equals the seeded draft', Boolean(afterPublish.attendanceGuide.published))
   check(
-    'and the two still-unreviewed sections are still unpublished',
-    ['menu', 'dosAndDonts'].every((id) => afterPublish[id].published === null),
+    'and the still-unreviewed section is still unpublished',
+    afterPublish.menu.published === null,
   )
   check('orgChart is unaffected — still published from the seed itself', Boolean(afterPublish.orgChart.published))
 
@@ -227,8 +227,8 @@ async function main() {
     JSON.stringify(served?.orgChart),
   )
   check(
-    'and serves null for the two still seeded-but-unpublished sections',
-    served !== null && ['menu', 'dosAndDonts'].every((id) => served[id] === null),
+    'and serves null for the still seeded-but-unpublished section',
+    served !== null && served.menu === null,
     JSON.stringify(served),
   )
 

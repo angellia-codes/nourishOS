@@ -76,7 +76,6 @@ export interface WelcomeContent {
     menu: MenuContent | null
     orgChart: OrgChartContent | null
     attendanceGuide: GuideContent | null
-    dosAndDonts: GuideContent | null
   }
 }
 

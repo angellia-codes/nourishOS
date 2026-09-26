@@ -25,16 +25,19 @@ import { COMPANY_PROFILE, CORE_VALUES, type CoreValueItem, type StaticBlock } fr
 import { STRINGS, t, type Lang } from '../strings'
 import type { GuideContent, MenuContent, OrgChartContent, WelcomeContent } from '../api'
 import { GroomingSection } from './GroomingSection'
+import { HolidaySection } from './HolidaySection'
 
 /**
- * welcome-portal.md §7.4 — the seven content sections, three static in the
- * bundle and four served from `welcomeContent`.
+ * welcome-portal.md §7.4 — the content sections: four static in the bundle
+ * (Company Profile, Core Values, Grooming Standard, and Public Holiday 2026 —
+ * added 2026-09-26, see `content/holidays.ts`) and three served from
+ * `welcomeContent` (Menu, Org Chart, Attendance Guide).
  *
  * Every section renders the same way whether its source is a constant or a
  * Firestore document: the hire cannot tell, and should not be able to.
  */
 
-export type SectionKey = 'profile' | 'values' | 'grooming' | 'menu' | 'orgChart' | 'attendance' | 'dosDonts'
+export type SectionKey = 'profile' | 'values' | 'grooming' | 'menu' | 'orgChart' | 'attendance' | 'holidays'
 
 export function SectionPage({
   section,
@@ -70,7 +73,7 @@ export function SectionPage({
       {section === 'menu' ? <Menu content={content?.sections.menu ?? null} lang={lang} /> : null}
       {section === 'orgChart' ? <OrgChart content={content?.sections.orgChart ?? null} lang={lang} /> : null}
       {section === 'attendance' ? <Guide content={content?.sections.attendanceGuide ?? null} lang={lang} /> : null}
-      {section === 'dosDonts' ? <Guide content={content?.sections.dosAndDonts ?? null} lang={lang} /> : null}
+      {section === 'holidays' ? <HolidaySection lang={lang} /> : null}
     </div>
   )
 }
@@ -82,7 +85,7 @@ const TITLES = {
   menu: STRINGS.secMenu,
   orgChart: STRINGS.secOrgChart,
   attendance: STRINGS.secAttendance,
-  dosDonts: STRINGS.secDosDonts,
+  holidays: STRINGS.secPublicHoliday,
 } as const
 
 function Blocks({ blocks, lang }: { blocks: StaticBlock[]; lang: Lang }) {
