@@ -20,7 +20,14 @@
  *   lays out the categories and leaves every item list empty for HR to fill.
  * - **Org Chart** — needs a publicly reachable image URL (a `files/{id}` in
  *   this app's own bucket renders broken for an audience with no Firebase Auth
- *   session). Only the caption is seeded; the URL is HR's to paste.
+ *   session). HR supplied the real chart 2026-09-26 (`welcome/public/org-chart.png`);
+ *   `ORG_CHART_SEED.imageUrl` is a root-relative path rather than an absolute
+ *   URL, which resolves fine here since the `<img>` renders inside `welcome/`
+ *   itself — same convention Company Profile's own hero/brand photos use.
+ *   `WelcomeContentPage.tsx`'s `type="url"` field expects an absolute URL if
+ *   HR ever retypes it there, so swap in the deployed `dist-welcome/` origin's
+ *   absolute URL once that's known, rather than leaving the relative path as
+ *   the permanent source of truth.
  */
 
 export interface SeedBilingual {
@@ -168,9 +175,9 @@ export const MENU_SEED: SeedMenu = {
   ],
 }
 
-/** Caption only — the image URL is HR's to paste, per this file's header. */
+/** The real chart, per this file's header note on the imageUrl's shape. */
 export const ORG_CHART_SEED: SeedOrgChart = {
-  imageUrl: '',
+  imageUrl: '/org-chart.png',
   caption: p(
     'Struktur organisasi Nourish Group. Cari posisimu, lalu cari supervisor langsungmu — merekalah orang pertama yang kamu hubungi.',
     'The Nourish Group structure. Find your own position, then find your direct supervisor — they are your first point of contact.',
