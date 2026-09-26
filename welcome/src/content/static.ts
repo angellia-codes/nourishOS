@@ -1,24 +1,5 @@
 import type { Pair } from '../strings'
 
-/**
- * welcome-portal.md §2 D4 / §7.4 — the three sections that are static in the
- * bundle rather than HR-editable. Company Profile, Core Values and the
- * Grooming Standard change when the company changes, which is a deploy either
- * way; the Menu, Org Chart, Attendance Guide and Do's & Don'ts change far more
- * often and come from `welcomeContent` instead.
- *
- * This is content, not engineering. The copy below is drawn from the Company
- * Profile PDF, the Core Value PDF and the Grooming Standard deck the spec
- * cites — **it is a first pass and needs an owner read-through** (open item
- * M7 covers the same ground for the two editable guides). Editing the strings
- * here is a data change; nothing branches on them.
- *
- * §7.4's HR-contact note is honoured by NOT hardcoding a name or a number
- * here: open item M8 records that the Company Profile and the Org Chart
- * disagree about who a hire contacts, so the contact block reads from the
- * editable content instead and this file says nothing about it.
- */
-
 const p = (id: string, en: string): Pair => ({ id, en })
 
 export interface StaticBlock {
