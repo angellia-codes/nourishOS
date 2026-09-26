@@ -94,6 +94,29 @@ function Blocks({ blocks, lang }: { blocks: StaticBlock[]; lang: Lang }) {
           <p className="whitespace-pre-line text-sm leading-relaxed text-[var(--w-cream-soft)]">
             {t(block.body, lang)}
           </p>
+          {block.images ? (
+            // Tapping opens the full-size photo in a new tab — the browser's own
+            // viewer gives pinch-zoom without a lightbox component.
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              {block.images.map((image) => (
+                <a
+                  key={image.src}
+                  href={image.src}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-focusable flex flex-col gap-1.5 rounded-xl"
+                >
+                  <img
+                    src={image.src}
+                    alt={t(image.caption, lang)}
+                    loading="lazy"
+                    className="w-full rounded-xl bg-white/5"
+                  />
+                  <span className="text-xs text-[var(--w-cream-soft)]">{t(image.caption, lang)}</span>
+                </a>
+              ))}
+            </div>
+          ) : null}
         </Card>
       ))}
     </div>

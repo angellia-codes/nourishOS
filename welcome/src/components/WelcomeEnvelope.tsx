@@ -30,8 +30,7 @@ export function WelcomeEnvelope({
   verified: boolean
   lang: Lang
 }) {
-  // Read once, at mount: flipping this mid-session would re-animate the card
-  // under the hire while they are reading it.
+
   const [open, setOpen] = useState(() => hasOpenedEnvelope())
   const cardRef = useRef<HTMLElement>(null)
   const reduceMotion = usePrefersReducedMotion()
@@ -43,8 +42,7 @@ export function WelcomeEnvelope({
     }
     setOpen(true)
     markEnvelopeOpened()
-    // Move focus into the card once it has arrived, so a screen reader hears
-    // the greeting rather than being left on the envelope button.
+
     window.setTimeout(() => cardRef.current?.focus(), reduceMotion ? 50 : 680)
   }
 

@@ -1,29 +1,12 @@
 import type { Pair } from '../strings'
 
-/**
- * welcome-portal.md §2 D4 / §7.4 — the three sections that are static in the
- * bundle rather than HR-editable. Company Profile, Core Values and the
- * Grooming Standard change when the company changes, which is a deploy either
- * way; the Menu, Org Chart, Attendance Guide and Do's & Don'ts change far more
- * often and come from `welcomeContent` instead.
- *
- * This is content, not engineering. The copy below is drawn from the Company
- * Profile PDF, the Core Value PDF and the Grooming Standard deck the spec
- * cites — **it is a first pass and needs an owner read-through** (open item
- * M7 covers the same ground for the two editable guides). Editing the strings
- * here is a data change; nothing branches on them.
- *
- * §7.4's HR-contact note is honoured by NOT hardcoding a name or a number
- * here: open item M8 records that the Company Profile and the Org Chart
- * disagree about who a hire contacts, so the contact block reads from the
- * editable content instead and this file says nothing about it.
- */
-
 const p = (id: string, en: string): Pair => ({ id, en })
 
 export interface StaticBlock {
   heading: Pair
   body: Pair
+  /** Photos under the text — only the Grooming Standard uses these today. */
+  images?: { src: string; caption: Pair }[]
 }
 
 /**
@@ -274,4 +257,8 @@ export const CORE_VALUES: CoreValuesContent = {
  * on 2026-09-26, replacing this flat `StaticBlock[]` with the full bilingual
  * category/subcategory/position hierarchy from the supplied Grooming Standard
  * spec — see `content/grooming.ts`'s own header for why it's a separate file.
+ * The 22 real photos a parallel push wired into this file's old flat
+ * structure (see the git history around `2026-09-26T18` for that commit)
+ * moved with it — they're now `imageUrl`s on the matching leaf/position in
+ * `content/grooming.ts`, same filenames, e.g. `/grooming-nametag.png`.
  */
