@@ -476,7 +476,10 @@ export function ImagePlaceholder({
   className?: string
 }) {
   if (imageUrl) {
-    return <img src={imageUrl} alt={alt} className={`aspect-[4/3] w-full rounded-xl object-cover ${className}`} />
+    // No forced aspect ratio here — a cropped `object-cover` box hid parts of
+    // portrait photos and multi-shot composite grids. The image renders at
+    // its own natural ratio instead, so the box always matches the photo.
+    return <img src={imageUrl} alt={alt} className={`w-full rounded-xl ${className}`} />
   }
   return (
     <div
