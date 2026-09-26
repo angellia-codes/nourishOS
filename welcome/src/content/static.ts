@@ -269,54 +269,9 @@ export const CORE_VALUES: CoreValuesContent = {
   ],
 }
 
-export const GROOMING: StaticBlock[] = [
-  {
-    heading: p('Kenapa ini penting', 'Why this matters'),
-    body: p(
-      'Penampilan adalah hal pertama yang dilihat tamu, dan di dapur ini juga soal keamanan pangan. Standar di bawah berlaku untuk semua departemen kecuali disebutkan lain.',
-      'Your appearance is the first thing a guest sees, and in the kitchen it is also food safety. The standards below apply to every department unless stated otherwise.',
-    ),
-  },
-  {
-    heading: p('Kebersihan diri', 'Personal hygiene'),
-    body: p(
-      'Mandi sebelum shift. Deodoran wajib, parfum menyengat tidak. Gigi dan napas bersih. Cuci tangan saat tiba, setiap ganti tugas, setelah dari toilet, dan setelah memegang bahan mentah.',
-      'Shower before your shift. Deodorant yes, heavy fragrance no. Clean teeth and fresh breath. Wash your hands on arrival, between tasks, after the toilet, and after handling raw ingredients.',
-    ),
-  },
-  {
-    heading: p('Rambut', 'Hair'),
-    body: p(
-      'Bersih dan rapi. Rambut panjang diikat rapat ke belakang; di dapur wajib memakai penutup kepala. Jenggot dan kumis dicukur rapi. Pewarna rambut warna mencolok tidak diperbolehkan.',
-      'Clean and tidy. Long hair tied back tightly; in the kitchen a head covering is required. Beards and moustaches neatly trimmed. Bright unnatural hair colour is not permitted.',
-    ),
-  },
-  {
-    heading: p('Kuku dan tangan', 'Nails and hands'),
-    body: p(
-      'Kuku pendek, bersih, tanpa cat kuku dan tanpa kuku palsu untuk semua yang memegang makanan. Luka terbuka ditutup plester tahan air berwarna dan sarung tangan.',
-      'Nails short, clean, no polish and no false nails for anyone handling food. Open cuts covered with a coloured waterproof plaster and a glove.',
-    ),
-  },
-  {
-    heading: p('Make-up dan perhiasan', 'Make-up and jewellery'),
-    body: p(
-      'Make-up natural. Perhiasan dibatasi: jam tangan sederhana dan satu cincin polos. Di dapur, tidak ada perhiasan sama sekali kecuali cincin kawin polos.',
-      'Natural make-up. Jewellery is limited: a plain watch and one plain ring. In the kitchen, no jewellery at all except a plain wedding band.',
-    ),
-  },
-  {
-    heading: p('Seragam dan name tag', 'Uniform and name tag'),
-    body: p(
-      'Seragam bersih dan disetrika setiap shift. Name tag selalu dipakai, di dada sebelah kiri, menghadap tamu. Sepatu tertutup, anti-slip, warna gelap. Apron diganti begitu kotor, bukan di akhir shift.',
-      'Uniform clean and pressed every shift. Name tag always worn, left chest, facing the guest. Closed, non-slip, dark shoes. Aprons are changed as soon as they are soiled, not at the end of the shift.',
-    ),
-  },
-  {
-    heading: p('Per departemen', 'By department'),
-    body: p(
-      'Dapur dan bakery: penutup kepala, apron, sepatu tertutup, tanpa perhiasan. Service dan bar: seragam outlet, name tag, sepatu gelap. Ritel wholefood: seragam outlet dan name tag. Security: seragam lengkap sesuai ketentuan.',
-      'Kitchen and bakery: head covering, apron, closed shoes, no jewellery. Service and bar: outlet uniform, name tag, dark shoes. Wholefood retail: outlet uniform and name tag. Security: full uniform as specified.',
-    ),
-  },
-]
+/**
+ * Grooming Standard moved to its own `content/grooming.ts` + `pages/GroomingSection.tsx`
+ * on 2026-09-26, replacing this flat `StaticBlock[]` with the full bilingual
+ * category/subcategory/position hierarchy from the supplied Grooming Standard
+ * spec — see `content/grooming.ts`'s own header for why it's a separate file.
+ */
