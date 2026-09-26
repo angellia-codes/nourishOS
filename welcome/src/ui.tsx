@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useState } from 'react'
 
 /**
  * The welcome app's whole component set — glass surfaces over the Basalt
@@ -133,6 +134,76 @@ export function Chip({
       <span className="flex flex-none">{icon}</span>
       <span>{label}</span>
     </span>
+  )
+}
+
+/**
+ * Generalizes `LangToggle`'s (`App.tsx`) two-button `role="group"`/
+ * `aria-pressed` pill pattern so Grooming's Male/Female switch can reuse it
+ * instead of duplicating the markup. Takes already-resolved labels, not
+ * `Pair`s, matching every other primitive here.
+ */
+export function SegmentedToggle<T extends string>({
+  value,
+  options,
+  onChange,
+  ariaLabel,
+}: {
+  value: T
+  options: { value: T; label: string }[]
+  onChange: (value: T) => void
+  ariaLabel: string
+}) {
+  return (
+    <div className="flex overflow-hidden rounded-full border border-[var(--w-glass-border)]" role="group" aria-label={ariaLabel}>
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          aria-pressed={value === option.value}
+          onClick={() => onChange(option.value)}
+          className={`w-focusable min-h-[44px] flex-1 px-4 text-sm font-semibold transition-colors ${
+            value === option.value ? 'bg-[var(--w-amber)] text-[var(--w-ink)]' : 'text-[var(--w-cream-soft)]'
+          }`}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/**
+ * Grooming Standard's "SHOW NOTES ▼ / HIDE NOTES ▲" pattern — notes hidden by
+ * default, expanded in place with no navigation. No accordion/collapsible
+ * existed anywhere in this app before; generic enough for a future section
+ * to reuse.
+ */
+export function Collapsible({
+  closedLabel,
+  openLabel,
+  defaultOpen = false,
+  children,
+}: {
+  closedLabel: string
+  openLabel: string
+  defaultOpen?: boolean
+  children: React.ReactNode
+}) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <div>
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        className="w-focusable flex min-h-[44px] items-center gap-1.5 rounded text-sm font-semibold text-[var(--w-amber)]"
+      >
+        {open ? openLabel : closedLabel}
+        <span className={`flex-none transition-transform ${open ? 'rotate-180' : ''}`}>{ChevronIcon}</span>
+      </button>
+      {open ? <div className="mt-2 flex flex-col gap-2">{children}</div> : null}
+    </div>
   )
 }
 
@@ -360,6 +431,25 @@ export const InstagramIcon = (
   </svg>
 )
 
+/** Grooming Standard — Uniform & Accessories category (§7.4, added 2026-09-26). */
+export const ShirtIcon = (
+  <svg viewBox="0 0 20 20" width="16" height="16" fill="none" aria-hidden="true">
+    <path
+      d="M7 3.2L4 5.4l1.6 2.3L7 6.9v9.9h6V6.9l1.4.8L16 5.4 13 3.2c-.6.9-1.7 1.5-3 1.5s-2.4-.6-3-1.5z"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
+/** Grooming Standard — the `Collapsible` expand/collapse indicator (§7.4, added 2026-09-26). */
+export const ChevronIcon = (
+  <svg viewBox="0 0 20 20" width="14" height="14" fill="none" aria-hidden="true">
+    <path d="M5.5 7.5l4.5 4.5 4.5-4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
 const ImageIcon = (
   <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true">
     <rect x="3" y="4.5" width="18" height="15" rx="2" stroke="currentColor" strokeWidth="1.4" />
@@ -386,7 +476,18 @@ export function ImagePlaceholder({
   className?: string
 }) {
   if (imageUrl) {
-    return <img src={imageUrl} alt={alt} className={`aspect-[4/3] w-full rounded-xl object-cover ${className}`} />
+    // Capped by height, not width: Position Standards' photos are portrait
+    // composites (~400x590px) that render ~500px tall at full card width —
+    // taller than half a phone screen. object-contain + a height cap keeps
+    // every photo fully visible (never cropped) while it fits on screen;
+    // wider photos (Name Tag, Apron) are already well under the cap.
+    return (
+      <img
+        src={imageUrl}
+        alt={alt}
+        className={`mx-auto max-h-[420px] w-auto max-w-full rounded-xl object-contain ${className}`}
+      />
+    )
   }
   return (
     <div

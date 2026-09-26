@@ -21,9 +21,10 @@ import {
   StoreIcon,
   TargetIcon,
 } from '../ui'
-import { COMPANY_PROFILE, CORE_VALUES, GROOMING, type CoreValueItem, type StaticBlock } from '../content/static'
+import { COMPANY_PROFILE, CORE_VALUES, type CoreValueItem, type StaticBlock } from '../content/static'
 import { STRINGS, t, type Lang } from '../strings'
 import type { GuideContent, MenuContent, OrgChartContent, WelcomeContent } from '../api'
+import { GroomingSection } from './GroomingSection'
 
 /**
  * welcome-portal.md §7.4 — the seven content sections, three static in the
@@ -65,7 +66,7 @@ export function SectionPage({
 
       {section === 'profile' ? <CompanyProfile lang={lang} /> : null}
       {section === 'values' ? <CoreValues lang={lang} /> : null}
-      {section === 'grooming' ? <Blocks blocks={GROOMING} lang={lang} /> : null}
+      {section === 'grooming' ? <GroomingSection lang={lang} /> : null}
       {section === 'menu' ? <Menu content={content?.sections.menu ?? null} lang={lang} /> : null}
       {section === 'orgChart' ? <OrgChart content={content?.sections.orgChart ?? null} lang={lang} /> : null}
       {section === 'attendance' ? <Guide content={content?.sections.attendanceGuide ?? null} lang={lang} /> : null}
