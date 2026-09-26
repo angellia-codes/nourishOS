@@ -476,10 +476,18 @@ export function ImagePlaceholder({
   className?: string
 }) {
   if (imageUrl) {
-    // No forced aspect ratio here — a cropped `object-cover` box hid parts of
-    // portrait photos and multi-shot composite grids. The image renders at
-    // its own natural ratio instead, so the box always matches the photo.
-    return <img src={imageUrl} alt={alt} className={`w-full rounded-xl ${className}`} />
+    // Capped by height, not width: Position Standards' photos are portrait
+    // composites (~400x590px) that render ~500px tall at full card width —
+    // taller than half a phone screen. object-contain + a height cap keeps
+    // every photo fully visible (never cropped) while it fits on screen;
+    // wider photos (Name Tag, Apron) are already well under the cap.
+    return (
+      <img
+        src={imageUrl}
+        alt={alt}
+        className={`mx-auto max-h-[420px] w-auto max-w-full rounded-xl object-contain ${className}`}
+      />
+    )
   }
   return (
     <div
