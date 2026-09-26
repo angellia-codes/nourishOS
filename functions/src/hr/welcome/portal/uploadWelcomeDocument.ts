@@ -39,7 +39,12 @@ const IMAGE_MIME = ['image/jpeg', 'image/png', 'image/heic', 'image/heif']
 /** §6 — "Max 8 MB per file", checked on the decoded bytes, not the base64. */
 const MAX_FILE_BYTES = 8 * 1024 * 1024
 
-export const uploadWelcomeDocument = onCall({ region: REGION, maxInstances: 10 }, async (request) => {
+// Base64 inflates an 8MB file to ~10.7MB, and receiving that body counts
+// against the function's own request timeout the same as any other work it
+// does — the default 60s is what was producing "deadline-exceeded" on the
+// KTP/KK slots over a slow mobile upload, before the body had even finished
+// arriving. 180s matches the client's own override in welcome/src/api.ts.
+export const uploadWelcomeDocument = onCall({ region: REGION, maxInstances: 10, timeoutSeconds: 180 }, async (request) => {
   try {
     const data = (request.data ?? {}) as Record<string, unknown>
 

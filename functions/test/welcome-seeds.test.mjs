@@ -56,8 +56,8 @@ describe('WELCOME_CONTENT_SEEDS', () => {
     })
   })
 
-  test('the org chart seeds a caption but no image url', () => {
+  test('the org chart seeds a caption and a real image url', () => {
     bilingual(WELCOME_CONTENT_SEEDS.orgChart.caption, 'orgChart.caption')
-    assert.equal(WELCOME_CONTENT_SEEDS.orgChart.imageUrl, '')
+    assert.ok(WELCOME_CONTENT_SEEDS.orgChart.imageUrl.trim().length > 0, 'orgChart.imageUrl is empty')
   })
 })

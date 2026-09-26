@@ -1,11 +1,11 @@
-import { Button, Card, DrawnCheck, Notice } from '../ui'
+import { Button, Card, Notice } from '../ui'
 import { WelcomeEnvelope } from '../components/WelcomeEnvelope'
-import { FIRST_WEEK } from '../content/static'
 import { STRINGS, t, type Lang } from '../strings'
 
 /**
  * welcome-portal.md §7.3 — "Home order: banner → 'Your first week' checklist →
- * section cards".
+ * section cards". The checklist card was dropped from this page; the banner
+ * and section cards are unchanged.
  *
  * Feedback is the spec's own last block on this page and is deliberately
  * absent: it was scoped out of this pass along with `onboardingFeedback`,
@@ -51,26 +51,6 @@ export function HomePage({
         </Card>
       ) : null}
 
-      <Card index={1}>
-        <div className="flex items-start gap-3">
-          <DrawnCheck size={28} />
-          <div>
-            <h2 className="text-lg font-semibold">{t(STRINGS.firstWeek, lang)}</h2>
-            <p className="text-sm text-[var(--w-cream-soft)]">{t(STRINGS.firstWeekIntro, lang)}</p>
-          </div>
-        </div>
-        <ul className="mt-4 flex flex-col gap-2.5">
-          {FIRST_WEEK.map((item, index) => (
-            <li key={index} className="flex gap-3 text-sm">
-              <span className="w-mono mt-0.5 flex-none text-xs text-[var(--w-amber)]">
-                {String(index + 1).padStart(2, '0')}
-              </span>
-              <span className="text-[var(--w-cream-soft)]">{t(item, lang)}</span>
-            </li>
-          ))}
-        </ul>
-      </Card>
-
       <div>
         <h2 className="mb-3 px-1 text-lg font-semibold">{t(STRINGS.readSections, lang)}</h2>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -80,7 +60,7 @@ export function HomePage({
               type="button"
               onClick={() => onOpenSection(section.key)}
               className="w-glass w-focusable w-rise p-4 text-left"
-              style={{ '--i': index + 2 } as React.CSSProperties}
+              style={{ '--i': index + 1 } as React.CSSProperties}
             >
               <p className="font-semibold">{section.title}</p>
               <p className="mt-1 text-sm text-[var(--w-cream-soft)]">{section.blurb}</p>

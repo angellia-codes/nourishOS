@@ -32,7 +32,11 @@ export function uploadWelcomeDocument(input: {
   mimeType: string
   contentBase64: string
 }): Promise<{ fileId: string; slot: UploadSlot; fileName: string }> {
-  return callFunction('uploadWelcomeDocument', input)
+  // Base64 puts an 8MB file at ~10.7MB on the wire, which a slow mobile
+  // upload can outrun the SDK's default 70s deadline on — that's what showed
+  // up as a raw "deadline-exceeded" on the KTP/KK slots. 180s matches the
+  // matching timeoutSeconds on the callable itself.
+  return callFunction('uploadWelcomeDocument', input, { timeout: 180000 })
 }
 
 export function submitWelcomeForm(

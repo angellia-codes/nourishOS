@@ -157,8 +157,6 @@ export const STRINGS = {
   openForm: p('Buka formulir', 'Open the form'),
 
   // Home (§7.3)
-  firstWeek: p('Minggu pertamamu', 'Your first week'),
-  firstWeekIntro: p('Yang akan kamu jalani beberapa hari pertama.', 'What the first few days look like.'),
   readSections: p('Yang perlu kamu tahu', 'What you need to know'),
 
   // Nav (§7.3)
@@ -187,6 +185,10 @@ export const STRINGS = {
   ),
   menuLegend: p('GF bebas gluten · V vegetarian · VO bisa vegan · VG vegan', 'GF gluten free · V vegetarian · VO vegan option · VG vegan'),
   orgChartZoom: p('Cubit untuk memperbesar.', 'Pinch to zoom.'),
+
+  // Company Profile (§7.4, replaced 2026-09-26)
+  photoComingSoon: p('Foto segera hadir', 'Photo coming soon'),
+  openInMaps: p('Buka di Google Maps', 'Open in Google Maps'),
 } as const
 
 /** "Step {n} of {total}" and friends. */
