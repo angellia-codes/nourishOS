@@ -160,14 +160,3 @@ export const GROOMING: StaticBlock[] = [
     ),
   },
 ]
-
-/** §7.3 — the "Your first week" checklist on Home. */
-export const FIRST_WEEK: Pair[] = [
-  p('Lengkapi formulir data diri ini dan kirim ke HR.', 'Complete this details form and send it to HR.'),
-  p('Baca Profil Perusahaan dan Nilai Inti.', 'Read the Company Profile and Core Values.'),
-  p('Baca Standar Penampilan sebelum shift pertamamu.', 'Read the Grooming Standard before your first shift.'),
-  p('Bawa dokumen asli ke HR untuk dicocokkan.', 'Bring your original documents to HR to be checked.'),
-  p('Ambil seragam dan name tag.', 'Collect your uniform and name tag.'),
-  p('Pelajari menu outletmu.', 'Learn your outlet’s menu.'),
-  p('Kenalan dengan tim dan supervisormu.', 'Meet your team and your supervisor.'),
-]

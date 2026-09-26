@@ -8,9 +8,13 @@ import { hasOpenedEnvelope, markEnvelopeOpened } from '../token'
  * interaction rather than a plain card.
  *
  * Tap the kraft envelope: the flap swings back, the seal shrinks away, a
- * ticket-shaped glass card rises out, the headline enters word by word, and
- * the status chip settles in last. The choreography and its timings come
- * straight from the prototype the spec links; the CSS lives in glass.css.
+ * ticket-shaped glass card rises out, and the headline enters word by word.
+ * The status chip sits below the envelope, outside the card — the ticket is
+ * the welcome message alone, not the hire's status too. It has to go below
+ * rather than above: the open ticket rises above the top of its own `.w-stage`
+ * box (see glass.css) and would paint over anything placed there instead. The
+ * choreography and its timings come straight from the prototype the spec
+ * links; the CSS lives in glass.css.
  *
  * The spec flags one behaviour as an unconfirmed assumption and this is the
  * reading it takes: the ceremony plays **once**, on the first arrival after
@@ -48,61 +52,70 @@ export function WelcomeEnvelope({
   const words = headline.split(' ')
 
   return (
-    <div className={`w-stage ${open ? 'is-open' : ''}`}>
-      <button
-        type="button"
-        className="w-envelope"
-        aria-expanded={open}
-        aria-controls="welcome-card"
-        aria-label={t(STRINGS.envelopeHint, lang)}
-        onClick={toggle}
-      >
-        <span className="w-env-shadow" />
-        <span className="w-env-back" />
-        <span className="w-env-pocket" />
-        <span className="w-env-flap" />
-        <span className="w-env-seal" aria-hidden="true">
-          ✉
-        </span>
-      </button>
+    <div className="flex flex-col items-center gap-4">
+      <div className={`w-stage ${open ? 'is-open' : ''}`}>
+        <button
+          type="button"
+          className="w-envelope"
+          aria-expanded={open}
+          aria-controls="welcome-card"
+          aria-label={t(STRINGS.envelopeHint, lang)}
+          onClick={toggle}
+        >
+          <span className="w-env-shadow" />
+          <span className="w-env-back" />
+          <span className="w-env-pocket" />
+          <span className="w-env-flap" />
+          <span className="w-env-seal" aria-hidden="true">
+            ✉
+          </span>
+        </button>
 
-      <section
-        ref={cardRef}
-        id="welcome-card"
-        className="w-ticket"
-        tabIndex={-1}
-        aria-hidden={!open}
-        aria-live="polite"
-      >
-        <span className="w-ticket-teeth" aria-hidden="true" />
-        <h1 className="mb-4 text-[clamp(21px,6.2vw,27px)] font-bold leading-tight tracking-tight">
-          {/* Word by word, each 70ms after the last. Re-keyed on the name so a
-              late-arriving fullName replays cleanly rather than half-animating. */}
-          {words.map((word, index) => (
-            <span
-              key={`${fullName}-${index}`}
-              className="w-word"
-              style={{ '--i': index } as React.CSSProperties}
-            >
-              {word}
-              {index < words.length - 1 ? ' ' : ''}
-            </span>
-          ))}
-        </h1>
+        <section
+          ref={cardRef}
+          id="welcome-card"
+          className="w-ticket"
+          tabIndex={-1}
+          aria-hidden={!open}
+          aria-live="polite"
+        >
+          <span className="w-ticket-teeth" aria-hidden="true" />
+          <h1 className="mb-4 text-[clamp(21px,6.2vw,27px)] font-bold leading-tight tracking-tight">
+            {/* Word by word, each 70ms after the last. Re-keyed on the name so a
+                late-arriving fullName replays cleanly rather than half-animating. */}
+            {words.map((word, index) => (
+              <span
+                key={`${fullName}-${index}`}
+                className="w-word"
+                style={{ '--i': index } as React.CSSProperties}
+              >
+                {word}
+                {index < words.length - 1 ? ' ' : ''}
+              </span>
+            ))}
+          </h1>
 
+          <div className="w-note-in text-[12.5px] leading-relaxed text-[var(--w-cream-soft)]">
+            <p>{t(STRINGS.bannerNote, lang)}</p>
+            <p className="mt-3 font-semibold text-[var(--w-cream)]">{t(STRINGS.bannerSignerName, lang)}</p>
+            <p className="text-[11.5px]">{t(STRINGS.bannerSignerTitle, lang)}</p>
+          </div>
+        </section>
+      </div>
+
+      {/* Status lives outside the card: the ticket above is the welcome
+          message alone, and this reads as the hire's current status rather
+          than as one more line inside it. Below the stage, not above it —
+          the open ticket rises above the stage's own box and would paint
+          over anything placed there instead. */}
+      {open ? (
         <Chip
-          className="w-chip-in"
+          className="w-chip-in mt-2"
           tone={verified ? 'done' : 'pending'}
           icon={verified ? CheckIcon : ClockIcon}
           label={t(verified ? STRINGS.chipVerified : STRINGS.chipSubmitted, lang)}
         />
-
-        <div className="w-note-in mt-4 text-[12.5px] leading-relaxed text-[var(--w-cream-soft)]">
-          <p>{t(STRINGS.bannerNote, lang)}</p>
-          <p className="mt-3 font-semibold text-[var(--w-cream)]">{t(STRINGS.bannerSignerName, lang)}</p>
-          <p className="text-[11.5px]">{t(STRINGS.bannerSignerTitle, lang)}</p>
-        </div>
-      </section>
+      ) : null}
     </div>
   )
 }

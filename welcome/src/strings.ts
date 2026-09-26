@@ -157,8 +157,6 @@ export const STRINGS = {
   openForm: p('Buka formulir', 'Open the form'),
 
   // Home (§7.3)
-  firstWeek: p('Minggu pertamamu', 'Your first week'),
-  firstWeekIntro: p('Yang akan kamu jalani beberapa hari pertama.', 'What the first few days look like.'),
   readSections: p('Yang perlu kamu tahu', 'What you need to know'),
 
   // Nav (§7.3)
