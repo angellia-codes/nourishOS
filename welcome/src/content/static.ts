@@ -105,6 +105,7 @@ export const COMPANY_PROFILE: CompanyProfileContent = {
   brands: [
     {
       name: 'Nourish',
+      imageUrl: '/brand-nourish.png',
       body: p(
         'Kafe yang peduli kesehatan, didedikasikan untuk menyajikan hidangan organik kaya nutrisi yang dibuat dari bahan segar dan bersumber lokal. Dirancang untuk mereka yang mengutamakan kesehatan, Nourish menghadirkan menu seimbang berupa hidangan bergizi, smoothie superfood, dan pilihan berbasis nabati untuk menyehatkan tubuh dan pikiran.',
         'A health-conscious café dedicated to serving organic, nutrient-rich meals made from fresh, locally sourced ingredients. Designed for those who prioritize wellness, Nourish offers a balanced menu of wholesome dishes, superfood smoothies and plant-based options to nourish both body and mind.',
@@ -112,6 +113,7 @@ export const COMPANY_PROFILE: CompanyProfileContent = {
     },
     {
       name: 'The Bakery',
+      imageUrl: '/brand-the-bakery.png',
       body: p(
         'Berfokus pada roti, pastry, dan produk panggang buatan tangan dari bahan-bahan alami berkualitas tinggi. Dengan perpaduan teknik tradisional dan cita rasa modern, The Bakery menghadirkan suasana hangat dan ramah, tempat pelanggan dapat menikmati kelezatan yang baru keluar dari oven, mulai dari roti sourdough hingga croissant yang lembut.',
         'Specializing in handcrafted bread, pastries and baked goods made from high-quality, natural ingredients. With a focus on traditional techniques and modern flavors, The Bakery brings a warm, inviting atmosphere where customers can enjoy fresh-from-the-oven delights, from sourdough loaves to delicate croissants.',
@@ -119,6 +121,7 @@ export const COMPANY_PROFILE: CompanyProfileContent = {
     },
     {
       name: 'Wholefoods',
+      imageUrl: '/brand-wholefoods.png',
       body: p(
         'Tempat makan bergaya pasar yang mengutamakan bahan-bahan segar, alami, dan bersumber secara etis. Wholefoods menawarkan berbagai hidangan menyehatkan yang terinspirasi dari cita rasa global, dengan penekanan pada keberlanjutan dan praktik farm-to-table. Baik kamu mencari camilan sehat yang praktis maupun pilihan bahan pangan organik dan kebutuhan dapur pilihan, Wholefoods adalah destinasi untuk makan dengan penuh kesadaran.',
         "A market-style eatery that champions fresh, wholesome and ethically sourced ingredients. Wholefoods offers a variety of nourishing dishes inspired by global flavors, emphasizing sustainability and farm-to-table practices. Whether you're looking for a quick, healthy bite or a curated grocery selection of organic produce and pantry essentials, Wholefoods is a destination for mindful eating.",
