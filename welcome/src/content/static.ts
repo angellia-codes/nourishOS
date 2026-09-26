@@ -4,10 +4,7 @@ const p = (id: string, en: string): Pair => ({ id, en })
 
 export interface StaticBlock {
   heading: Pair
-  body: Pair
-  /** Photos under the text — only the Grooming Standard uses these today. */
-  images?: { src: string; caption: Pair }[]
-}
+  body: Pair}
 
 /**
  * Company Profile — replaced 2026-09-26 with Nourish Bali's real profile copy
