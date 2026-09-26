@@ -162,64 +162,109 @@ export const COMPANY_PROFILE: CompanyProfileContent = {
   },
 }
 
-export const CORE_VALUES: StaticBlock[] = [
-  {
-    heading: p('INSPIRE', 'INSPIRE'),
-    body: p(
-      'Nilai inti kami dieja INSPIRE. Tujuh kata ini yang kami pakai untuk memutuskan hal-hal yang tidak ada di SOP mana pun.',
-      'Our core values spell INSPIRE. These seven words are what we use to decide the things no SOP covers.',
-    ),
-  },
-  {
-    heading: p('I — Integritas', 'I — Integrity'),
-    body: p(
-      'Jujur soal bahan, porsi, jam kerja, dan kesalahan. Termasuk saat tidak ada yang melihat.',
-      'Honest about ingredients, portions, hours and mistakes. Including when nobody is watching.',
-    ),
-  },
-  {
-    heading: p('N — Nurture', 'N — Nurture'),
-    body: p(
-      'Kita menumbuhkan satu sama lain. Yang senior mengajar, yang baru bertanya — keduanya wajar.',
-      'We grow each other. Seniors teach, new people ask — both are normal here.',
-    ),
-  },
-  {
-    heading: p('S — Service', 'S — Service'),
-    body: p(
-      'Layanan bukan sekadar sopan. Layanan adalah memperhatikan apa yang dibutuhkan tamu sebelum diminta.',
-      'Service is not just politeness. It is noticing what a guest needs before they ask.',
-    ),
-  },
-  {
-    heading: p('P — Passion', 'P — Passion'),
-    body: p(
-      'Peduli pada hasil akhirnya. Piring yang keluar dari dapur adalah namamu.',
-      'Care about the result. The plate that leaves the kitchen carries your name.',
-    ),
-  },
-  {
-    heading: p('I — Inovasi', 'I — Innovation'),
-    body: p(
-      'Kalau ada cara yang lebih baik, katakan. Ide terbaik sering datang dari yang paling dekat dengan pekerjaannya.',
-      'If there is a better way, say so. The best ideas usually come from whoever is closest to the work.',
-    ),
-  },
-  {
-    heading: p('R — Respect', 'R — Respect'),
-    body: p(
-      'Ke tamu, ke rekan kerja, ke supplier, ke tempat kerja. Tanpa pengecualian.',
-      'To guests, to colleagues, to suppliers, to the place we work in. No exceptions.',
-    ),
-  },
-  {
-    heading: p('E — Excellence', 'E — Excellence'),
-    body: p(
-      'Standar yang sama di hari sibuk dan di hari sepi. Konsistensi itulah keunggulan.',
-      'The same standard on a busy day and a quiet one. Consistency is what excellence means.',
-    ),
-  },
-]
+/**
+ * Core Values — replaced 2026-09-26 with Nourish Bali's real INSPIRE values
+ * copy, given directly (slogan plus a short line per letter). Restructured
+ * from a flat `StaticBlock[]` into its own `CoreValuesContent` (a kicker, the
+ * "INSPIRE" hero word, the slogan, and one `CoreValueItem` per letter) so
+ * `SectionPage.tsx` can render the hero and each value's icon distinctly,
+ * the same reasoning `CompanyProfileContent` replaced its own `StaticBlock[]`
+ * for. `icon` is a name, not JSX — this file stays free of React so the
+ * icon/name map lives in `SectionPage.tsx` next to the icons themselves.
+ * Descriptions are translated to Indonesian as a first pass needing an
+ * owner read-through, the same standing caveat this file's header carries.
+ * **Deliberately reverses the previous copy's P value** — it read "Passion"
+ * before; the given copy replaces it with "Professionalism".
+ */
+export interface CoreValueItem {
+  letter: string
+  word: Pair
+  body: Pair
+  icon: 'shield' | 'heart' | 'sparkle' | 'badge' | 'bulb' | 'handshake' | 'medal'
+}
+
+export interface CoreValuesContent {
+  kicker: Pair
+  hero: string
+  slogan: Pair
+  sloganNote: Pair
+  values: CoreValueItem[]
+}
+
+export const CORE_VALUES: CoreValuesContent = {
+  kicker: p('Nilai Inti', 'Core Value'),
+  hero: 'INSPIRE',
+  slogan: p('Menginspirasi dengan Tujuan, Menyehatkan dengan Kepedulian', 'Inspire with Purpose, Nourish with Care'),
+  sloganNote: p(
+    '(Seimbang antara pemenuhan profesional dan emosional)',
+    '(Balanced between professional and emotional fulfillment)',
+  ),
+  values: [
+    {
+      letter: 'I',
+      word: p('INTEGRITAS', 'INTEGRITY'),
+      body: p(
+        'Selalu bertindak jujur dan etis dalam setiap interaksi.',
+        'Always act honestly and ethically in every interaction.',
+      ),
+      icon: 'shield',
+    },
+    {
+      letter: 'N',
+      word: p('NURTURE', 'NURTURE'),
+      body: p(
+        'Membangun kepercayaan dan hubungan jangka panjang dengan pelanggan.',
+        'Build trust and long-term relationships with customers.',
+      ),
+      icon: 'heart',
+    },
+    {
+      letter: 'S',
+      word: p('SERVICE', 'SERVICE'),
+      body: p(
+        'Mengutamakan kepuasan pelanggan dan berupaya lebih untuk memenuhi kebutuhan mereka.',
+        'Prioritize customer satisfaction and go above and beyond to meet their needs.',
+      ),
+      icon: 'sparkle',
+    },
+    {
+      letter: 'P',
+      word: p('PROFESIONALISME', 'PROFESSIONALISM'),
+      body: p(
+        'Menjaga standar tinggi dalam sikap, penampilan, dan komunikasi.',
+        'Maintain high standards in conduct, appearance and communication.',
+      ),
+      icon: 'badge',
+    },
+    {
+      letter: 'I',
+      word: p('INOVASI', 'INNOVATION'),
+      body: p(
+        'Merangkul kreativitas dan beradaptasi untuk memberikan solusi yang unik.',
+        'Embrace creativity and adapt to provide unique solutions.',
+      ),
+      icon: 'bulb',
+    },
+    {
+      letter: 'R',
+      word: p('RESPECT', 'RESPECT'),
+      body: p(
+        'Menghargai sudut pandang, waktu, dan kebutuhan pelanggan serta rekan kerja.',
+        'Value the perspectives, time and needs of customers and colleagues.',
+      ),
+      icon: 'handshake',
+    },
+    {
+      letter: 'E',
+      word: p('EXCELLENCE', 'EXCELLENCE'),
+      body: p(
+        'Berusaha mencapai kinerja luar biasa dan perbaikan berkelanjutan.',
+        'Strive for exceptional performance and continuous improvement.',
+      ),
+      icon: 'medal',
+    },
+  ],
+}
 
 export const GROOMING: StaticBlock[] = [
   {

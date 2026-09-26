@@ -162,6 +162,81 @@ export function Notice({
   return <p className={`rounded-xl border px-4 py-3 text-sm ${style}`}>{children}</p>
 }
 
+/** INSPIRE core values (§7.4, replaced 2026-09-26) — one icon per value. */
+export const ShieldIcon = (
+  <svg viewBox="0 0 20 20" width="16" height="16" fill="none" aria-hidden="true">
+    <path
+      d="M10 2.5l6 2.2v4.6c0 4-2.6 6.9-6 8.2-3.4-1.3-6-4.2-6-8.2V4.7l6-2.2z"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+    />
+    <path d="M7.2 10.1l1.9 1.9 3.7-3.9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
+export const HeartIcon = (
+  <svg viewBox="0 0 20 20" width="16" height="16" fill="none" aria-hidden="true">
+    <path
+      d="M10 17S2.8 12.6 2.8 7.6a3.7 3.7 0 016.9-1.9A3.7 3.7 0 0117.2 7.6C17.2 12.6 10 17 10 17z"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
+export const SparkleIcon = (
+  <svg viewBox="0 0 20 20" width="16" height="16" fill="none" aria-hidden="true">
+    <path
+      d="M10 2.5l1.3 4.4L15.7 8l-4.4 1.3L10 13.7 8.7 9.3 4.3 8l4.4-1.3L10 2.5z"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinejoin="round"
+    />
+    <path d="M15.5 12.5l.6 2 2 .6-2 .6-.6 2-.6-2-2-.6 2-.6.6-2z" fill="currentColor" />
+  </svg>
+)
+
+export const BadgeIcon = (
+  <svg viewBox="0 0 20 20" width="16" height="16" fill="none" aria-hidden="true">
+    <circle cx="10" cy="8" r="5" stroke="currentColor" strokeWidth="1.5" />
+    <path d="M7.2 12.3L6.3 17.5 10 15.4l3.7 2.1-.9-5.2" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+  </svg>
+)
+
+export const BulbIcon = (
+  <svg viewBox="0 0 20 20" width="16" height="16" fill="none" aria-hidden="true">
+    <path
+      d="M10 2.8a5 5 0 00-2.8 9.1c.5.4.8 1 .8 1.6v.5h4v-.5c0-.6.3-1.2.8-1.6A5 5 0 0010 2.8z"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinejoin="round"
+    />
+    <path d="M8 16.5h4M8.5 18h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+)
+
+export const HandshakeIcon = (
+  <svg viewBox="0 0 20 20" width="16" height="16" fill="none" aria-hidden="true">
+    <path
+      d="M2.5 9.5l3-2.7 3 2 2.3-2.3 3 1.9 3.7-2.4M2.5 9.5l3.2 4 2-1.2 1.7 1.9 2-1.1 1.6 1.6 2-1.2 2.5-3"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
+export const MedalIcon = (
+  <svg viewBox="0 0 20 20" width="16" height="16" fill="none" aria-hidden="true">
+    <circle cx="10" cy="12" r="5" stroke="currentColor" strokeWidth="1.5" />
+    <path d="M8.4 7.6L6.8 2.5M11.6 7.6l1.6-5.1" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    <path d="M8.6 12l1 1 2-2.2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
 export const ClockIcon = (
   <svg viewBox="0 0 20 20" width="15" height="15" fill="none" aria-hidden="true">
     <circle cx="10" cy="10" r="7.25" stroke="currentColor" strokeWidth="1.6" />

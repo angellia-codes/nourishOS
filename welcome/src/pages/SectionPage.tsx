@@ -1,20 +1,27 @@
 import { useEffect, useRef, useState } from 'react'
 import {
+  BadgeIcon,
   BagIcon,
+  BulbIcon,
   Button,
   Card,
   EyeIcon,
+  HandshakeIcon,
+  HeartIcon,
   ImagePlaceholder,
   InstagramIcon,
   LeafIcon,
   MailIcon,
+  MedalIcon,
   Notice,
   PhoneIcon,
   PinIcon,
+  ShieldIcon,
+  SparkleIcon,
   StoreIcon,
   TargetIcon,
 } from '../ui'
-import { COMPANY_PROFILE, CORE_VALUES, GROOMING, type StaticBlock } from '../content/static'
+import { COMPANY_PROFILE, CORE_VALUES, GROOMING, type CoreValueItem, type StaticBlock } from '../content/static'
 import { STRINGS, t, type Lang } from '../strings'
 import type { GuideContent, MenuContent, OrgChartContent, WelcomeContent } from '../api'
 
@@ -57,7 +64,7 @@ export function SectionPage({
       </h1>
 
       {section === 'profile' ? <CompanyProfile lang={lang} /> : null}
-      {section === 'values' ? <Blocks blocks={CORE_VALUES} lang={lang} /> : null}
+      {section === 'values' ? <CoreValues lang={lang} /> : null}
       {section === 'grooming' ? <Blocks blocks={GROOMING} lang={lang} /> : null}
       {section === 'menu' ? <Menu content={content?.sections.menu ?? null} lang={lang} /> : null}
       {section === 'orgChart' ? <OrgChart content={content?.sections.orgChart ?? null} lang={lang} /> : null}
@@ -214,6 +221,51 @@ function CompanyProfile({ lang }: { lang: Lang }) {
           </li>
         </ul>
       </Card>
+    </div>
+  )
+}
+
+const CORE_VALUE_ICONS: Record<CoreValueItem['icon'], React.ReactNode> = {
+  shield: ShieldIcon,
+  heart: HeartIcon,
+  sparkle: SparkleIcon,
+  badge: BadgeIcon,
+  bulb: BulbIcon,
+  handshake: HandshakeIcon,
+  medal: MedalIcon,
+}
+
+/** The INSPIRE values (§7.4), replacing the generic heading/body list — the hero word and each letter's icon need their own layout. */
+function CoreValues({ lang }: { lang: Lang }) {
+  const c = CORE_VALUES
+  return (
+    <div className="flex flex-col gap-3">
+      <Card index={0}>
+        <p className="text-xs font-semibold uppercase tracking-wide text-[var(--w-cream-faint)]">
+          {t(c.kicker, lang)}
+        </p>
+        <p className="mt-1 text-[clamp(32px,10vw,44px)] font-bold leading-none tracking-tight text-[var(--w-amber)]">
+          {c.hero}
+        </p>
+        <p className="mt-3 text-base font-semibold text-[var(--w-cream)]">{t(c.slogan, lang)}</p>
+        <p className="mt-1 text-sm text-[var(--w-cream-soft)]">{t(c.sloganNote, lang)}</p>
+      </Card>
+
+      {c.values.map((value, index) => (
+        <Card key={index} index={index + 1}>
+          <div className="flex items-start gap-3">
+            <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-white/5 text-[var(--w-amber)]">
+              {CORE_VALUE_ICONS[value.icon]}
+            </span>
+            <div>
+              <h2 className="font-semibold">
+                {value.letter} — {t(value.word, lang)}
+              </h2>
+              <p className="mt-1 text-sm leading-relaxed text-[var(--w-cream-soft)]">{t(value.body, lang)}</p>
+            </div>
+          </div>
+        </Card>
+      ))}
     </div>
   )
 }
