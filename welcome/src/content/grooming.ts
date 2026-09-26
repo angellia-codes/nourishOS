@@ -491,6 +491,7 @@ export const GROOMING_CONTENT: GroomingContent = {
           leaves: [
             {
               hasImage: true,
+              imageUrl: '/grooming-nametag.png',
               notes: [
                 p(
                   'Posisikan tanda nama sejajar dengan bagian atas dada, tidak terlalu rendah maupun terlalu tinggi.',
@@ -522,10 +523,10 @@ export const GROOMING_CONTENT: GroomingContent = {
           id: 'apron',
           heading: p('Apron', 'Apron'),
           leaves: [
-            { name: p('Floor', 'Floor'), hasImage: true, notes: APRON_NOTES },
-            { name: p('Kitchen', 'Kitchen'), hasImage: true, notes: APRON_NOTES },
-            { name: p('Bar', 'Bar'), hasImage: true, notes: APRON_NOTES },
-            { name: p('Kitchen Bakery', 'Kitchen Bakery'), hasImage: true, notes: APRON_NOTES },
+            { name: p('Floor', 'Floor'), hasImage: true, imageUrl: '/grooming-apron-floor.png', notes: APRON_NOTES },
+            { name: p('Kitchen', 'Kitchen'), hasImage: true, imageUrl: '/grooming-apron-kitchen.png', notes: APRON_NOTES },
+            { name: p('Bar', 'Bar'), hasImage: true, imageUrl: '/grooming-apron-bar.png', notes: APRON_NOTES },
+            { name: p('Kitchen Bakery', 'Kitchen Bakery'), hasImage: true, imageUrl: '/grooming-apron-kitchen-bakery.png', notes: APRON_NOTES },
           ],
         },
         {
@@ -585,6 +586,7 @@ export const GROOMING_CONTENT: GroomingContent = {
       name: p('Floor', 'Floor'),
       male: {
         hasImage: true,
+        imageUrl: '/grooming-position-floor-male.png',
         notes: [
           p('Tidak diperbolehkan kumis dan janggut.', 'No mustache and beard.'),
           p('Kenakan T-shirt Nourish putih yang bersih dan rapi.', 'Wear a clean and neat white Nourish T-shirt.'),
@@ -610,6 +612,7 @@ export const GROOMING_CONTENT: GroomingContent = {
       },
       female: {
         hasImage: true,
+        imageUrl: '/grooming-position-floor-female.png',
         notes: [
           p('Gunakan makeup natural dan hindari penggunaan yang berlebihan.', 'Use natural makeup and avoid excessive application.'),
           p('Makeup berat atau dramatis tidak diperbolehkan.', 'Heavy or dramatic makeup is not allowed.'),
@@ -641,6 +644,7 @@ export const GROOMING_CONTENT: GroomingContent = {
       name: p('Kitchen', 'Kitchen'),
       male: {
         hasImage: true,
+        imageUrl: '/grooming-position-kitchen-male.png',
         notes: [
           p('Penggunaan hair cap dan topi wajib.', 'Wearing a hair cap and hat is mandatory.'),
           p('Tidak diperbolehkan kumis dan janggut.', 'No mustache and beard.'),
@@ -657,6 +661,7 @@ export const GROOMING_CONTENT: GroomingContent = {
       },
       female: {
         hasImage: true,
+        imageUrl: '/grooming-position-kitchen-female.png',
         notes: [
           p('Penggunaan hair cap dan topi wajib.', 'Wearing a hair cap and hat is mandatory.'),
           p('Kenakan T-shirt Nourish hijau yang bersih dan rapi.', 'Wear a clean and neat green Nourish T-shirt.'),
@@ -676,6 +681,7 @@ export const GROOMING_CONTENT: GroomingContent = {
       name: p('Bar', 'Bar'),
       male: {
         hasImage: true,
+        imageUrl: '/grooming-position-bar-male.png',
         notes: [
           p('Tidak diperbolehkan kumis dan janggut.', 'No mustache and beard.'),
           p('Kenakan T-shirt Nourish hijau yang bersih dan rapi.', 'Wear a clean and neat green Nourish T-shirt.'),
@@ -705,6 +711,7 @@ export const GROOMING_CONTENT: GroomingContent = {
       name: p('Kitchen Leader', 'Kitchen Leader'),
       male: {
         hasImage: true,
+        imageUrl: '/grooming-position-kitchen-leader-male.png',
         notes: [
           p('Penggunaan hair cap dan topi wajib.', 'Wearing a hair cap and hat is mandatory.'),
           p('Tidak diperbolehkan kumis dan janggut.', 'No mustache and beard.'),
@@ -725,6 +732,7 @@ export const GROOMING_CONTENT: GroomingContent = {
       name: p('Floor & Bar Leader', 'Floor & Bar Leader'),
       male: {
         hasImage: true,
+        imageUrl: '/grooming-position-floor-bar-leader-male.png',
         notes: [
           p('Tidak diperbolehkan kumis dan janggut.', 'No mustache and beard.'),
           p('Kenakan kemeja Nourish warna olive yang bersih dan rapi.', 'Wear a clean and neat olive Nourish shirt.'),
@@ -754,6 +762,7 @@ export const GROOMING_CONTENT: GroomingContent = {
       name: p('Floor & Cashier Leader', 'Floor & Cashier Leader'),
       female: {
         hasImage: true,
+        imageUrl: '/grooming-position-floor-cashier-leader-female.png',
         notes: [
           p('Gunakan makeup natural dan hindari penggunaan yang berlebihan.', 'Use natural makeup and avoid excessive application.'),
           p('Makeup berat atau dramatis tidak diperbolehkan.', 'Heavy or dramatic makeup is not allowed.'),
@@ -785,6 +794,7 @@ export const GROOMING_CONTENT: GroomingContent = {
       name: p('Kasir', 'Cashier'),
       male: {
         hasImage: true,
+        imageUrl: '/grooming-position-cashier-male.png',
         notes: [
           p('Tidak diperbolehkan kumis dan janggut.', 'No mustache and beard.'),
           p('Kenakan T-shirt Nourish putih yang bersih dan rapi.', 'Wear a clean and neat white Nourish T-shirt.'),
@@ -810,6 +820,7 @@ export const GROOMING_CONTENT: GroomingContent = {
       },
       female: {
         hasImage: true,
+        imageUrl: '/grooming-position-cashier-female.png',
         notes: [
           p('Gunakan makeup natural dan hindari penggunaan yang berlebihan.', 'Use natural makeup and avoid excessive application.'),
           p('Makeup berat atau dramatis tidak diperbolehkan.', 'Heavy or dramatic makeup is not allowed.'),
@@ -841,6 +852,7 @@ export const GROOMING_CONTENT: GroomingContent = {
       name: p('Security', 'Security'),
       male: {
         hasImage: true,
+        imageUrl: '/grooming-position-security-male.png',
         notes: [
           p('Penggunaan topi wajib.', 'Wearing a hat is mandatory.'),
           p('Tidak diperbolehkan kumis dan janggut.', 'No mustache and beard.'),
@@ -866,6 +878,7 @@ export const GROOMING_CONTENT: GroomingContent = {
       name: p('Back Office', 'Back Office'),
       female: {
         hasImage: true,
+        imageUrl: '/grooming-position-back-office-female.png',
         notes: [
           p('Gunakan makeup natural dan hindari penggunaan yang berlebihan.', 'Use natural makeup and avoid excessive application.'),
           p('Makeup berat atau dramatis tidak diperbolehkan.', 'Heavy or dramatic makeup is not allowed.'),
@@ -891,6 +904,7 @@ export const GROOMING_CONTENT: GroomingContent = {
       },
       male: {
         hasImage: true,
+        imageUrl: '/grooming-position-back-office-male.png',
         notes: [
           p('Tidak diperbolehkan kumis dan janggut.', 'No mustache and beard.'),
           p('Kenakan kemeja/T-shirt yang bersih dan rapi.', 'Wear a clean and neat shirt/T-shirt.'),
@@ -919,6 +933,7 @@ export const GROOMING_CONTENT: GroomingContent = {
       name: p('Kitchen Bakery', 'Kitchen Bakery'),
       female: {
         hasImage: true,
+        imageUrl: '/grooming-position-kitchen-bakery-female.png',
         notes: [
           p('Penggunaan hair cap dan topi wajib.', 'Wearing a hair cap and hat is mandatory.'),
           p('Kenakan T-shirt The Bakery putih yang bersih dan rapi.', 'Wear a clean and neat white The Bakery T-shirt.'),
@@ -934,6 +949,7 @@ export const GROOMING_CONTENT: GroomingContent = {
       },
       male: {
         hasImage: true,
+        imageUrl: '/grooming-position-kitchen-bakery-male.png',
         notes: [
           p('Penggunaan hair cap dan topi wajib.', 'Wearing a hair cap and hat is mandatory.'),
           p('Tidak diperbolehkan kumis dan janggut.', 'No mustache and beard.'),
@@ -954,6 +970,7 @@ export const GROOMING_CONTENT: GroomingContent = {
       name: p('Leader Kitchen Bakery', 'Leader Kitchen Bakery'),
       female: {
         hasImage: true,
+        imageUrl: '/grooming-position-leader-kitchen-bakery-female.png',
         notes: [
           p('Penggunaan hair cap dan topi wajib.', 'Wearing a hair cap and hat is mandatory.'),
           p('Kenakan kemeja The Bakery putih yang bersih dan rapi.', 'Wear a clean and neat white The Bakery shirt.'),
@@ -969,6 +986,7 @@ export const GROOMING_CONTENT: GroomingContent = {
       },
       male: {
         hasImage: true,
+        imageUrl: '/grooming-position-leader-kitchen-bakery-male.png',
         notes: [
           p('Penggunaan hair cap dan topi wajib.', 'Wearing a hair cap and hat is mandatory.'),
           p('Tidak diperbolehkan kumis dan janggut.', 'No mustache and beard.'),
