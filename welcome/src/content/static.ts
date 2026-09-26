@@ -5,6 +5,8 @@ const p = (id: string, en: string): Pair => ({ id, en })
 export interface StaticBlock {
   heading: Pair
   body: Pair
+  /** Photos under the text — only the Grooming Standard uses these today. */
+  images?: { src: string; caption: Pair }[]
 }
 
 /**
@@ -292,6 +294,13 @@ export const GROOMING: StaticBlock[] = [
       'Seragam bersih dan disetrika setiap shift. Name tag selalu dipakai, di dada sebelah kiri, menghadap tamu. Sepatu tertutup, anti-slip, warna gelap. Apron diganti begitu kotor, bukan di akhir shift.',
       'Uniform clean and pressed every shift. Name tag always worn, left chest, facing the guest. Closed, non-slip, dark shoes. Aprons are changed as soon as they are soiled, not at the end of the shift.',
     ),
+    images: [
+      { src: '/grooming-nametag.png', caption: p('Name tag — dada kiri', 'Name tag — left chest') },
+      { src: '/grooming-apron-floor.png', caption: p('Apron floor', 'Floor apron') },
+      { src: '/grooming-apron-bar.png', caption: p('Apron bar', 'Bar apron') },
+      { src: '/grooming-apron-kitchen.png', caption: p('Apron dapur', 'Kitchen apron') },
+      { src: '/grooming-apron-kitchen-bakery.png', caption: p('Apron bakery', 'Bakery apron') },
+    ],
   },
   {
     heading: p('Per departemen', 'By department'),
@@ -299,5 +308,24 @@ export const GROOMING: StaticBlock[] = [
       'Dapur dan bakery: penutup kepala, apron, sepatu tertutup, tanpa perhiasan. Service dan bar: seragam outlet, name tag, sepatu gelap. Ritel wholefood: seragam outlet dan name tag. Security: seragam lengkap sesuai ketentuan.',
       'Kitchen and bakery: head covering, apron, closed shoes, no jewellery. Service and bar: outlet uniform, name tag, dark shoes. Wholefood retail: outlet uniform and name tag. Security: full uniform as specified.',
     ),
+    images: [
+      { src: '/grooming-position-floor-female.png', caption: p('Floor (perempuan)', 'Floor (female)') },
+      { src: '/grooming-position-floor-male.png', caption: p('Floor (laki-laki)', 'Floor (male)') },
+      { src: '/grooming-position-floor-cashier-leader-female.png', caption: p('Leader floor & kasir (perempuan)', 'Floor & cashier leader (female)') },
+      { src: '/grooming-position-floor-bar-leader-male.png', caption: p('Leader floor & bar (laki-laki)', 'Floor & bar leader (male)') },
+      { src: '/grooming-position-cashier-female.png', caption: p('Kasir (perempuan)', 'Cashier (female)') },
+      { src: '/grooming-position-cashier-male.png', caption: p('Kasir (laki-laki)', 'Cashier (male)') },
+      { src: '/grooming-position-bar-male.png', caption: p('Bar (laki-laki)', 'Bar (male)') },
+      { src: '/grooming-position-kitchen-female.png', caption: p('Dapur (perempuan)', 'Kitchen (female)') },
+      { src: '/grooming-position-kitchen-male.png', caption: p('Dapur (laki-laki)', 'Kitchen (male)') },
+      { src: '/grooming-position-kitchen-leader-male.png', caption: p('Leader dapur (laki-laki)', 'Kitchen leader (male)') },
+      { src: '/grooming-position-kitchen-bakery-female.png', caption: p('Bakery (perempuan)', 'Bakery (female)') },
+      { src: '/grooming-position-kitchen-bakery-male.png', caption: p('Bakery (laki-laki)', 'Bakery (male)') },
+      { src: '/grooming-position-leader-kitchen-bakery-female.png', caption: p('Leader bakery (perempuan)', 'Bakery leader (female)') },
+      { src: '/grooming-position-leader-kitchen-bakery-male.png', caption: p('Leader bakery (laki-laki)', 'Bakery leader (male)') },
+      { src: '/grooming-position-back-office-female.png', caption: p('Back office (perempuan)', 'Back office (female)') },
+      { src: '/grooming-position-back-office-male.png', caption: p('Back office (laki-laki)', 'Back office (male)') },
+      { src: '/grooming-position-security-male.png', caption: p('Security (laki-laki)', 'Security (male)') },
+    ],
   },
 ]
