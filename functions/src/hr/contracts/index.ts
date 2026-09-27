@@ -3,6 +3,7 @@ import { FieldValue } from 'firebase-admin/firestore'
 import { db, COLLECTIONS } from '../../lib'
 import { registerApprovalResolvedHandler } from '../../shared/approval'
 import { notifyUsersByRole } from '../../shared/notifications'
+import { generateSignedContractPdf } from './generateSignedContract'
 
 export { renewContract } from './renewContract'
 export { terminateContract } from './terminateContract'
@@ -42,4 +43,24 @@ registerApprovalResolvedHandler('contractSigning', async (event) => {
     referenceId: event.resourceId,
     priority: 'high',
   })
+
+  // Best-effort — stamping happens after the approval has already resolved,
+  // so a failure here must never leave the contract stuck: log it and tell
+  // HR to assemble the signed PDF by hand, rather than throwing back into
+  // the approval engine's own resolved-handler dispatch.
+  if (signed) {
+    try {
+      await generateSignedContractPdf(event.resourceId)
+    } catch (error) {
+      logger.error(`Could not generate the fully signed PDF for contract ${event.resourceId}`, error)
+      await notifyUsersByRole({
+        role: 'hrManager',
+        module: 'hr',
+        title: 'Fully Signed PDF Needs Manual Review',
+        message: `The contract for employee ${contract.employeeId as string} is signed, but the stamped PDF could not be generated automatically. Assemble it manually.`,
+        referenceId: event.resourceId,
+        priority: 'high',
+      })
+    }
+  }
 })

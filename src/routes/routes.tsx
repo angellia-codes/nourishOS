@@ -122,6 +122,7 @@ import { CalendarEventFormPage } from '@/features/calendar/pages/CalendarEventFo
 import { RolePermissionsPage } from '@/features/settings/pages/RolePermissionsPage'
 import { ContractRenewPage } from '@/features/hr/contracts/pages/ContractRenewPage'
 import { ContractTerminatePage } from '@/features/hr/contracts/pages/ContractTerminatePage'
+import { ContractSigningPage } from '@/features/hr/contracts/pages/ContractSigningPage'
 import { PositionListPage } from '@/features/hr/positions/pages/PositionListPage'
 import { PositionDetailPage } from '@/features/hr/positions/pages/PositionDetailPage'
 import { PositionFormPage } from '@/features/hr/positions/pages/PositionFormPage'
@@ -189,6 +190,8 @@ export const router = createBrowserRouter([
               { path: 'employees/:employeeId/appraisals/new', element: <NewAppraisalPage /> },
               { path: 'employees/:employeeId/contracts/renew', element: <ContractRenewPage /> },
               { path: 'employees/:employeeId/contracts/terminate', element: <ContractTerminatePage /> },
+              // HR_OPERATIONS.md §9.14 — GM/Director open the PDF and sign here.
+              { path: 'contracts/:contractId/signing', element: <ContractSigningPage /> },
               { path: 'offboarding', element: <OffboardingListPage /> },
               { path: 'offboarding/:checklistId', element: <OffboardingChecklistPage /> },
               { path: 'offboarding/:checklistId/statement', element: <ClearanceStatementPage /> },

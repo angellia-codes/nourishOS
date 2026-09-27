@@ -21,9 +21,11 @@ export const APPROVAL_RESOURCES: Record<string, { label: string; routeFor?: (res
   // approvalRequests raised before then still carry the old key.
   'recruitment/requisition': { label: 'Requisition', routeFor: (id) => `/recruitment/requisitions/${id}` },
   'hr/requisition': { label: 'Requisition', routeFor: (id) => `/recruitment/requisitions/${id}` },
-  // No contracts UI ships yet, so these two render as rows without a link.
+  // No renewal-approval UI ships yet, so this one renders as a row without a link.
   'hr/contract': { label: 'Contract' },
-  'hr/contractSigning': { label: 'Contract Signing' },
+  // resourceId is the contract doc id (functions/src/hr/contracts/index.ts's
+  // resolved handler resolves it the same way) — HR_OPERATIONS.md §9.14.
+  'hr/contractSigning': { label: 'Contract Signing', routeFor: (id) => `/hr/contracts/${id}/signing` },
   'people/attendancePeriod': {
     label: 'Attendance Period',
     routeFor: (id) => `/hr/attendance/periods/${id}`,
