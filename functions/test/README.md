@@ -31,6 +31,7 @@ sit there failing to reach an emulator that isn't running.
 | `apar-inspection.test.mjs` | Fire extinguisher §4.6 failure handling, period-key arithmetic, round reference ids. |
 | `attendance-import.test.mjs` | Attendance CSV taxonomy, legacy alias folding (§2.2 D4), the §5.1 hard rules. |
 | `communication-steps.test.mjs` | The Employee Communication approval chain and its three corrections (§17). |
+| `contract-pdf-stamping.test.mjs` | The §9.14 PDF-stamping geometry detectors (`pdfStamping.ts`) against an in-memory synthetic fixture (no real employee data) — footer initial-box detection, the bilingual signature-gap detector, and a regression guard for the "tanda tangani" false-positive the anchored-label regex was added to fix. |
 | `csv-parse.test.mjs` | `src/utils/csv.ts`'s delimiter sniffing (comma / semicolon / tab), quoting, and the toCsv round-trip. **The one test here that imports from `src/`** — Node strips the types, no build needed. |
 | `expense-steps.test.mjs` | The expense approval chain, threshold boundary, dedupe and floor (§3). |
 | `gap-pass.test.mjs` | Fonnte adapter retry/response handling, milestone parser, flash-report formatter. **~15s — real 5s backoffs, on purpose.** |

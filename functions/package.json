@@ -15,8 +15,10 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.111.0",
     "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.1.0",
     "google-auth-library": "^9.15.1",
-    "firebase-functions": "^6.1.0"
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^3.11.174"
   },
   "devDependencies": {
     "typescript": "^5.6.0"

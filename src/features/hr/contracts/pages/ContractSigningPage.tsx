@@ -52,6 +52,7 @@ export function ContractSigningPage() {
   const [loading, setLoading] = useState(true)
   const [employee, setEmployee] = useState<Employee | null>(null)
   const [signedFile, setSignedFile] = useState<FileMetadata | null>(null)
+  const [fullySignedFile, setFullySignedFile] = useState<FileMetadata | null>(null)
 
   const [approvalRequest, setApprovalRequest] = useState<ApprovalRequest | null>(null)
   const [approvalHistory, setApprovalHistory] = useState<ApprovalHistoryEntry[]>([])
@@ -96,6 +97,20 @@ export function ContractSigningPage() {
       cancelled = true
     }
   }, [contract?.signedFileId])
+
+  useEffect(() => {
+    if (!contract?.fullySignedFileId) {
+      setFullySignedFile(null)
+      return
+    }
+    let cancelled = false
+    getDocument<FileMetadata>(COLLECTIONS.FILES, contract.fullySignedFileId).then((row) => {
+      if (!cancelled) setFullySignedFile(row)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [contract?.fullySignedFileId])
 
   const approvalRequestId = contract?.signingApprovalRequestId ?? null
 
@@ -188,6 +203,12 @@ export function ContractSigningPage() {
   async function handleViewPdf() {
     if (!signedFile) return
     const url = await fileService.getFileDownloadUrl(signedFile.storagePath)
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
+
+  async function handleViewFullySignedPdf() {
+    if (!fullySignedFile) return
+    const url = await fileService.getFileDownloadUrl(fullySignedFile.storagePath)
     window.open(url, '_blank', 'noopener,noreferrer')
   }
 
@@ -293,6 +314,25 @@ export function ContractSigningPage() {
           </Button>
         </CardContent>
       </Card>
+
+      {contract.signingStatus === 'signed' && (
+        <Card>
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+            <div>
+              <p className="text-sm text-foreground">Fully Signed PDF</p>
+              <p className="text-xs text-muted-foreground">
+                {fullySignedFile
+                  ? "The GM's and Director's signatures, stamped into the original document."
+                  : 'Being generated — check back shortly, or ask HR if this persists.'}
+              </p>
+            </div>
+            <Button variant="secondary" disabled={!fullySignedFile} onClick={() => void handleViewFullySignedPdf()}>
+              <FileCheck className="mr-1 h-4 w-4" aria-hidden="true" />
+              Download Fully Signed PDF
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {approvalRequest && (
         <Card>
