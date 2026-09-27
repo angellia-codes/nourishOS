@@ -29,12 +29,25 @@ const OVERRIDE_ROLES = ['superAdmin']
 export const approveStep = onCall({ region: REGION }, async (request) => {
   try {
     const user = await requireActiveUser(request)
-    const { approvalRequestId, comments } = (request.data ?? {}) as {
+    const { approvalRequestId, comments, signatureFileId } = (request.data ?? {}) as {
       approvalRequestId?: string
       comments?: string
+      signatureFileId?: string
     }
     if (!approvalRequestId) {
       throw new AppError('invalid-argument', 'approvalRequestId is required.')
+    }
+
+    // HR_OPERATIONS.md §9.14 — an optional signature image captured on a step
+    // that names requiresSignature (contract signing's GM/Director steps
+    // today). Validated outside the transaction, same as signing.ts's own
+    // fileId check. Every other route leaves this undefined; the field is
+    // inert unless a caller sends it.
+    if (signatureFileId) {
+      const signatureSnap = await db.collection(COLLECTIONS.FILES).doc(signatureFileId).get()
+      if (!signatureSnap.exists || signatureSnap.data()?.fileStatus !== 'available') {
+        throw new AppError('invalid-argument', 'That signature could not be found.')
+      }
     }
 
     const requestRef = db.collection(COLLECTIONS.APPROVAL_REQUESTS).doc(approvalRequestId)
@@ -117,6 +130,7 @@ export const approveStep = onCall({ region: REGION }, async (request) => {
         approverUid: user.uid,
         action: isOverride && user.roleId !== currentStep.approverRole ? 'approve_override' : 'approve',
         comments: comments ?? null,
+        signatureFileId: signatureFileId ?? null,
         previousStatus: 'pending',
         newStatus,
         timestamp: FieldValue.serverTimestamp(),

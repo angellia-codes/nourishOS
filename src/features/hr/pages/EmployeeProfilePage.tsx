@@ -931,6 +931,16 @@ export function EmployeeProfilePage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <ContractStatusBadge status={contract.status} />
+                      {/* §9.14 — track/act on the signing chain once it has started. */}
+                      {(contract.signingStatus === 'pending' || contract.signingStatus === 'signed') && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate(`/hr/contracts/${contract.id}/signing`)}
+                        >
+                          View signing status
+                        </Button>
+                      )}
                       {/* Needs a PDF in the Contract Document card below first —
                           the callable rejects a signing request without one. */}
                       {contract.status === 'active' &&

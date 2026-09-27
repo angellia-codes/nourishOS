@@ -1,8 +1,9 @@
 import { callFunction } from '@/services/api'
-import { queryDocuments, where, orderBy } from '@/services/firestore'
+import { queryDocuments, subscribeToDocument, where, orderBy } from '@/services/firestore'
 import { COLLECTIONS } from '@/constants'
 import type { Contract } from '@/types'
 import type { ContractType } from '@/constants/hr'
+import type { Unsubscribe } from '@/services/firestore'
 
 export function renewContract(input: {
   employeeId: string
@@ -38,4 +39,15 @@ export function listContractsForEmployee(employeeId: string): Promise<Contract[]
     where('employeeId', '==', employeeId),
     orderBy('version', 'desc'),
   ])
+}
+
+/**
+ * Live — HR_OPERATIONS.md §9.14's signing page needs to see signingStatus
+ * flip the moment the approval chain resolves, without a manual refresh.
+ */
+export function subscribeToContract(
+  contractId: string,
+  onChange: (contract: Contract | null) => void,
+): Unsubscribe {
+  return subscribeToDocument<Contract>(COLLECTIONS.CONTRACTS, contractId, onChange)
 }

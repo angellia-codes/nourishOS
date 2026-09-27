@@ -10,6 +10,13 @@ export interface ApprovalStepDefinition {
   conditions?: Record<string, unknown>
   /** equipment-master-design.md §5.2 — scopes this step to one outlet's own approver rather than the role everywhere. */
   approverOutletId?: string
+  /**
+   * HR_OPERATIONS.md §9.14 — this step's approval should be accompanied by a
+   * captured signature image. UX-only: the frontend uses it to decide
+   * whether to render SignaturePad; approveStep.ts never enforces it.
+   * Omitted by every other route today.
+   */
+  requiresSignature?: boolean
 }
 
 /** Configurable route for a resource type. Source: APPROVAL_ENGINE.md §6. */
@@ -68,6 +75,8 @@ export interface ApprovalHistoryEntry {
   approverUid: string
   action: ApprovalAction
   comments?: string
+  /** HR_OPERATIONS.md §9.14 — a files/{id} pointer to a captured signature image, when this step required one. */
+  signatureFileId?: string | null
   previousStatus: ApprovalStatus
   newStatus: ApprovalStatus
   timestamp: string

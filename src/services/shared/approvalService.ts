@@ -31,7 +31,12 @@ export function submitApproval(input: SubmitApprovalInput): Promise<{ approvalRe
   return callFunction('submitApproval', input)
 }
 
-export function approveStep(input: { approvalRequestId: string; comments?: string }): Promise<void> {
+export function approveStep(input: {
+  approvalRequestId: string
+  comments?: string
+  /** HR_OPERATIONS.md §9.14 — a files/{id} pointer, only meaningful on a step marked requiresSignature. */
+  signatureFileId?: string
+}): Promise<void> {
   return callFunction('approveStep', input)
 }
 

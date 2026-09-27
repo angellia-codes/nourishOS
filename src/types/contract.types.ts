@@ -23,7 +23,9 @@ export interface Contract extends BaseDocument {
    * HR_OPERATIONS.md §9.14 New Contract Signing. Absent on contracts created
    * before signing existed and on any contract never sent for signature —
    * treat missing as 'unsigned'. The "signature" is the approval trail
-   * (approver identity + timestamp in approvalHistory), not a signed PDF.
+   * (approver identity + timestamp in approvalHistory, plus a captured
+   * signature image on the GM/Director steps — ApprovalHistoryEntry.signatureFileId),
+   * not a stamped/signed PDF — this file's own bytes are never modified.
    */
   signingStatus?: 'unsigned' | 'pending' | 'signed'
   signingApprovalRequestId?: string | null

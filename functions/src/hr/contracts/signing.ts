@@ -24,12 +24,16 @@ import { submitApprovalInternal } from '../../shared/approval'
  * (HR Manager → General Manager → Director, `shared/approval/routes.ts`).
  *
  * ponytail: the "digital signature" is the approval record itself — approver
- * identity, timestamp and comment captured by `approveStep` in approvalHistory.
- * There is no signature-capture canvas and no signed-PDF generation, so what is
- * stored is an auditable approval trail rather than a cryptographically signed
- * document. If a signed artifact is ever legally required, that is a PDF
- * pipeline (no PDF library exists anywhere in this app today), not a change to
- * this flow.
+ * identity, timestamp and comment captured by `approveStep` in approvalHistory,
+ * plus (on the GM/Director steps, which carry requiresSignature) a real drawn
+ * signature image captured via SignaturePad and linked on that history entry
+ * as `signatureFileId` — src/features/hr/contracts/pages/ContractSigningPage.tsx
+ * is where GM/Director open the PDF (a link, not a download) and sign. The PDF
+ * file itself is still never modified, so what is stored is an auditable
+ * approval trail with an attached signature image, not a cryptographically
+ * signed document. If a stamped/signed PDF is ever legally required, that is a
+ * PDF pipeline (no PDF library exists anywhere in this app today), not a
+ * change to this flow.
  */
 export const submitContractForSigning = onCall({ region: REGION }, async (request) => {
   try {
