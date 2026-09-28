@@ -6,7 +6,7 @@ import { callFunction } from '@/services/api/callFunction'
  * The portal app itself talks to its own unauthenticated callables from
  * `welcome/src/api.ts`; nothing in NourishOS calls those. What lives here is
  * what HR does from inside the app: send the link, resend it, revoke it, and
- * curate the four editable content sections.
+ * curate the editable content sections.
  */
 
 export interface WelcomeInviteResult {
@@ -29,17 +29,15 @@ export function revokeWelcomeInvite(checklistId: string): Promise<{ inviteId: st
 }
 
 /** §7.4's HR-editable set. Must match WELCOME_SECTIONS in functions/src/hr/welcome/content.ts. */
-export const WELCOME_SECTIONS = ['menu', 'orgChart', 'attendanceGuide'] as const
+export const WELCOME_SECTIONS = ['orgChart', 'attendanceGuide'] as const
 export type WelcomeSection = (typeof WELCOME_SECTIONS)[number]
 
 export const WELCOME_SECTION_LABELS: Record<WelcomeSection, string> = {
-  menu: 'Menu',
   orgChart: 'Organization Chart',
   attendanceGuide: 'Attendance Guide',
 }
 
 export const WELCOME_SECTION_HINTS: Record<WelcomeSection, string> = {
-  menu: 'Categories, items, prices and dietary tags. The tax and allergen notices are added automatically.',
   orgChart:
     'A public image URL. New hires have no NourishOS account, so a link into this app’s own storage will not load for them — host the chart somewhere publicly readable. They can pinch to zoom, so a wide chart is fine.',
   attendanceGuide: 'Working hours, how attendance is recorded, and the public-holiday calendar.',
@@ -49,22 +47,6 @@ export const WELCOME_SECTION_HINTS: Record<WelcomeSection, string> = {
 export interface Bilingual {
   id: string
   en: string
-}
-
-export interface MenuItem {
-  name: string
-  price: string
-  /** GF / V / VO / VG, free-form so a new tag needs no deploy. */
-  tags: string
-}
-
-export interface MenuCategory {
-  title: Bilingual
-  items: MenuItem[]
-}
-
-export interface MenuContent {
-  categories: MenuCategory[]
 }
 
 export interface OrgChartContent {
@@ -86,7 +68,7 @@ export interface GuideContent {
   blocks: GuideBlock[]
 }
 
-export type WelcomeSectionContent = MenuContent | OrgChartContent | GuideContent
+export type WelcomeSectionContent = OrgChartContent | GuideContent
 
 export function updateWelcomeContent(
   sectionId: WelcomeSection,
@@ -113,7 +95,6 @@ export function seedWelcomeContent(): Promise<{ seeded: WelcomeSection[]; skippe
 /** An empty draft of the right shape, so the editor never starts from nothing. */
 export function emptySection(section: WelcomeSection): WelcomeSectionContent {
   const blank: Bilingual = { id: '', en: '' }
-  if (section === 'menu') return { categories: [{ title: { ...blank }, items: [{ name: '', price: '', tags: '' }] }] }
   if (section === 'orgChart') return { imageUrl: '', caption: { ...blank } }
   return { blocks: [{ heading: { ...blank }, body: { ...blank } }] }
 }

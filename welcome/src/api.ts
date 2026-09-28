@@ -52,10 +52,6 @@ export interface Bilingual {
   en: string
 }
 
-export interface MenuContent {
-  categories: { title: Bilingual; items: { name: string; price: string; tags: string }[] }[]
-}
-
 export interface OrgChartContent {
   /**
    * A public image URL, deliberately not a `files/{id}` id: a new hire has no
@@ -73,7 +69,6 @@ export interface GuideContent {
 
 export interface WelcomeContent {
   sections: {
-    menu: MenuContent | null
     orgChart: OrgChartContent | null
     attendanceGuide: GuideContent | null
   }

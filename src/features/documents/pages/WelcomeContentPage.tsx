@@ -15,21 +15,21 @@ import {
   updateWelcomeContent,
   type Bilingual,
   type GuideContent,
-  type MenuContent,
   type OrgChartContent,
   type WelcomeSection,
   type WelcomeSectionContent,
 } from '@/features/hr/welcome/welcomeService'
 
 /**
- * welcome-portal.md §5.1 / §7.4 — the four HR-editable welcome sections.
+ * welcome-portal.md §5.1 / §7.4 — the HR-editable welcome sections.
  *
  * Draft and publish are separate actions on purpose: a new hire sees the
  * published half the moment it lands (§14 criterion 6, "without a redeploy"),
- * so a half-rewritten menu must not be visible while HR is still typing it.
+ * so a half-rewritten guide must not be visible while HR is still typing it.
  *
- * Company Profile, Core Values and Grooming Standard are deliberately absent —
- * §2 D4 keeps those static in the welcome bundle.
+ * Company Profile, Core Values, Grooming Standard and the Menu are deliberately
+ * absent — they are static in the welcome bundle (§2 D4; the Menu is bundled
+ * scans since 2026-09-28).
  */
 
 interface SectionDoc {
@@ -61,119 +61,6 @@ function BilingualFields({
         <Label>{label} (Bahasa Indonesia)</Label>
         <Field value={value.id} onChange={(event) => onChange({ ...value, id: event.target.value })} />
       </div>
-    </div>
-  )
-}
-
-function MenuEditor({ value, onChange }: { value: MenuContent; onChange: (next: MenuContent) => void }) {
-  const patch = (index: number, next: MenuContent['categories'][number]) =>
-    onChange({ categories: value.categories.map((category, i) => (i === index ? next : category)) })
-
-  return (
-    <div className="flex flex-col gap-6">
-      <p className="text-sm text-muted-foreground">
-        Prices are shown to new hires with the &ldquo;exclusive of 10% government tax + 6% service charge&rdquo; and
-        allergen notices appended automatically — do not repeat them here.
-      </p>
-      {value.categories.map((category, categoryIndex) => (
-        <Card key={categoryIndex}>
-          <CardContent className="flex flex-col gap-4 p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1">
-                <BilingualFields
-                  label="Category"
-                  value={category.title}
-                  onChange={(title) => patch(categoryIndex, { ...category, title })}
-                />
-              </div>
-              <Button
-                variant="secondary"
-                onClick={() =>
-                  onChange({ categories: value.categories.filter((_, i) => i !== categoryIndex) })
-                }
-                aria-label="Remove category"
-              >
-                <Trash2 className="h-4 w-4" aria-hidden="true" />
-              </Button>
-            </div>
-
-            {category.items.map((item, itemIndex) => (
-              <div key={itemIndex} className="grid gap-2 sm:grid-cols-[2fr_1fr_1fr_auto]">
-                <Input
-                  placeholder="Item name"
-                  value={item.name}
-                  onChange={(event) =>
-                    patch(categoryIndex, {
-                      ...category,
-                      items: category.items.map((row, i) =>
-                        i === itemIndex ? { ...row, name: event.target.value } : row,
-                      ),
-                    })
-                  }
-                />
-                <Input
-                  placeholder="Price"
-                  value={item.price}
-                  onChange={(event) =>
-                    patch(categoryIndex, {
-                      ...category,
-                      items: category.items.map((row, i) =>
-                        i === itemIndex ? { ...row, price: event.target.value } : row,
-                      ),
-                    })
-                  }
-                />
-                <Input
-                  placeholder="GF, V, VO, VG"
-                  value={item.tags}
-                  onChange={(event) =>
-                    patch(categoryIndex, {
-                      ...category,
-                      items: category.items.map((row, i) =>
-                        i === itemIndex ? { ...row, tags: event.target.value } : row,
-                      ),
-                    })
-                  }
-                />
-                <Button
-                  variant="secondary"
-                  onClick={() =>
-                    patch(categoryIndex, { ...category, items: category.items.filter((_, i) => i !== itemIndex) })
-                  }
-                  aria-label="Remove item"
-                >
-                  <Trash2 className="h-4 w-4" aria-hidden="true" />
-                </Button>
-              </div>
-            ))}
-
-            <Button
-              variant="secondary"
-              onClick={() =>
-                patch(categoryIndex, { ...category, items: [...category.items, { name: '', price: '', tags: '' }] })
-              }
-            >
-              <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
-              Add item
-            </Button>
-          </CardContent>
-        </Card>
-      ))}
-
-      <Button
-        variant="secondary"
-        onClick={() =>
-          onChange({
-            categories: [
-              ...value.categories,
-              { title: { id: '', en: '' }, items: [{ name: '', price: '', tags: '' }] },
-            ],
-          })
-        }
-      >
-        <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
-        Add category
-      </Button>
     </div>
   )
 }
@@ -250,7 +137,7 @@ function GuideEditor({ value, onChange }: { value: GuideContent; onChange: (next
 
 export function WelcomeContentPage() {
   const toast = useToast()
-  const [section, setSection] = useState<WelcomeSection>('menu')
+  const [section, setSection] = useState<WelcomeSection>('orgChart')
   const [drafts, setDrafts] = useState<Partial<Record<WelcomeSection, WelcomeSectionContent>>>({})
   const [publishedAt, setPublishedAt] = useState<Partial<Record<WelcomeSection, string | null>>>({})
   const [loading, setLoading] = useState(true)
@@ -368,8 +255,8 @@ export function WelcomeContentPage() {
         <div>
           <h1 className="text-xl font-semibold text-foreground">Welcome content</h1>
           <p className="text-sm text-muted-foreground">
-            What a new hire reads in the welcome portal. Company Profile, Core Values and Grooming Standard are fixed in
-            the app itself — these four are yours.
+            What a new hire reads in the welcome portal. Company Profile, Core Values, Grooming Standard and the Menu are
+            fixed in the app itself — these are yours.
           </p>
         </div>
         <Button variant="secondary" disabled={busy} onClick={() => void seed()}>
@@ -378,9 +265,7 @@ export function WelcomeContentPage() {
       </div>
       <p className="text-xs text-muted-foreground">
         &ldquo;Load starter content&rdquo; fills only the sections that are still empty, as unpublished drafts — it never
-        overwrites what you have written, and nothing reaches a new hire until you publish it. The Menu arrives as
-        categories with no items, and the Org Chart without its image: both need source material HR holds.
-      </p>
+        overwrites what you have written, and nothing reaches a new hire until you publish it.      </p>
 
       <Tabs items={tabs} value={section} onValueChange={(next) => setSection(next as WelcomeSection)} />
 
@@ -393,12 +278,7 @@ export function WelcomeContentPage() {
           </p>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
-          {section === 'menu' ? (
-            <MenuEditor
-              value={current as MenuContent}
-              onChange={(next) => setDrafts((prev) => ({ ...prev, menu: next }))}
-            />
-          ) : section === 'orgChart' ? (
+          {section === 'orgChart' ? (
             <OrgChartEditor
               value={current as OrgChartContent}
               onChange={(next) => setDrafts((prev) => ({ ...prev, orgChart: next }))}

@@ -19,16 +19,16 @@ import {
  *
  * Company Profile, Core Values and Grooming Standard are static in the welcome
  * bundle: they change when the company changes, which is a deploy either way.
- * The three below change without one, so they live in Firestore and HR edits
- * them at /documents/welcome. (Do's & Don'ts was a fourth, removed 2026-09-26 —
- * see root CLAUDE.md.)
+ * The two below change without one, so they live in Firestore and HR edits
+ * them at /documents/welcome. (Do's & Don'ts was removed 2026-09-26, and the
+ * Menu became bundled scans 2026-09-28 — see root CLAUDE.md.)
  *
  * Draft and published are two fields on one document rather than two
  * documents: a section is never partly published, and a single doc read is
  * what the portal callable needs anyway.
  */
 
-export const WELCOME_SECTIONS = ['menu', 'orgChart', 'attendanceGuide'] as const
+export const WELCOME_SECTIONS = ['orgChart', 'attendanceGuide'] as const
 export type WelcomeSection = (typeof WELCOME_SECTIONS)[number]
 
 /** Generous, but bounded — this is an authenticated write, not a public one. */
@@ -43,8 +43,8 @@ function requireSection(value: unknown): WelcomeSection {
 }
 
 /**
- * The body is a free-form structured payload — a menu is categories and items,
- * an org chart is one file id, the guides are blocks of prose — so it is
+ * The body is a free-form structured payload — an org chart is an image URL,
+ * the guide is blocks of prose — so it is
  * stored as given rather than schema-checked field by field. What is enforced
  * is that it is an object and that it cannot be used as a storage bucket.
  */

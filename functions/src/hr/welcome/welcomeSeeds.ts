@@ -1,8 +1,8 @@
 /**
- * welcome-portal.md §7.4 — the first-pass content for the three HR-editable
- * welcome sections, in the shapes `welcome/src/api.ts` renders. (§7.4 named a
- * fourth, Do's & Don'ts; it shipped 2026-09-25 and was removed 2026-09-26 —
- * see root CLAUDE.md.)
+ * welcome-portal.md §7.4 — the first-pass content for the two HR-editable
+ * welcome sections, in the shapes `welcome/src/api.ts` renders. (§7.4 also
+ * named Do's & Don'ts, removed 2026-09-26, and the Menu, which became bundled
+ * scans in `welcome/public/` 2026-09-28 — see root CLAUDE.md.)
  *
  * This is content, not engineering, and it carries the same standing caveat
  * `welcome/src/content/static.ts` does for the three static sections: the copy
@@ -13,13 +13,6 @@
  * `published`: a new hire sees nothing from this file until HR has read it and
  * pressed Publish.
  *
- * Two sections are deliberately seeded as structure with no content, because
- * the source material §7.4 cites does not exist in this repo:
- *
- * - **Menu** — "one-time seed from the five menu PDFs", and there are no menu
- *   PDFs here. Inventing dish names and prices for a live F&B group would put
- *   fabricated figures one Publish click away from every new hire, so the seed
- *   lays out the categories and leaves every item list empty for HR to fill.
  * - **Org Chart** — needs a publicly reachable image URL (a `files/{id}` in
  *   this app's own bucket renders broken for an audience with no Firebase Auth
  *   session). HR supplied the real chart 2026-09-26 (`welcome/public/org-chart.png`);
@@ -39,10 +32,6 @@ export interface SeedBilingual {
 
 export interface SeedGuide {
   blocks: { heading: SeedBilingual; body: SeedBilingual }[]
-}
-
-export interface SeedMenu {
-  categories: { title: SeedBilingual; items: { name: string; price: string; tags: string }[] }[]
 }
 
 export interface SeedOrgChart {
@@ -107,23 +96,6 @@ export const ATTENDANCE_GUIDE_SEED: SeedGuide = {
   ],
 }
 
-/**
- * Structure only — see this file's header for why no item carries a name or a
- * price. The categories are the ones common across the group's outlets; HR
- * adds, renames or removes them in the editor as each menu requires.
- */
-export const MENU_SEED: SeedMenu = {
-  categories: [
-    { title: p('Sarapan', 'Breakfast'), items: [] },
-    { title: p('Bowl dan Salad', 'Bowls & Salads'), items: [] },
-    { title: p('Hidangan Utama', 'Mains'), items: [] },
-    { title: p('Bakery', 'Bakery'), items: [] },
-    { title: p('Pencuci Mulut', 'Desserts'), items: [] },
-    { title: p('Kopi dan Teh', 'Coffee & Tea'), items: [] },
-    { title: p('Minuman', 'Drinks'), items: [] },
-  ],
-}
-
 /** The real chart, per this file's header note on the imageUrl's shape. */
 export const ORG_CHART_SEED: SeedOrgChart = {
   imageUrl: '/org-chart.png',
@@ -135,7 +107,6 @@ export const ORG_CHART_SEED: SeedOrgChart = {
 
 /** Keyed by WELCOME_SECTIONS' own ids, which are the document ids too. */
 export const WELCOME_CONTENT_SEEDS = {
-  menu: MENU_SEED,
   orgChart: ORG_CHART_SEED,
   attendanceGuide: ATTENDANCE_GUIDE_SEED,
 } as const

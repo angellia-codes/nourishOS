@@ -23,15 +23,15 @@ import {
 } from '../ui'
 import { COMPANY_PROFILE, CORE_VALUES, type CoreValueItem, type StaticBlock } from '../content/static'
 import { STRINGS, t, type Lang } from '../strings'
-import type { GuideContent, MenuContent, OrgChartContent, WelcomeContent } from '../api'
+import type { GuideContent, OrgChartContent, WelcomeContent } from '../api'
 import { GroomingSection } from './GroomingSection'
 import { HolidaySection } from './HolidaySection'
 
 /**
- * welcome-portal.md §7.4 — the content sections: four static in the bundle
- * (Company Profile, Core Values, Grooming Standard, and Public Holiday 2026 —
- * added 2026-09-26, see `content/holidays.ts`) and three served from
- * `welcomeContent` (Menu, Org Chart, Attendance Guide).
+ * welcome-portal.md §7.4 — the content sections: five static in the bundle
+ * (Company Profile, Core Values, Grooming Standard, Public Holiday 2026 —
+ * added 2026-09-26, see `content/holidays.ts` — and the Menu scans, 2026-09-28)
+ * and two served from `welcomeContent` (Org Chart, Attendance Guide).
  *
  * Every section renders the same way whether its source is a constant or a
  * Firestore document: the hire cannot tell, and should not be able to.
@@ -70,7 +70,7 @@ export function SectionPage({
       {section === 'profile' ? <CompanyProfile lang={lang} /> : null}
       {section === 'values' ? <CoreValues lang={lang} /> : null}
       {section === 'grooming' ? <GroomingSection lang={lang} /> : null}
-      {section === 'menu' ? <Menu content={content?.sections.menu ?? null} lang={lang} /> : null}
+      {section === 'menu' ? <Menu lang={lang} /> : null}
       {section === 'orgChart' ? <OrgChart content={content?.sections.orgChart ?? null} lang={lang} /> : null}
       {section === 'attendance' ? <Guide content={content?.sections.attendanceGuide ?? null} lang={lang} /> : null}
       {section === 'holidays' ? <HolidaySection lang={lang} /> : null}
@@ -280,36 +280,30 @@ function Guide({ content, lang }: { content: GuideContent | null; lang: Lang }) 
   return <Blocks blocks={content.blocks} lang={lang} />
 }
 
-function Menu({ content, lang }: { content: MenuContent | null; lang: Lang }) {
-  if (!content || content.categories.length === 0) return <Notice>{t(STRINGS.sectionEmpty, lang)}</Notice>
+/** Full-page menu scans bundled in `welcome/public/`; tap opens full size for zooming. */
+const MENU_IMAGES = [1, 2, 3, 4, 5].map((n) => `/menu-${n}.png`)
 
+function Menu({ lang }: { lang: Lang }) {
   return (
     <div className="flex flex-col gap-3">
-      {content.categories.map((category, index) => (
-        <Card key={index} index={index}>
-          <h2 className="mb-3 font-semibold">{t(category.title, lang)}</h2>
-          <ul className="flex flex-col divide-y divide-white/10">
-            {category.items.map((item, itemIndex) => (
-              <li key={itemIndex} className="flex items-baseline justify-between gap-3 py-2.5">
-                <span className="text-sm">
-                  {item.name}
-                  {item.tags ? (
-                    <span className="w-mono ml-2 text-[11px] uppercase text-[var(--w-amber)]">{item.tags}</span>
-                  ) : null}
-                </span>
-                <span className="w-mono flex-none text-sm text-[var(--w-cream-soft)]">{item.price}</span>
-              </li>
-            ))}
-          </ul>
+      {MENU_IMAGES.map((src, index) => (
+        <Card key={src} index={index}>
+          <a href={src} target="_blank" rel="noreferrer">
+            <img
+              src={src}
+              alt={`${t(STRINGS.secMenu, lang)} ${index + 1}`}
+              className="w-full rounded-xl bg-white"
+              loading="lazy"
+            />
+          </a>
         </Card>
       ))}
 
-      {/* §7.4 — both notices MUST render. They are a legal and a safety
-          statement, not decoration, so they are in the app rather than left to
-          whoever fills in the menu content. */}
+      {/* §7.4 — the tax notice is a legal statement, so it stays in the app
+          rather than being left to whatever each scan happens to print. The
+          allergen notice was removed on request 2026-09-28; the scans print it. */}
       <Notice>{t(STRINGS.menuLegend, lang)}</Notice>
       <Notice>{t(STRINGS.menuTaxNote, lang)}</Notice>
-      <Notice tone="error">{t(STRINGS.menuAllergenNote, lang)}</Notice>
     </div>
   )
 }

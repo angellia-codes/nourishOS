@@ -89,10 +89,10 @@ export const saveWelcomeDraft = onCall(PORTAL_OPTIONS, async (request) => {
 })
 
 /**
- * §7.4 — the four HR-editable sections. Takes a token like every other portal
+ * §7.4 — the HR-editable sections. Takes a token like every other portal
  * callable so the app has exactly one failure mode to handle; a section that
  * has never been published comes back null rather than as an error, because an
- * empty Menu is a content gap, not a broken link.
+ * empty section is a content gap, not a broken link.
  */
 export const getWelcomeContent = onCall(PORTAL_OPTIONS, async (request) => {
   try {
