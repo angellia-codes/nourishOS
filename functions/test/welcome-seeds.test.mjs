@@ -24,7 +24,7 @@ const bilingual = (pair, where) => {
 }
 
 describe('WELCOME_CONTENT_SEEDS', () => {
-  test('covers exactly the three HR-editable sections', () => {
+  test('covers exactly the HR-editable sections', () => {
     assert.deepEqual(Object.keys(WELCOME_CONTENT_SEEDS).sort(), [...WELCOME_SECTIONS].sort())
   })
 
@@ -43,15 +43,6 @@ describe('WELCOME_CONTENT_SEEDS', () => {
     for (const code of codes) {
       assert.match(body, new RegExp(`\\b${code} —`), `attendance guide never explains ${code}`)
     }
-  })
-
-  test('menu categories are bilingual, and carry no invented item', () => {
-    const { categories } = WELCOME_CONTENT_SEEDS.menu
-    assert.ok(categories.length > 0)
-    categories.forEach((category, index) => {
-      bilingual(category.title, `menu.categories[${index}].title`)
-      assert.deepEqual(category.items, [], `menu.categories[${index}] must ship empty — see welcomeSeeds.ts`)
-    })
   })
 
   test('the org chart seeds a caption and a real image url', () => {

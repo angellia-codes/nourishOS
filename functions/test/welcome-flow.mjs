@@ -78,18 +78,25 @@ function idTokenFor(uid) {
   return `${header}.${payload}.`
 }
 
+/**
+ * Merge-writes only the given fields (updateMask), so a one-field patch such as
+ * clearing `employeeId` does not wipe the rest of the document.
+ */
 async function put(path, fields) {
-  const response = await fetch(`${FIRESTORE}/${path}`, {
+  const mask = Object.keys(fields)
+    .map((key) => `updateMask.fieldPaths=${encodeURIComponent(key)}`)
+    .join('&')
+  const response = await fetch(`${FIRESTORE}/${path}?${mask}`, {
     method: 'PATCH',
     headers: OWNER,
     body: JSON.stringify({ fields }),
   })
-  assert.ok(response.ok, `seed ${path} failed: ${await response.text()}`)
+  if (!response.ok) assert.fail(`seed ${path} failed: ${await response.text()}`)
 }
 
 async function read(path) {
   const response = await fetch(`${FIRESTORE}/${path}`, { headers: OWNER })
-  assert.ok(response.ok, `read ${path} failed: ${await response.text()}`)
+  if (!response.ok) assert.fail(`read ${path} failed: ${await response.text()}`)
   return (await response.json()).fields ?? {}
 }
 
@@ -390,13 +397,14 @@ async function main() {
 
   // ---- §7.4: content ----
 
-  await call('updateWelcomeContent', { sectionId: 'menu', content: { categories: [] } }, hrToken)
+  await call('updateWelcomeContent', { sectionId: 'attendanceGuide', content: { blocks: [] } }, hrToken)
   const beforePublish = await call('getWelcomeContent', { token })
-  assert.equal(beforePublish.sections.menu, null, 'a draft is not visible to the hire')
+  assert.equal(beforePublish.sections.attendanceGuide, null, 'a draft is not visible to the hire')
 
-  await call('publishWelcomeContent', { sectionId: 'menu' }, hrToken)
+  await call('publishWelcomeContent', { sectionId: 'attendanceGuide' }, hrToken)
   const afterPublish = await call('getWelcomeContent', { token })
-  assert.deepEqual(afterPublish.sections.menu, { categories: [] }, 'publishing makes it visible')
+  assert.deepEqual(afterPublish.sections.attendanceGuide, { blocks: [] }, 'publishing makes it visible')
+  await expectFailure('updateWelcomeContent', { sectionId: 'menu', content: {} }, /must be one of/i, hrToken)
   await expectFailure('publishWelcomeContent', { sectionId: 'notASection' }, /must be one of/i, hrToken)
 
   console.log('welcome-flow: OK')

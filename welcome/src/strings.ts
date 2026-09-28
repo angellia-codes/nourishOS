@@ -178,10 +178,6 @@ export const STRINGS = {
     'Harga belum termasuk pajak pemerintah 10% dan service charge 6%.',
     'Prices are exclusive of 10% government tax and 6% service charge.',
   ),
-  menuAllergenNote: p(
-    'Ada alergi? Tanyakan ke tim sebelum memesan atau menyajikan. Dapur kami menangani kacang, susu, telur, gluten, dan makanan laut.',
-    'Allergies? Ask the team before ordering or serving. Our kitchen handles nuts, dairy, egg, gluten and seafood.',
-  ),
   menuLegend: p('GF bebas gluten · V vegetarian · VO bisa vegan · VG vegan', 'GF gluten free · V vegetarian · VO vegan option · VG vegan'),
   orgChartZoom: p('Cubit untuk memperbesar.', 'Pinch to zoom.'),
 
