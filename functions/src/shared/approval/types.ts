@@ -24,10 +24,10 @@ export interface ApprovalStepDefinition {
   /**
    * This step's approval should be accompanied by a captured signature image
    * (a files/{id} pointer) — HR_OPERATIONS.md §9.14's GM/Director contract
-   * signing steps. UX-only: approveStep.ts accepts signatureFileId
-   * regardless of this flag and never enforces it server-side, the same way
-   * `comments` is optional-by-convention rather than checked. Omitted by
-   * every other route today.
+   * signing steps. Enforced: approveStep.ts rejects an approval of such a
+   * step that carries no signatureFileId (since 2026-09-28 — it was UX-only
+   * before, and the dashboard's inline Approve skipped the signature).
+   * Omitted by every other route today.
    */
   requiresSignature?: boolean
 }

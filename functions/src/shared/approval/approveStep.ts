@@ -38,11 +38,11 @@ export const approveStep = onCall({ region: REGION }, async (request) => {
       throw new AppError('invalid-argument', 'approvalRequestId is required.')
     }
 
-    // HR_OPERATIONS.md §9.14 — an optional signature image captured on a step
-    // that names requiresSignature (contract signing's GM/Director steps
-    // today). Validated outside the transaction, same as signing.ts's own
-    // fileId check. Every other route leaves this undefined; the field is
-    // inert unless a caller sends it.
+    // HR_OPERATIONS.md §9.14 — a signature image captured on a step that
+    // names requiresSignature (contract signing's GM/Director steps today),
+    // required there (checked in the transaction below). Validated outside
+    // the transaction, same as signing.ts's own fileId check. Every other
+    // route leaves this undefined.
     if (signatureFileId) {
       const signatureSnap = await db.collection(COLLECTIONS.FILES).doc(signatureFileId).get()
       if (!signatureSnap.exists || signatureSnap.data()?.fileStatus !== 'available') {
@@ -80,6 +80,13 @@ export const approveStep = onCall({ region: REGION }, async (request) => {
       // request, even if they hold the approver role for this step.
       if (data.requestedBy === user.uid && !isOverride) {
         throw new AppError('permission-denied', 'You cannot approve your own request.')
+      }
+      // A signing step cannot be cleared without the signature it exists to
+      // collect — the dashboard's inline Approve used to do exactly that, and
+      // generateSignedContract then had nothing to stamp. Applies to superAdmin
+      // too: an override may clear a step, not sign on someone's behalf.
+      if (currentStep.requiresSignature && !signatureFileId) {
+        throw new AppError('failed-precondition', 'This step needs your signature — open the record to sign it.')
       }
 
       // Firestore transactions require every read to happen before the first

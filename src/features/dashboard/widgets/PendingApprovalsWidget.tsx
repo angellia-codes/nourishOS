@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Stamp, Check, X } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Stamp, Check, PenLine, X } from 'lucide-react'
 import { Button, StatusPill, Textarea } from '@/components/ui'
 import { useAuth, useToast } from '@/hooks'
 import { approvalService, userService } from '@/services/shared'
@@ -161,8 +161,10 @@ function ApprovalDecisionRow({
   const [comment, setComment] = useState('')
   const [busy, setBusy] = useState(false)
 
+  const navigate = useNavigate()
   const to = approvalResourceRoute(request.module, request.resourceType, request.resourceId)
   const label = approvalResourceLabel(request.module, request.resourceType)
+  const needsSignature = request.steps?.[request.currentStepIndex]?.requiresSignature === true
 
   async function decide(action: 'approve' | 'reject') {
     setBusy(true)
@@ -234,10 +236,20 @@ function ApprovalDecisionRow({
               </>
             ) : (
               <>
-                <Button size="sm" disabled={busy} onClick={() => void decide('approve')}>
-                  <Check className="mr-1 h-4 w-4" aria-hidden="true" />
-                  Approve
-                </Button>
+                {needsSignature && to ? (
+                  // A signing step can't be approved from here — the signature
+                  // pad and the PDF live on the record's own page, and
+                  // approveStep rejects a signing step with no signature.
+                  <Button size="sm" onClick={() => navigate(to)}>
+                    <PenLine className="mr-1 h-4 w-4" aria-hidden="true" />
+                    Review &amp; sign
+                  </Button>
+                ) : (
+                  <Button size="sm" disabled={busy} onClick={() => void decide('approve')}>
+                    <Check className="mr-1 h-4 w-4" aria-hidden="true" />
+                    Approve
+                  </Button>
+                )}
                 <Button size="sm" variant="secondary" disabled={busy} onClick={() => setRejecting(true)}>
                   <X className="mr-1 h-4 w-4" aria-hidden="true" />
                   Reject
