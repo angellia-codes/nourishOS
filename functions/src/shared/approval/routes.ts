@@ -66,12 +66,13 @@ const APPROVAL_ROUTES: Record<string, ApprovalRoute> = {
   // §9.14 Contract Signing — HR uploads, GM signs, Director signs. Distinct
   // from 'hr/contract' above (renewal approval), because signing is a
   // three-step chain ending at Director and carries its own resolved handler.
-  // requiresSignature on the GM/Director steps only — HR's own step 1 stays a
-  // plain review/approve, since HR is the one who raised the request.
+  // No HR step: HR raises the request (submitContractForSigning needs
+  // employees.update, which only hrManager holds), and approveStep refuses a
+  // requester approving their own request — an hrManager step 1 left every
+  // contract stuck before it ever reached the GM (removed 2026-09-28).
   'hr/contractSigning': [
-    { sequence: 1, approverRole: 'hrManager' },
-    { sequence: 2, approverRole: 'generalManager', requiresSignature: true },
-    { sequence: 3, approverRole: 'director', requiresSignature: true },
+    { sequence: 1, approverRole: 'generalManager', requiresSignature: true },
+    { sequence: 2, approverRole: 'director', requiresSignature: true },
   ],
   // employee_communication.md §17 Department Head → HR → GM. Conditional
   // because "Department Head" resolves from the subject employee's department;

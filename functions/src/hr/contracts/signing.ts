@@ -21,7 +21,8 @@ import { submitApprovalInternal } from '../../shared/approval'
  * card uploads it through the existing File Storage Service
  * (`resourceType: 'employeeContract'`), so this callable only routes an
  * already-uploaded contract version into the §9.10 "Contract Signing" chain
- * (HR Manager → General Manager → Director, `shared/approval/routes.ts`).
+ * (General Manager → Director, `shared/approval/routes.ts` — HR raises the
+ * request, so it carries no HR approval step of its own).
  *
  * ponytail: the "digital signature" is the approval record itself — approver
  * identity, timestamp and comment captured by `approveStep` in approvalHistory,

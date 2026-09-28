@@ -23,7 +23,7 @@ export function terminateContract(input: {
 
 /**
  * HR_OPERATIONS.md §9.14 — routes an already-uploaded contract PDF into the
- * HR → GM → Director signing chain. The upload itself is the profile page's
+ * GM → Director signing chain (HR raises it; no HR approval step). The upload itself is the profile page's
  * existing "Contract Document" card (resourceType 'employeeContract').
  */
 export function submitContractForSigning(input: {
