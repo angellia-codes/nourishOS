@@ -331,7 +331,7 @@ function OrgChart({ content, lang }: { content: OrgChartContent | null; lang: La
         <img
           src={content.imageUrl}
           alt={t(STRINGS.secOrgChart, lang)}
-          className="min-w-[1400px] max-w-none"
+          className="w-[1400px] max-w-none"
           onError={() => setFailed(true)}
         />
       </div>
