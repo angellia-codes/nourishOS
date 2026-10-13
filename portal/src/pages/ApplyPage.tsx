@@ -85,7 +85,7 @@ export function ApplyPage() {
         <Input value={fullName} onChange={(event) => setFullName(event.target.value)} autoComplete="name" />
       </Field>
 
-      <Field label="WhatsApp number" hint="We send your application link here, e.g. 0812xxxxxxx.">
+      <Field label="WhatsApp number" hint="e.g. 0812xxxxxxx">
         <Input value={phone} onChange={(event) => setPhone(event.target.value)} inputMode="tel" autoComplete="tel" />
       </Field>
 
