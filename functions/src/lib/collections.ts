@@ -77,6 +77,12 @@ export const COLLECTIONS = {
   JOB_DESCRIPTIONS: 'jobDescriptions',
   SOPS: 'sops',
   COMPANY_FORMS: 'companyForms',
+  // nourish-bible.md §6–7.
+  BIBLE_EDITIONS: 'bibleEditions',
+  BIBLE_OUTLET_MENUS: 'bibleOutletMenus',
+  BIBLE_MENU_ITEMS: 'bibleMenuItems',
+  BIBLE_MENU_CATEGORIES: 'bibleMenuCategories',
+  BIBLE_CONTENT: 'bibleContent',
 
   CHECKPOINTS: 'checkpoints',
   PATROL_LOGS: 'patrolLogs',

@@ -206,6 +206,8 @@ export { createSop, updateSop, deleteSop, setSopAccess } from './documents/sopLi
 
 // ---- Documents: Company Forms ----
 export { createDocumentResource, updateDocumentResource, deleteDocumentResource } from './documents/resources'
+// ---- Documents: Nourish's Bible ----
+export { getBibleAccess, setBibleOutletMenu } from './documents/bible/callables'
 
 // ---- Finance: Expense Requests ----
 export {

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { BookText, ClipboardList, FileText } from 'lucide-react'
+import { BookOpen, BookText, FileText } from 'lucide-react'
 import { Button, Card, CardContent } from '@/components/ui'
 
 /**
@@ -24,10 +24,10 @@ const SUB_MODULES = [
     description: 'Approved standard operating procedures by department.',
   },
   {
-    to: '/documents/company-forms',
-    icon: ClipboardList,
-    title: 'Company Documents',
-    description: 'Downloadable company forms.',
+    to: '/documents/bible',
+    icon: BookOpen,
+    title: "Nourish's Bible",
+    description: 'Grooming, menus, service standards, SOPs and company forms in one book.',
   },
 ]
 

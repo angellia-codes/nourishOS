@@ -568,7 +568,9 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
   ],
   // POSITIONS.md §3 Level III — runs one restaurant outlet end to end.
   // outletManager (removed 2026-08-29) carried this identical set.
-  restaurantManager: OUTLET_LEAD,
+  // nourish-bible.md §8.5 adds the outlet menu ticks, which only the three
+  // restaurant outlets have — so not on the shared OUTLET_LEAD set.
+  restaurantManager: [...OUTLET_LEAD, 'bible.manageOutletMenu'],
   // POSITIONS.md §4 Level I — group-wide F&B operations from BOH. Same
   // permission strings as the outlet lead it sits above; what makes it
   // group-wide is firestore.rules, where it reads every outlet's operational

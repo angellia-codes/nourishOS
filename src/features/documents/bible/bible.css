@@ -1,0 +1,787 @@
+/*
+ * Nourish's Bible reader — the scoped Basalt exception (design guide §1.1,
+ * design system v1.3). Gradients, kraft, amber and page motion live here and
+ * nowhere else in the app. Every value is a --bible-* token on .bible-root.
+ * Kraft / seal / ticket shapes are adapted from welcome/src/glass.css, which
+ * the main app cannot import.
+ */
+
+.bible-root {
+  --bible-pandan: #0e4f47;
+  --bible-teal: #0b332f;
+  --bible-teal-deep: #082420;
+  --bible-amber: #ffc98a;
+  --bible-amber-dim: #e0a968;
+  --bible-olive: #3a4a22;
+  --bible-kraft-light: #e2b87f;
+  --bible-kraft: #c79a5e;
+  --bible-kraft-dark: #b7864a;
+  --bible-paper: #f4efe4;
+  --bible-paper-edge: #cfc5b2;
+  --bible-ink: #14201d;
+  --bible-ink-soft: #47524e;
+  --bible-ink-muted: #5a6661;
+  --bible-placeholder: #8a5a1e;
+  --bible-cream-soft: rgba(244, 239, 228, 0.72);
+  --bible-line: rgba(20, 32, 29, 0.2);
+  --bible-glass-line: rgba(255, 255, 255, 0.16);
+
+  --bible-ease: cubic-bezier(0.45, 0.05, 0.3, 1);
+  --bible-turn: 400ms;
+  --persp: 2200px;
+  --page-h: min(572px, calc(100dvh - 188px));
+  --page-w: min(calc(var(--page-h) * 0.734), calc(100vw - 32px));
+
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--bible-cream-soft);
+  font-family: 'Archivo Variable', Archivo, system-ui, sans-serif;
+  /* Stage (§2): two soft glows over Pandan → teal → deep teal. Stays dark in every theme. */
+  background:
+    radial-gradient(60% 50% at 15% 10%, rgba(255, 201, 138, 0.1), transparent 70%),
+    radial-gradient(50% 45% at 90% 90%, rgba(58, 74, 34, 0.35), transparent 70%),
+    linear-gradient(160deg, var(--bible-pandan), var(--bible-teal) 55%, var(--bible-teal-deep));
+}
+
+@media (max-width: 639px) {
+  .bible-root {
+    --persp: 1500px;
+    --page-h: min(548px, calc(100dvh - 296px));
+  }
+}
+
+@media (min-width: 640px) and (max-width: 1279px) {
+  .bible-root {
+    --page-h: min(572px, calc(100dvh - 300px));
+  }
+}
+
+.bible-root .tabular,
+.bible-mono {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+.bible-root .tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.bible-root :focus-visible {
+  outline: 2px solid var(--bible-amber);
+  outline-offset: 2px;
+}
+
+/* ---- Chrome: header, tab rows, controls -------------------------------- */
+
+.bible-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
+  border-radius: 999px;
+  color: var(--bible-paper);
+}
+.bible-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.bible-icon-btn:disabled {
+  opacity: 0.35;
+}
+
+.bible-pill {
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--bible-glass-line);
+  color: var(--bible-paper);
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+}
+.bible-pill[aria-pressed='true'],
+.bible-pill[aria-current='true'] {
+  background: var(--bible-amber);
+  border-color: var(--bible-amber);
+  color: var(--bible-ink);
+}
+
+.bible-text-tab {
+  min-height: 48px;
+  padding: 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bible-cream-soft);
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+}
+.bible-text-tab[aria-current='true'] {
+  color: var(--bible-paper);
+  border-bottom-color: var(--bible-amber);
+}
+
+.bible-scroll-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 0 16px;
+}
+.bible-scroll-row::-webkit-scrollbar {
+  display: none;
+}
+
+.bible-seg {
+  display: inline-flex;
+  border-radius: 999px;
+  border: 1px solid var(--bible-glass-line);
+  padding: 2px;
+}
+.bible-seg button {
+  min-height: 44px;
+  min-width: 48px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--bible-paper);
+}
+.bible-seg button[aria-pressed='true'] {
+  background: var(--bible-amber);
+  color: var(--bible-ink);
+}
+
+/* ---- The book ---------------------------------------------------------- */
+
+.bible-stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  position: relative;
+}
+
+.bible-book {
+  position: relative;
+  height: var(--page-h);
+  width: calc(var(--page-w) * 2);
+  transition: transform 440ms var(--bible-ease);
+}
+.bible-book[data-layout='single'] {
+  width: var(--page-w);
+}
+/* Closed on desktop: the cover (right page) sits at the centre (§7.1 "slides to centre"). */
+.bible-book[data-layout='spread'].is-closed {
+  transform: translateX(calc(var(--page-w) * -0.5));
+}
+
+.bible-page {
+  position: absolute;
+  top: 0;
+  width: var(--page-w);
+  height: var(--page-h);
+  display: flex;
+  flex-direction: column;
+  background: var(--bible-paper);
+  color: var(--bible-ink);
+  overflow: hidden;
+}
+.bible-page.is-left {
+  left: 0;
+  border-radius: 10px 2px 2px 10px;
+  box-shadow: inset -22px 0 26px -22px rgba(20, 32, 29, 0.35), -6px 10px 30px rgba(0, 0, 0, 0.3);
+}
+.bible-page.is-right {
+  right: 0;
+  border-radius: 2px 10px 10px 2px;
+  box-shadow: inset 22px 0 26px -22px rgba(20, 32, 29, 0.35), 6px 10px 30px rgba(0, 0, 0, 0.3);
+}
+.bible-book[data-layout='single'] .bible-page {
+  left: 0;
+  right: auto;
+  border-radius: 4px 10px 10px 4px;
+  box-shadow: inset 18px 0 22px -20px rgba(20, 32, 29, 0.35), 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+.bible-page.is-blank {
+  background: var(--bible-paper);
+}
+
+.bible-page-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 18px 24px 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bible-ink-muted);
+}
+.bible-page-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px 24px 16px;
+}
+.bible-page-foot {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 24px;
+  padding: 10px 0 14px;
+  border-top: 1.5px dashed var(--bible-line);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--bible-ink-muted);
+}
+.bible-h1 {
+  font-size: 25px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--bible-ink);
+  overflow-wrap: anywhere;
+}
+.bible-row {
+  display: flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--bible-line);
+  text-align: left;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bible-ink);
+}
+button.bible-row:hover,
+a.bible-row:hover {
+  background: rgba(20, 32, 29, 0.04);
+}
+.bible-muted {
+  color: var(--bible-ink-muted);
+}
+.bible-accent {
+  color: var(--bible-placeholder);
+}
+.bible-desc {
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-line;
+  color: var(--bible-ink-soft);
+}
+@media (min-width: 640px) {
+  .bible-desc {
+    font-size: 13.5px;
+  }
+}
+.bible-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--bible-line);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--bible-ink-soft);
+}
+.bible-photo-missing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  aspect-ratio: 4 / 3;
+  border: 2px dashed var(--bible-paper-edge);
+  border-radius: 8px;
+  color: var(--bible-placeholder);
+  text-align: center;
+  padding: 12px;
+}
+
+/* Pandan pages: title + chapter openers. */
+.bible-page.is-pandan {
+  background: linear-gradient(160deg, var(--bible-pandan), var(--bible-teal));
+  color: var(--bible-paper);
+}
+.bible-numeral {
+  font-size: 168px;
+  font-weight: 800;
+  line-height: 0.9;
+  color: var(--bible-amber);
+}
+.bible-chapter-title {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--bible-paper);
+}
+
+/* Kraft: cover, endpaper, back cover. Text on kraft is always teal-deep (§2). */
+.bible-kraft {
+  background: linear-gradient(155deg, var(--bible-kraft-light), var(--bible-kraft) 55%, var(--bible-kraft-dark));
+  color: var(--bible-teal-deep);
+}
+.bible-kraft-frame {
+  position: absolute;
+  inset: 16px;
+  border: 1.5px dashed rgba(8, 36, 32, 0.45);
+  border-radius: 8px;
+  pointer-events: none;
+}
+.bible-seal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  background: var(--bible-pandan);
+  color: var(--bible-amber);
+  font-weight: 800;
+  font-size: 20px;
+  box-shadow: 0 4px 12px rgba(8, 36, 32, 0.35);
+}
+
+/* Title page ticket (from the Welcome Card). Notches are filled with the page colour. */
+.bible-ticket {
+  position: relative;
+  border-radius: 16px;
+  padding: 22px 20px;
+  background: rgba(8, 36, 32, 0.55);
+  border: 1px solid var(--bible-glass-line);
+}
+.bible-ticket::before,
+.bible-ticket::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  margin-left: -9px;
+  border-radius: 999px;
+  background: var(--bible-pandan);
+}
+.bible-ticket::before {
+  top: -9px;
+}
+.bible-ticket::after {
+  bottom: -9px;
+}
+.bible-ticket-perf {
+  border-top: 1.5px dashed rgba(255, 255, 255, 0.28);
+  margin: 16px 0;
+}
+
+/* ---- Page turns (§7.2) ---------------------------------------------------
+ * Two half-turns instead of one 3D leaf: the outgoing face swings to 90°,
+ * then the incoming face swings in from 90°. Each element carries its own
+ * perspective() and z-index — no preserve-3d, no backface tricks (§7.5).
+ */
+
+.bible-flip {
+  z-index: 5;
+  will-change: transform;
+  animation-fill-mode: both;
+}
+.bible-flip::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  animation: bible-shade var(--bible-turn) var(--bible-ease) both;
+}
+.bible-flip.fwd-out {
+  transform-origin: left center;
+  animation: bible-fwd-out calc(var(--bible-turn) / 2) cubic-bezier(0.45, 0.05, 0.8, 0.6) both;
+  animation-delay: var(--delay, 0ms);
+}
+.bible-flip.fwd-in {
+  transform-origin: right center;
+  animation: bible-fwd-in calc(var(--bible-turn) / 2) cubic-bezier(0.2, 0.4, 0.3, 1) both;
+  animation-delay: calc(var(--delay, 0ms) + var(--bible-turn) / 2);
+}
+.bible-flip.back-out {
+  transform-origin: right center;
+  animation: bible-back-out calc(var(--bible-turn) / 2) cubic-bezier(0.45, 0.05, 0.8, 0.6) both;
+  animation-delay: var(--delay, 0ms);
+}
+.bible-flip.back-in {
+  transform-origin: left center;
+  animation: bible-back-in calc(var(--bible-turn) / 2) cubic-bezier(0.2, 0.4, 0.3, 1) both;
+  animation-delay: calc(var(--delay, 0ms) + var(--bible-turn) / 2);
+}
+/* Riffle (§7.3): blank leaves, staggered, each a full turn around the spine. */
+.bible-flip.riffle-fwd {
+  transform-origin: left center;
+  animation: bible-riffle-fwd var(--bible-turn) var(--bible-ease) both;
+  animation-delay: var(--delay, 0ms);
+}
+.bible-flip.riffle-back {
+  transform-origin: right center;
+  animation: bible-riffle-back var(--bible-turn) var(--bible-ease) both;
+  animation-delay: var(--delay, 0ms);
+}
+/* Phone (§7.2): the page swings to -112° and fades in its last third. */
+.bible-flip.phone-out {
+  transform-origin: left center;
+  animation: bible-phone-out var(--bible-turn) var(--bible-ease) both;
+}
+.bible-flip.phone-in {
+  transform-origin: left center;
+  animation: bible-phone-in var(--bible-turn) var(--bible-ease) both;
+}
+.bible-flip.fade-in {
+  animation: bible-fade 200ms ease-out both;
+}
+.bible-flip.fade-in::after {
+  animation: none;
+}
+
+@keyframes bible-fwd-out {
+  from { transform: perspective(var(--persp)) rotateY(0deg); }
+  to { transform: perspective(var(--persp)) rotateY(-90deg); }
+}
+@keyframes bible-fwd-in {
+  from { transform: perspective(var(--persp)) rotateY(90deg); }
+  to { transform: perspective(var(--persp)) rotateY(0deg); }
+}
+@keyframes bible-back-out {
+  from { transform: perspective(var(--persp)) rotateY(0deg); }
+  to { transform: perspective(var(--persp)) rotateY(90deg); }
+}
+@keyframes bible-back-in {
+  from { transform: perspective(var(--persp)) rotateY(-90deg); }
+  to { transform: perspective(var(--persp)) rotateY(0deg); }
+}
+@keyframes bible-riffle-fwd {
+  from { transform: perspective(var(--persp)) rotateY(0deg); }
+  to { transform: perspective(var(--persp)) rotateY(-180deg); }
+}
+@keyframes bible-riffle-back {
+  from { transform: perspective(var(--persp)) rotateY(0deg); }
+  to { transform: perspective(var(--persp)) rotateY(180deg); }
+}
+@keyframes bible-phone-out {
+  0% { transform: perspective(var(--persp)) rotateY(0deg); opacity: 1; }
+  66% { opacity: 1; }
+  100% { transform: perspective(var(--persp)) rotateY(-112deg); opacity: 0; }
+}
+@keyframes bible-phone-in {
+  0% { transform: perspective(var(--persp)) rotateY(-112deg); opacity: 0; }
+  33% { opacity: 1; }
+  100% { transform: perspective(var(--persp)) rotateY(0deg); opacity: 1; }
+}
+/* Moving pages darken up to 14%, clearing as they land. */
+@keyframes bible-shade {
+  0% { opacity: 0; }
+  50% { opacity: 0.14; }
+  100% { opacity: 0; }
+}
+@keyframes bible-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ---- Opening (§7.1) ------------------------------------------------------ */
+
+.bible-cover {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 6;
+  width: var(--page-w);
+  height: var(--page-h);
+  border-radius: 4px 12px 12px 4px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  transform-origin: left center;
+}
+.bible-book[data-layout='single'] .bible-cover {
+  left: 0;
+}
+.is-opening .bible-cover {
+  animation: bible-cover-open 500ms var(--bible-ease) 200ms both;
+}
+.is-opening .bible-cover .bible-seal {
+  animation: bible-seal-out 300ms ease-in both;
+}
+.is-opening .bible-page.is-left {
+  animation: bible-fade 260ms ease-out 260ms both;
+}
+.is-opening .bible-word {
+  display: inline-block;
+  animation: bible-word-in 500ms var(--bible-ease) both;
+  animation-delay: calc(460ms + var(--i) * 90ms);
+}
+.is-opening .bible-chip-in {
+  animation: bible-fade 450ms ease-out 720ms both;
+}
+.is-opening .bible-note-in {
+  animation: bible-fade 450ms ease-out 840ms both;
+}
+@keyframes bible-cover-open {
+  0% { transform: perspective(var(--persp)) rotateY(0deg); opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: perspective(var(--persp)) rotateY(-110deg); opacity: 0; }
+}
+@keyframes bible-seal-out {
+  to { transform: scale(0); opacity: 0; }
+}
+@keyframes bible-word-in {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+.bible-skeleton {
+  border-radius: 6px;
+  background: rgba(8, 36, 32, 0.12);
+  animation: bible-pulse 1.4s ease-in-out infinite;
+}
+@keyframes bible-pulse {
+  50% { opacity: 0.5; }
+}
+
+/* ---- Edge tabs (desktop thumb index, §4.2) ------------------------------- */
+
+.bible-edge {
+  position: absolute;
+  top: 24px;
+  z-index: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.bible-edge.is-left {
+  right: 100%;
+  align-items: flex-end;
+}
+.bible-edge.is-right {
+  left: 100%;
+  align-items: flex-start;
+}
+.bible-edge-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 56px;
+  max-width: 150px;
+  padding: 6px 14px;
+  background: var(--bible-teal-deep);
+  border: 1px solid var(--bible-glass-line);
+  color: var(--bible-paper);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+}
+.bible-edge.is-left .bible-edge-tab {
+  border-radius: 10px 0 0 10px;
+  border-right: 0;
+}
+.bible-edge.is-right .bible-edge-tab {
+  border-radius: 0 10px 10px 0;
+  border-left: 0;
+}
+.bible-edge-tab[aria-current='true'] {
+  background: var(--bible-amber);
+  color: var(--bible-ink);
+}
+
+/* ---- Panels (Contents from the left, Search from the right) -------------- */
+
+.bible-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(4, 18, 16, 0.55);
+}
+.bible-panel {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  z-index: 41;
+  width: min(380px, 100vw);
+  display: flex;
+  flex-direction: column;
+  /* Solid fill, no backdrop-filter (§7.5). */
+  background: var(--bible-teal-deep);
+  border: 1px solid var(--bible-glass-line);
+  color: var(--bible-paper);
+  animation: bible-fade 200ms ease-out both;
+}
+.bible-panel.is-left {
+  left: 0;
+}
+.bible-panel.is-right {
+  right: 0;
+}
+@media (max-width: 639px) {
+  .bible-panel.is-right {
+    width: 100vw;
+  }
+}
+.bible-panel-row {
+  display: flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  text-align: left;
+  font-size: 14px;
+}
+.bible-panel-row:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+.bible-panel-row[aria-current='true'] {
+  color: var(--bible-amber);
+}
+.bible-search-input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--bible-glass-line);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--bible-paper);
+  font-size: 16px; /* 16px minimum stops iOS zooming in (§3) */
+}
+.bible-search-input::placeholder {
+  color: var(--bible-cream-soft);
+}
+
+.bible-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---- Reduced motion (§7.4): a 200ms fade, no rotation, no word reveal. --- */
+@media (prefers-reduced-motion: reduce) {
+  .bible-book {
+    transition: none;
+  }
+  .is-opening .bible-cover {
+    animation: bible-fade-out 200ms ease-out both;
+  }
+  .is-opening .bible-word,
+  .is-opening .bible-chip-in,
+  .is-opening .bible-note-in,
+  .is-opening .bible-cover .bible-seal,
+  .is-opening .bible-page.is-left {
+    animation: none;
+  }
+  .bible-skeleton {
+    animation: none;
+  }
+}
+@keyframes bible-fade-out {
+  to { opacity: 0; }
+}
+
+/* ---- Page-template helpers (used by book/pages.tsx) ---------------------- */
+
+.bible-pandan {
+  background: linear-gradient(160deg, var(--bible-pandan), var(--bible-teal));
+  color: var(--bible-paper);
+}
+.bible-rule {
+  border-bottom: 1px solid var(--bible-line);
+}
+.bible-boxed {
+  border: 1px solid var(--bible-line);
+  border-radius: 6px;
+  padding: 8px;
+}
+.bible-card {
+  display: flex;
+  min-height: 64px;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 10px;
+  text-align: left;
+  border: 1px solid var(--bible-line);
+  border-radius: 8px;
+  color: var(--bible-ink);
+}
+.bible-card:hover {
+  background: rgba(20, 32, 29, 0.04);
+}
+.bible-search-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 12px;
+  text-align: left;
+  font-size: 14px;
+  border: 1px solid var(--bible-line);
+  border-radius: 8px;
+  color: var(--bible-ink-muted);
+}
+.bible-icon-btn.is-paper {
+  color: var(--bible-ink);
+}
+.bible-seg.is-paper {
+  border-color: var(--bible-line);
+}
+.bible-seg.is-paper button {
+  color: var(--bible-ink);
+}
+.bible-seg.is-paper button[aria-pressed='true'] {
+  background: var(--bible-pandan);
+  color: var(--bible-paper);
+}
+.bible-kraft-btn {
+  min-height: 48px;
+  padding: 0 20px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  background: var(--bible-teal-deep);
+  color: var(--bible-amber);
+}
+.bible-catbar {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+.bible-catbar::-webkit-scrollbar {
+  display: none;
+}
+.bible-catbar button {
+  min-height: 48px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--bible-line);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--bible-ink);
+}
+.bible-catbar button[aria-current='true'] {
+  background: var(--bible-amber);
+  border-color: var(--bible-amber-dim);
+}
+
+/* Closed on desktop: only the cover shows, centred. */
+.bible-book.is-closed .bible-page {
+  visibility: hidden;
+}
+.bible-book.is-closed .bible-cover {
+  visibility: visible;
+}
+.bible-stage.is-opening .bible-book .bible-page {
+  visibility: visible;
+}

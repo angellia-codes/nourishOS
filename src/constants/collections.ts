@@ -81,6 +81,13 @@ export const COLLECTIONS = {
   DOCUMENT_TAGS: 'documentTags',
   DOCUMENT_APPROVALS: 'documentApprovals',
   COMPANY_FORMS: 'companyForms',
+  // Nourish's Bible (nourish-bible.md §6–7). Staff read only the compiled
+  // edition + outlet docs; the source collections are editor-only.
+  BIBLE_EDITIONS: 'bibleEditions',
+  BIBLE_OUTLET_MENUS: 'bibleOutletMenus',
+  BIBLE_MENU_ITEMS: 'bibleMenuItems',
+  BIBLE_MENU_CATEGORIES: 'bibleMenuCategories',
+  BIBLE_CONTENT: 'bibleContent',
   TRAINING_MODULES: 'trainingModules',
   KNOWLEDGE_BASE: 'knowledgeBase',
   DOCUMENT_ACKNOWLEDGEMENTS: 'documentAcknowledgements',

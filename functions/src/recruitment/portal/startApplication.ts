@@ -28,7 +28,7 @@ import { normalizeEmail, normalizePhone, portalText, requireNotDuplicate, requir
  * typed in by HR. `appliedVia` is the only tell, and it exists for reporting,
  * not for branching.
  */
-export const startApplication = onCall({ region: REGION, secrets: [FONNTE_TOKEN] }, async (request) => {
+export const startApplication = onCall({ region: REGION, secrets: [FONNTE_TOKEN], enforceAppCheck: true }, async (request) => {
   try {
     const data = (request.data ?? {}) as Record<string, unknown>
     requirePayloadUnderLimit(data)

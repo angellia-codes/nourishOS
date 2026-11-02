@@ -759,6 +759,47 @@ service cloud.firestore {
       allow write: if false; // createDocumentResource / updateDocumentResource / deleteDocumentResource only
     }
 
+    // ---- Documents: Nourish's Bible ----
+    // nourish-bible.md §12. Staff read only the compiled, immutable edition,
+    // its pointer and the per-outlet ticks — three document reads per book
+    // open. The source collections are editor-only. Menu-only hiding of
+    // Sequence of Service/SOPs is client-side by decision (§8.3, OI-2); recipes
+    // (Phase 3) will get no client read path at all.
+    function canEditBible() {
+      return hasAnyRole(['headChef', 'barManager', 'chiefBaker', 'restaurantManager',
+        'hrManager', 'generalManager', 'director', 'superAdmin']);
+    }
+
+    match /systemSettings/bibleEdition {
+      allow read: if isSignedIn();
+      allow write: if false; // import-bible-menu.mjs / publishEditionInternal only
+    }
+
+    match /bibleEditions/{editionId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    match /bibleOutletMenus/{outletId} {
+      allow read: if isSignedIn();
+      allow write: if false; // setBibleOutletMenu only
+    }
+
+    match /bibleMenuItems/{itemId} {
+      allow read: if canEditBible();
+      allow write: if false;
+    }
+
+    match /bibleMenuCategories/{categoryId} {
+      allow read: if canEditBible();
+      allow write: if false;
+    }
+
+    match /bibleContent/{contentId} {
+      allow read: if canEditBible();
+      allow write: if false;
+    }
+
     // ---- Finance: Expense Requests ----
     // expense-request.md §7's view column: own always, Finance and above see
     // everything, and a department leader sees their own department's — that

@@ -1,4 +1,5 @@
 import { initializeApp } from 'firebase/app'
+import { CustomProvider, initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check'
 import { getFunctions, connectFunctionsEmulator, httpsCallable, type HttpsCallableOptions } from 'firebase/functions'
 
 /**
@@ -17,6 +18,28 @@ const app = initializeApp({
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 })
+
+/**
+ * App Check — this app is unauthenticated and public, so a valid token here
+ * is the only thing telling a real browser apart from a script hitting the
+ * callables directly. Every callable sets `enforceAppCheck: true`, so a
+ * missing/invalid token is rejected server-side regardless of anything here.
+ *
+ * With a site key: reCAPTCHA v3. Without one (local dev): a placeholder token,
+ * which the Functions emulator accepts (it decodes but does not verify) and
+ * production rejects — so dev against the emulator works, dev against prod
+ * needs a real key. Production builds never take the placeholder branch.
+ */
+const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY as string | undefined
+if (recaptchaSiteKey) {
+  initializeAppCheck(app, { provider: new ReCaptchaV3Provider(recaptchaSiteKey), isTokenAutoRefreshEnabled: true })
+} else if (import.meta.env.DEV) {
+  initializeAppCheck(app, {
+    provider: new CustomProvider({
+      getToken: async () => ({ token: 'e30.e30.', expireTimeMillis: Date.now() + 3600_000 }),
+    }),
+  })
+}
 
 const functions = getFunctions(app, 'asia-southeast2')
 

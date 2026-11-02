@@ -52,6 +52,8 @@ export const PERMISSION_MODULES = {
   EQUIPMENT: 'equipment',
   /** welcome-portal.md §5.1 — curating the new-hire welcome content. */
   WELCOME: 'welcome',
+  /** nourish-bible.md §8.5 — Nourish's Bible. */
+  BIBLE: 'bible',
 } as const
 
 export type PermissionModule = (typeof PERMISSION_MODULES)[keyof typeof PERMISSION_MODULES]
@@ -318,6 +320,11 @@ export const PERMISSIONS = {
   // editing a draft section and publishing it — the audience is the same
   // person, and a draft nobody can publish is not a separable power.
   WELCOME_MANAGE_CONTENT: permission(PERMISSION_MODULES.WELCOME, 'manageContent'),
+
+  // Nourish's Bible (nourish-bible.md §8.5). Reading the book needs no string.
+  // Phase 1 ships only the outlet-tick string; `bible.edit` lands with the
+  // Phase 2 editor that checks it, per this file's "no string nothing checks" rule.
+  BIBLE_MANAGE_OUTLET_MENU: permission(PERMISSION_MODULES.BIBLE, 'manageOutletMenu'),
 } as const
 
 export type PermissionString = (typeof PERMISSIONS)[keyof typeof PERMISSIONS]

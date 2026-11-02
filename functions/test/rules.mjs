@@ -300,6 +300,14 @@ before(async () => {
     seed('equipment/at-uluwatu', { outletId: 'nourish_uluwatu', assetCode: 'NUL-REF-001' }),
     seed('equipment/at-ungasan', { outletId: 'nourish_ungasan', assetCode: 'NUN-REF-001' }),
 
+    // --- Nourish's Bible ---------------------------------------------------
+    seed('systemSettings/bibleEdition', { currentEditionId: 'e1' }),
+    seed('bibleEditions/e1', { editionNumber: 1, items: [], categories: [] }),
+    seed('bibleOutletMenus/nourish_uluwatu', { soldItemIds: ['KIT-001'] }),
+    seed('bibleMenuItems/KIT-001', { itemCode: 'KIT-001', owner: 'kitchen', name: 'EGGS ANY WAY' }),
+    seed('bibleMenuCategories/all-day-breakfast', { owner: 'kitchen', label: 'All Day Breakfast' }),
+    seed('bibleContent/grooming-foh', { kind: 'grooming', scope: 'frontOfHouse' }),
+
     // --- Own-record collections -------------------------------------------
     seed('notifications/for-staff', { recipientUid: 'uid-staff', title: 'x' }),
     seed('communicationSettings/uid-staff', { whatsappEnabled: true }),
@@ -330,6 +338,12 @@ describe('every collection is write-denied (ARCHITECTURE.md — clients read, ac
     'discResults/c1',
     'exitInterviews/x1',
     'equipment/at-uluwatu',
+    'systemSettings/bibleEdition',
+    'bibleEditions/e1',
+    'bibleOutletMenus/nourish_uluwatu',
+    'bibleMenuItems/KIT-001',
+    'bibleMenuCategories/all-day-breakfast',
+    'bibleContent/grooming-foh',
     'notifications/for-staff',
     'communicationSettings/uid-staff',
   ]
@@ -671,6 +685,32 @@ describe('equipment — outlet-scoped for everyone but the elevated set (§6.2 D
     // pinning because every other HR-sensitive collection reads the other way.
     await assertDenied(HR, 'equipment/at-uluwatu')
     await assertDenied(HR, 'equipment/at-ungasan')
+  })
+})
+
+describe("Nourish's Bible — compiled edition open, source collections editor-only (§12)", () => {
+  test('any signed-in user reads the edition, its pointer and the outlet ticks', async () => {
+    for (const reader of [STAFF, KITCHEN_ULU, HR]) {
+      await assertAllowed(reader, 'systemSettings/bibleEdition')
+      await assertAllowed(reader, 'bibleEditions/e1')
+      await assertAllowed(reader, 'bibleOutletMenus/nourish_uluwatu')
+    }
+  })
+
+  test('owners and leadership read the source collections', async () => {
+    for (const editor of [KITCHEN_ULU, BAR_ULU, HR, GM, SUPER]) {
+      await assertAllowed(editor, 'bibleMenuItems/KIT-001')
+      await assertAllowed(editor, 'bibleMenuCategories/all-day-breakfast')
+      await assertAllowed(editor, 'bibleContent/grooming-foh')
+    }
+  })
+
+  test('staff and non-owner leaders do not', async () => {
+    for (const reader of [STAFF, FINANCE, ENGINEERING]) {
+      await assertDenied(reader, 'bibleMenuItems/KIT-001')
+      await assertDenied(reader, 'bibleMenuCategories/all-day-breakfast')
+      await assertDenied(reader, 'bibleContent/grooming-foh')
+    }
   })
 })
 

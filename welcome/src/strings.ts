@@ -102,6 +102,10 @@ export const STRINGS = {
   slotKtp: p('Scan KTP', 'KTP scan'),
   slotKk: p('Scan Kartu Keluarga', 'Family card (KK) scan'),
   slotSupporting: p('Dokumen pendukung', 'Supporting documents'),
+  // Keyed by draft field: FormPage's review rows and required-field messages look labels up by field name.
+  ktpFileId: p('Scan KTP', 'KTP scan'),
+  kkFileId: p('Scan Kartu Keluarga', 'Family card (KK) scan'),
+  photoFileId: p('Pas foto', 'Photo'),
   slotPhotoHint: p('Foto 4x6, latar merah.', '4x6 photo, red background.'),
   slotKtpHint: p('Harus jelas dan terbaca semua.', 'Every line has to be readable.'),
   slotKkHint: p('Halaman yang memuat namamu.', 'The page with your name on it.'),

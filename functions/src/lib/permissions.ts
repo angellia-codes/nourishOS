@@ -100,4 +100,6 @@ export const PERMISSIONS = {
   ATTENDANCE_VIEW_ALL_OUTLETS: 'attendance.viewAllOutlets',
   ATTENDANCE_VIEW_OWN_OUTLET: 'attendance.viewOwnOutlet',
   ATTENDANCE_EXPORT: 'attendance.export',
+  // nourish-bible.md §8.5 — outlet ticks, no approval (D11).
+  BIBLE_MANAGE_OUTLET_MENU: 'bible.manageOutletMenu',
 } as const

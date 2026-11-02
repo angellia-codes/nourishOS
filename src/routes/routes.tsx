@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { createBrowserRouter, Navigate, useParams } from 'react-router-dom'
 import { AuthLayout, DashboardLayout } from '@/layouts'
 import { ProtectedRoute } from './ProtectedRoute'
@@ -98,7 +99,7 @@ import { DocumentsHomePage } from '@/features/documents/pages/DocumentsHomePage'
 import { SopListPage } from '@/features/documents/sopLibrary/pages/SopListPage'
 import { SopFormPage } from '@/features/documents/sopLibrary/pages/SopFormPage'
 import { SopAccessPage } from '@/features/documents/sopLibrary/pages/SopAccessPage'
-import { CompanyFormListPage } from '@/features/documents/companyForms/pages/CompanyFormListPage'
+import { OutletMenuPage } from '@/features/documents/bible/OutletMenuPage'
 import { CompanyFormFormPage } from '@/features/documents/companyForms/pages/CompanyFormFormPage'
 import { WelcomeContentPage } from '@/features/documents/pages/WelcomeContentPage'
 import { ExpenseListPage } from '@/features/finance/expenses/pages/ExpenseListPage'
@@ -144,6 +145,9 @@ function WorkOrderRedirect() {
   return <Navigate to={`/engineering/work-orders/${rest}`} replace />
 }
 
+/** The reader is the repo's first lazy route: it carries its own CSS and the whole book (design guide §7.5). */
+const BibleReaderPage = lazy(() => import('@/features/documents/bible/BibleReaderPage').then((m) => ({ default: m.BibleReaderPage })))
+
 /** HR module allow-list — everyone else does not see /hr at all. */
 const HR_MODULE_ROLES: string[] = [...HR_REPORT_ROLES]
 
@@ -163,6 +167,15 @@ export const router = createBrowserRouter([
   {
     element: <ProtectedRoute />,
     children: [
+      // Immersive reader: behind the auth guard but outside the app sidebar/header (design guide §4.1).
+      {
+        path: 'documents/bible',
+        element: (
+          <Suspense fallback={null}>
+            <BibleReaderPage />
+          </Suspense>
+        ),
+      },
       {
         element: <DashboardLayout />,
         children: [
@@ -406,7 +419,9 @@ export const router = createBrowserRouter([
               { path: 'sop-library/new', element: <SopFormPage /> },
               { path: 'sop-library/access', element: <SopAccessPage /> },
               { path: 'sop-library/:sopId/edit', element: <SopFormPage /> },
-              { path: 'company-forms', element: <CompanyFormListPage /> },
+              { path: 'bible/outlet-menu', element: <OutletMenuPage /> },
+              // Company Documents became a page of the book; new/:id/edit stay (nourish-bible.md §6.5).
+              { path: 'company-forms', element: <Navigate to="/documents/bible?page=general.forms" replace /> },
               { path: 'company-forms/new', element: <CompanyFormFormPage /> },
               { path: 'company-forms/:companyFormId/edit', element: <CompanyFormFormPage /> },
               // welcome-portal.md §5.1 — the four HR-editable welcome sections.

@@ -22,7 +22,7 @@ import { portalActor, resolveCandidateForEdit } from './token'
 const DOCUMENT_TYPES = ['cv', 'certificate', 'portfolio', 'idCard', 'other'] as const
 const ALLOWED_MIME = ['application/pdf', 'image/jpeg', 'image/png']
 
-export const uploadCandidateDocument = onCall({ region: REGION }, async (request) => {
+export const uploadCandidateDocument = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
   try {
     const data = (request.data ?? {}) as Record<string, unknown>
     requirePayloadUnderLimit(data)
