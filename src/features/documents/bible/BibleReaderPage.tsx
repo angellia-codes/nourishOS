@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { BookOpen, ChevronLeft, ChevronRight, List } from 'lucide-react'
+import { Book as BookIcon, BookOpen, ChevronLeft, ChevronRight, List } from 'lucide-react'
 import { usePermissions } from '@/hooks/usePermissions'
 import { useOutlet } from '@/hooks/useOutlet'
 import { PERMISSIONS } from '@/constants'
@@ -10,7 +10,7 @@ import { getBibleAccess, getCurrentEdition, subscribeToOutletMenu } from './bibl
 import { Book } from './book/Book'
 import { PageView } from './book/pages'
 import { useBookNavigation, type Layout } from './book/useBookNavigation'
-import { ChapterTabs, ContentsPanel, EdgeTabs, PageTabs, SectionTabs } from './nav'
+import { CompactNav, ContentsPanel, DesktopNavRow, EdgeTabs } from './nav'
 import { SearchPanel } from './menu'
 import { ReaderContext, type SectionSelection } from './readerContext'
 import { S, STORAGE, fill, safeGet, safeSet, t, todayWita, type Lang } from './strings'
@@ -52,7 +52,10 @@ export function BibleReaderPage() {
         setEdition(e)
         setAccess(a)
       })
-      .catch(() => alive && setFailed(true))
+      .catch((error) => {
+        console.error('Bible load failed', error)
+        if (alive) setFailed(true)
+      })
     return () => {
       alive = false
     }
@@ -104,6 +107,7 @@ function Reader({ edition, access, lang, setLang }: { edition: BibleEdition; acc
   const { outletId } = useOutlet()
   const reducedMotion = useMedia('(prefers-reduced-motion: reduce)')
   const wide = useMedia('(min-width: 1024px)')
+  const desktop = useMedia('(min-width: 1280px)')
   const layout: Layout = wide ? 'spread' : 'single'
 
   // §5.3 — a restaurant's staff see their outlet; everyone else the master menu, filterable.
@@ -120,6 +124,7 @@ function Reader({ edition, access, lang, setLang }: { edition: BibleEdition; acc
   const items = useMemo(() => mergeOutletView(edition.items, viewOutlet ? outletMenu : null), [edition.items, outletMenu, viewOutlet])
   const categoriesById = useMemo(() => new Map(edition.categories.map((c) => [c.id, c])), [edition.categories])
   const { spreads, pages } = useMemo(() => buildBook(access.menuOnly), [access.menuOnly])
+  const numberedCount = useMemo(() => pages.filter((p) => p.number > 0).length, [pages])
 
   // §7.4 — the cover plays on the first open of the Makassar day; a deep link skips it.
   const deepLink = params.get('page')
@@ -183,53 +188,75 @@ function Reader({ edition, access, lang, setLang }: { edition: BibleEdition; acc
   }
 
   const interactive = phase === 'open'
+  const atBack = layout === 'spread' && nav.position === nav.count - 1
+  // §5.2 Cover: kraft, spine, dashed frame, NOURISH, title, subtitle, Pandan seal, company.
   const cover = phase !== 'open' && (
-    <button type="button" className="bible-cover bible-kraft flex flex-col items-center justify-center gap-4" onClick={openBook} aria-label={`${t(S.book, lang)} — ${t(S.openHint, lang)}`}>
-      <span className="bible-kraft-frame" />
-      <span className="text-5xl font-extrabold tracking-tight">NOURISH.</span>
-      <span className="text-xl font-bold">{t(S.book, lang)}</span>
-      <span className="bible-seal">N</span>
-      <span className="bible-mono text-xs font-semibold">{t(S.openHint, lang)}</span>
+    <button type="button" className="bible-cover bible-kraft" onClick={openBook} aria-label={t(S.openBook, lang)}>
+      <span className="bible-spine is-left" aria-hidden="true" />
+      <span className="bible-kraft-frame" style={{ left: 40, right: 16, top: 16, bottom: 16 }} aria-hidden="true" />
+      <span className="absolute inset-x-0 top-[62px] ml-10 mr-4 block text-center">
+        <span className="bible-kraft-mark">NOURISH</span>
+        <span className="mt-3.5 block text-[46px] font-extrabold leading-[1.04] tracking-[-0.015em]">
+          Nourish&apos;s
+          <br />
+          Bible
+        </span>
+        <span className="mt-3.5 block text-[15px] font-semibold">{t(S.coverSub, lang)}</span>
+      </span>
+      <span className="bible-seal absolute bottom-[104px] left-[calc(50%+12px)] -ml-[38px]" aria-hidden="true">
+        <BookOpen className="h-[34px] w-[34px]" strokeWidth={1.8} />
+      </span>
+      <span className="bible-mono absolute inset-x-0 bottom-[38px] ml-10 mr-4 block text-center text-[11px] font-semibold uppercase">
+        {t(S.company, lang)}
+      </span>
     </button>
   )
 
   return (
     <ReaderContext.Provider value={value}>
-      <header className="flex min-h-16 items-center gap-2 px-3">
+      <header className="bible-header">
         <button type="button" className="bible-icon-btn" aria-label={t(S.closeBook, lang)} onClick={() => navigate('/documents')}>
-          <BookOpen className="h-5 w-5" aria-hidden="true" />
+          <BookIcon className="h-5 w-5" aria-hidden="true" />
         </button>
-        <h1 className="flex-1 truncate text-base font-bold" style={{ color: 'var(--bible-paper)' }}>
-          <span className="bible-mono text-xs" style={{ color: 'var(--bible-amber)' }}>
-            NOURISH /{' '}
-          </span>
-          {t(S.book, lang)}
+        <h1 className="min-w-0 flex-1">
+          <span className="bible-eyebrow block">NOURISH</span>
+          <span className="block truncate text-base font-bold leading-tight">{t(S.book, lang)}</span>
         </h1>
-        {can(PERMISSIONS.BIBLE_MANAGE_OUTLET_MENU) && (
-          <button type="button" className="bible-pill max-sm:hidden" onClick={() => navigate('/documents/bible/outlet-menu')}>
-            {t(S.manageOutletMenu, lang)}
-          </button>
-        )}
-        {!ownOutlet && (
-          <select
-            className="bible-pill max-sm:hidden"
-            style={{ background: 'transparent' }}
-            aria-label={t(S.outletFilter, lang)}
-            value={filterOutlet ?? ''}
-            onChange={(e) => setFilterOutlet(e.target.value || null)}
-          >
-            <option value="">{t(S.allOutlets, lang)}</option>
-            {BIBLE_OUTLETS.map((id) => (
-              <option key={id} value={id}>
-                {id.replace('nourish_', 'Nourish ').replace(/\b\w/g, (c) => c.toUpperCase())}
-              </option>
-            ))}
-          </select>
-        )}
-        <button type="button" className="bible-icon-btn" aria-label={t(S.contents, lang)} disabled={!interactive} onClick={() => open('contents')}>
+        {/* A wrapper, because .bible-icon-btn's display would override max-sm:hidden on the control itself. */}
+        <div className="flex gap-3 max-sm:hidden">
+          {can(PERMISSIONS.BIBLE_MANAGE_OUTLET_MENU) && (
+            <button type="button" className="bible-icon-btn has-label" onClick={() => navigate('/documents/bible/outlet-menu')}>
+              {t(S.manageOutletMenu, lang)}
+            </button>
+          )}
+          {!ownOutlet && (
+            <select
+              className="bible-icon-btn has-label bible-select"
+              aria-label={t(S.outletFilter, lang)}
+              value={filterOutlet ?? ''}
+              onChange={(e) => setFilterOutlet(e.target.value || null)}
+            >
+              <option value="">{t(S.allOutlets, lang)}</option>
+              {BIBLE_OUTLETS.map((id) => (
+                <option key={id} value={id}>
+                  {id.replace('nourish_', 'Nourish ').replace(/\b\w/g, (c) => c.toUpperCase())}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+        <button
+          type="button"
+          className={`bible-icon-btn ${desktop ? 'has-label' : ''}`}
+          aria-label={t(S.contents, lang)}
+          aria-expanded={panel === 'contents'}
+          disabled={!interactive}
+          onClick={() => open('contents')}
+        >
           <List className="h-5 w-5" aria-hidden="true" />
+          {desktop && <span>{t(S.contents, lang)}</span>}
         </button>
-        <div className="bible-seg" role="group" aria-label="Language">
+        <div className="bible-seg" role="group" aria-label={t(S.language, lang)}>
           {(['en', 'id'] as const).map((l) => (
             <button key={l} type="button" aria-pressed={lang === l} onClick={() => setLang(l)}>
               {l.toUpperCase()}
@@ -238,15 +265,12 @@ function Reader({ edition, access, lang, setLang }: { edition: BibleEdition; acc
         </div>
       </header>
 
-      {interactive && (
-        <nav aria-label={t(S.book, lang)} className="flex flex-col gap-1 pb-1">
-          <ChapterTabs current={nav.currentPage.chapter} />
-          <SectionTabs chapter={nav.currentPage.chapter} section={section} />
-          <PageTabs page={nav.currentPage} />
-        </nav>
-      )}
+      {/* Rows keep their height while closed so the book doesn't jump when it opens. */}
+      <div className={interactive ? '' : 'invisible'} aria-hidden={!interactive}>
+        {desktop ? <DesktopNavRow page={nav.currentPage} /> : <CompactNav page={nav.currentPage} />}
+      </div>
 
-      <div className={`bible-stage ${phase === 'opening' ? 'is-opening' : ''}`}>
+      <main className={`bible-stage ${phase === 'opening' ? 'is-opening' : ''}`}>
         <Book
           layout={layout}
           pages={pages}
@@ -259,27 +283,33 @@ function Reader({ edition, access, lang, setLang }: { edition: BibleEdition; acc
           onPrev={interactive ? nav.prev : () => undefined}
           onNext={interactive ? nav.next : () => undefined}
           consumeFocusRequest={nav.consumeFocusRequest}
-          className={phase === 'closed' ? 'is-closed' : ''}
-          edgeTabs={interactive ? <EdgeTabs current={nav.currentPage.chapter} /> : null}
+          closed={phase === 'closed'}
+          edgeTabs={interactive && !atBack ? <EdgeTabs current={nav.currentPage.chapter} position={nav.position} /> : null}
         >
           {cover}
         </Book>
-      </div>
+      </main>
 
-      <footer className="flex min-h-[68px] items-center justify-center gap-4">
-        <button type="button" className="bible-icon-btn" aria-label={t(S.prev, lang)} disabled={!interactive || nav.position === 0} onClick={nav.prev}>
-          <ChevronLeft className="h-6 w-6" aria-hidden="true" />
-        </button>
-        <span className="bible-mono tabular text-sm font-semibold" style={{ color: 'var(--bible-paper)' }}>
-          {fill(t(S.page, lang), { n: nav.announcement || '–', total: pages.length })}
-        </span>
-        <button type="button" className="bible-icon-btn" aria-label={t(S.next, lang)} disabled={!interactive || nav.position >= nav.count - 1} onClick={nav.next}>
-          <ChevronRight className="h-6 w-6" aria-hidden="true" />
-        </button>
+      <footer className="bible-footer">
+        {interactive ? (
+          <>
+            <button type="button" className="bible-round-btn" aria-label={t(S.prev, lang)} disabled={nav.position === 0} onClick={nav.prev}>
+              <ChevronLeft className="h-[22px] w-[22px]" aria-hidden="true" />
+            </button>
+            <p className="bible-counter bible-mono tabular" aria-hidden="true">
+              {fill(t(S.counter, lang), { n: nav.announcement || '–', total: numberedCount })}
+            </p>
+            <button type="button" className="bible-round-btn" aria-label={t(S.next, lang)} disabled={nav.position >= nav.count - 1} onClick={nav.next}>
+              <ChevronRight className="h-[22px] w-[22px]" aria-hidden="true" />
+            </button>
+          </>
+        ) : (
+          <p className="bible-hint">{t(S.openHint, lang)}</p>
+        )}
       </footer>
 
       <div className="bible-sr-only" aria-live="polite">
-        {fill(t(S.page, lang), { n: nav.announcement, total: pages.length })}
+        {nav.announcement && fill(t(S.page, lang), { n: nav.announcement, total: numberedCount })}
       </div>
 
       {panel === 'contents' && <ContentsPanel onClose={closePanel} />}

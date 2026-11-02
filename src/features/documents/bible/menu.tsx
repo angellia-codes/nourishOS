@@ -2,8 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Search, X } from 'lucide-react'
 import type { BibleMenuCategory } from '@/types'
 import { SECTION_OWNERS, formatPrices, searchMenu, type SectionId } from './bibleBook'
+import { sectionLabel } from './nav'
 import { useReader } from './readerContext'
-import { S, SECTION_TITLES, fill, t } from './strings'
+import { S, fill, t } from './strings'
 
 /** Design guide §6: the chosen category stays visible, scrolling the bar if needed. */
 export function CategoryBar({
@@ -66,43 +67,53 @@ export function SearchPanel({
         aria-label={t(S.search, lang)}
         onKeyDown={(e) => e.key === 'Escape' && onClose()}
       >
-        <div className="flex items-center gap-2 p-3">
-          <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" aria-hidden="true" />
+        <div className="bible-panel-head pb-1">
+          <h2 className="bible-panel-title">{t(S.search, lang)}</h2>
+          <button type="button" className="bible-close-btn" aria-label={t(S.closeSearch, lang)} onClick={onClose}>
+            <X className="h-[22px] w-[22px]" aria-hidden="true" />
+          </button>
+        </div>
+        <div className="flex-none px-5 pb-2.5">
+          <p className="bible-search-scope bible-mono">
+            {fill(t(S.searchingIn, lang), { scope: section ? sectionLabel(section, lang) : t(S.book, lang) })}
+          </p>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" style={{ color: 'var(--bible-cream-soft)' }} aria-hidden="true" />
             <input
               ref={input}
-              className="bible-search-input pl-9"
+              className="bible-search-input pl-10"
               type="search"
               value={query}
+              aria-label={t(S.search, lang)}
               placeholder={t(S.searchHint, lang)}
               onChange={(e) => setQuery(e.target.value)}
             />
           </div>
-          <button type="button" className="bible-icon-btn" aria-label={t(S.close, lang)} onClick={onClose}>
-            <X className="h-5 w-5" aria-hidden="true" />
-          </button>
         </div>
-        <p className="bible-mono px-4 pb-2 text-xs font-semibold" style={{ color: 'var(--bible-amber)' }}>
-          {fill(t(S.searchingIn, lang), { scope: section ? t(SECTION_TITLES[section], lang) : t(S.book, lang) })}
-        </p>
-        <ul className="flex-1 overflow-y-auto">
-          {query.trim() && results.length === 0 && <li className="px-4 py-3 text-sm">{t(S.noResults, lang)}</li>}
+        <ul className="bible-panel-body">
+          {query.trim() && results.length === 0 && (
+            <li className="mt-2 text-sm" style={{ color: 'var(--bible-cream-soft)' }}>
+              {t(S.noResults, lang)}
+            </li>
+          )}
           {results.map((item) => {
             const category = categoriesById.get(item.categoryId)
             return (
               <li key={item.id}>
                 <button
                   type="button"
-                  className="bible-panel-row"
+                  className="bible-result-row"
                   onClick={() => category && onPick(item.id, category.id, category.group)}
                 >
-                  <span className="flex-1">
-                    <span className="block font-semibold">{item.name}</span>
+                  <span className="min-w-0">
+                    <span className="block text-[14.5px] font-semibold leading-tight">{item.name}</span>
                     <span className="block text-xs" style={{ color: 'var(--bible-cream-soft)' }}>
                       {category?.label}
                     </span>
                   </span>
-                  <span className="bible-mono tabular text-xs">{formatPrices(item.prices)}</span>
+                  <span className="bible-mono tabular flex-none text-[12.5px] font-semibold" style={{ color: 'var(--bible-amber)' }}>
+                    {formatPrices(item.prices)}
+                  </span>
                 </button>
               </li>
             )

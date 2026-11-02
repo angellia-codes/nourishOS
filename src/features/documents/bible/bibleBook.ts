@@ -87,8 +87,11 @@ export function buildBook(menuOnly: boolean): { spreads: Spread[]; pages: BookPa
   raw.push([page('wholefood.opener', 'opener', 'wholefood'), page('wholefood.soon', 'soon', 'wholefood')])
   raw.push([page('back', 'back'), null])
 
+  // Kraft pages (endpaper, back cover) are boards, not leaves: they carry no number.
   let number = 0
-  const spreads = raw.map(([l, r]) => [l && { ...l, number: ++number }, r && { ...r, number: ++number }] as Spread)
+  const numbered = (p: Omit<BookPage, 'number'> | null) =>
+    p && { ...p, number: p.type === 'endpaper' || p.type === 'back' ? 0 : ++number }
+  const spreads = raw.map(([l, r]) => [numbered(l), numbered(r)] as Spread)
   const pages = spreads.flatMap((s) => s.filter((p): p is BookPage => p !== null))
   return { spreads, pages }
 }
