@@ -17,10 +17,14 @@ interface BookProps {
   consumeFocusRequest: () => boolean
   edgeTabs?: ReactNode
   children?: ReactNode // the cover overlay while closed
-  className?: string
+  /** True while only the cover shows (before the opening plays). */
+  closed: boolean
 }
 
 const SWIPE_PX = 48
+
+/** Page-block edge width: 2px for a thin block, up to 9px for a thick one. */
+const edgeWidth = (leaves: number) => Math.min(9, 2 + leaves * 0.4)
 
 /**
  * The open book (design guide §4–§7). Only the visible spread and the pages
@@ -39,7 +43,7 @@ export function Book(props: BookProps) {
   })
 
   const frame = (page: BookPage | null, side: 'left' | 'right', extra = '', style?: CSSProperties) => {
-    const cls = `bible-page is-${side} ${extra}`
+    const cls = `bible-page is-${side} ${page?.type === 'back' ? 'no-gutter' : ''} ${extra}`
     if (!page) return <div key={`${side}-blank-${extra}`} className={`${cls} is-blank`} style={style} aria-hidden="true" />
     return (
       <div key={`${page.key}-${extra}`} className={cls} style={style} data-page-key={extra ? undefined : page.key}>
@@ -108,16 +112,38 @@ export function Book(props: BookProps) {
     }
   }
 
+  // The back cover is alone on the last spread; centre it like the closed front cover.
+  const last = spreads.length - 1
+  const atBack = layout === 'spread' && position === last && !flip
+  const closed = props.closed
+  const thickness = (
+    <>
+      <div className={`bible-board is-left ${closed ? 'is-off' : ''}`} aria-hidden="true" />
+      <div className={`bible-board is-right ${atBack ? 'is-off' : ''}`} aria-hidden="true" />
+      <div
+        className={`bible-edge-stack is-left ${closed || atBack || position < 1 ? 'is-off' : ''}`}
+        style={{ left: -edgeWidth(position), width: edgeWidth(position) }}
+        aria-hidden="true"
+      />
+      <div
+        className={`bible-edge-stack is-right ${closed || atBack ? 'is-off' : ''}`}
+        style={{ width: edgeWidth(last - position) }}
+        aria-hidden="true"
+      />
+    </>
+  )
+
   return (
     <div
       ref={rootRef}
-      className={`bible-book ${props.className ?? ''}`}
+      className={`bible-book ${closed ? 'is-closed' : ''} ${atBack ? 'is-at-back' : ''}`}
       data-layout={layout}
       onKeyDown={onKeyDown}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
       {props.edgeTabs}
+      {layout === 'spread' && thickness}
       {content}
       {props.children}
     </div>
