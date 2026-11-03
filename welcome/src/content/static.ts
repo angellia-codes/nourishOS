@@ -7,6 +7,8 @@ export interface StaticBlock {
   body: Pair}
 
 /**
+ * Also rendered by Nourish's Bible (src/features/documents/bible/book/generalPages.tsx imports this file) — edits show in both apps.
+ *
  * Company Profile — replaced 2026-09-26 with Nourish Bali's real profile copy
  * (slogan, about us, vision, mission, brands, services, outlets and HR
  * contact), given directly in both languages rather than the generic

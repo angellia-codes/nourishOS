@@ -84,6 +84,8 @@ export const S = {
   notesUpsell: { en: 'Upsell', id: 'Upsell' },
   notesGuestQuestions: { en: 'Guest questions', id: 'Pertanyaan tamu' },
   servingHours: { en: 'Served {hours}', id: 'Disajikan {hours}' },
+  prevMonth: { en: 'Previous month', id: 'Bulan sebelumnya' },
+  nextMonth: { en: 'Next month', id: 'Bulan berikutnya' },
 } satisfies Record<string, Pair>
 
 export const CHAPTER_TITLES: Record<string, Pair> = {
@@ -121,7 +123,9 @@ export const PAGE_TITLES: Record<string, Pair> = {
   contents: S.contents,
   opener: S.chapter,
   toc: S.inThisChapter,
+  profile: { en: 'Company Profile', id: 'Profil Perusahaan' },
   grooming: { en: 'Grooming Standard', id: 'Standar Grooming' },
+  holidays: { en: 'Public Holiday Calendar', id: 'Kalender Libur Nasional' },
   forms: { en: 'Company Forms', id: 'Formulir Perusahaan' },
   menu: { en: 'Menu', id: 'Menu' },
   category: { en: 'Category', id: 'Kategori' },

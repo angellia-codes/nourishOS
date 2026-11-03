@@ -1,6 +1,8 @@
 import type { Pair } from '../strings'
 
 /**
+ * Also rendered by Nourish's Bible (src/features/documents/bible/book/generalPages.tsx imports this file) — edits show in both apps.
+ *
  * Grooming Standard — replaced 2026-09-26 with the full bilingual spec
  * supplied for this pass (category → subcategory → leaf, plus a structurally
  * separate Position Standards list), split into its own file rather than
