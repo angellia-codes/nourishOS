@@ -1,4 +1,6 @@
 /**
+ * Also rendered by Nourish's Bible (src/features/documents/bible/book/generalPages.tsx imports this file) — edits show in both apps.
+ *
  * Public Holiday 2026 — welcome-portal.md §7.4: "the 2026 public-holiday
  * calendar, ordered by the hire's own recorded religion (Hindu / Non-Hindu
  * lists)". Transcribed from PT Nourish Group Indonesia's signed 2026 Public

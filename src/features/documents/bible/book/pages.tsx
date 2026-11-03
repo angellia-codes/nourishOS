@@ -9,10 +9,11 @@ import { useReader, type SectionSelection } from '../readerContext'
 import { CategoryBar } from '../menu'
 import { chapterLabel, sectionLabel } from '../nav'
 import { S, CHAPTER_TITLES, OWNER_TEAMS, PAGE_TITLES, TAG_LABELS, fill, t, type Lang } from '../strings'
+import { CoreValuesPage, GroomingPage, HolidaysPage, OrgChartPage, ProfilePage } from './generalPages'
 
 // ---- Frame ------------------------------------------------------------------
 
-function Heading({ children, className = 'bible-h1' }: { children: ReactNode; className?: string }) {
+export function Heading({ children, className = 'bible-h1' }: { children: ReactNode; className?: string }) {
   return (
     <h2 className={className} tabIndex={-1} data-page-heading>
       {children}
@@ -21,7 +22,7 @@ function Heading({ children, className = 'bible-h1' }: { children: ReactNode; cl
 }
 
 /** §5.1 — running head ("F&B SERVICE · A. FLOOR"), heading, scrolling body, dashed footer with NOURISH and the page number. */
-function PageFrame({ page, children }: { page: BookPage; children: ReactNode }) {
+export function PageFrame({ page, children }: { page: BookPage; children: ReactNode }) {
   const { lang } = useReader()
   const run = [page.chapter ? t(CHAPTER_TITLES[page.chapter], lang) : t(S.book, lang), page.section ? sectionLabel(page.section, lang) : '']
     .filter(Boolean)
@@ -41,7 +42,7 @@ function PageFrame({ page, children }: { page: BookPage; children: ReactNode }) 
 }
 
 /** A dashed row with a label, an optional line under it, and a mono number on the right. */
-function Row({ label, sub, right, onClick, indent = false, strong = false }: { label: ReactNode; sub?: ReactNode; right?: ReactNode; onClick?: () => void; indent?: boolean; strong?: boolean }) {
+export function Row({ label, sub, right, onClick, indent = false, strong = false }: { label: ReactNode; sub?: ReactNode; right?: ReactNode; onClick?: () => void; indent?: boolean; strong?: boolean }) {
   const body = (
     <>
       <span className="min-w-0 flex-1">
@@ -208,12 +209,8 @@ function ContentsPage({ page }: { page: BookPage }) {
         return (
           <div key={chapter.id} className="contents">
             {opener && <Row label={t(CHAPTER_TITLES[chapter.id], lang)} right={opener.number} strong onClick={() => goTo(opener.key)} />}
-            {chapter.id === 'general' && (
-              <>
-                {sub('general.grooming', t(PAGE_TITLES.grooming, lang))}
-                {sub('general.forms', t(PAGE_TITLES.forms, lang))}
-              </>
-            )}
+            {chapter.id === 'general' &&
+              pages.filter((p) => p.chapter === 'general' && p.type !== 'opener').map((p) => sub(p.key, t(PAGE_TITLES[p.type], lang)))}
             {chapter.sections.map((section) => {
               const target = pages.find((p) => p.section === section)
               return target && sub(target.key, sectionLabel(section, lang))
@@ -270,7 +267,11 @@ function TocPage({ page }: { page: BookPage }) {
   )
 }
 
-/** Grooming and Sequence of Service — bilingual BibleContent blocks, or Coming soon (§3 Phase 1). */
+/**
+ * Sequence of Service — bilingual BibleContent blocks, or Coming soon (§3 Phase 1).
+ * Grooming used to render here too; it now reads the Welcome portal's static
+ * Grooming Standard (generalPages.tsx), since edition.content has none.
+ */
 function ContentBlocksPage({ page, kind, scopes }: { page: BookPage; kind: 'grooming' | 'sequenceOfService'; scopes: string[] }) {
   const { lang, edition } = useReader()
   const blocks = edition.content.filter((c) => c.kind === kind && scopes.includes(c.scope))
@@ -615,8 +616,16 @@ export function PageView({ page }: { page: BookPage }) {
       return <OpenerPage page={page} />
     case 'toc':
       return <TocPage page={page} />
+    case 'profile':
+      return <ProfilePage page={page} />
+    case 'values':
+      return <CoreValuesPage page={page} />
+    case 'orgChart':
+      return <OrgChartPage page={page} />
     case 'grooming':
-      return <ContentBlocksPage page={page} kind="grooming" scopes={['frontOfHouse', 'backOfHouse']} />
+      return <GroomingPage page={page} />
+    case 'holidays':
+      return <HolidaysPage page={page} />
     case 'sequence':
       return <ContentBlocksPage page={page} kind="sequenceOfService" scopes={[page.section ?? '']} />
     case 'forms':

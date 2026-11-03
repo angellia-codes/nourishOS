@@ -5,7 +5,7 @@ import { useReader } from './readerContext'
 import { CHAPTER_SHORT, CHAPTER_TITLES, PAGE_TITLES, S, SECTION_TITLES, t, type Lang } from './strings'
 
 /** Page types worth a tab; openers, endpapers and the like are reached by Next or Contents. */
-const TAB_TYPES: PageType[] = ['grooming', 'forms', 'menu', 'sequence', 'picture', 'recipe', 'procedure', 'sop']
+const TAB_TYPES: PageType[] = ['profile', 'values', 'orgChart', 'grooming', 'holidays', 'forms', 'menu', 'sequence', 'picture', 'recipe', 'procedure', 'sop']
 /** Pages without a tab of their own light up the tab they belong to (§6 "page type always shows as active"). */
 const TAB_OF: Partial<Record<PageType, PageType>> = { category: 'menu', dish: 'menu', notes: 'menu' }
 
@@ -102,7 +102,7 @@ export function SectionTabs({ chapter, section, compact = false }: { chapter: Ch
   )
 }
 
-/** Underlined page-type tabs for the current section, or Grooming/Forms in General Information. */
+/** Underlined page-type tabs for the current section, or the General Information pages. */
 export function PageTabs({ page }: { page: BookPage }) {
   const { lang, pages, goTo } = useReader()
   const tabs = pages.filter((p) => TAB_TYPES.includes(p.type) && p.chapter === page.chapter && p.section === page.section)
@@ -192,12 +192,8 @@ export function ContentsPanel({ onClose }: { onClose: () => void }) {
                     <span className="bible-mono tabular">{opener.number}</span>
                   </button>
                 )}
-                {chapter.id === 'general' && (
-                  <>
-                    {sub('general.grooming', t(PAGE_TITLES.grooming, lang))}
-                    {sub('general.forms', t(PAGE_TITLES.forms, lang))}
-                  </>
-                )}
+                {chapter.id === 'general' &&
+                  pages.filter((p) => p.chapter === 'general' && p.type !== 'opener').map((p) => sub(p.key, t(PAGE_TITLES[p.type], lang)))}
                 {chapter.sections.map((section) => {
                   const target = pages.find((p) => p.section === section)
                   return target && sub(target.key, sectionLabel(section, lang))
