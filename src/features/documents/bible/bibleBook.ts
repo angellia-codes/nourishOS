@@ -9,7 +9,7 @@ import type { BibleMenuCategory, BibleMenuItem, BibleOutletMenu, BiblePrice, Men
 export type ChapterId = 'general' | 'service' | 'product' | 'wholefood'
 export type SectionId = 'floor' | 'cashier' | 'kitchen' | 'bar' | 'bakery'
 export type PageType =
-  | 'endpaper' | 'title' | 'contents' | 'opener' | 'toc' | 'profile' | 'grooming' | 'holidays' | 'forms'
+  | 'endpaper' | 'title' | 'contents' | 'opener' | 'toc' | 'profile' | 'values' | 'orgChart' | 'grooming' | 'holidays' | 'forms'
   | 'menu' | 'category' | 'dish' | 'notes' | 'sequence' | 'sop'
   | 'picture' | 'recipe' | 'procedure' | 'soon' | 'back'
 
@@ -70,7 +70,8 @@ export function buildBook(menuOnly: boolean): { spreads: Spread[]; pages: BookPa
 
   raw.push([page('endpaper', 'endpaper'), page('title', 'title')])
   raw.push([page('contents', 'contents'), page('general.opener', 'opener', 'general')])
-  raw.push([page('general.profile', 'profile', 'general'), page('general.grooming', 'grooming', 'general')])
+  raw.push([page('general.profile', 'profile', 'general'), page('general.values', 'values', 'general')])
+  raw.push([page('general.orgChart', 'orgChart', 'general'), page('general.grooming', 'grooming', 'general')])
   raw.push([page('general.holidays', 'holidays', 'general'), page('general.forms', 'forms', 'general')])
 
   for (const chapter of [CHAPTERS[1], CHAPTERS[2]]) {

@@ -84,6 +84,13 @@ export const S = {
   notesUpsell: { en: 'Upsell', id: 'Upsell' },
   notesGuestQuestions: { en: 'Guest questions', id: 'Pertanyaan tamu' },
   servingHours: { en: 'Served {hours}', id: 'Disajikan {hours}' },
+  // Same copy as ORG_CHART_SEED in functions/src/hr/welcome/welcomeSeeds.ts. The Welcome
+  // portal reads it from welcomeContent (HR-only rules), so the Bible keeps its own copy.
+  orgChartCaption: {
+    en: 'The Nourish Group structure. Find your own position, then find your direct supervisor — they are your first point of contact.',
+    id: 'Struktur organisasi Nourish Group. Cari posisimu, lalu cari supervisor langsungmu — merekalah orang pertama yang kamu hubungi.',
+  },
+  orgChartOpen: { en: 'Open full size', id: 'Buka ukuran penuh' },
   prevMonth: { en: 'Previous month', id: 'Bulan sebelumnya' },
   nextMonth: { en: 'Next month', id: 'Bulan berikutnya' },
 } satisfies Record<string, Pair>
@@ -124,6 +131,8 @@ export const PAGE_TITLES: Record<string, Pair> = {
   opener: S.chapter,
   toc: S.inThisChapter,
   profile: { en: 'Company Profile', id: 'Profil Perusahaan' },
+  values: { en: 'Core Values', id: 'Nilai Inti' },
+  orgChart: { en: 'Organization Chart', id: 'Struktur Organisasi' },
   grooming: { en: 'Grooming Standard', id: 'Standar Grooming' },
   holidays: { en: 'Public Holiday Calendar', id: 'Kalender Libur Nasional' },
   forms: { en: 'Company Forms', id: 'Formulir Perusahaan' },

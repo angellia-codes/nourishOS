@@ -9,7 +9,7 @@ import { useReader, type SectionSelection } from '../readerContext'
 import { CategoryBar } from '../menu'
 import { chapterLabel, sectionLabel } from '../nav'
 import { S, CHAPTER_TITLES, OWNER_TEAMS, PAGE_TITLES, TAG_LABELS, fill, t, type Lang } from '../strings'
-import { GroomingPage, HolidaysPage, ProfilePage } from './generalPages'
+import { CoreValuesPage, GroomingPage, HolidaysPage, OrgChartPage, ProfilePage } from './generalPages'
 
 // ---- Frame ------------------------------------------------------------------
 
@@ -618,6 +618,10 @@ export function PageView({ page }: { page: BookPage }) {
       return <TocPage page={page} />
     case 'profile':
       return <ProfilePage page={page} />
+    case 'values':
+      return <CoreValuesPage page={page} />
+    case 'orgChart':
+      return <OrgChartPage page={page} />
     case 'grooming':
       return <GroomingPage page={page} />
     case 'holidays':

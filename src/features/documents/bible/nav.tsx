@@ -5,7 +5,7 @@ import { useReader } from './readerContext'
 import { CHAPTER_SHORT, CHAPTER_TITLES, PAGE_TITLES, S, SECTION_TITLES, t, type Lang } from './strings'
 
 /** Page types worth a tab; openers, endpapers and the like are reached by Next or Contents. */
-const TAB_TYPES: PageType[] = ['profile', 'grooming', 'holidays', 'forms', 'menu', 'sequence', 'picture', 'recipe', 'procedure', 'sop']
+const TAB_TYPES: PageType[] = ['profile', 'values', 'orgChart', 'grooming', 'holidays', 'forms', 'menu', 'sequence', 'picture', 'recipe', 'procedure', 'sop']
 /** Pages without a tab of their own light up the tab they belong to (§6 "page type always shows as active"). */
 const TAB_OF: Partial<Record<PageType, PageType>> = { category: 'menu', dish: 'menu', notes: 'menu' }
 

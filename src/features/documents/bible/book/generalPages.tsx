@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
 // The Welcome portal owns this content (welcome/src/content/*, React-free data);
 // the Bible reads the same files so the two never drift. Direction is src → welcome
 // only — welcome/ still imports nothing from src/.
-import { COMPANY_PROFILE } from '../../../../../welcome/src/content/static'
+import { COMPANY_PROFILE, CORE_VALUES } from '../../../../../welcome/src/content/static'
 import { GROOMING_CONTENT, type GroomingLeaf, type GroomingPosition } from '../../../../../welcome/src/content/grooming'
 import { PUBLIC_HOLIDAYS } from '../../../../../welcome/src/content/holidays'
 import { OPTIONS, STRINGS as W } from '../../../../../welcome/src/strings'
@@ -14,7 +14,7 @@ import { Heading, PageFrame, Row } from './pages'
 
 // Photos live in welcome/public/. Globbing them bundles hashed copies into this
 // app without duplicating the files in git; content URLs are '/name.png'.
-const ASSETS = import.meta.glob(['/welcome/public/grooming-*.png', '/welcome/public/brand-*.png', '/welcome/public/hero-nourish.png'], {
+const ASSETS = import.meta.glob(['/welcome/public/grooming-*.png', '/welcome/public/brand-*.png', '/welcome/public/hero-nourish.png', '/welcome/public/org-chart.png'], {
   eager: true,
   query: '?url',
   import: 'default',
@@ -111,6 +111,68 @@ export function ProfilePage({ page }: { page: BookPage }) {
       <ExternalRow href={`mailto:${c.contact.email}`} label={c.contact.email} />
       <Row label={c.contact.address} />
       <ExternalRow href={`https://www.instagram.com/${c.contact.instagramHandle.replace(/^@/, '')}`} label={c.contact.instagramHandle} />
+    </PageFrame>
+  )
+}
+
+// ---- Core Values -----------------------------------------------------------------
+
+/** INSPIRE — each letter in the numbered-step badge Sequence of Service uses. */
+export function CoreValuesPage({ page }: { page: BookPage }) {
+  const { lang } = useReader()
+  const c = CORE_VALUES
+  return (
+    <PageFrame page={page}>
+      <Heading>{t(PAGE_TITLES.values, lang)}</Heading>
+      <p className="bible-accent flex-none text-[40px] font-extrabold leading-none tracking-tight">{c.hero}</p>
+      <p className="mt-2 flex-none text-[15px] font-semibold">{t(c.slogan, lang)}</p>
+      <p className="bible-desc mb-2">{t(c.sloganNote, lang)}</p>
+      {c.values.map((value, i) => (
+        <div key={i} className="bible-step">
+          <span className="bible-step-no" aria-hidden="true">
+            {value.letter}
+          </span>
+          <div className="min-w-0">
+            <p className="text-[14.5px] font-semibold leading-tight">{t(value.word, lang)}</p>
+            <p className="bible-desc mt-0.5" style={{ fontSize: 12.5 }}>
+              {t(value.body, lang)}
+            </p>
+          </div>
+        </div>
+      ))}
+    </PageFrame>
+  )
+}
+
+// ---- Organization Chart ------------------------------------------------------------
+
+/**
+ * The bundled chart the Welcome portal's seed points at (welcome/public/org-chart.png).
+ * The chart is far wider than a page, so it scrolls (pinch-zoom on touch) and opens full size.
+ */
+export function OrgChartPage({ page }: { page: BookPage }) {
+  const { lang } = useReader()
+  const src = ASSETS['/welcome/public/org-chart.png']
+  return (
+    <PageFrame page={page}>
+      <Heading>{t(PAGE_TITLES.orgChart, lang)}</Heading>
+      <Body>{t(S.orgChartCaption, lang)}</Body>
+      <div className="mt-2 flex-none overflow-auto rounded-xl bg-white" style={{ touchAction: 'pinch-zoom', maxHeight: '60%' }}>
+        <img
+          src={src}
+          alt={t(PAGE_TITLES.orgChart, lang)}
+          className="w-[1400px] max-w-none"
+          // The chart's top is centred, so open on the middle rather than its empty left edge.
+          onLoad={(e) => {
+            const box = e.currentTarget.parentElement!
+            box.scrollLeft = (box.scrollWidth - box.clientWidth) / 2
+          }}
+        />
+      </div>
+      <a href={src} target="_blank" rel="noopener noreferrer" className="bible-row">
+        <span className="min-w-0 flex-1">{t(S.orgChartOpen, lang)}</span>
+        <ExternalLink className="bible-muted h-4 w-4 shrink-0" aria-hidden="true" />
+      </a>
     </PageFrame>
   )
 }
