@@ -25,7 +25,7 @@ import { WELCOME_SECTIONS } from '../content'
  * anyone on the internet, and an unbounded Blaze-plan fan-out is a bill, not
  * an outage.
  */
-const PORTAL_OPTIONS = { region: REGION, maxInstances: 10, enforceAppCheck: true }
+const PORTAL_OPTIONS = { region: REGION, maxInstances: 10 }
 
 /**
  * §3.3 step 3 — what the app is allowed to know before the hire has typed
