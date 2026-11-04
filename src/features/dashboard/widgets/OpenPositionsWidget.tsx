@@ -43,13 +43,13 @@ export function OpenPositionsWidget() {
 
   return (
     <DashboardWidget
-      title="Open Positions"
+      title={{ en: 'Open Positions', id: 'Lowongan Terbuka' }}
       icon={Briefcase}
       count={requisitions === null ? undefined : open.length}
       viewAllTo="/recruitment/requisitions"
       loading={requisitions === null}
       denied={denied}
-      emptyText="No open vacancies right now."
+      emptyText={{ en: 'No open vacancies right now.', id: 'Tidak ada lowongan terbuka saat ini.' }}
     >
       <div className="flex flex-col gap-2">
         {open.slice(0, MAX_ROWS).map((requisition) => (

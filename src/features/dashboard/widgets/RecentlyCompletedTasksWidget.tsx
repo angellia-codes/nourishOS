@@ -34,13 +34,13 @@ export function RecentlyCompletedTasksWidget() {
 
   return (
     <DashboardWidget
-      title="Recently Completed"
+      title={{ en: 'Recently Completed', id: 'Baru Selesai' }}
       icon={CheckCircle2}
       count={tasks === null ? undefined : tasks.length}
       viewAllTo="/communications/tasks"
       loading={tasks === null}
       denied={denied}
-      emptyText="Nothing completed yet."
+      emptyText={{ en: 'Nothing completed yet.', id: 'Belum ada yang selesai.' }}
     >
       <div className="flex flex-col gap-2">
         {recent.map((task) => (

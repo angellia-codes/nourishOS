@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { tOrEn, useLang } from '@/lib/i18n'
 import { Badge, Button, Card, CardContent, Textarea } from '@/components/ui'
 import { AppraisalCriterionScoreCard } from './AppraisalCriterionScoreCard'
 import { RATING_BAND_LABELS, type AppraisalCriterion, type CriterionScore, type RatingBand } from '@/types'
@@ -42,6 +43,7 @@ export function AppraisalScoringForm({
   onSubmitSecondary,
   isSubmitting,
 }: AppraisalScoringFormProps) {
+  const lang = useLang()
   const [draft, setDraft] = useState<Record<string, { score: number | null; note?: string }>>(() => {
     const initial: Record<string, { score: number | null; note?: string }> = {}
     for (const c of criteria) {
@@ -93,9 +95,9 @@ export function AppraisalScoringForm({
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-sm font-medium text-foreground">
-                      {i + 1}. {c.label.en}
+                      {i + 1}. {tOrEn(c.label, lang)}
                     </p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">{c.description.en}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{tOrEn(c.description, lang)}</p>
                   </div>
                   <div className="shrink-0 text-right text-sm">
                     <p className="text-foreground">Primary {s?.primaryScore ?? '—'}/10</p>

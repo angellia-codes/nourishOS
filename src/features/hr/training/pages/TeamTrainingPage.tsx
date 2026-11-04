@@ -13,6 +13,7 @@ import {
   bilingual,
   formatDuration,
 } from '../trainingFormat'
+import { useLang } from '@/lib/i18n'
 import type { Employee, TrainingAssignment, TrainingTopic } from '@/types'
 
 /**
@@ -122,6 +123,7 @@ function VerificationRow({
   onError: (message: string) => void
 }) {
   const [open, setOpen] = useState(false)
+  const lang = useLang()
   const [passed, setPassed] = useState(true)
   const [score, setScore] = useState('')
   const [notes, setNotes] = useState('')
@@ -173,7 +175,7 @@ function VerificationRow({
         <button type="button" className="flex min-h-11 items-start gap-3 text-left" onClick={() => setOpen(!open)}>
           <div className="flex-1">
             <p className="font-medium text-foreground">{employeeName}</p>
-            <p className="text-sm text-foreground">{topic ? bilingual(topic.title) : assignment.topicId}</p>
+            <p className="text-sm text-foreground">{topic ? bilingual(topic.title, lang) : assignment.topicId}</p>
             <p className="text-xs text-muted-foreground">
               {formatDuration(topic?.durationMinutes)}
               {assignment.dueAt ? ` · due ${formatDate(assignment.dueAt)}` : ''}

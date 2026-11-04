@@ -21,6 +21,8 @@ import { cn } from '@/lib/utils'
 import { ROUTES, HR_REPORT_ROLES } from '@/constants'
 import { useUIStore } from '@/store'
 import { useAuth } from '@/hooks'
+import { NAV, S } from '@/constants/strings'
+import { t, useLang, type Pair } from '@/lib/i18n'
 
 /**
  * /hr is the only role-gated branch in the router (RoleRoute in routes.tsx), so
@@ -39,14 +41,14 @@ const HR_ROLES = HR_REPORT_ROLES
 
 interface NavChild {
   to: string
-  label: string
+  label: Pair
   end?: boolean
   roles?: readonly string[]
 }
 
 interface NavItem {
   to: string
-  label: string
+  label: Pair
   icon: typeof Users
   end?: boolean
   roles?: readonly string[]
@@ -54,97 +56,97 @@ interface NavItem {
 }
 
 const NAV_ITEMS: readonly NavItem[] = [
-  { to: ROUTES.DASHBOARD, label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: ROUTES.DASHBOARD, label: NAV.dashboard, icon: LayoutDashboard, end: true },
   {
     to: ROUTES.HR,
-    label: 'People',
+    label: NAV.people,
     icon: Users,
     roles: HR_ROLES,
     children: [
-      { to: '/hr/employees', label: 'Employees', roles: HR_ROLES },
-      { to: ROUTES.POSITIONS, label: 'Positions' },
-      { to: '/hr/inventory', label: 'Inventory', roles: HR_ROLES },
-      { to: ROUTES.RECRUITMENT, label: 'Recruitment' },
-      { to: '/hr/training', label: 'Training Catalogue', roles: HR_ROLES },
+      { to: '/hr/employees', label: NAV.employees, roles: HR_ROLES },
+      { to: ROUTES.POSITIONS, label: NAV.positions },
+      { to: '/hr/inventory', label: NAV.inventory, roles: HR_ROLES },
+      { to: ROUTES.RECRUITMENT, label: NAV.recruitment },
+      { to: '/hr/training', label: NAV.trainingCatalogue, roles: HR_ROLES },
       // §5's own-assignments row: every trainee, so no `roles` gate — the page
       // is outside /hr's RoleRoute for the same reason.
-      { to: '/training/me', label: 'My Training' },
-      { to: '/hr/appraisal-templates', label: 'Appraisal', roles: HR_ROLES },
-      { to: '/communications/employee', label: 'Employee Communication' },
-      { to: '/hr/payroll', label: 'Payroll', roles: HR_ROLES },
-      { to: '/hr/attendance', label: 'Attendance', roles: HR_ROLES },
-      { to: '/hr/reports', label: 'Reports', roles: HR_ROLES },
-      { to: '/hr/offboarding', label: 'Offboarding', roles: HR_ROLES },
+      { to: '/training/me', label: NAV.myTraining },
+      { to: '/hr/appraisal-templates', label: NAV.appraisal, roles: HR_ROLES },
+      { to: '/communications/employee', label: NAV.employeeCommunication },
+      { to: '/hr/payroll', label: NAV.payroll, roles: HR_ROLES },
+      { to: '/hr/attendance', label: NAV.attendance, roles: HR_ROLES },
+      { to: '/hr/reports', label: NAV.reports, roles: HR_ROLES },
+      { to: '/hr/offboarding', label: NAV.offboarding, roles: HR_ROLES },
     ],
   },
-  { to: ROUTES.CALENDAR, label: 'Calendar', icon: CalendarDays },
+  { to: ROUTES.CALENDAR, label: NAV.calendar, icon: CalendarDays },
   {
     to: ROUTES.OPERATIONS,
-    label: 'Operations',
+    label: NAV.operations,
     icon: ClipboardList,
     children: [
-      { to: '/operations/daily-updates', label: 'Daily Updates' },
-      { to: '/operations/shift-reports', label: 'Shift Reports' },
-      { to: '/operations/lost-found', label: 'Lost & Found' },
-      { to: '/operations/incidents', label: 'Incident Reports' },
-      { to: '/operations/projects', label: 'Projects' },
+      { to: '/operations/daily-updates', label: NAV.dailyUpdates },
+      { to: '/operations/shift-reports', label: NAV.shiftReports },
+      { to: '/operations/lost-found', label: NAV.lostFound },
+      { to: '/operations/incidents', label: NAV.incidents },
+      { to: '/operations/projects', label: NAV.projects },
     ],
   },
   {
     to: ROUTES.ENGINEERING,
-    label: 'Engineering',
+    label: NAV.engineering,
     icon: Wrench,
     children: [
-      { to: '/engineering/work-orders', label: 'Work Orders' },
-      { to: '/engineering/preventive-maintenance', label: 'Preventive Maintenance' },
-      { to: '/engineering/assets', label: 'Assets' },
+      { to: '/engineering/work-orders', label: NAV.workOrders },
+      { to: '/engineering/preventive-maintenance', label: NAV.preventiveMaintenance },
+      { to: '/engineering/assets', label: NAV.assets },
     ],
   },
   {
     to: ROUTES.SECURITY,
-    label: 'Security',
+    label: NAV.security,
     icon: Shield,
     children: [
       // /security's index IS the checkpoint list — there is no separate list path.
-      { to: ROUTES.SECURITY, label: 'Patrol Checkpoints', end: true },
-      { to: '/security/fire-extinguishers', label: 'Fire Extinguisher Checklist' },
+      { to: ROUTES.SECURITY, label: NAV.patrolCheckpoints, end: true },
+      { to: '/security/fire-extinguishers', label: NAV.fireExtinguishers },
     ],
   },
   // One sub-module, and /finance is the expense register itself — a group with a
   // single child would just be a chevron to nowhere.
-  { to: ROUTES.FINANCE, label: 'Finance', icon: Wallet },
+  { to: ROUTES.FINANCE, label: NAV.finance, icon: Wallet },
   {
     to: ROUTES.DOCUMENTS,
-    label: 'Documents',
+    label: NAV.documents,
     icon: FileText,
     children: [
-      { to: '/documents/sop-library', label: 'SOP Library' },
-      { to: '/documents/job-descriptions', label: 'Job Descriptions' },
-      { to: '/documents/bible', label: "Nourish's Bible" },
+      { to: '/documents/sop-library', label: NAV.sopLibrary },
+      { to: '/documents/job-descriptions', label: NAV.jobDescriptions },
+      { to: '/documents/bible', label: NAV.bible },
       // welcome-portal.md §5.1 — HR curates what a new hire reads in the
       // welcome portal. HR-only, like the rest of that app's administration.
-      { to: '/documents/welcome', label: 'Welcome Content', roles: HR_ROLES },
+      { to: '/documents/welcome', label: NAV.welcomeContent, roles: HR_ROLES },
     ],
   },
   {
     to: ROUTES.COMMUNICATIONS,
-    label: 'Communications',
+    label: NAV.communications,
     icon: MessageSquare,
     children: [
-      { to: '/communications/announcements', label: 'Announcements' },
-      { to: '/communications/tasks', label: 'Tasks' },
+      { to: '/communications/announcements', label: NAV.announcements },
+      { to: '/communications/tasks', label: NAV.tasks },
       // Team Chat is reached from the header ChatBell, not the nav.
     ],
   },
-  { to: ROUTES.REPORTS, label: 'Reports', icon: BarChart3 },
+  { to: ROUTES.REPORTS, label: NAV.reports, icon: BarChart3 },
   {
     to: ROUTES.SETTINGS,
-    label: 'Settings',
+    label: NAV.settings,
     icon: Settings,
     children: [
       // /settings' index IS the role permissions page.
-      { to: ROUTES.SETTINGS, label: 'Role Permissions', end: true },
-      { to: '/settings/communications', label: 'Communications' },
+      { to: ROUTES.SETTINGS, label: NAV.rolePermissions, end: true },
+      { to: '/settings/communications', label: NAV.communications },
     ],
   },
 ]
@@ -162,10 +164,15 @@ export function Sidebar() {
   const location = useLocation()
   const { profile } = useAuth()
   const [openKeys, setOpenKeys] = useState<string[]>([])
+  const lang = useLang()
 
   const navItems = NAV_ITEMS.map((item) => ({
     ...item,
-    visibleChildren: item.children?.filter((child) => allows(child.roles, profile?.roleId)) ?? [],
+    label: t(item.label, lang),
+    visibleChildren:
+      item.children
+        ?.filter((child) => allows(child.roles, profile?.roleId))
+        .map((child) => ({ ...child, label: t(child.label, lang) })) ?? [],
   })).filter((item) => allows(item.roles, profile?.roleId) || item.visibleChildren.length > 0)
 
   // Following a link on mobile should get you to the page, not leave the
@@ -201,10 +208,10 @@ export function Sidebar() {
         type="button"
         onClick={closeMobileNav}
         className="flex items-center gap-2 border-b border-border p-3 text-xs text-muted-foreground md:hidden"
-        aria-label="Close navigation"
+        aria-label={t(S.closeNav, lang)}
       >
         <X className="h-4 w-4" aria-hidden="true" />
-        Close
+        {t(S.close, lang)}
       </button>
 
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
@@ -280,7 +287,7 @@ export function Sidebar() {
                   onClick={() => toggleGroup(to)}
                   className="rounded-md p-2 text-muted-foreground transition-colors duration-150 hover:bg-border/50 hover:text-foreground"
                   aria-expanded={open}
-                  aria-label={`${open ? 'Collapse' : 'Expand'} ${label}`}
+                  aria-label={`${t(open ? S.collapse : S.expand, lang)} ${label}`}
                 >
                   <ChevronDown
                     className={cn('h-4 w-4 transition-transform duration-150', open && 'rotate-180')}
@@ -317,14 +324,14 @@ export function Sidebar() {
         type="button"
         onClick={toggleSidebar}
         className="hidden items-center justify-center gap-2 border-t border-border p-3 text-xs text-muted-foreground transition-colors duration-150 hover:text-foreground md:flex"
-        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        aria-label={t(collapsed ? S.expandSidebar : S.collapseSidebar, lang)}
       >
         {collapsed ? (
           <ChevronRight className="h-4 w-4" aria-hidden="true" />
         ) : (
           <>
             <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-            Collapse
+            {t(S.collapse, lang)}
           </>
         )}
       </button>

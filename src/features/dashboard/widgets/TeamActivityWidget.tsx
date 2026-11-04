@@ -30,12 +30,12 @@ export function TeamActivityWidget() {
 
   return (
     <DashboardWidget
-      title="Team Activity"
+      title={{ en: 'Team Activity', id: 'Aktivitas Tim' }}
       icon={Activity}
       count={entries === null ? undefined : entries.length}
       loading={entries === null}
       denied={denied}
-      emptyText="No recent activity."
+      emptyText={{ en: 'No recent activity.', id: 'Belum ada aktivitas.' }}
     >
       <Timeline>
         {(entries ?? []).map((entry) => (

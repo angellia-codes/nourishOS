@@ -1,3 +1,4 @@
+import { tOrEn, type Lang } from '@/lib/i18n'
 import { BookOpen, CheckCircle2, Lock, XCircle, GraduationCap, type LucideIcon } from 'lucide-react'
 import type { StatusTone } from '@/components/ui'
 import type {
@@ -42,9 +43,9 @@ export function resolveTrainingDepartment(
   return TRAINING_DEPARTMENT_BY_ORG[departmentId] ?? null
 }
 
-/** O4 is still open — all 197 imported topics have `title.id === null`, so English is what renders. */
-export function bilingual(text: BilingualText | undefined | null): string {
-  return text?.en ?? '—'
+/** O4 is still open — all 197 imported topics have `title.id === null`, so ID falls back to English. */
+export function bilingual(text: BilingualText | undefined | null, lang: Lang): string {
+  return tOrEn(text, lang) || '—'
 }
 
 export const PHASE_LABELS: Record<TrainingPhase, string> = {

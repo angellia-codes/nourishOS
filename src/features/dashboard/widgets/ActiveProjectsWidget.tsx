@@ -43,13 +43,13 @@ export function ActiveProjectsWidget() {
 
   return (
     <DashboardWidget
-      title="Active Projects"
+      title={{ en: 'Active Projects', id: 'Proyek Aktif' }}
       icon={KanbanSquare}
       count={projects === null ? undefined : active.length}
       viewAllTo="/operations/projects"
       loading={projects === null}
       denied={denied}
-      emptyText="No projects on the board."
+      emptyText={{ en: 'No projects on the board.', id: 'Belum ada proyek di papan.' }}
     >
       <div className="flex flex-col gap-2">
         {atRiskCount > 0 && <p className="text-xs text-error">{atRiskCount} past their target date</p>}

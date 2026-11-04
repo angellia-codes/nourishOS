@@ -1,4 +1,5 @@
 import { Card, Textarea } from '@/components/ui'
+import { tOrEn, useLang } from '@/lib/i18n'
 import { NumericScoreSelector } from './NumericScoreSelector'
 import type { AppraisalCriterion } from '@/types'
 
@@ -24,6 +25,7 @@ export function AppraisalCriterionScoreCard({
   onNoteChange,
   disabled,
 }: AppraisalCriterionScoreCardProps) {
+  const lang = useLang()
   const needsNote = score !== null && score <= LOW_SCORE_THRESHOLD
 
   return (
@@ -35,19 +37,19 @@ export function AppraisalCriterionScoreCard({
           </span>
           <div>
             <div className="flex items-center gap-2">
-              <p className="font-medium text-foreground">{criterion.label.en}</p>
+              <p className="font-medium text-foreground">{tOrEn(criterion.label, lang)}</p>
               {criterion.isLeadershipCriterion && (
                 <span className="rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[10px] font-medium text-accent">
                   Leadership
                 </span>
               )}
             </div>
-            {criterion.description.en && (
-              <p className="mt-0.5 text-sm text-muted-foreground">{criterion.description.en}</p>
+            {tOrEn(criterion.description, lang) && (
+              <p className="mt-0.5 text-sm text-muted-foreground">{tOrEn(criterion.description, lang)}</p>
             )}
           </div>
         </div>
-        <NumericScoreSelector value={score} onChange={onScoreChange} criterionLabel={criterion.label.en} disabled={disabled} />
+        <NumericScoreSelector value={score} onChange={onScoreChange} criterionLabel={tOrEn(criterion.label, lang)} disabled={disabled} />
       </div>
 
       {needsNote && (

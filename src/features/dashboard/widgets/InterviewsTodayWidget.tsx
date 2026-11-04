@@ -40,12 +40,12 @@ export function InterviewsTodayWidget() {
 
   return (
     <DashboardWidget
-      title="Interviews (7 days)"
+      title={{ en: 'Interviews (7 days)', id: 'Wawancara (7 hari)' }}
       icon={UserSearch}
       count={events === null ? undefined : interviews.length}
       viewAllTo="/calendar"
       loading={events === null}
-      emptyText="No interviews scheduled this week."
+      emptyText={{ en: 'No interviews scheduled this week.', id: 'Tidak ada wawancara minggu ini.' }}
     >
       <div className="flex flex-col gap-2">
         <p className="text-xs text-muted-foreground">

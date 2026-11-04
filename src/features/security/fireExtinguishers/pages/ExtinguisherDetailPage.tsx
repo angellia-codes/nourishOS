@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useLang } from '@/lib/i18n'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Pencil } from 'lucide-react'
 import { Button, Card, CardContent, Spinner, StatusPill } from '@/components/ui'
@@ -22,7 +23,7 @@ import {
 } from '../fireExtinguisherFormat'
 import type { FileMetadata, FireExtinguisher, FireExtinguisherInspection } from '@/types'
 
-const LABEL_BY_KEY = new Map(APAR_CHECKLIST_ITEMS.map((item) => [item.key, item.en]))
+const LABEL_BY_KEY = new Map(APAR_CHECKLIST_ITEMS.map((item) => [item.key, item]))
 
 /**
  * §9.2 — one view that answers "what has happened to this cylinder", which is
@@ -31,6 +32,7 @@ const LABEL_BY_KEY = new Map(APAR_CHECKLIST_ITEMS.map((item) => [item.key, item.
  * ended up fine.
  */
 export function ExtinguisherDetailPage() {
+  const lang = useLang()
   const { extinguisherId } = useParams<{ extinguisherId: string }>()
   const navigate = useNavigate()
   const [unit, setUnit] = useState<FireExtinguisher | null | undefined>(undefined)
@@ -155,7 +157,7 @@ export function ExtinguisherDetailPage() {
                     <li key={item.key} className="text-sm">
                       <span className="font-mono text-xs text-muted-foreground">{ITEM_RESULT_SYMBOL[item.result]}</span>{' '}
                       <span className={item.result === 'fail' ? 'text-status-rejected' : 'text-foreground'}>
-                        {LABEL_BY_KEY.get(item.key) ?? item.key}
+                        {LABEL_BY_KEY.get(item.key)?.[lang] ?? item.key}
                       </span>
                       {item.note && <span className="text-muted-foreground"> — {item.note}</span>}
                       {item.resolution === 'resolvedOnSpot' && (

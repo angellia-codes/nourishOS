@@ -66,12 +66,12 @@ export function AppraisalsDueWidget() {
 
   return (
     <DashboardWidget
-      title="Appraisals Due"
+      title={{ en: 'Appraisals Due', id: 'Penilaian Jatuh Tempo' }}
       icon={ClipboardCheck}
       count={appraisals === null ? undefined : rows.length}
       loading={appraisals === null && !denied}
       denied={denied}
-      emptyText="No appraisals waiting for a Department Head score."
+      emptyText={{ en: 'No appraisals waiting for a Department Head score.', id: 'Tidak ada penilaian yang menunggu skor Kepala Departemen.' }}
     >
       <div className="flex flex-col gap-2">
         {rows.slice(0, MAX_ROWS).map((a) => {

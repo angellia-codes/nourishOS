@@ -45,13 +45,13 @@ export function EscalationCenterWidget() {
 
   return (
     <DashboardWidget
-      title="Escalation Center"
+      title={{ en: 'Escalation Center', id: 'Pusat Eskalasi' }}
       icon={TriangleAlert}
       count={tasks === null ? undefined : escalated.length}
       viewAllTo="/operations/daily-updates"
       loading={tasks === null}
       denied={denied}
-      emptyText="Nothing escalated right now."
+      emptyText={{ en: 'Nothing escalated right now.', id: 'Tidak ada eskalasi saat ini.' }}
     >
       <div className="flex flex-col gap-2">
         {escalated.slice(0, MAX_ROWS).map((task) => {

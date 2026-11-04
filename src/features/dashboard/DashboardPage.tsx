@@ -2,6 +2,7 @@ import type { ComponentType } from 'react'
 import { useAuth } from '@/hooks'
 import { DEPARTMENTS, OUTLETS, ROLE_LABELS } from '@/constants'
 import { formatDate } from '@/utils'
+import { t, useLang, type Lang } from '@/lib/i18n'
 import { PendingApprovalsWidget } from './widgets/PendingApprovalsWidget'
 import { AssignedTasksWidget } from './widgets/AssignedTasksWidget'
 import { AnnouncementsWidget } from './widgets/AnnouncementsWidget'
@@ -20,10 +21,12 @@ const OUTLET_NAMES: Record<string, string> = Object.fromEntries(OUTLETS.map((o) 
 const DEPARTMENT_NAMES: Record<string, string> = Object.fromEntries(DEPARTMENTS.map((d) => [d.id, d.name]))
 
 /** dashboard.md §6 — greeting by local time, not by the backend's WITA day key. */
-function greeting(hour: number): string {
-  if (hour < 12) return 'Good morning'
-  if (hour < 18) return 'Good afternoon'
-  return 'Good evening'
+function greeting(hour: number, lang: Lang): string {
+  if (hour < 11) return t({ en: 'Good morning', id: 'Selamat pagi' }, lang)
+  if (hour < 12) return t({ en: 'Good morning', id: 'Selamat siang' }, lang)
+  if (hour < 15) return t({ en: 'Good afternoon', id: 'Selamat siang' }, lang)
+  if (hour < 18) return t({ en: 'Good afternoon', id: 'Selamat sore' }, lang)
+  return t({ en: 'Good evening', id: 'Selamat malam' }, lang)
 }
 
 /**
@@ -92,6 +95,7 @@ const APPRAISAL_SCORER_ROLES = new Set([
  */
 export function DashboardPage() {
   const { profile } = useAuth()
+  const lang = useLang()
   const firstName = profile?.displayName?.split(' ')[0] ?? 'there'
   const extras =
     (profile && ROLE_WIDGETS[profile.roleId]) ??
@@ -111,7 +115,7 @@ export function DashboardPage() {
     <div className="mx-auto flex max-w-5xl flex-col gap-4">
       <div>
         <h1 className="font-display text-2xl font-semibold text-foreground">
-          {greeting(new Date().getHours())}, {firstName}
+          {greeting(new Date().getHours(), lang)}, {firstName}
         </h1>
         <p className="text-sm text-muted-foreground">{meta}</p>
         <p className="text-xs text-muted-foreground">{formatDate(new Date())}</p>

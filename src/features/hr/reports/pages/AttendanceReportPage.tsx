@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useLang } from '@/lib/i18n'
 import { CalendarCheck, Clock, TimerReset, Users, type LucideIcon } from 'lucide-react'
 import { Card, CardContent, Select, Spinner } from '@/components/ui'
 import { EmptyState, MetricTile, ReportTable, BarDiagram, type ReportTableColumn } from '@/components/shared'
@@ -54,6 +55,7 @@ const DETAIL_COLUMNS: ReportTableColumn<AttendanceRecord>[] = [
  * server-side hiding (§8).
  */
 export function AttendanceReportPage() {
+  const lang = useLang()
   const [periods, setPeriods] = useState<AttendancePeriod[] | null>(null)
   const [periodId, setPeriodId] = useState('')
   const [records, setRecords] = useState<AttendanceRecord[] | null>(null)
@@ -206,7 +208,7 @@ export function AttendanceReportPage() {
 
           <div>
             <h2 className="mb-2 text-sm font-medium text-foreground">Leave breakdown</h2>
-            <BarDiagram items={breakdown.map((b) => ({ label: CODE_LABELS[b.code].en, value: b.total }))} />
+            <BarDiagram items={breakdown.map((b) => ({ label: CODE_LABELS[b.code][lang], value: b.total }))} />
           </div>
 
           <div>

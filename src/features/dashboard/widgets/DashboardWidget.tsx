@@ -2,9 +2,10 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, type LucideIcon } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, Skeleton } from '@/components/ui'
+import { t, useLang, type Pair } from '@/lib/i18n'
 
 interface DashboardWidgetProps {
-  title: string
+  title: Pair
   icon: LucideIcon
   /** Total across the whole source, not just the rows shown — the widget lists at most five. */
   count?: number
@@ -13,7 +14,7 @@ interface DashboardWidgetProps {
   loading: boolean
   /** Rules denials surface as a subscription error, which is a different message from "nothing here". */
   denied?: boolean
-  emptyText: string
+  emptyText: Pair
   children: ReactNode
   className?: string
 }
@@ -34,12 +35,13 @@ export function DashboardWidget({
   children,
   className,
 }: DashboardWidgetProps) {
+  const lang = useLang()
   return (
     <Card className={className}>
       <CardHeader className="flex-row items-center justify-between gap-3 space-y-0">
         <CardTitle className="flex items-center gap-2 text-base">
           <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-          {title}
+          {t(title, lang)}
           {count !== undefined && count > 0 && (
             <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{count}</span>
           )}
@@ -49,7 +51,7 @@ export function DashboardWidget({
             to={viewAllTo}
             className="flex shrink-0 items-center gap-1 text-xs text-primary transition-colors duration-150 hover:underline"
           >
-            View all
+            {t({ en: 'View all', id: 'Lihat semua' }, lang)}
             <ArrowRight className="h-3 w-3" aria-hidden="true" />
           </Link>
         )}
@@ -63,10 +65,10 @@ export function DashboardWidget({
           </div>
         ) : denied ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
-            You don&apos;t have access to this data.
+            {t({ en: "You don't have access to this data.", id: 'Anda tidak memiliki akses ke data ini.' }, lang)}
           </p>
         ) : count === 0 ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">{emptyText}</p>
+          <p className="py-6 text-center text-sm text-muted-foreground">{t(emptyText, lang)}</p>
         ) : (
           children
         )}

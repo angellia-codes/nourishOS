@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { tOrEn, useLang } from '@/lib/i18n'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Archive, ClipboardCheck, GraduationCap, Hash, Pencil, RotateCcw } from 'lucide-react'
 import {
@@ -216,13 +217,14 @@ export function EmployeeProfilePage() {
   useEffect(() => trainingService.subscribeToLegacyTrainings(setTrainings), [])
   useEffect(() => trainingService.subscribeToTrainingTopics(setTrainingTopics), [])
 
+  const lang = useLang()
   const trainingTitleById = useMemo(
     () =>
       Object.fromEntries([
         ...trainings.map((t) => [t.id, t.title] as const),
-        ...trainingTopics.map((topic) => [topic.id, topic.title.en] as const),
+        ...trainingTopics.map((topic) => [topic.id, tOrEn(topic.title, lang)] as const),
       ]),
-    [trainings, trainingTopics],
+    [trainings, trainingTopics, lang],
   )
 
   const { data: documents } = useFirestoreQuery<FileMetadata>(

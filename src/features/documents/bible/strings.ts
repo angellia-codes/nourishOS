@@ -1,20 +1,11 @@
 /**
- * Reader copy, EN/ID (design guide §8). The main app has no i18n framework,
- * so — like employeeCommunicationFormat.ts's BILINGUAL map — the reader keeps
- * its own pairs. Dish names and descriptions are never translated (D6).
+ * Reader copy, EN/ID (design guide §8). The language itself is the app-wide
+ * toggle (src/lib/i18n.ts); these pairs are the reader's own copy. Dish names
+ * and descriptions are never translated (D6).
  */
+import type { Pair } from '@/lib/i18n'
 
-export type Lang = 'en' | 'id'
-
-export interface Pair {
-  en: string
-  id: string
-}
-
-export const t = (pair: Pair, lang: Lang) => pair[lang]
-
-export const fill = (template: string, values: Record<string, string | number>) =>
-  template.replace(/\{(\w+)\}/g, (_, key: string) => String(values[key] ?? ''))
+export { t, fill, type Lang, type Pair } from '@/lib/i18n'
 
 export const S = {
   book: { en: "Nourish's Bible", id: "Nourish's Bible" },
@@ -176,7 +167,6 @@ export function safeSet(key: string, value: string): void {
 }
 
 export const STORAGE = {
-  lang: 'bible.lang',
   lastOpenedDate: 'bible.lastOpenedDate',
   lastPageKey: 'bible.lastPageKey',
 } as const

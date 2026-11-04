@@ -78,7 +78,7 @@ export function PendingApprovalsWidget() {
 
   return (
     <DashboardWidget
-      title="Pending Approvals"
+      title={{ en: 'Pending Approvals', id: 'Menunggu Persetujuan' }}
       icon={Stamp}
       count={loading ? undefined : total}
       // No "View all": there is no approval queue page, and pointing at
@@ -86,7 +86,7 @@ export function PendingApprovalsWidget() {
       // approved requisitions rather than the ones awaiting them.
       loading={loading}
       denied={denied}
-      emptyText="Nothing waiting on you, and nothing of yours in flight."
+      emptyText={{ en: 'Nothing waiting on you, and nothing of yours in flight.', id: 'Tidak ada yang menunggu persetujuan Anda, dan tidak ada pengajuan Anda yang berjalan.' }}
     >
       <div className="flex flex-col gap-3">
         {decisions.length > 0 && (
