@@ -27,7 +27,7 @@ Interview focus hints (§20) are a pure lookup in `recruitmentFormat.ts`'s `disc
 
 ### Known gap
 
-**No App Check.** Every portal callable is unauthenticated, and the only rate limit is the 30-day same-phone/same-vacancy duplicate check in `guard.ts`. Turn on App Check + reCAPTCHA before `careers.nourishgroup.id` is announced publicly.
+**App Check is not enforced.** Every portal callable is unauthenticated, and the only rate limit is the 30-day same-phone/same-vacancy duplicate check in `guard.ts`. The portal already sends reCAPTCHA v3 App Check tokens (`portal/src/firebase.ts`), but `enforceAppCheck` was rolled back on 2026-11-04 after enforcing it locked every candidate out with "Unauthenticated" — see the root CLAUDE.md "Public portals and App Check" for the three console steps to finish before re-enabling it. Do that before `careers.nourishgroup.id` is announced publicly.
 
 ## GM Interview stage + interviewer role restriction (2026-08-28)
 

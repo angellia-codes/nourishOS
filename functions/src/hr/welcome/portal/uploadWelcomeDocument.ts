@@ -44,7 +44,7 @@ const MAX_FILE_BYTES = 8 * 1024 * 1024
 // does — the default 60s is what was producing "deadline-exceeded" on the
 // KTP/KK slots over a slow mobile upload, before the body had even finished
 // arriving. 180s matches the client's own override in welcome/src/api.ts.
-export const uploadWelcomeDocument = onCall({ region: REGION, maxInstances: 10, timeoutSeconds: 180, enforceAppCheck: true }, async (request) => {
+export const uploadWelcomeDocument = onCall({ region: REGION, maxInstances: 10, timeoutSeconds: 180 }, async (request) => {
   try {
     const data = (request.data ?? {}) as Record<string, unknown>
 

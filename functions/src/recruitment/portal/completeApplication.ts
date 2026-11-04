@@ -28,7 +28,7 @@ import { portalActor, resolveCandidateForEdit } from './token'
  */
 const SCREENING_STAGE: CandidateStage = 'ST-02'
 
-export const completeApplication = onCall({ region: REGION, secrets: [FONNTE_TOKEN], enforceAppCheck: true }, async (request) => {
+export const completeApplication = onCall({ region: REGION, secrets: [FONNTE_TOKEN] }, async (request) => {
   try {
     const data = (request.data ?? {}) as Record<string, unknown>
     const { candidateId, candidate, ref } = await resolveCandidateForEdit(data.applicationToken)

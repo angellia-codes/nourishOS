@@ -14,7 +14,7 @@ import { portalActor, resolveCandidateForEdit } from './token'
  */
 
 /** Question text only — no dimension mapping, or the test answers itself. */
-export const getDiscQuestions = onCall({ region: REGION, enforceAppCheck: true }, async () => {
+export const getDiscQuestions = onCall({ region: REGION }, async () => {
   try {
     const questions = DISC_QUESTIONS.map((question) => ({
       id: question.id,
@@ -28,7 +28,7 @@ export const getDiscQuestions = onCall({ region: REGION, enforceAppCheck: true }
   }
 })
 
-export const submitDiscAssessment = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
+export const submitDiscAssessment = onCall({ region: REGION }, async (request) => {
   try {
     const data = (request.data ?? {}) as Record<string, unknown>
     requirePayloadUnderLimit(data)

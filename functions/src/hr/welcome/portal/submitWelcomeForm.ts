@@ -34,7 +34,7 @@ interface SubmitInput {
   values?: Record<string, unknown>
 }
 
-export const submitWelcomeForm = onCall({ region: REGION, maxInstances: 10, enforceAppCheck: true }, async (request) => {
+export const submitWelcomeForm = onCall({ region: REGION, maxInstances: 10 }, async (request) => {
   try {
     const data = (request.data ?? {}) as Partial<SubmitInput>
     // ForEdit, not the plain resolver: §2 D6 locks the form on submit, so a

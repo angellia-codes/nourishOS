@@ -13,7 +13,7 @@ import { portalActor, resolveCandidateForEdit } from './token'
  * candidate document (§3), which is what makes the `recruitment.viewSensitive`
  * rule enforceable — Firestore rules gate documents, not fields.
  */
-export const saveApplicationForm = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
+export const saveApplicationForm = onCall({ region: REGION }, async (request) => {
   try {
     const data = (request.data ?? {}) as Record<string, unknown>
     requirePayloadUnderLimit(data)

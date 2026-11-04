@@ -11,7 +11,7 @@ import { POSITION_LABELS } from '../../lib/positions'
  * justification, headcount and everything under `recruitments/{id}/confidential`
  * stay inside NourishOS.
  */
-export const listOpenPositions = onCall({ region: REGION, enforceAppCheck: true }, async () => {
+export const listOpenPositions = onCall({ region: REGION }, async () => {
   try {
     const snap = await db
       .collection(COLLECTIONS.RECRUITMENTS)

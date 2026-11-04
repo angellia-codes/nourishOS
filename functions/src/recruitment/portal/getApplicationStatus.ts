@@ -15,7 +15,7 @@ import { resolveCandidateByToken } from './token'
 /** The stages a candidate is shown, in order. Rejected/withdrawn are reported as an outcome instead. */
 const VISIBLE_STAGES: CandidateStage[] = ['ST-01', 'ST-02', 'ST-03', 'ST-04', 'ST-05', 'ST-06']
 
-export const getApplicationStatus = onCall({ region: REGION, enforceAppCheck: true }, async (request) => {
+export const getApplicationStatus = onCall({ region: REGION }, async (request) => {
   try {
     const data = (request.data ?? {}) as Record<string, unknown>
     const { candidateId, candidate } = await resolveCandidateByToken(data.applicationToken)
