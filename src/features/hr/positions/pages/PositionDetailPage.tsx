@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { tOrEn, useLang } from '@/lib/i18n'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Lock, Pencil, RotateCcw } from 'lucide-react'
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Select, Spinner } from '@/components/ui'
@@ -11,6 +12,7 @@ import { positionStatusVariant, isScorerUnassigned } from '../positionFormat'
 
 /** Read view of one position's JD content, tier, and appraisal scorer assignment. */
 export function PositionDetailPage() {
+  const lang = useLang()
   const navigate = useNavigate()
   const toast = useToast()
   const { positionId } = useParams<{ positionId: string }>()
@@ -115,8 +117,8 @@ export function PositionDetailPage() {
             {!position.isAppraisable && <Badge variant="neutral">Not appraisable</Badge>}
             {isScorerUnassigned(position) && <Badge variant="warning">Scorer Unassigned</Badge>}
           </div>
-          <CardTitle>{position.title.en}</CardTitle>
-          {position.jobOverview.en && <p className="text-sm text-muted-foreground">{position.jobOverview.en}</p>}
+          <CardTitle>{tOrEn(position.title, lang)}</CardTitle>
+          {tOrEn(position.jobOverview, lang) && <p className="text-sm text-muted-foreground">{tOrEn(position.jobOverview, lang)}</p>}
         </CardHeader>
         <CardContent className="flex flex-wrap justify-end gap-2">
           {position.isActive ? (
@@ -164,7 +166,7 @@ export function PositionDetailPage() {
               {activeResponsibilities
                 .sort((a, b) => a.order - b.order)
                 .map((r) => (
-                  <li key={r.responsibilityId}>{r.text.en}</li>
+                  <li key={r.responsibilityId}>{tOrEn(r.text, lang)}</li>
                 ))}
             </ol>
           )}
@@ -184,7 +186,7 @@ export function PositionDetailPage() {
                   .filter((p) => p.positionId !== position.positionId)
                   .map((p) => (
                     <option key={p.positionId} value={p.positionId}>
-                      {p.title.en}
+                      {tOrEn(p.title, lang)}
                     </option>
                   ))}
               </Select>

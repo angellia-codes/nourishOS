@@ -13,6 +13,7 @@ import {
   recurrenceSummary,
   resolveTrainingDepartment,
 } from '../trainingFormat'
+import { useLang } from '@/lib/i18n'
 import type { Department, TrainingBinding, TrainingTopic } from '@/types'
 
 /**
@@ -21,6 +22,7 @@ import type { Department, TrainingBinding, TrainingTopic } from '@/types'
  * binding editing is deferred with campaigns.
  */
 export function TrainingCataloguePage() {
+  const lang = useLang()
   const toast = useToast()
   const { profile } = useAuth()
   const [departments, setDepartments] = useState<Department[] | null>(null)
@@ -104,7 +106,7 @@ export function TrainingCataloguePage() {
       <Select aria-label="Department" value={selected} onChange={(event) => setSelected(event.target.value)}>
         {departments.map((department) => (
           <option key={department.id} value={department.id}>
-            {bilingual(department.name)}
+            {bilingual(department.name, lang)}
           </option>
         ))}
       </Select>
@@ -125,7 +127,7 @@ export function TrainingCataloguePage() {
                   {String(binding.sequence).padStart(2, '0')}
                 </span>
                 <div className="flex flex-1 flex-col gap-1">
-                  <p className="font-medium text-foreground">{topic ? bilingual(topic.title) : binding.topicId}</p>
+                  <p className="font-medium text-foreground">{topic ? bilingual(topic.title, lang) : binding.topicId}</p>
                   <p className="text-xs text-muted-foreground">
                     {topic ? `${PHASE_LABELS[topic.phase]} · ${PHASE_HINT[topic.phase]} · ` : ''}
                     <Clock className="inline h-3 w-3" aria-hidden="true" /> {formatDuration(topic?.durationMinutes)} ·{' '}
@@ -137,7 +139,7 @@ export function TrainingCataloguePage() {
                       <Lock className="mt-0.5 h-3 w-3 shrink-0" aria-hidden="true" />
                       <span>
                         {binding.prerequisiteTopicIds
-                          .map((topicId) => (topicById.get(topicId) ? bilingual(topicById.get(topicId)!.title) : topicId))
+                          .map((topicId) => (topicById.get(topicId) ? bilingual(topicById.get(topicId)!.title, lang) : topicId))
                           .join(', ')}
                         {binding.allCoreTopics && (binding.prerequisiteTopicIds.length ? ' · ' : '') + 'all onboarding topics'}
                         {binding.minTenureMonths

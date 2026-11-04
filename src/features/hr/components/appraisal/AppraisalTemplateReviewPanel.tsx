@@ -1,4 +1,5 @@
 import { Badge, Card, CardContent } from '@/components/ui'
+import { tOrEn, useLang } from '@/lib/i18n'
 import type { AppraisalCriterion, PositionResponsibility } from '@/types'
 
 interface AppraisalTemplateReviewPanelProps {
@@ -17,7 +18,8 @@ interface AppraisalTemplateReviewPanelProps {
  * server-side regardless of what the UI allows.
  */
 export function AppraisalTemplateReviewPanel({ criteria, responsibilities }: AppraisalTemplateReviewPanelProps) {
-  const responsibilityById = new Map(responsibilities.map((r) => [r.responsibilityId, r.text.en]))
+  const lang = useLang()
+  const responsibilityById = new Map(responsibilities.map((r) => [r.responsibilityId, tOrEn(r.text, lang)]))
 
   return (
     <div className="flex flex-col gap-3">
@@ -30,10 +32,10 @@ export function AppraisalTemplateReviewPanel({ criteria, responsibilities }: App
               <div>
                 <div className="mb-1 flex items-center gap-2">
                   <span className="text-xs font-semibold text-muted-foreground">{i + 1}</span>
-                  <p className="font-medium text-foreground">{c.label.en}</p>
+                  <p className="font-medium text-foreground">{tOrEn(c.label, lang)}</p>
                   {c.isLeadershipCriterion && <Badge variant="accent">Leadership</Badge>}
                 </div>
-                <p className="text-sm text-muted-foreground">{c.description.en}</p>
+                <p className="text-sm text-muted-foreground">{tOrEn(c.description, lang)}</p>
               </div>
               <div className="border-t border-border pt-3 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
                 <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">

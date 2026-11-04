@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { tOrEn, useLang } from '@/lib/i18n'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Archive, ArrowLeft, Check, RotateCcw } from 'lucide-react'
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Spinner } from '@/components/ui'
@@ -14,6 +15,7 @@ import type { AppraisalTemplate, Position } from '@/types'
 
 /** §6.2 — the mandatory HR gate: side-by-side generated-criterion / source-responsibility-text review, then Approve. */
 export function AppraisalTemplateReviewPage() {
+  const lang = useLang()
   const navigate = useNavigate()
   const toast = useToast()
   const { templateId } = useParams<{ templateId: string }>()
@@ -107,7 +109,7 @@ export function AppraisalTemplateReviewPage() {
             </Badge>
             <Badge variant="neutral">{template.generationMethod}</Badge>
           </div>
-          <CardTitle>{position?.title.en ?? template.positionId}</CardTitle>
+          <CardTitle>{tOrEn(position?.title, lang) || template.positionId}</CardTitle>
         </CardHeader>
         {template.templateStatus === 'pendingGm' && (
           <CardContent className="text-sm text-muted-foreground">

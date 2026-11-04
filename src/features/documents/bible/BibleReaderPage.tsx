@@ -4,6 +4,7 @@ import { Book as BookIcon, BookOpen, ChevronLeft, ChevronRight, List } from 'luc
 import { usePermissions } from '@/hooks/usePermissions'
 import { useOutlet } from '@/hooks/useOutlet'
 import { PERMISSIONS } from '@/constants'
+import { useLanguageStore } from '@/store'
 import type { BibleAccess, BibleEdition, BibleOutletMenu } from '@/types'
 import { BIBLE_OUTLETS, buildBook, mergeOutletView, type SectionId } from './bibleBook'
 import { getBibleAccess, getCurrentEdition, subscribeToOutletMenu } from './bibleService'
@@ -37,7 +38,9 @@ function useMedia(query: string): boolean {
  * access callable, the compiled edition and one outlet doc (§6.1).
  */
 export function BibleReaderPage() {
-  const [lang, setLang] = useState<Lang>(() => (safeGet(STORAGE.lang) === 'id' ? 'id' : 'en'))
+  // The app-wide EN/ID toggle (src/lib/i18n.ts); the in-book switch writes it too.
+  const lang = useLanguageStore((s) => s.lang)
+  const setLanguage = useLanguageStore((s) => s.setLang)
   const [edition, setEdition] = useState<BibleEdition | null | undefined>(undefined) // undefined = loading
   const [access, setAccess] = useState<BibleAccess | null>(null)
   const [failed, setFailed] = useState(false)
@@ -60,11 +63,6 @@ export function BibleReaderPage() {
       alive = false
     }
   }, [attempt])
-
-  const setLanguage = (next: Lang) => {
-    setLang(next)
-    safeSet(STORAGE.lang, next)
-  }
 
   const shell = (children: React.ReactNode) => (
     <div className="bible-root" lang={lang}>

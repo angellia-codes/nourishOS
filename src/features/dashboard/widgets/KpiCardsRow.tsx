@@ -4,6 +4,7 @@ import { Users, Stamp, ListChecks, Megaphone } from 'lucide-react'
 import { db } from '@/services/firebase'
 import { MetricTile } from '@/components/shared'
 import { useAuth } from '@/hooks'
+import { t, useLang } from '@/lib/i18n'
 import { COLLECTIONS, DEPARTMENT_ROLES, HR_REPORT_ROLES } from '@/constants'
 import { approvalService, taskService } from '@/services/shared'
 import * as announcementService from '@/features/communications/announcements/announcementService'
@@ -20,6 +21,7 @@ import { isTerminal } from '@/features/communications/tasks/taskFormat'
  * department instead of the whole company.
  */
 export function KpiCardsRow() {
+  const lang = useLang()
   const { user, profile } = useAuth()
   const uid = user?.uid ?? null
   const roleId = profile?.roleId ?? null
@@ -70,14 +72,14 @@ export function KpiCardsRow() {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       <MetricTile
-        label={isDepartmentManager ? 'Active Employees (Dept)' : 'Active Employees'}
+        label={t(isDepartmentManager ? { en: 'Active Employees (Dept)', id: 'Karyawan Aktif (Dept)' } : { en: 'Active Employees', id: 'Karyawan Aktif' }, lang)}
         value={activeEmployees}
         icon={Users}
         to={canViewHrReports ? '/hr/reports/active-employees' : undefined}
       />
-      <MetricTile label="Pending Approvals" value={pendingApprovals} icon={Stamp} />
-      <MetricTile label="Open Tasks" value={openTasks} icon={ListChecks} />
-      <MetricTile label="Announcements" value={announcementCount} icon={Megaphone} />
+      <MetricTile label={t({ en: 'Pending Approvals', id: 'Menunggu Persetujuan' }, lang)} value={pendingApprovals} icon={Stamp} />
+      <MetricTile label={t({ en: 'Open Tasks', id: 'Tugas Terbuka' }, lang)} value={openTasks} icon={ListChecks} />
+      <MetricTile label={t({ en: 'Announcements', id: 'Pengumuman' }, lang)} value={announcementCount} icon={Megaphone} />
     </div>
   )
 }

@@ -4,13 +4,17 @@ import { SearchBar } from './SearchBar'
 import { NotificationBell } from './NotificationBell'
 import { ChatBell } from './ChatBell'
 import { useAuth } from '@/hooks'
-import { useThemeStore, useUIStore } from '@/store'
+import { useLanguageStore, useThemeStore, useUIStore } from '@/store'
+import { S } from '@/constants/strings'
+import { t } from '@/lib/i18n'
 
 export function Header() {
   const { profile, signOut } = useAuth()
   const toggleMobileNav = useUIStore((s) => s.toggleMobileNav)
   const theme = useThemeStore((s) => s.theme)
   const setTheme = useThemeStore((s) => s.setTheme)
+  const lang = useLanguageStore((s) => s.lang)
+  const setLang = useLanguageStore((s) => s.setLang)
 
   const isDark =
     theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
@@ -25,7 +29,7 @@ export function Header() {
           size="icon"
           className="md:hidden"
           onClick={toggleMobileNav}
-          aria-label="Open navigation"
+          aria-label={t(S.openNav, lang)}
         >
           <Menu className="h-5 w-5" aria-hidden="true" />
         </Button>
@@ -39,8 +43,20 @@ export function Header() {
           type="button"
           variant="ghost"
           size="icon"
+          className="font-mono text-xs font-semibold"
+          onClick={() => setLang(lang === 'en' ? 'id' : 'en')}
+          aria-label={t(S.toOtherLang, lang)}
+          title={t(S.toOtherLang, lang)}
+        >
+          {lang.toUpperCase()}
+        </Button>
+
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
           onClick={() => setTheme(isDark ? 'light' : 'dark')}
-          aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          aria-label={t(isDark ? S.toLight : S.toDark, lang)}
         >
           {isDark ? <Sun className="h-4 w-4" aria-hidden="true" /> : <Moon className="h-4 w-4" aria-hidden="true" />}
         </Button>
@@ -53,7 +69,7 @@ export function Header() {
           <p className="text-xs leading-tight text-muted-foreground">{profile?.roleId}</p>
         </div>
 
-        <Button type="button" variant="ghost" size="icon" onClick={() => void signOut()} aria-label="Sign out">
+        <Button type="button" variant="ghost" size="icon" onClick={() => void signOut()} aria-label={t(S.signOut, lang)}>
           <LogOut className="h-4 w-4" aria-hidden="true" />
         </Button>
       </div>

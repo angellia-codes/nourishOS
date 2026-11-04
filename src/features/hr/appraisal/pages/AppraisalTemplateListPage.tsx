@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { tOrEn, useLang } from '@/lib/i18n'
 import { useNavigate } from 'react-router-dom'
 import { ClipboardCheck, RotateCcw, Sparkles } from 'lucide-react'
 import { Badge, Button, Card, CardContent, Spinner, Tabs } from '@/components/ui'
@@ -15,6 +16,7 @@ type View = 'current' | 'archived'
 
 /** §6 — one row per position: its latest template's status, and a Generate action when appraisable with no approved instrument yet. */
 export function AppraisalTemplateListPage() {
+  const lang = useLang()
   const navigate = useNavigate()
   const toast = useToast()
   const [positions, setPositions] = useState<Position[] | null>(null)
@@ -73,7 +75,7 @@ export function AppraisalTemplateListPage() {
     if (!existing || t.version > existing.version) latestByPosition.set(t.positionId, t)
   }
 
-  const titleByPositionId = new Map(positions.map((p) => [p.positionId, p.title.en]))
+  const titleByPositionId = new Map(positions.map((p) => [p.positionId, tOrEn(p.title, lang)]))
   const archivedTemplates = templates
     .filter((t) => t.templateStatus === 'archived')
     .sort((a, b) => (b.archivedAt ?? '').localeCompare(a.archivedAt ?? ''))
@@ -161,7 +163,7 @@ export function AppraisalTemplateListPage() {
               <Card key={position.id}>
                 <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium text-foreground">{position.title.en}</p>
+                    <p className="truncate font-medium text-foreground">{tOrEn(position.title, lang)}</p>
                     {latest ? (
                       <button
                         type="button"

@@ -13,6 +13,7 @@ import {
   formatDuration,
   lockReason,
 } from '../trainingFormat'
+import { useLang } from '@/lib/i18n'
 import type { TrainingAssignment, TrainingBinding, TrainingTopic } from '@/types'
 
 /**
@@ -21,6 +22,7 @@ import type { TrainingAssignment, TrainingBinding, TrainingTopic } from '@/types
  * trainee with no linked login sees nothing here and HR acts on their behalf.
  */
 export function MyTrainingPage() {
+  const lang = useLang()
   const { user } = useAuth()
   const [assignments, setAssignments] = useState<TrainingAssignment[] | null>(null)
   const [topics, setTopics] = useState<TrainingTopic[]>([])
@@ -61,7 +63,7 @@ export function MyTrainingPage() {
 
   function titleFor(topicId: string): string {
     const topic = topicById.get(topicId)
-    return topic ? bilingual(topic.title) : topicId
+    return topic ? bilingual(topic.title, lang) : topicId
   }
 
   function Row({ assignment }: { assignment: TrainingAssignment }) {
@@ -71,7 +73,7 @@ export function MyTrainingPage() {
       <Card>
         <CardContent className="flex flex-col gap-1.5 p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="font-medium text-foreground">{topic ? bilingual(topic.title) : assignment.topicId}</p>
+            <p className="font-medium text-foreground">{topic ? bilingual(topic.title, lang) : assignment.topicId}</p>
             <StatusPill
               tone={ASSIGNMENT_STATUS_TONE[assignment.status]}
               icon={ASSIGNMENT_STATUS_ICON[assignment.status]}

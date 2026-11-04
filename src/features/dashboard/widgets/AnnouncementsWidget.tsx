@@ -55,13 +55,13 @@ export function AnnouncementsWidget() {
 
   return (
     <DashboardWidget
-      title="Announcements"
+      title={{ en: 'Announcements', id: 'Pengumuman' }}
       icon={Megaphone}
       count={rows === null ? undefined : rows.length}
       viewAllTo="/communications/announcements"
       loading={rows === null}
       denied={denied}
-      emptyText="No announcements available."
+      emptyText={{ en: 'No announcements available.', id: 'Belum ada pengumuman.' }}
       className="lg:col-span-2"
     >
       <div className="flex flex-col gap-2">

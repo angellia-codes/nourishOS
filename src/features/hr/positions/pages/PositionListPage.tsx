@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { tOrEn, useLang } from '@/lib/i18n'
 import { useNavigate } from 'react-router-dom'
 import { Briefcase, Plus, RotateCcw } from 'lucide-react'
 import { Badge, Button, Card, CardContent, Spinner, Tabs } from '@/components/ui'
@@ -17,6 +18,7 @@ type View = 'active' | 'archived'
  * with no way back; superAdmin/HR Manager can now see and restore them.
  */
 export function PositionListPage() {
+  const lang = useLang()
   const navigate = useNavigate()
   const toast = useToast()
   const [positions, setPositions] = useState<Position[] | null>(null)
@@ -94,7 +96,7 @@ export function PositionListPage() {
                   onClick={() => navigate(`/positions/${position.id}`)}
                   className="min-w-0 flex-1 text-left"
                 >
-                  <p className="truncate font-medium text-foreground">{position.title.en}</p>
+                  <p className="truncate font-medium text-foreground">{tOrEn(position.title, lang)}</p>
                   <p className="text-xs text-muted-foreground">
                     {POSITION_LEVEL_LABELS[position.level]} · {position.departmentId}
                   </p>

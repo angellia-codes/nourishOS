@@ -25,12 +25,12 @@ export function UpcomingCalendarWidget() {
 
   return (
     <DashboardWidget
-      title="Upcoming Calendar"
+      title={{ en: 'Upcoming Calendar', id: 'Agenda Mendatang' }}
       icon={CalendarDays}
       count={events === null ? undefined : confirmed.length}
       viewAllTo="/calendar"
       loading={events === null}
-      emptyText="No upcoming events."
+      emptyText={{ en: 'No upcoming events.', id: 'Tidak ada acara mendatang.' }}
       className="lg:col-span-2"
     >
       <div className="flex flex-col gap-2">

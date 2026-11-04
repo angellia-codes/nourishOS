@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from 'react'
-import { useThemeStore, useAuthStore, type ThemePreference } from '@/store'
+import { useThemeStore, useAuthStore, useLanguageStore, type ThemePreference } from '@/store'
 
 function resolveTheme(pref: ThemePreference): 'light' | 'dark' {
   if (pref === 'system') {
@@ -12,6 +12,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const theme = useThemeStore((s) => s.theme)
   const setTheme = useThemeStore((s) => s.setTheme)
   const profile = useAuthStore((s) => s.profile)
+  const lang = useLanguageStore((s) => s.lang)
+
+  // Lets screen readers and hyphenation follow the EN/ID toggle.
+  useEffect(() => {
+    document.documentElement.lang = lang
+  }, [lang])
 
   useEffect(() => {
     const apply = () => {

@@ -38,13 +38,13 @@ export function AssignedTasksWidget() {
 
   return (
     <DashboardWidget
-      title="Assigned Tasks"
+      title={{ en: 'Assigned Tasks', id: 'Tugas Saya' }}
       icon={ListChecks}
       count={tasks === null ? undefined : open.length}
       viewAllTo="/communications/tasks"
       loading={tasks === null}
       denied={denied}
-      emptyText="No assigned tasks."
+      emptyText={{ en: 'No assigned tasks.', id: 'Tidak ada tugas.' }}
     >
       <div className="flex flex-col gap-2">
         {open.slice(0, MAX_ROWS).map((task) => {

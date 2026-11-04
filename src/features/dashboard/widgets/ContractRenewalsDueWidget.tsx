@@ -62,12 +62,12 @@ export function ContractRenewalsDueWidget() {
 
   return (
     <DashboardWidget
-      title="Contracts & Probations Due"
+      title={{ en: 'Contracts & Probations Due', id: 'Kontrak & Masa Percobaan Jatuh Tempo' }}
       icon={FileSignature}
       count={employees === null ? undefined : rows.length}
       viewAllTo="/hr/employees"
       loading={employees === null}
-      emptyText="Nothing falling due in the next 60 days."
+      emptyText={{ en: 'Nothing falling due in the next 60 days.', id: 'Tidak ada yang jatuh tempo dalam 60 hari ke depan.' }}
     >
       <div className="flex flex-col gap-2">
         {rows.slice(0, MAX_ROWS).map((row) => {
