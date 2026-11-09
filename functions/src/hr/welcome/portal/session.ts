@@ -11,7 +11,6 @@ import {
 import { OUTLET_NAMES } from '../../../lib/organization'
 import { resolveWelcomeInvite, resolveWelcomeInviteForEdit, welcomeActor } from '../invite'
 import { pickWelcomeDraft } from '../whitelist'
-import { WELCOME_SECTIONS } from '../content'
 
 /**
  * welcome-portal.md §5.2 — the unauthenticated half of the Welcome Portal.
@@ -83,32 +82,6 @@ export const saveWelcomeDraft = onCall(PORTAL_OPTIONS, async (request) => {
     await ref.update({ draft: merged, ...updatedFields(welcomeActor(employeeId, employee).uid) })
 
     return successResponse({ saved: Object.keys(draft) }, 'Saved.')
-  } catch (error) {
-    return handleError(error)
-  }
-})
-
-/**
- * §7.4 — the HR-editable sections. Takes a token like every other portal
- * callable so the app has exactly one failure mode to handle; a section that
- * has never been published comes back null rather than as an error, because an
- * empty section is a content gap, not a broken link.
- */
-export const getWelcomeContent = onCall(PORTAL_OPTIONS, async (request) => {
-  try {
-    const data = (request.data ?? {}) as Record<string, unknown>
-    await resolveWelcomeInvite(data.token)
-
-    const snaps = await db.getAll(
-      ...WELCOME_SECTIONS.map((section) => db.collection(COLLECTIONS.WELCOME_CONTENT).doc(section)),
-    )
-
-    const sections: Record<string, unknown> = {}
-    for (const snap of snaps) {
-      sections[snap.id] = snap.exists ? (snap.data()?.published ?? null) : null
-    }
-
-    return successResponse({ sections })
   } catch (error) {
     return handleError(error)
   }

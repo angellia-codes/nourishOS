@@ -15,7 +15,7 @@ export interface StaticBlock {
  * heading/body list every other static section uses. `Brand`/`ServiceItem`
  * each carry an optional `imageUrl` — empty today, since no photos exist yet;
  * `ImagePlaceholder` (ui.tsx) renders a placeholder box until one is set, the
- * same fallback `SectionPage.tsx`'s `OrgChart` already uses for `welcomeContent`.
+ * same placeholder shape used across the portal's other photo slots.
  * Everything language-neutral (phone, email, address, map links, the
  * Instagram handle) is a plain string, not a `Pair` — there is nothing to
  * translate and inventing a translation would only risk getting it wrong.

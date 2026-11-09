@@ -4,9 +4,7 @@ import { registerApprovalResolvedHandler } from '../../shared/approval'
 import { findLatestInvite } from './invite'
 
 export { issueWelcomeInvite, reissueWelcomeInvite, revokeWelcomeInvite } from './issueWelcomeInvite'
-export { updateWelcomeContent, publishWelcomeContent, WELCOME_SECTIONS } from './content'
-export { seedWelcomeContent } from './seedWelcomeContent'
-export { getWelcomeSession, saveWelcomeDraft, getWelcomeContent } from './portal/session'
+export { getWelcomeSession, saveWelcomeDraft } from './portal/session'
 export { uploadWelcomeDocument } from './portal/uploadWelcomeDocument'
 export { submitWelcomeForm } from './portal/submitWelcomeForm'
 

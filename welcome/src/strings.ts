@@ -174,16 +174,20 @@ export const STRINGS = {
   secValues: p('Nilai Inti', 'Core Values'),
   secOrgChart: p('Struktur Organisasi', 'Organization Chart'),
   secGrooming: p('Standar Penampilan', 'Grooming Standard'),
-  secAttendance: p('Panduan Absensi', 'Attendance Guide'),
   secMenu: p('Menu', 'Menu'),
 
-  sectionEmpty: p('HR belum mengisi bagian ini.', 'HR has not filled this in yet.'),
   menuTaxNote: p(
     'Harga belum termasuk pajak pemerintah 10% dan service charge 6%.',
     'Prices are exclusive of 10% government tax and 6% service charge.',
   ),
   menuLegend: p('GF bebas gluten · V vegetarian · VO bisa vegan · VG vegan', 'GF gluten free · V vegetarian · VO vegan option · VG vegan'),
   orgChartZoom: p('Cubit untuk memperbesar.', 'Pinch to zoom.'),
+  // Shared with Nourish's Bible (generalPages.tsx reads these), so the two never drift.
+  orgChartCaption: p(
+    'Struktur organisasi Nourish Group. Cari posisimu, lalu cari supervisor langsungmu — merekalah orang pertama yang kamu hubungi.',
+    'The Nourish Group structure. Find your own position, then find your direct supervisor — they are your first point of contact.',
+  ),
+  orgChartOpen: p('Buka ukuran penuh', 'Open full size'),
 
   // Company Profile (§7.4, replaced 2026-09-26)
   photoComingSoon: p('Foto segera hadir', 'Photo coming soon'),

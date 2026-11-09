@@ -101,15 +101,11 @@ export {
   issueWelcomeInvite,
   reissueWelcomeInvite,
   revokeWelcomeInvite,
-  updateWelcomeContent,
-  publishWelcomeContent,
-  seedWelcomeContent,
   // Welcome Portal — unauthenticated, token-authenticated.
   getWelcomeSession,
   saveWelcomeDraft,
   uploadWelcomeDocument,
   submitWelcomeForm,
-  getWelcomeContent,
 } from './hr/welcome'
 
 // ---- HR: Employee Engagement ----

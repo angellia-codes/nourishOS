@@ -1,6 +1,6 @@
 # NourishOS — New-Hire Welcome Portal — Design Spec
 
-**Version:** 1.7 (built)
+**Version:** 1.8 (built)
 **Date:** 2026-11-09
 **Status:** **Shipped 2026-09-25**, with four confirmed deviations recorded in §18 and the Feedback half (§8) deliberately deferred. Sections below are the design as approved; where the build differs, §18 says so and the build is what runs.
 **Owner:** Angel
@@ -24,7 +24,7 @@ A separate, mobile-first, glassmorphism landing site that a new hire opens from 
 | D1 | How hire data reaches the Employee module | HR creates a **draft employee**, sends a magic link. The hire fills only whitelisted fields. HR verifies. No direct write path that bypasses HR. |
 | D2 | Departure from Basalt design system | **Full glass, gradients and rich animation**, scoped to this app only (Section 9). AA contrast and reduced-motion are held. |
 | D3 | Data the hire enters | Core personal and contact data, NIK, NPWP, BPJS TK / Kesehatan, KTP / KK scans, **and** bank account details (revised 2026-09-24 — bank details were originally scoped to HR; see §4.2). |
-| D4 | Content location | **Hybrid.** Company Profile, Core Values, Grooming are static in the bundle. Menu, Org Chart, Attendance Guide (incl. holidays), Do's & Don'ts are HR-editable and served by a read-only callable. |
+| D4 | Content location | **Hybrid.** Company Profile, Core Values, Grooming are static in the bundle. Menu, Org Chart, Attendance Guide (incl. holidays), Do's & Don'ts are HR-editable and served by a read-only callable. **Superseded (v1.8, 2026-11-09): every section is bundled; nothing is HR-editable — see §18.** |
 | D5 | Feedback handling | **Named to HR, aggregated for leadership.** HR sees names and comments. GM and Director see only aggregates (Section 8). |
 | D6 | Link lifecycle | **30-day token. Form locks on submit.** Welcome banner and content stay open until the token expires. HR can re-issue. |
 | D7 | Where it lives | **Third Vite app `welcome/`**, own hosting target, own bundle. Not an extension of `portal/`. |
@@ -118,7 +118,7 @@ All new collections are added to `src/constants/collections.ts`. Firestore rules
 | `issueWelcomeInvite` | `employees.invite` (new → hrManager, superAdmin) | Draft employee only. Sends WhatsApp. Returns the raw invite link in the response so it can be rendered on the Onboarding tab row for hrManager/superAdmin to copy (interim, while Fonnte isn't connected — §3.3). Marks the Onboarding tab's "Send welcome link" checklist item complete. Audit. |
 | `reissueWelcomeInvite` | `employees.invite` | Revokes the previous invite, issues a new token, returns the new link the same way. |
 | `revokeWelcomeInvite` | `employees.invite` | Sets `revokedAt`. |
-| `updateWelcomeContent` / `publishWelcomeContent` | `welcome.manageContent` (new → hrManager) | Draft/publish, audited. Editor lives under `/documents/welcome`. |
+| ~~`updateWelcomeContent` / `publishWelcomeContent`~~ | `welcome.manageContent` (new → hrManager) | **Removed v1.8**, with `seedWelcomeContent`, `getWelcomeContent` and the `/documents/welcome` editor. |
 | `listOnboardingFeedback` | `onboarding.readFeedback` (new → hrManager) | Named entries and comments. |
 | `getOnboardingFeedbackSummary` | `onboarding.readSummary` (new → hrManager, GM, director, superAdmin) | Aggregates only. |
 | `hr/onboardingVerification` | Approval Engine route, HR Manager | Single step. Rejection requires a reason. |
@@ -171,8 +171,8 @@ Mobile bottom bar (five tabs, glass): **Home · About** (Profile, Values, Org Ch
 | Core Values | static | INSPIRE, bilingual, as in the Core Value PDF. |
 | Grooming Standard | static | From the Grooming Standard deck: definition, hygiene, name tag, aprons, hairstyles, make-up, nails, uniform by department. |
 | Menu | HR-editable | Structured data (category, item, price, dietary tags GF / V / VO / VG). One-time seed from the five menu PDFs. **Must render** "prices exclusive of 10% government tax + 6% service charge" and the allergen notice. |
-| Org Chart | HR-editable | Image with pinch-zoom (the chart is too wide for a phone otherwise). |
-| Attendance Guide | HR-editable | Drafted from `docs/modules/attendance.md`. Includes the 2026 public-holiday calendar, ordered by the hire's own recorded religion (Hindu / Non-Hindu lists). |
+| Org Chart | ~~HR-editable~~ static (v1.8) | Image with pinch-zoom (the chart is too wide for a phone otherwise). Since v1.8 the bundled `welcome/public/org-chart.png`, rendered as Nourish's Bible renders it. |
+| ~~Attendance Guide~~ | **Removed v1.8** | Drafted from `docs/modules/attendance.md`. Includes the 2026 public-holiday calendar, ordered by the hire's own recorded religion (Hindu / Non-Hindu lists). |
 | Do's & Don'ts | HR-editable | Drafted from the grooming standard, Core Values and attendance rules. |
 
 All labels are `{id, en}` pairs. The default language follows `navigator.language`, with an EN/ID toggle. Every screen is tested against the Indonesian string.
@@ -284,7 +284,7 @@ Staggered section reveals · sliding step transitions (200–280 ms) · word-by-
 | # | Item |
 |---|---|
 | M4 | **App Check.** Unchanged launch blocker in this spec's own §10.1, and still not enabled — see §18 deviation 5. |
-| M7 | **Content review.** The Attendance Guide and Do's & Don'ts are HR-editable and start empty; Company Profile, Core Values and Grooming are a first-pass draft in `welcome/src/content/static.ts` and need an owner read-through. |
+| M7 | **Content review.** (The Attendance Guide and Do's & Don'ts have since been removed.) Company Profile, Core Values and Grooming are a first-pass draft in `welcome/src/content/static.ts` and need an owner read-through. |
 | M8 | **HR contact.** Company Profile vs Org Chart still disagree. |
 
 ### Can defer
@@ -327,6 +327,9 @@ The Candidate Portal has run without it since 2026-08-19; enabling it on these f
 **v1.7 addendum (built 2026-11-09): the invite link is returned to HR on every issue and reissue.**
 `issueWelcomeInvite`/`reissueWelcomeInvite` return `link` (`welcomeLinkUrl(token)`) whether or not WhatsApp delivered, since a delivered link may still need re-sharing. `OnboardingListPage.tsx` holds it in component state only — a reload drops it, and Resend mints a fresh one. The emulator-only `WELCOME_RETURN_TOKEN` escape hatch is gone: `welcome-flow.mjs` now reads the token out of `link`. The audit entry still records neither the link nor the token.
 
+**v1.8 addendum (built 2026-11-09): the Org Chart is bundled, the Attendance Guide and the HR content editor are gone.**
+On request, the portal's Organization Chart now renders the bundled `welcome/public/org-chart.png` exactly as Nourish's Bible does (`OrgChartPage` in `src/features/documents/bible/book/generalPages.tsx`): caption, a white scroll box with the chart at 1400px, pinch-zoom, opened on its centre, and an "Open full size" link. The caption lives once, in `welcome/src/strings.ts`, and the Bible reads it from there. The Attendance Guide section was removed. That left `welcomeContent` with nothing to hold, so the Documents > Welcome content editor, its sidebar entry, `updateWelcomeContent`, `publishWelcomeContent`, `seedWelcomeContent`, `getWelcomeContent` and the seed copy were deleted. The `welcomeContent` collection, its deny-all-but-HR rules block and the `welcome.manageContent` permission string are left in place, dormant. Acceptance criterion 6 now reads "all six sections render"; there are no HR-editable ones.
+
 ### Acceptance criteria status
 
 1–6 and 8–9 are built. **7 is deferred** (Feedback). **10**: `portal-flow.mjs` still passes unchanged after the token refactor; `welcome-flow.mjs` is written but **was not run** — no JRE in the build environment, so no emulator. Run both before treating this as production-ready, along with the two things `welcome-flow.mjs` itself prints as uncovered: the `hr/onboardingVerification` approve **and reject** round trip, and the WhatsApp leg.
@@ -351,3 +354,4 @@ The Candidate Portal has run without it since 2026-08-19; enabling it on these f
 | 1.5 | 2026-09-25 | Resolved the flag from 1.4: sending the welcome link is now a **required** Onboarding checklist item — `issueWelcomeInvite` marks it complete on success (§3.3, §5.1). The exact checklist storage to write to isn't visible from the screenshots; added as M11. Verification (the separate Task Engine item, §3.3 step 6) is explicitly *not* included in this — noted as an assumption, since the instruction only covered sending the link. |
 | 1.6 | 2026-09-25 | **Built.** Added §18 recording the six confirmed deviations and the deferred Feedback half, rewrote §15's open items against what the codebase actually turned out to hold (M1/M3/M5 were stale, M2/M6/M9/M10/M11 resolved, M4/M7/M8 still open), and moved this document to its suggested location. §17 numbering left as-is so existing `// welcome-portal.md §x` citations in the code still resolve. |
 | 1.7 | 2026-11-09 | HR and superAdmin can see the generated invite link on the Onboarding tab (copy-to-clipboard), as an interim measure while Fonnte isn't connected (§3.3 step 2, §5.1, §10.9, F4, §18 v1.7 addendum). Drafted as "1.6" in `2026-09-24-welcome-portal-design.md`, renumbered here because 1.6 was already the build record. The raw token is still never persisted. |
+| 1.8 | 2026-11-09 | Org Chart is the bundled `org-chart.png`, rendered as in Nourish's Bible; Attendance Guide removed; with no HR-editable section left, the `/documents/welcome` editor and the four content callables were deleted (§2 D4, §5.1, §7.4, §18 v1.8 addendum). |

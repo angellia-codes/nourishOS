@@ -6,7 +6,7 @@ import { SectionPage, type SectionKey } from './pages/SectionPage'
 import { InvalidPage } from './pages/InvalidPage'
 import { STRINGS, detectLang, t, type Lang } from './strings'
 import { clearCachedDraft, readToken } from './token'
-import { getWelcomeContent, getWelcomeSession, type WelcomeContent, type WelcomeSession } from './api'
+import { getWelcomeSession, type WelcomeSession } from './api'
 
 /**
  * NourishOS New-Hire Welcome Portal — welcome-portal.md §7.3.
@@ -39,7 +39,6 @@ export function App() {
   const [lang, setLang] = useState<Lang>(detectLang)
   const [token] = useState<string | null>(readToken)
   const [session, setSession] = useState<WelcomeSession | null>(null)
-  const [content, setContent] = useState<WelcomeContent | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState<View>('home')
@@ -73,13 +72,6 @@ export function App() {
       setSession(next)
       setView(next.submitted ? 'home' : 'form')
       setError(null)
-      // Content is a nice-to-have; a hire who cannot read the menu should
-      // still reach their welcome card.
-      try {
-        setContent(await getWelcomeContent(token))
-      } catch {
-        setContent(null)
-      }
     } catch (sessionError) {
       setError(sessionError instanceof Error ? sessionError.message : null)
     } finally {
@@ -96,7 +88,6 @@ export function App() {
       { key: 'profile', title: t(STRINGS.secProfile, lang), blurb: t(STRINGS.appName, lang) },
       { key: 'values', title: t(STRINGS.secValues, lang), blurb: 'INSPIRE' },
       { key: 'grooming', title: t(STRINGS.secGrooming, lang), blurb: t(STRINGS.navStandards, lang) },
-      { key: 'attendance', title: t(STRINGS.secAttendance, lang), blurb: t(STRINGS.navStandards, lang) },
       { key: 'holidays', title: t(STRINGS.secPublicHoliday, lang), blurb: t(STRINGS.navStandards, lang) },
       { key: 'orgChart', title: t(STRINGS.secOrgChart, lang), blurb: t(STRINGS.navAbout, lang) },
       { key: 'menu', title: t(STRINGS.secMenu, lang), blurb: t(STRINGS.navMenu, lang) },
@@ -173,7 +164,7 @@ export function App() {
         ) : null}
 
         {view === 'section' ? (
-          <SectionPage section={section} content={content} lang={lang} onBack={() => setView('home')} />
+          <SectionPage section={section} lang={lang} onBack={() => setView('home')} />
         ) : null}
       </main>
 

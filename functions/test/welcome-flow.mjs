@@ -125,7 +125,6 @@ async function seedHrManager() {
       arrayValue: {
         values: [
           string('employees.invite'),
-          string('welcome.manageContent'),
           string('employees.readSensitive'),
           string('employees.update'),
         ],
@@ -400,18 +399,6 @@ async function main() {
 
   await call('revokeWelcomeInvite', { checklistId: otherChecklistId }, hrToken)
   await expectFailure('getWelcomeSession', { token: otherToken }, INVALID_LINK)
-
-  // ---- §7.4: content ----
-
-  await call('updateWelcomeContent', { sectionId: 'attendanceGuide', content: { blocks: [] } }, hrToken)
-  const beforePublish = await call('getWelcomeContent', { token })
-  assert.equal(beforePublish.sections.attendanceGuide, null, 'a draft is not visible to the hire')
-
-  await call('publishWelcomeContent', { sectionId: 'attendanceGuide' }, hrToken)
-  const afterPublish = await call('getWelcomeContent', { token })
-  assert.deepEqual(afterPublish.sections.attendanceGuide, { blocks: [] }, 'publishing makes it visible')
-  await expectFailure('updateWelcomeContent', { sectionId: 'menu', content: {} }, /must be one of/i, hrToken)
-  await expectFailure('publishWelcomeContent', { sectionId: 'notASection' }, /must be one of/i, hrToken)
 
   console.log('welcome-flow: OK')
   console.log('')

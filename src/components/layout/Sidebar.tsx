@@ -123,9 +123,6 @@ const NAV_ITEMS: readonly NavItem[] = [
       { to: '/documents/sop-library', label: NAV.sopLibrary },
       { to: '/documents/job-descriptions', label: NAV.jobDescriptions },
       { to: '/documents/bible', label: NAV.bible },
-      // welcome-portal.md §5.1 — HR curates what a new hire reads in the
-      // welcome portal. HR-only, like the rest of that app's administration.
-      { to: '/documents/welcome', label: NAV.welcomeContent, roles: HR_ROLES },
     ],
   },
   {

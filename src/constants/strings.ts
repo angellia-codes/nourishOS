@@ -54,7 +54,6 @@ export const NAV = {
   sopLibrary: { en: 'SOP Library', id: 'Pustaka SOP' },
   jobDescriptions: { en: 'Job Descriptions', id: 'Deskripsi Pekerjaan' },
   bible: { en: "Nourish's Bible", id: "Nourish's Bible" },
-  welcomeContent: { en: 'Welcome Content', id: 'Konten Welcome' },
   communications: { en: 'Communications', id: 'Komunikasi' },
   announcements: { en: 'Announcements', id: 'Pengumuman' },
   tasks: { en: 'Tasks', id: 'Tugas' },
