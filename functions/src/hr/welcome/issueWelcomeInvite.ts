@@ -38,18 +38,16 @@ import { findLatestInvite, welcomeLinkUrl, WELCOME_TOKEN_TTL_DAYS } from './invi
 const WELCOME_LINK_ITEM_NUMBER = 31
 
 /**
- * The raw token leaves this module exactly once, in the WhatsApp message, and
- * is never returned to a caller — so `functions/test/welcome-flow.mjs` has no
- * way to drive the portal half of the flow. This env var, set only on the
- * emulator, lets the reissue response carry it.
+ * welcome-portal.md §3.3 step 2 / §10.9 (v1.7) — interim, while Fonnte isn't
+ * connected (F4): issue and reissue return the full invite link in their
+ * response so HR can copy it from the Onboarding tab and share it by hand.
  *
- * It is an env var rather than a build flag on purpose: a production
- * deployment that never sets it cannot be talked into returning the token, and
- * `firebase functions:config` shows at a glance whether it is set anywhere.
+ * The raw token still never reaches Firestore. It leaves this module in this
+ * one response (to an `employees.invite` holder only — the same gate that
+ * issues it) and in the WhatsApp message, and nowhere else. It is returned on
+ * every call, not only when `delivered` is false: a delivered link is still
+ * one HR may need to re-share.
  */
-function shouldReturnToken(): boolean {
-  return process.env.WELCOME_RETURN_TOKEN === 'true'
-}
 
 interface IssueInput {
   checklistId: string
@@ -106,8 +104,8 @@ async function createInvite(
   await inviteRef.set({
     employeeId: target.employeeId,
     checklistId,
-    // Only ever the hash. The raw token leaves this function once, in the
-    // WhatsApp message, and is never written anywhere.
+    // Only ever the hash. The raw token goes out in the callable's response
+    // and the WhatsApp message (see the note above) and is never written anywhere.
     tokenHash,
     expiresAt,
     lockedAt: null,
@@ -132,8 +130,8 @@ async function createInvite(
 /**
  * Fire-and-log, the same contract recruitment/whatsappTemplates.ts uses: the
  * invite is already committed by this point, so a dead Fonnte device must not
- * roll it back. The caller reports `delivered` so HR can read the link out
- * loud if the message did not go.
+ * roll it back. The caller reports `delivered`, and returns the link itself,
+ * so HR can share it by hand if the message did not go.
  */
 async function sendWelcomeLink(employee: FirebaseFirestore.DocumentData, token: string): Promise<boolean> {
   const target = (employee.phone as string | undefined)?.trim()
@@ -230,8 +228,10 @@ export const issueWelcomeInvite = onCall({ region: REGION, secrets: [FONNTE_TOKE
     })
 
     return successResponse(
-      { inviteId, expiresAt, delivered },
-      delivered ? 'Welcome link sent.' : 'Welcome link created, but the WhatsApp message did not send.',
+      { inviteId, expiresAt, delivered, link: welcomeLinkUrl(token) },
+      delivered
+        ? 'Welcome link sent.'
+        : 'Welcome link created — WhatsApp did not send; copy the link to share it.',
     )
   } catch (error) {
     return handleError(error)
@@ -286,8 +286,10 @@ export const reissueWelcomeInvite = onCall({ region: REGION, secrets: [FONNTE_TO
     })
 
     return successResponse(
-      { inviteId, expiresAt, delivered, ...(shouldReturnToken() ? { token } : {}) },
-      delivered ? 'New welcome link sent.' : 'New welcome link created, but the WhatsApp message did not send.',
+      { inviteId, expiresAt, delivered, link: welcomeLinkUrl(token) },
+      delivered
+        ? 'New welcome link sent.'
+        : 'New welcome link created — WhatsApp did not send; copy the link to share it.',
     )
   } catch (error) {
     return handleError(error)

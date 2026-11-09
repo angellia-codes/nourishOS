@@ -14,6 +14,13 @@ export interface WelcomeInviteResult {
   expiresAt: string
   /** False when Fonnte is unprovisioned or the send failed — HR needs to know. */
   delivered: boolean
+  /**
+   * The full invite link, raw token included — welcome-portal.md §3.3 / §10.9
+   * (v1.7). Interim while Fonnte isn't connected (F4): shown once on the
+   * Onboarding tab for HR to copy. Hold it in component state only; never
+   * persist it anywhere. Absent until the functions are redeployed.
+   */
+  link?: string
 }
 
 export function issueWelcomeInvite(checklistId: string): Promise<WelcomeInviteResult> {
