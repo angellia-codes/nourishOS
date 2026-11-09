@@ -42,7 +42,7 @@ export function Button({
   // Deliberately no fixed width anywhere — Indonesian labels run long (§9).
   const tone =
     variant === 'primary'
-      ? 'bg-[var(--w-amber)] text-[var(--w-ink)]'
+      ? 'bg-[var(--w-amber-button)] text-[var(--w-ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_8px_20px_-10px_rgba(247,180,98,0.7)] hover:brightness-105 active:brightness-95'
       : 'border border-[var(--w-glass-border)] bg-white/5 text-[var(--w-cream)]'
   return (
     <button type="button" className={`${base} ${tone} ${className}`} {...rest}>
@@ -207,11 +207,15 @@ export function Collapsible({
   )
 }
 
-/** §7.1/§9 — the primary action lives in a sticky bottom bar, above the home indicator. */
+/**
+ * §7.1/§9 — the primary action lives in a sticky bottom bar, above the home indicator.
+ * Phone: full-bleed with a top hairline. sm+: a floating dock the same width,
+ * radius and 1px border as the form card, instead of a band wider than it.
+ */
 export function BottomBar({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className="sticky bottom-0 z-20 -mx-4 mt-6 border-t border-[var(--w-glass-border)] bg-[var(--w-glass-strong)] px-4 pt-3 backdrop-blur-md"
+      className="sticky bottom-0 z-20 -mx-4 mt-6 border-t border-[var(--w-glass-border)] bg-[var(--w-glass-strong)] px-4 pt-3 backdrop-blur-md sm:bottom-3 sm:mx-0 sm:rounded-[var(--w-radius)] sm:border sm:shadow-[0_24px_48px_-24px_rgba(0,0,0,0.55)]"
       style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
     >
       <div className="mx-auto flex max-w-xl items-center gap-3">{children}</div>

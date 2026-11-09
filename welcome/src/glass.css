@@ -4,6 +4,9 @@
   --w-teal-deep: #082420;
   --w-amber: #ffc98a;
   --w-amber-dim: #e0a968;
+  /* Primary button fill: richer than --w-amber so it reads as a solid action,
+     not a pale tint, against the dark glass bar. Ink on it is ~10:1. */
+  --w-amber-button: #f7b462;
   --w-olive: #3a4a22;
   --w-cream: #f4efe4;
   --w-cream-soft: rgba(244, 239, 228, 0.72);
