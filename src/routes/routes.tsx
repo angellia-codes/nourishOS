@@ -101,7 +101,6 @@ import { SopFormPage } from '@/features/documents/sopLibrary/pages/SopFormPage'
 import { SopAccessPage } from '@/features/documents/sopLibrary/pages/SopAccessPage'
 import { OutletMenuPage } from '@/features/documents/bible/OutletMenuPage'
 import { CompanyFormFormPage } from '@/features/documents/companyForms/pages/CompanyFormFormPage'
-import { WelcomeContentPage } from '@/features/documents/pages/WelcomeContentPage'
 import { ExpenseListPage } from '@/features/finance/expenses/pages/ExpenseListPage'
 import { ExpenseFormPage } from '@/features/finance/expenses/pages/ExpenseFormPage'
 import { ExpenseDetailPage } from '@/features/finance/expenses/pages/ExpenseDetailPage'
@@ -424,10 +423,6 @@ export const router = createBrowserRouter([
               { path: 'company-forms', element: <Navigate to="/documents/bible?page=general.forms" replace /> },
               { path: 'company-forms/new', element: <CompanyFormFormPage /> },
               { path: 'company-forms/:companyFormId/edit', element: <CompanyFormFormPage /> },
-              // welcome-portal.md §5.1 — the four HR-editable welcome sections.
-              // No RoleRoute: the page's own reads are rules-gated to HR, and
-              // the callables behind it check welcome.manageContent.
-              { path: 'welcome', element: <WelcomeContentPage /> },
             ],
           },
           {

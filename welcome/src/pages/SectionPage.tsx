@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import {
   BadgeIcon,
   BagIcon,
@@ -21,32 +21,28 @@ import {
   StoreIcon,
   TargetIcon,
 } from '../ui'
-import { COMPANY_PROFILE, CORE_VALUES, type CoreValueItem, type StaticBlock } from '../content/static'
+import { COMPANY_PROFILE, CORE_VALUES, type CoreValueItem } from '../content/static'
 import { STRINGS, t, type Lang } from '../strings'
-import type { GuideContent, OrgChartContent, WelcomeContent } from '../api'
 import { GroomingSection } from './GroomingSection'
 import { HolidaySection } from './HolidaySection'
 
 /**
- * welcome-portal.md §7.4 — the content sections: five static in the bundle
- * (Company Profile, Core Values, Grooming Standard, Public Holiday 2026 —
- * added 2026-09-26, see `content/holidays.ts` — and the Menu scans, 2026-09-28)
- * and two served from `welcomeContent` (Org Chart, Attendance Guide).
- *
- * Every section renders the same way whether its source is a constant or a
- * Firestore document: the hire cannot tell, and should not be able to.
+ * welcome-portal.md §7.4 — the content sections, all bundled with the app:
+ * Company Profile, Core Values, Grooming Standard, Public Holiday 2026
+ * (2026-09-26, `content/holidays.ts`), the Menu scans (2026-09-28) and the
+ * Organization Chart (2026-11-09, v1.8 — the same `org-chart.png` Nourish's
+ * Bible shows). The Attendance Guide was removed in v1.8, and with it the last
+ * HR-editable `welcomeContent` section, so nothing here reads Firestore.
  */
 
-export type SectionKey = 'profile' | 'values' | 'grooming' | 'menu' | 'orgChart' | 'attendance' | 'holidays'
+export type SectionKey = 'profile' | 'values' | 'grooming' | 'menu' | 'orgChart' | 'holidays'
 
 export function SectionPage({
   section,
-  content,
   lang,
   onBack,
 }: {
   section: SectionKey
-  content: WelcomeContent | null
   lang: Lang
   onBack: () => void
 }) {
@@ -71,8 +67,7 @@ export function SectionPage({
       {section === 'values' ? <CoreValues lang={lang} /> : null}
       {section === 'grooming' ? <GroomingSection lang={lang} /> : null}
       {section === 'menu' ? <Menu lang={lang} /> : null}
-      {section === 'orgChart' ? <OrgChart content={content?.sections.orgChart ?? null} lang={lang} /> : null}
-      {section === 'attendance' ? <Guide content={content?.sections.attendanceGuide ?? null} lang={lang} /> : null}
+      {section === 'orgChart' ? <OrgChart lang={lang} /> : null}
       {section === 'holidays' ? <HolidaySection lang={lang} /> : null}
     </div>
   )
@@ -84,24 +79,8 @@ const TITLES = {
   grooming: STRINGS.secGrooming,
   menu: STRINGS.secMenu,
   orgChart: STRINGS.secOrgChart,
-  attendance: STRINGS.secAttendance,
   holidays: STRINGS.secPublicHoliday,
 } as const
-
-function Blocks({ blocks, lang }: { blocks: StaticBlock[]; lang: Lang }) {
-  return (
-    <div className="flex flex-col gap-3">
-      {blocks.map((block, index) => (
-        <Card key={index} index={index}>
-          <h2 className="mb-2 font-semibold">{t(block.heading, lang)}</h2>
-          <p className="whitespace-pre-line text-sm leading-relaxed text-[var(--w-cream-soft)]">
-            {t(block.body, lang)}
-          </p>
-        </Card>
-      ))}
-    </div>
-  )
-}
 
 function SectionHeading({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
   return (
@@ -274,12 +253,6 @@ function CoreValues({ lang }: { lang: Lang }) {
   )
 }
 
-/** The HR-editable guides share the static blocks' shape, so they render the same. */
-function Guide({ content, lang }: { content: GuideContent | null; lang: Lang }) {
-  if (!content || content.blocks.length === 0) return <Notice>{t(STRINGS.sectionEmpty, lang)}</Notice>
-  return <Blocks blocks={content.blocks} lang={lang} />
-}
-
 /** Full-page menu scans bundled in `welcome/public/`; tap opens full size for zooming. */
 const MENU_IMAGES = [1, 2, 3, 4, 5].map((n) => `/menu-${n}.png`)
 
@@ -310,26 +283,42 @@ function Menu({ lang }: { lang: Lang }) {
 
 /**
  * §7.4 — "Image with pinch-zoom (the chart is too wide for a phone
- * otherwise)." A scrollable container with `touch-action: pinch-zoom` is what
- * gives that natively; a zoom library would be larger than this whole app.
+ * otherwise)." Rendered exactly as Nourish's Bible does it
+ * (src/features/documents/bible/book/generalPages.tsx, `OrgChartPage`): the
+ * bundled `public/org-chart.png` on white, 1400px wide inside a scroll box,
+ * opened on its centre, with a link to the full-size file. A scrollable
+ * container with `touch-action: pinch-zoom` gives the zoom natively; a zoom
+ * library would be larger than this whole app.
  */
-function OrgChart({ content, lang }: { content: OrgChartContent | null; lang: Lang }) {
-  const [failed, setFailed] = useState(false)
+const ORG_CHART_SRC = '/org-chart.png'
 
-  if (!content?.imageUrl || failed) return <Notice>{t(STRINGS.sectionEmpty, lang)}</Notice>
-
+function OrgChart({ lang }: { lang: Lang }) {
   return (
     <Card index={0}>
-      <p className="mb-3 text-sm text-[var(--w-cream-soft)]">{t(content.caption, lang)}</p>
-      <div className="overflow-auto rounded-xl bg-white/5" style={{ touchAction: 'pinch-zoom' }}>
+      <p className="mb-3 text-sm leading-relaxed text-[var(--w-cream-soft)]">{t(STRINGS.orgChartCaption, lang)}</p>
+      <div className="overflow-auto rounded-xl bg-white" style={{ touchAction: 'pinch-zoom' }}>
         <img
-          src={content.imageUrl}
+          src={ORG_CHART_SRC}
           alt={t(STRINGS.secOrgChart, lang)}
           className="w-[1400px] max-w-none"
-          onError={() => setFailed(true)}
+          // The chart's top is centred, so open on the middle rather than its empty left edge.
+          onLoad={(event) => {
+            const box = event.currentTarget.parentElement
+            if (box) box.scrollLeft = (box.scrollWidth - box.clientWidth) / 2
+          }}
         />
       </div>
-      <p className="mt-2 text-xs text-[var(--w-cream-faint)]">{t(STRINGS.orgChartZoom, lang)}</p>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs text-[var(--w-cream-faint)]">{t(STRINGS.orgChartZoom, lang)}</p>
+        <a
+          href={ORG_CHART_SRC}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-focusable inline-flex min-h-[48px] items-center rounded text-sm font-semibold text-[var(--w-amber)] underline underline-offset-2"
+        >
+          {t(STRINGS.orgChartOpen, lang)}
+        </a>
+      </div>
     </Card>
   )
 }

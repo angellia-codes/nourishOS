@@ -461,8 +461,7 @@ const ImageIcon = (
 /**
  * A slot for a photo that does not exist yet — HR drops the real file in
  * later by giving this an `imageUrl`. Renders the placeholder whenever one
- * isn't set, the same fallback shape `SectionPage.tsx`'s `OrgChart` already
- * uses for `welcomeContent`'s own images.
+ * isn't set.
  */
 export function ImagePlaceholder({
   imageUrl,

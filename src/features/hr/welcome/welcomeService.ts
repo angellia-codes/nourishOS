@@ -14,6 +14,13 @@ export interface WelcomeInviteResult {
   expiresAt: string
   /** False when Fonnte is unprovisioned or the send failed — HR needs to know. */
   delivered: boolean
+  /**
+   * The full invite link, raw token included — welcome-portal.md §3.3 / §10.9
+   * (v1.7). Interim while Fonnte isn't connected (F4): shown once on the
+   * Onboarding tab for HR to copy. Hold it in component state only; never
+   * persist it anywhere. Absent until the functions are redeployed.
+   */
+  link?: string
 }
 
 export function issueWelcomeInvite(checklistId: string): Promise<WelcomeInviteResult> {
@@ -26,75 +33,4 @@ export function reissueWelcomeInvite(checklistId: string): Promise<WelcomeInvite
 
 export function revokeWelcomeInvite(checklistId: string): Promise<{ inviteId: string }> {
   return callFunction('revokeWelcomeInvite', { checklistId })
-}
-
-/** §7.4's HR-editable set. Must match WELCOME_SECTIONS in functions/src/hr/welcome/content.ts. */
-export const WELCOME_SECTIONS = ['orgChart', 'attendanceGuide'] as const
-export type WelcomeSection = (typeof WELCOME_SECTIONS)[number]
-
-export const WELCOME_SECTION_LABELS: Record<WelcomeSection, string> = {
-  orgChart: 'Organization Chart',
-  attendanceGuide: 'Attendance Guide',
-}
-
-export const WELCOME_SECTION_HINTS: Record<WelcomeSection, string> = {
-  orgChart:
-    'A public image URL. New hires have no NourishOS account, so a link into this app’s own storage will not load for them — host the chart somewhere publicly readable. They can pinch to zoom, so a wide chart is fine.',
-  attendanceGuide: 'Working hours, how attendance is recorded, and the public-holiday calendar.',
-}
-
-/** Every label the portal renders is an {id, en} pair (§7.4). */
-export interface Bilingual {
-  id: string
-  en: string
-}
-
-export interface OrgChartContent {
-  /**
-   * A public image URL, deliberately not a `files/{id}` id: a new hire has no
-   * Firebase Auth session and `storage.rules` requires one, so anything inside
-   * the app's own bucket renders as a broken image on the welcome portal.
-   */
-  imageUrl: string
-  caption: Bilingual
-}
-
-export interface GuideBlock {
-  heading: Bilingual
-  body: Bilingual
-}
-
-export interface GuideContent {
-  blocks: GuideBlock[]
-}
-
-export type WelcomeSectionContent = OrgChartContent | GuideContent
-
-export function updateWelcomeContent(
-  sectionId: WelcomeSection,
-  content: WelcomeSectionContent,
-): Promise<{ sectionId: string }> {
-  return callFunction('updateWelcomeContent', { sectionId, content })
-}
-
-export function publishWelcomeContent(sectionId: WelcomeSection): Promise<{ sectionId: string; publishedAt: string }> {
-  return callFunction('publishWelcomeContent', { sectionId })
-}
-
-/**
- * Fills any section that has neither a draft nor a published version with the
- * first-pass copy in `functions/src/hr/welcome/welcomeSeeds.ts`. A section
- * that already holds content is skipped, never overwritten, so this is safe to
- * press twice — and it only ever writes drafts, so nothing reaches a new hire
- * until HR publishes it.
- */
-export function seedWelcomeContent(): Promise<{ seeded: WelcomeSection[]; skipped: WelcomeSection[] }> {
-  return callFunction('seedWelcomeContent', {})
-}
-
-/** An empty draft of the right shape, so the editor never starts from nothing. */
-export function emptySection(section: WelcomeSection): WelcomeSectionContent {
-  const blank: Bilingual = { id: '', en: '' }
-  if (section === 'orgChart') return { imageUrl: '', caption: { ...blank } }
-  return { blocks: [{ heading: { ...blank }, body: { ...blank } }] }
 }

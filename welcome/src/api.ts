@@ -46,38 +46,6 @@ export function submitWelcomeForm(
   return callFunction('submitWelcomeForm', { token, values })
 }
 
-/** {id, en} pairs, as §7.4 specifies for every label the portal renders. */
-export interface Bilingual {
-  id: string
-  en: string
-}
-
-export interface OrgChartContent {
-  /**
-   * A public image URL, deliberately not a `files/{id}` id: a new hire has no
-   * Firebase Auth session and `storage.rules` requires one, so an id pointing
-   * into the app's own bucket would render as a broken image for exactly the
-   * audience this section exists for.
-   */
-  imageUrl: string
-  caption: Bilingual
-}
-
-export interface GuideContent {
-  blocks: { heading: Bilingual; body: Bilingual }[]
-}
-
-export interface WelcomeContent {
-  sections: {
-    orgChart: OrgChartContent | null
-    attendanceGuide: GuideContent | null
-  }
-}
-
-export function getWelcomeContent(token: string): Promise<WelcomeContent> {
-  return callFunction('getWelcomeContent', { token })
-}
-
 /** Reads a File as bare base64 (no data: prefix) for uploadWelcomeDocument. */
 export function toBase64(file: Blob): Promise<string> {
   return new Promise((resolve, reject) => {

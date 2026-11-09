@@ -147,7 +147,8 @@ export function CoreValuesPage({ page }: { page: BookPage }) {
 // ---- Organization Chart ------------------------------------------------------------
 
 /**
- * The bundled chart the Welcome portal's seed points at (welcome/public/org-chart.png).
+ * The bundled welcome/public/org-chart.png — the Welcome portal renders the same file
+ * the same way, and both read the caption from welcome/src/strings.ts.
  * The chart is far wider than a page, so it scrolls (pinch-zoom on touch) and opens full size.
  */
 export function OrgChartPage({ page }: { page: BookPage }) {
@@ -156,7 +157,7 @@ export function OrgChartPage({ page }: { page: BookPage }) {
   return (
     <PageFrame page={page}>
       <Heading>{t(PAGE_TITLES.orgChart, lang)}</Heading>
-      <Body>{t(S.orgChartCaption, lang)}</Body>
+      <Body>{t(W.orgChartCaption, lang)}</Body>
       <div className="mt-2 flex-none overflow-auto rounded-xl bg-white" style={{ touchAction: 'pinch-zoom', maxHeight: '60%' }}>
         <img
           src={src}
@@ -170,7 +171,7 @@ export function OrgChartPage({ page }: { page: BookPage }) {
         />
       </div>
       <a href={src} target="_blank" rel="noopener noreferrer" className="bible-row">
-        <span className="min-w-0 flex-1">{t(S.orgChartOpen, lang)}</span>
+        <span className="min-w-0 flex-1">{t(W.orgChartOpen, lang)}</span>
         <ExternalLink className="bible-muted h-4 w-4 shrink-0" aria-hidden="true" />
       </a>
     </PageFrame>

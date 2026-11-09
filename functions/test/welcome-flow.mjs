@@ -17,9 +17,9 @@
  * driving createEmployee and the approval engine. This is a test of the
  * welcome portal, not of HR's own callables.
  *
- * `issueWelcomeInvite` is authenticated, so the raw token is read back out of
- * `onboardingInvites` the same way — which is also why the WhatsApp leg is not
- * asserted here: without FONNTE_TOKEN the adapter reports `skipped` by design.
+ * The raw token is read out of the `link` that issue/reissue return (§3.3,
+ * v1.7 — the interim in-UI link display). The WhatsApp leg is not asserted
+ * here: without FONNTE_TOKEN the adapter reports `skipped` by design.
  */
 import assert from 'node:assert/strict'
 
@@ -125,7 +125,6 @@ async function seedHrManager() {
       arrayValue: {
         values: [
           string('employees.invite'),
-          string('welcome.manageContent'),
           string('employees.readSensitive'),
           string('employees.update'),
         ],
@@ -247,6 +246,8 @@ async function main() {
 
   const issued = await call('issueWelcomeInvite', { checklistId }, hrToken)
   assert.ok(issued.inviteId, 'issueWelcomeInvite returned no inviteId')
+  // §3.3 / §10.9 (v1.7) — the link comes back in the response for HR to copy.
+  const issuedToken = tokenFromLink(issued.link)
 
   // §3.3 / §5.1 — checklist item 31 is marked complete on success.
   const checklist = await read(`onboardingChecklists/${checklistId}`)
@@ -259,9 +260,10 @@ async function main() {
   // A second issue is refused; reissue is the documented path.
   await expectFailure('issueWelcomeInvite', { checklistId }, /already been sent/i, hrToken)
 
-  // The raw token is never persisted, so recover it the only way a test can:
-  // reissue, and read the hash back to confirm it matches what we hold.
+  // Reissue revokes the first link and returns a fresh one.
   const token = await recoverToken(checklistId, hrToken)
+  assert.notEqual(token, issuedToken, 'reissue should mint a new token')
+  await expectFailure('getWelcomeSession', { token: issuedToken }, INVALID_LINK)
   await call('issueWelcomeInvite', { checklistId: otherChecklistId }, hrToken)
   const otherToken = await recoverToken(otherChecklistId, hrToken)
 
@@ -299,11 +301,6 @@ async function main() {
   // ---- §11: the server is authoritative, per field ----
 
   await expectFailure('submitWelcomeForm', { token, values: { ...goodValues, nik: '123' } }, /NIK must be 16 digits/i)
-  await expectFailure(
-    'submitWelcomeForm',
-    { token, values: { ...goodValues, bankAccountNumber: '123' } },
-    /10 digits/i,
-  )
 
   // Documents are required, and nothing has been uploaded yet.
   await expectFailure('submitWelcomeForm', { token, values: goodValues }, /KTP/i)
@@ -353,6 +350,14 @@ async function main() {
     /at most 2/i,
   )
 
+  // The bank rule is only reached once the required scans exist — the server
+  // checks documents before the financial fields.
+  await expectFailure(
+    'submitWelcomeForm',
+    { token, values: { ...goodValues, bankAccountNumber: '123' } },
+    /10 digits/i,
+  )
+
   // ---- §3.3 step 6: submit ----
 
   const submitted = await call('submitWelcomeForm', { token, values: goodValues })
@@ -395,18 +400,6 @@ async function main() {
   await call('revokeWelcomeInvite', { checklistId: otherChecklistId }, hrToken)
   await expectFailure('getWelcomeSession', { token: otherToken }, INVALID_LINK)
 
-  // ---- §7.4: content ----
-
-  await call('updateWelcomeContent', { sectionId: 'attendanceGuide', content: { blocks: [] } }, hrToken)
-  const beforePublish = await call('getWelcomeContent', { token })
-  assert.equal(beforePublish.sections.attendanceGuide, null, 'a draft is not visible to the hire')
-
-  await call('publishWelcomeContent', { sectionId: 'attendanceGuide' }, hrToken)
-  const afterPublish = await call('getWelcomeContent', { token })
-  assert.deepEqual(afterPublish.sections.attendanceGuide, { blocks: [] }, 'publishing makes it visible')
-  await expectFailure('updateWelcomeContent', { sectionId: 'menu', content: {} }, /must be one of/i, hrToken)
-  await expectFailure('publishWelcomeContent', { sectionId: 'notASection' }, /must be one of/i, hrToken)
-
   console.log('welcome-flow: OK')
   console.log('')
   console.log('Not covered here, verify by hand:')
@@ -414,28 +407,18 @@ async function main() {
   console.log('  - the WhatsApp leg (needs FONNTE_TOKEN; without it the adapter reports "skipped" by design)')
 }
 
-/**
- * Reissues and returns the raw token. `issueWelcomeInvite` returns the token
- * only in the WhatsApp message, never in its response, so a test has to take
- * this route — which also exercises reissue's revoke-then-issue ordering.
- */
-async function recoverToken(checklistId, hrToken) {
-  const response = await fetch(`${FUNCTIONS}/reissueWelcomeInvite`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${hrToken}` },
-    body: JSON.stringify({ data: { checklistId } }),
-  })
-  const body = await response.json()
-  if (body.error) throw new Error(`reissueWelcomeInvite: ${body.error.message}`)
-
-  const token = body.result.data.token
-  assert.ok(
-    token,
-    'reissueWelcomeInvite must return `token` for this test to run.\n' +
-      '  It deliberately does not in production — the raw token goes out by WhatsApp only.\n' +
-      '  Set WELCOME_RETURN_TOKEN=true on the functions emulator to enable it.',
-  )
+/** The `?t=` param of a welcome link — the shape `welcomeLinkUrl` writes. */
+function tokenFromLink(link) {
+  assert.ok(typeof link === 'string' && link, 'issue/reissue should return `link`')
+  const token = new URL(link).searchParams.get('t')
+  assert.ok(token, `link has no ?t= token: ${link}`)
   return token
+}
+
+/** Reissues and returns the raw token, which exercises revoke-then-issue ordering. */
+async function recoverToken(checklistId, hrToken) {
+  const reissued = await call('reissueWelcomeInvite', { checklistId }, hrToken)
+  return tokenFromLink(reissued.link)
 }
 
 main().catch((error) => {
