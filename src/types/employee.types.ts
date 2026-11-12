@@ -139,10 +139,12 @@ export interface Employee extends BaseDocument {
  * GM/Director/department leaders and firestore.rules can't hide individual
  * fields. Only one live document ("current") per employee; history is
  * covered by auditLogs, not a version array here. Written by
- * updateEmployeeCompensation only.
+ * updateEmployeeCompensation, and — bank fields only, merged — by the welcome
+ * portal's submitWelcomeForm (setEmployeeBankDetailsInternal). A new hire's
+ * doc therefore has no basicSalary until HR sets one.
  */
 export interface EmployeeCompensation {
-  basicSalary: number
+  basicSalary?: number | null
   positionAllowance?: number | null
   phoneAllowance?: number | null
   transportationAllowance?: number | null
