@@ -10,6 +10,7 @@ import {
   Checkbox,
   Input,
   Label,
+  MultiSelect,
   Select,
   Spinner,
   Textarea,
@@ -22,11 +23,9 @@ import { ANNOUNCEMENT_CATEGORY_LABELS } from '../announcementFormat'
 import type { AnnouncementCategory } from '@/types'
 import type { Role } from '@/constants/roles'
 
-const ROLE_OPTIONS = Object.entries(ROLE_LABELS) as [Role, string][]
-
-function toggle<T extends string>(list: T[], value: T): T[] {
-  return list.includes(value) ? list.filter((item) => item !== value) : [...list, value]
-}
+const OUTLET_OPTIONS = OUTLETS.map((outlet) => ({ value: outlet.id as string, label: outlet.name }))
+const DEPARTMENT_OPTIONS = DEPARTMENTS.map((department) => ({ value: department.id as string, label: department.name }))
+const ROLE_OPTIONS = (Object.entries(ROLE_LABELS) as [Role, string][]).map(([value, label]) => ({ value, label }))
 
 /** Checkbox is a bare native input, so the label wrapper lives here rather than four times below. */
 function CheckOption({ checked, onChange, label }: { checked: boolean; onChange: () => void; label: string }) {
@@ -222,54 +221,40 @@ export function AnnouncementFormPage() {
             Leave a group empty to reach everyone in it. All three empty means company-wide.
           </p>
 
-          <fieldset className="flex flex-col gap-2">
-            <legend className="text-sm font-medium text-foreground">
-              Outlets {outletIds.length === 0 && <span className="text-muted-foreground">— all outlets</span>}
-            </legend>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {OUTLETS.map((outlet) => (
-                <CheckOption
-                  key={outlet.id}
-                  checked={outletIds.includes(outlet.id)}
-                  onChange={() => setOutletIds((ids) => toggle(ids, outlet.id))}
-                  label={outlet.name}
-                />
-              ))}
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="audienceOutlets">Outlets</Label>
+              <MultiSelect
+                id="audienceOutlets"
+                options={OUTLET_OPTIONS}
+                value={outletIds}
+                onChange={setOutletIds}
+                emptyLabel="All outlets"
+              />
             </div>
-          </fieldset>
-
-          <fieldset className="flex flex-col gap-2">
-            <legend className="text-sm font-medium text-foreground">
-              Departments{' '}
-              {departmentIds.length === 0 && <span className="text-muted-foreground">— all departments</span>}
-            </legend>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {DEPARTMENTS.map((department) => (
-                <CheckOption
-                  key={department.id}
-                  checked={departmentIds.includes(department.id)}
-                  onChange={() => setDepartmentIds((ids) => toggle(ids, department.id))}
-                  label={department.name}
-                />
-              ))}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="audienceDepartments">Departments</Label>
+              <MultiSelect
+                id="audienceDepartments"
+                options={DEPARTMENT_OPTIONS}
+                value={departmentIds}
+                onChange={setDepartmentIds}
+                emptyLabel="All departments"
+                searchPlaceholder="Search departments…"
+              />
             </div>
-          </fieldset>
-
-          <fieldset className="flex flex-col gap-2">
-            <legend className="text-sm font-medium text-foreground">
-              Roles {roleIds.length === 0 && <span className="text-muted-foreground">— all roles</span>}
-            </legend>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {ROLE_OPTIONS.map(([roleId, label]) => (
-                <CheckOption
-                  key={roleId}
-                  checked={roleIds.includes(roleId)}
-                  onChange={() => setRoleIds((ids) => toggle(ids, roleId))}
-                  label={label}
-                />
-              ))}
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="audienceRoles">Roles</Label>
+              <MultiSelect
+                id="audienceRoles"
+                options={ROLE_OPTIONS}
+                value={roleIds}
+                onChange={setRoleIds}
+                emptyLabel="All roles"
+                searchPlaceholder="Search roles…"
+              />
             </div>
-          </fieldset>
+          </div>
         </CardContent>
       </Card>
 
