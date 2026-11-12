@@ -802,7 +802,7 @@ export function EmployeeProfilePage() {
               <ErrorMessage message={compensationError} />
             ) : compensation ? (
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                <Field label="Basic salary" value={compensation.basicSalary.toLocaleString('id-ID')} />
+                <Field label="Basic salary" value={compensation.basicSalary?.toLocaleString('id-ID')} />
                 <Field label="Position allowance" value={compensation.positionAllowance?.toLocaleString('id-ID')} />
                 <Field label="Phone allowance" value={compensation.phoneAllowance?.toLocaleString('id-ID')} />
                 <Field
